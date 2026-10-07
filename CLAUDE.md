@@ -44,9 +44,10 @@ Rules:
 ## SRS rules (constants and level logic in `src/lib/srs.js`)
 - Levels 0 to 7. Wait before a card is due again, by the level it just reached: `LEVEL_HOURS = [0, 4, 24, 72, 168, 336, 720, 2880]` (new, 4h, 1d, 3d, 1w, 2w, 30d, ~4 months).
 - Correct on the first try: level +1 (max 7).
-- Wrong answers (WaniKani style): every 2 misses on a card in a session = 1 level down; from level 5 up the penalty is doubled; a learned card never drops below level 1. The lowered level is saved at each miss.
+- Wrong answers (WaniKani style): the drop is based on how many times the card was missed this session, rounded up in pairs. The 1st and 2nd miss = 1 level down, the 3rd and 4th = 2 levels down, and so on (the first miss already costs a level). From level 5 up the penalty is doubled (1st/2nd miss = 2 levels down). A learned card never drops below level 1; a new card (level 0) stays at 0. The drop is always counted from the level the card had at the start of the session, and the lowered level is saved at each miss.
 - A card missed in a session comes back later that session as extra practice. It does not move up again that session.
 - Review sessions are capped at `SESSION_SIZE = 20` cards.
+- These rules are covered by automated tests in `src/lib/srs.test.js` (and drill helpers in `src/lib/drill.test.js`). Run them with `npm test`. If a rule is changed on purpose, update its test in the same change.
 
 ## UI conventions
 - Interface is mostly Japanese. Keep the "English to Japanese" / "Japanese to English" direction labels in English. Answer buttons are bilingual (English plus Japanese). Do not add furigana unless I ask.
@@ -55,7 +56,7 @@ Rules:
 
 ## How to work with me
 - Make small, focused changes. Before large refactors (like reorganizing folders or moving logic between many files), propose a plan and wait for approval.
-- After a change, summarize in a few plain sentences what changed and how I can test it.
+- After a change, run `npm test`, `npm run lint` and `npm run build`, then summarize in a few plain sentences what changed and how I can test it.
 - If you are not certain a step or command is correct, say so instead of guessing.
 - Work on a branch, not on `main`. Suggest a git commit message after each working change.
 - Never push to `main` (or merge into it) unless I say so, because that deploys to students. Don't push other branches unless I ask.
