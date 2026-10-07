@@ -12,10 +12,12 @@ export default function MyCardsTab({ decks, dueRows, onReview, onRemove, loading
     );
   }
 
+  // A word can be in several decks, so a due card counts toward each of them.
   const dueByDeck = {};
   dueRows.forEach((r) => {
-    const d = r.cards?.deck_id;
-    if (d) dueByDeck[d] = (dueByDeck[d] || 0) + 1;
+    r.words?.deck_words?.forEach(({ deck_id: d }) => {
+      dueByDeck[d] = (dueByDeck[d] || 0) + 1;
+    });
   });
 
   return (

@@ -3,23 +3,23 @@
 export const CLEAR_TARGET = 2; // only used for the Card Sets practice drill
 
 // Each word becomes two cards: English to Japanese and Japanese to English.
-export function buildCards(dbCards) {
+export function buildCards(words) {
   const cards = [];
-  dbCards.forEach((c) => {
-    cards.push({ id: `${c.id}-e2j`, direction: "en2jp", front: c.english, back: c.japanese, jp: c.japanese, en: c.english });
-    cards.push({ id: `${c.id}-j2e`, direction: "jp2en", front: c.japanese, back: c.english, jp: c.japanese, en: c.english });
+  words.forEach((w) => {
+    cards.push({ id: `${w.id}-e2j`, wordId: w.id, direction: "en2jp", front: w.english, back: w.japanese, jp: w.japanese, en: w.english });
+    cards.push({ id: `${w.id}-j2e`, wordId: w.id, direction: "jp2en", front: w.japanese, back: w.english, jp: w.japanese, en: w.english });
   });
   return cards;
 }
 
-// Turn user_cards rows (with their joined card) into review cards.
+// Turn user_cards rows (with their joined word) into review cards.
 export function buildReviewCards(rows) {
   return rows.map((r) => {
-    const c = r.cards;
+    const c = r.words;
     const e2j = r.direction === 'en2jp';
     return {
-      id: `${r.card_id}-${e2j ? 'e2j' : 'j2e'}`,
-      cardId: r.card_id,
+      id: `${r.word_id}-${e2j ? 'e2j' : 'j2e'}`,
+      wordId: r.word_id,
       direction: r.direction,
       front: e2j ? c.english : c.japanese,
       back: e2j ? c.japanese : c.english,

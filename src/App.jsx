@@ -112,9 +112,9 @@ function App() {
   async function startDeck(deck) {
     setLoadingDeck(true);
     try {
-      const dbCards = await api.fetchDeckCards(deck.id);
-      if (dbCards.length === 0) throw new Error();
-      beginSession({ id: deck.id, name: deck.name, cards: buildCards(dbCards) });
+      const words = await api.fetchDeckWords(deck.id);
+      if (words.length === 0) throw new Error();
+      beginSession({ id: deck.id, name: deck.name, cards: buildCards(words) });
     } catch {
       alert("No cards found in this deck yet!");
     }
