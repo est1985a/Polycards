@@ -6,7 +6,7 @@ A vocabulary spaced-repetition (SRS) web app for Japanese junior high and high s
 - React + Vite. Code layout:
   - `src/App.jsx`: shared state (session, screen, My Cards data) and which screen to show
   - `src/components/`: one file per screen part (`StudySession`, `MyCardsTab`, `CardSetsTab`, `LibrarySection`, `LoginScreen`, `Header`, `Tabs`, `Stamp`)
-  - `src/lib/srs.js`: SRS rules; `src/lib/drill.js`: building/shuffling card piles; `src/lib/api.js`: every Supabase query; `src/lib/supabaseClient.js`: creates the Supabase client
+  - `src/lib/srs.js`: SRS rules; `src/lib/points.js`: points and player level (pure functions); `src/lib/drill.js`: building/shuffling card piles; `src/lib/api.js`: every Supabase query; `src/lib/supabaseClient.js`: creates the Supabase client
   - `src/styles/theme.js`: shared colors, fonts, and button styles
 - Supabase: PostgreSQL, Auth, Row Level Security
 - Sign-in: Google OAuth, open to any Google account. Signing in is required; the old "Skip login (Test App)" bypass has been removed. Email/password is enabled in Supabase but has no sign-in screen in the app.
@@ -23,7 +23,8 @@ Library tables (read-only for everyone, I add content myself in the Supabase SQL
 
 Per-student tables (RLS: each user can only touch their own rows; `user_id` defaults to `auth.uid()`):
 - `user_decks` (user_id, deck_id, added_at): decks added to My Cards
-- `user_cards` (user_id, word_id, direction, level, next_review_at, updated_at): progress per word AND direction, unique on (user_id, word_id, direction). Progress belongs to the word, not the deck, so a shared word has one level across all of a student's decks.
+- `user_cards` (user_id, word_id, direction, level, next_review_at, updated_at): progress per word AND direction, primary key (user_id, word_id, direction). Progress belongs to the word, not the deck, so a shared word has one level across all of a student's decks.
+- `user_stats` (user_id primary key default `auth.uid()`, peak_points, updated_at): highest points the student has ever had. RLS own row only; the trigger `user_stats_keep_peak` keeps `peak_points` at the highest value ever saved.
 
 Shared-word rules:
 - Adding a deck creates `user_cards` rows for each of its words in both directions and skips words the student already has, so existing progress is kept.
@@ -48,6 +49,16 @@ Rules:
 - A card missed in a session comes back later that session as extra practice. It does not move up again that session.
 - Review sessions are capped at `SESSION_SIZE = 20` cards.
 - These rules are covered by automated tests in `src/lib/srs.test.js` (and drill helpers in `src/lib/drill.test.js`). Run them with `npm test`. If a rule is changed on purpose, update its test in the same change.
+
+## Points and player level
+- Each card (one `user_cards` row, so both directions count separately) is worth `CARD_POINTS = [0, 1, 2, 3, 5, 8, 13, 21]` by level (in `src/lib/srs.js`, next to `LEVEL_HOURS`). Level 0 cards are worth 0, so adding a deck gives no points until cards are learned.
+- Current points = sum over all of the student's `user_cards`. Peak points = highest ever, saved in `user_stats`.
+- Player level comes from peak points via `playerLevel()` in `src/lib/points.js` (the only place the formula lives): `floor(sqrt(peak / 20)) + 1`. Lv2 at 20 points, Lv3 at 80, Lv4 at 180, Lv10 at 1,620.
+- Player level never goes down: removing a deck lowers current points but not the peak.
+- Points are recounted each time the dashboard is shown (so after every review), after pending progress saves finish. If the total beats the saved peak, the new peak is upserted to `user_stats`.
+- All card levels are read in pages of 1,000 (`fetchAllCardLevels` in `src/lib/api.js`), so totals are correct beyond Supabase's 1,000-row limit.
+- Shown at the top of My Cards by `src/components/PlayerStats.jsx` (player level, current and peak points, card count per level). Kept plain on purpose; a UI overhaul is planned.
+- Tests: `src/lib/points.test.js` (pure, never touches the database or the test account).
 
 ## UI conventions
 - Interface is mostly Japanese. Keep the "English to Japanese" / "Japanese to English" direction labels in English. Answer buttons are bilingual (English plus Japanese). Do not add furigana unless I ask.
