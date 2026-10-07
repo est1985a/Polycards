@@ -1,13 +1,17 @@
 import { colors, serif, cardStyle, btnPrimary, btnGhost, btnLink } from '../styles/theme';
+import PlayerStats from './PlayerStats';
 
-export default function MyCardsTab({ decks, dueRows, onReview, onRemove, loading, removingDeckId }) {
+export default function MyCardsTab({ decks, dueRows, stats, onReview, onRemove, loading, removingDeckId }) {
   if (decks.length === 0) {
     return (
-      <div style={{ ...cardStyle, padding: 30, textAlign: "center" }}>
-        <h3 style={{ margin: "0 0 10px", color: colors.navy }}>Your Personal Rotation</h3>
-        <p style={{ fontSize: 14, color: colors.textSoft }}>
-          You haven't saved any sets yet! Go to the <strong>Card Sets</strong> tab to find vocabulary lists and add them to your SRS schedule.
-        </p>
+      <div style={{ display: "grid", gap: 10 }}>
+        <PlayerStats stats={stats} />
+        <div style={{ ...cardStyle, padding: 30, textAlign: "center" }}>
+          <h3 style={{ margin: "0 0 10px", color: colors.navy }}>Your Personal Rotation</h3>
+          <p style={{ fontSize: 14, color: colors.textSoft }}>
+            You haven't saved any sets yet! Go to the <strong>Card Sets</strong> tab to find vocabulary lists and add them to your SRS schedule.
+          </p>
+        </div>
       </div>
     );
   }
@@ -22,6 +26,7 @@ export default function MyCardsTab({ decks, dueRows, onReview, onRemove, loading
 
   return (
     <div style={{ display: "grid", gap: 10 }}>
+      <PlayerStats stats={stats} />
       <div style={{ ...cardStyle, padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div>
           <div style={{ fontSize: 12, color: colors.muted }}>今の復習 (Due now)</div>

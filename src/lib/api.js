@@ -149,7 +149,19 @@ export async function fetchReviewRows(deckId = null) {
   return data || [];
 }
 
-export async function saveProgress(userId, card, newLevel) {
+// Progress saves that haven't finished yet. The study screen doesn't wait for saves,
+// so points are only counted after these are done (see waitForPendingSaves).
+const pendingSaves = new Set();
+
+export function saveProgress(userId, card, newLevel) {
+  const save = writeProgress(userId, card, newLevel);
+  pendingSaves.add(save);
+  const done = () => pendingSaves.delete(save);
+  save.then(done, done);
+  return save;
+}
+
+async function writeProgress(userId, card, newLevel) {
   const { error } = await supabase
     .from('user_cards')
     .update({
@@ -161,4 +173,47 @@ export async function saveProgress(userId, card, newLevel) {
     .eq('word_id', card.wordId)
     .eq('direction', card.direction);
   if (error) throw new Error("Could not save progress: " + error.message);
+}
+
+export async function waitForPendingSaves() {
+  await Promise.allSettled([...pendingSaves]);
+}
+
+// Level of every one of the student's cards. Read in pages, because Supabase
+// returns at most 1,000 rows per request and a big collection has more cards than that.
+export async function fetchAllCardLevels() {
+  const PAGE = 1000;
+  const levels = [];
+  let total = null;
+  while (total === null || levels.length < total) {
+    const { data, error, count } = await supabase
+      .from('user_cards')
+      .select('level', total === null ? { count: 'exact' } : undefined)
+      .order('word_id', { ascending: true })
+      .order('direction', { ascending: true })
+      .range(levels.length, levels.length + PAGE - 1);
+    if (error) throw new Error("Could not load card levels: " + error.message);
+    if (total === null) total = count ?? 0;
+    if (!data || data.length === 0) break; // safety: rows were removed while reading
+    data.forEach((r) => levels.push(r.level));
+  }
+  return levels;
+}
+
+// Highest points the student has ever had (0 if they have no user_stats row yet).
+export async function fetchPeakPoints() {
+  const { data, error } = await supabase
+    .from('user_stats')
+    .select('peak_points')
+    .maybeSingle();
+  if (error) throw new Error("Could not load points: " + error.message);
+  return data?.peak_points ?? 0;
+}
+
+// The database trigger also keeps the highest value, so this can never lower the peak.
+export async function savePeakPoints(userId, peakPoints) {
+  const { error } = await supabase
+    .from('user_stats')
+    .upsert({ user_id: userId, peak_points: peakPoints, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+  if (error) throw new Error("Could not save points: " + error.message);
 }

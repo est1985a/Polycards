@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from './lib/supabaseClient';
 import * as api from './lib/api';
 import { buildCards, buildReviewCards } from './lib/drill';
+import { totalPoints, levelCounts, playerLevel, newPeak } from './lib/points';
 import { colors, wrap, btnLink } from './styles/theme';
 import Header from './components/Header';
 import LoginScreen from './components/LoginScreen';
@@ -38,12 +39,13 @@ function App() {
   const [dueRows, setDueRows] = useState([]);
   const [savingDeck, setSavingDeck] = useState(false);
   const [removingDeckId, setRemovingDeckId] = useState(null);
+  const [stats, setStats] = useState(null); // points and player level
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (!session) { setMyDeckIds([]); setMyDecks([]); }
+      if (!session) { setMyDeckIds([]); setMyDecks([]); setStats(null); }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -61,6 +63,11 @@ function App() {
   // Refresh the "due now" counts whenever the dashboard is shown
   useEffect(() => {
     if (session && view === "dashboard") loadDueRows();
+  }, [session, view]);
+
+  // Recount points whenever the dashboard is shown (so right after every review)
+  useEffect(() => {
+    if (session && view === "dashboard") loadStats(session.user.id);
   }, [session, view]);
 
   async function loadLibrary() {
@@ -86,6 +93,19 @@ function App() {
   async function loadDueRows() {
     try {
       setDueRows(await api.fetchDueRows());
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function loadStats(userId) {
+    try {
+      await api.waitForPendingSaves(); // include the last answers of a review that just ended
+      const [levels, savedPeak] = await Promise.all([api.fetchAllCardLevels(), api.fetchPeakPoints()]);
+      const currentPoints = totalPoints(levels);
+      const peakPoints = newPeak(currentPoints, savedPeak);
+      if (peakPoints > savedPeak) await api.savePeakPoints(userId, peakPoints);
+      setStats({ currentPoints, peakPoints, playerLevel: playerLevel(peakPoints), levelCounts: levelCounts(levels) });
     } catch (e) {
       console.error(e);
     }
@@ -163,7 +183,7 @@ function App() {
     } catch (e) {
       alert(e.message);
     }
-    await Promise.all([loadMyDecks(), loadDueRows()]);
+    await Promise.all([loadMyDecks(), loadDueRows(), loadStats(session.user.id)]);
     setRemovingDeckId(null);
   }
 
@@ -181,6 +201,7 @@ function App() {
               <MyCardsTab
                 decks={myDecks}
                 dueRows={dueRows}
+                stats={stats}
                 onReview={startReview}
                 onRemove={removeDeck}
                 loading={loadingDeck}

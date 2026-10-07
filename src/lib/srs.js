@@ -2,6 +2,8 @@
 // Wait time (in hours) before a card is due again, by level it has just reached.
 // Level 0 = new, level 7 = mastered (about 4 months).
 export const LEVEL_HOURS = [0, 4, 24, 72, 168, 336, 720, 2880];
+// Points each card (one word in one direction) is worth, by its level. New cards are worth 0.
+export const CARD_POINTS = [0, 1, 2, 3, 5, 8, 13, 21];
 export const MAX_LEVEL = LEVEL_HOURS.length - 1;
 export const SESSION_SIZE = 20; // max cards per review session
 
