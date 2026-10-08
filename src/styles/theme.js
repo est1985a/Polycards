@@ -25,6 +25,8 @@ export const fontDisplay = "'Chakra Petch', 'Zen Maru Gothic', sans-serif"; // h
 export const fontBody = "'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif"; // body, Japanese
 
 export const gutter = 16; // side padding of the page column
+// My Cards header band: the content starts `overlap` px before the band ends, over its faded part.
+export const headerBand = { height: 230, overlap: 146 };
 export const tabBarHeight = 72; // bottom tab bar (the page needs this much extra bottom padding)
 
 // The page column: 480 px wide on desktop, full width on phones.

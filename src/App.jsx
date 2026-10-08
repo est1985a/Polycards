@@ -3,7 +3,7 @@ import { supabase } from './lib/supabaseClient';
 import * as api from './lib/api';
 import { buildCards, buildReviewCards } from './lib/drill';
 import { totalPoints, levelCounts, playerLevel, newPeak } from './lib/points';
-import { colors, wrap, gutter, tabBarHeight, btnLink } from './styles/theme';
+import { colors, wrap, gutter, headerBand, tabBarHeight, btnLink } from './styles/theme';
 import Header from './components/Header';
 import LoginScreen from './components/LoginScreen';
 import Tabs from './components/Tabs';
@@ -187,51 +187,56 @@ function App() {
     setRemovingDeckId(null);
   }
 
+  // The tall low-poly header is only on My Cards; other screens get the compact one.
+  const bandHeader = !!session && view === "dashboard" && activeTab === "myCards";
+
   return (
     <div style={{ background: colors.bg, minHeight: "100vh" }}>
-      <div style={{ ...wrap, padding: `24px ${gutter}px 60px` }}>
-        <Header showSignOut={!!session} onSignOut={handleLogout} />
+      <div style={wrap}>
+        <Header variant={bandHeader ? "band" : "compact"} user={session?.user} onSignOut={handleLogout} />
 
-        {!session ? (
-          <LoginScreen error={authError} onGoogleLogin={handleGoogleLogin} />
-        ) : view === "dashboard" ? (
-          <div style={{ paddingBottom: tabBarHeight + 32 }}>
-            {activeTab === "myCards" && (
-              <MyCardsTab
-                decks={myDecks}
-                dueRows={dueRows}
-                stats={stats}
-                onReview={startReview}
-                onRemove={removeDeck}
-                loading={loadingDeck}
-                removingDeckId={removingDeckId}
-              />
-            )}
-            {activeTab === "cardSets" && (
-              <CardSetsTab library={libraryData} loading={loadingLibrary} onOpenDeck={startDeck} disabled={loadingDeck} />
-            )}
-            <Tabs tabs={TABS} active={activeTab} onChange={setActiveTab} />
-          </div>
-        ) : (
-          <>
-            <div style={{ marginBottom: 14 }}>
-              <button onClick={() => setView("dashboard")} style={btnLink}>
-                ← ダッシュボードに戻る (Back to Dashboard)
-              </button>
+        <div style={{ position: "relative", padding: `0 ${gutter}px 60px`, marginTop: bandHeader ? -headerBand.overlap : 0 }}>
+          {!session ? (
+            <LoginScreen error={authError} onGoogleLogin={handleGoogleLogin} />
+          ) : view === "dashboard" ? (
+            <div style={{ paddingBottom: tabBarHeight + 32 }}>
+              {activeTab === "myCards" && (
+                <MyCardsTab
+                  decks={myDecks}
+                  dueRows={dueRows}
+                  stats={stats}
+                  onReview={startReview}
+                  onRemove={removeDeck}
+                  loading={loadingDeck}
+                  removingDeckId={removingDeckId}
+                />
+              )}
+              {activeTab === "cardSets" && (
+                <CardSetsTab library={libraryData} loading={loadingLibrary} onOpenDeck={startDeck} disabled={loadingDeck} />
+              )}
+              <Tabs tabs={TABS} active={activeTab} onChange={setActiveTab} />
             </div>
-            {activeSet && (
-              <StudySession
-                key={sessionKey}
-                activeSet={activeSet}
-                userId={session?.user.id}
-                isAdded={myDeckIds.includes(activeSet.id)}
-                saving={savingDeck}
-                onAddDeck={addDeck}
-                onBack={() => setView("dashboard")}
-              />
-            )}
-          </>
-        )}
+          ) : (
+            <>
+              <div style={{ marginBottom: 14 }}>
+                <button onClick={() => setView("dashboard")} style={btnLink}>
+                  ← ダッシュボードに戻る (Back to Dashboard)
+                </button>
+              </div>
+              {activeSet && (
+                <StudySession
+                  key={sessionKey}
+                  activeSet={activeSet}
+                  userId={session?.user.id}
+                  isAdded={myDeckIds.includes(activeSet.id)}
+                  saving={savingDeck}
+                  onAddDeck={addDeck}
+                  onBack={() => setView("dashboard")}
+                />
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
