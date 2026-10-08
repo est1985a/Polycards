@@ -1,6 +1,7 @@
 import { colors, fontDisplay, cardStyle, btnGhost, btnLink } from '../styles/theme';
 import { SESSION_SIZE } from '../lib/srs';
 import PlayerStats from './PlayerStats';
+import LevelChart from './LevelChart';
 
 // Big "start review" button. The pill shows how many cards the session will have
 // (all due cards, up to SESSION_SIZE).
@@ -63,6 +64,7 @@ export default function MyCardsTab({ decks, dueRows, stats, onReview, onRemove, 
     <div style={{ display: "grid", gap: 10 }}>
       <PlayerStats stats={stats} />
       <ReviewButton dueCount={dueRows.length} loading={loading} onReview={() => onReview()} />
+      {stats && <LevelChart counts={stats.levelCounts} />}
 
       {decks.map((deck) => {
         const due = dueByDeck[deck.id] || 0;
