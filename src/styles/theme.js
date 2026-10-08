@@ -13,6 +13,7 @@ export const colors = {
   muted: v("muted"),         // labels, hints, links
   accent: v("accent"),       // fills only, never text
   accentInk: v("accentInk"),
+  accentText: v("accentText"), // accent color as readable text
   danger: v("danger"),
   dangerInk: v("dangerInk"),
   gold: v("gold"),           // points, levels, big numbers

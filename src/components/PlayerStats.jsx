@@ -30,8 +30,8 @@ export default function PlayerStats({ stats }) {
         </div>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 12, color: colors.muted }}>プレイヤーレベル</div>
-          <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 46, lineHeight: 1.05, color: colors.gold }}>Lv {level}</div>
-          <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 22, lineHeight: 1.3, color: colors.text }}>{fmt(stats.currentPoints)} pt</div>
+          <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 46, lineHeight: 1.05, color: colors.accentText }}>Lv {level}</div>
+          <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 22, lineHeight: 1.3, color: colors.gold }}>{fmt(stats.currentPoints)} pt</div>
           <div style={{ fontSize: 13, color: colors.muted }}>ベスト {fmt(stats.peakPoints)} pt</div>
         </div>
       </div>

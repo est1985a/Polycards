@@ -13,6 +13,7 @@ export const COLOR_ROLES = [
   "muted",     // labels, hints, links
   "accent",    // main buttons, active tab, filled stamps (fills only, never text)
   "accentInk", // text on accent
+  "accentText", // accent as readable text (player level); same as accent unless accent is too light
   "danger",    // "Still learning" button, error text
   "dangerInk", // text on danger
   "gold",      // points, levels, big numbers
@@ -25,7 +26,7 @@ export const themes = {
     colors: {
       bg: "#15122b", surface: "#231e47", surface2: "#2e2860", line: "#3d3578",
       text: "#f4f1ff", muted: "#b3add9",
-      accent: "#3df2c0", accentInk: "#15122b",
+      accent: "#3df2c0", accentInk: "#15122b", accentText: "#3df2c0",
       danger: "#ff4f9a", dangerInk: "#15122b",
       gold: "#ffd35a",
     },
@@ -37,7 +38,7 @@ export const themes = {
     colors: {
       bg: "#fff8e1", surface: "#ffffff", surface2: "#ffeec2", line: "#f0dca0",
       text: "#2a1b14", muted: "#6e5a4c",
-      accent: "#d4341f", accentInk: "#ffffff",
+      accent: "#d4341f", accentInk: "#ffffff", accentText: "#d4341f",
       danger: "#277a4d", dangerInk: "#ffffff",
       gold: "#9a5b00",
     },
@@ -49,7 +50,7 @@ export const themes = {
     colors: {
       bg: "#effafa", surface: "#ffffff", surface2: "#d9f1f1", line: "#bfe3e3",
       text: "#0b2b33", muted: "#3f6670",
-      accent: "#ff6a4d", accentInk: "#0b2b33",
+      accent: "#ff6a4d", accentInk: "#0b2b33", accentText: "#c43f24",
       danger: "#0e7c86", dangerInk: "#ffffff",
       gold: "#8a5a00",
     },

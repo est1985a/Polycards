@@ -40,6 +40,7 @@ describe.each(Object.entries(themes))('theme "%s"', (id, theme) => {
       ['text', 'bg'], ['text', 'surface'], ['text', 'surface2'],
       ['muted', 'bg'], ['muted', 'surface'],
       ['gold', 'surface'],
+      ['accentText', 'surface'],
       ['danger', 'surface'],
       ['accentInk', 'accent'],
       ['dangerInk', 'danger'],
