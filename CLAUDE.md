@@ -76,4 +76,5 @@ Rules:
 - Show when the next cards come due
 - Word game for cleared sets
 - Vocabulary categories and test-prep sets (e.g. EIKEN)
+- Verb form cards (irregular past tense and past participle)
 - Low-poly visual style (inspired by Poly Pizza): retro poly avatar that levels up and unlocks new poly models as a student's decks grow
