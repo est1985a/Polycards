@@ -9,13 +9,20 @@ const JA = '彼女はもう昼ご飯を食べました。';
 describe('WordInfo', () => {
   it('shows the English example, then the Japanese, then the dictionary link', () => {
     const html = renderToStaticMarkup(<WordInfo english="already" exampleEn={EN} exampleJa={JA} />);
-    const en = html.indexOf(EN);
-    const ja = html.indexOf(JA);
-    const link = html.indexOf('辞書で調べる');
+    const text = html.replace(/<[^>]*>/g, ''); // words only, without the highlight tags
+    const en = text.indexOf(EN);
+    const ja = text.indexOf(JA);
+    const link = text.indexOf('辞書で調べる');
     expect(en).toBeGreaterThan(-1);
     expect(ja).toBeGreaterThan(en);
     expect(link).toBeGreaterThan(ja);
     expect(html).toContain('href="https://eow.alc.co.jp/search?q=already"');
+  });
+
+  it('highlights the word in the English example', () => {
+    const html = renderToStaticMarkup(<WordInfo english="already" exampleEn={EN} exampleJa={JA} />);
+    expect(html).toMatch(/<strong[^>]*>already<\/strong>/);
+    expect(html).toContain('例文');
   });
 
   it('shows only the dictionary link when there is no example', () => {

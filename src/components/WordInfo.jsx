@@ -1,21 +1,32 @@
-import { colors } from '../styles/theme';
-import { dictionaryUrl } from '../lib/dictionary';
+import { Fragment } from 'react';
+import { colors, fontDisplay } from '../styles/theme';
+import { dictionaryUrl, highlightParts } from '../lib/dictionary';
 
-// Extra info shown after a card is answered: an example sentence (if the word has one)
-// and a dictionary link.
+// Extra info on the back of a card: an example sentence (if the word has one),
+// with the word highlighted, and a dictionary link.
 export default function WordInfo({ english, exampleEn, exampleJa }) {
   const url = dictionaryUrl(english);
   if (!url && !exampleEn) return null;
   return (
-    <div style={{ display: "grid", gap: 10, textAlign: "center" }}>
+    <div style={{ display: "grid", gap: 6 }}>
       {exampleEn && (
-        <div>
-          <div style={{ fontSize: 16, lineHeight: 1.5, color: colors.text }}>{exampleEn}</div>
+        <div style={{ background: colors.surface, borderRadius: 16, padding: "12px 14px", textAlign: "left" }}>
+          <div style={{ fontFamily: fontDisplay, fontSize: 12, fontWeight: 700, color: colors.muted, marginBottom: 4 }}>例文</div>
+          <div style={{ fontSize: 16, lineHeight: 1.5, color: colors.text }}>
+            {highlightParts(exampleEn, english).map((p, i) =>
+              p.hit
+                ? <strong key={i} style={{ color: colors.gold }}>{p.text}</strong>
+                : <Fragment key={i}>{p.text}</Fragment>
+            )}
+          </div>
           {exampleJa && <div style={{ fontSize: 13, lineHeight: 1.5, color: colors.muted, marginTop: 4 }}>{exampleJa}</div>}
         </div>
       )}
       {url && (
-        <a href={url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: colors.text }}>
+        <a
+          href={url} target="_blank" rel="noopener noreferrer"
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 44, fontSize: 14, color: colors.text }}
+        >
           辞書で調べる
         </a>
       )}
