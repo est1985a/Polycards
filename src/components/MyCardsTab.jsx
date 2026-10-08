@@ -1,5 +1,40 @@
-import { colors, fontDisplay, cardStyle, btnPrimary, btnGhost, btnLink } from '../styles/theme';
+import { colors, fontDisplay, cardStyle, btnGhost, btnLink } from '../styles/theme';
+import { SESSION_SIZE } from '../lib/srs';
 import PlayerStats from './PlayerStats';
+
+// Big "start review" button. The pill shows how many cards the session will have
+// (all due cards, up to SESSION_SIZE).
+function ReviewButton({ dueCount, loading, onReview }) {
+  const ready = dueCount > 0;
+  return (
+    <button
+      onClick={onReview}
+      disabled={loading || !ready}
+      style={{
+        width: "100%", height: 64, borderRadius: 16, border: "none", padding: "0 20px",
+        display: "flex", alignItems: "center", justifyContent: ready ? "space-between" : "center", gap: 12,
+        background: ready ? colors.accent : colors.surface2, color: ready ? colors.accentInk : colors.muted,
+        cursor: ready && !loading ? "pointer" : "default", opacity: loading ? 0.7 : 1,
+      }}
+    >
+      {ready ? (
+        <>
+          <span style={{ fontSize: 20, fontWeight: 700 }}>復習を始める</span>
+          <span
+            style={{
+              fontFamily: fontDisplay, fontWeight: 700, fontSize: 16, padding: "4px 14px", borderRadius: 999,
+              background: `color-mix(in srgb, ${colors.accentInk} 15%, transparent)`,
+            }}
+          >
+            {Math.min(dueCount, SESSION_SIZE)}枚
+          </span>
+        </>
+      ) : (
+        <span style={{ fontSize: 16, fontWeight: 700 }}>復習するカードはありません</span>
+      )}
+    </button>
+  );
+}
 
 export default function MyCardsTab({ decks, dueRows, stats, onReview, onRemove, loading, removingDeckId }) {
   if (decks.length === 0) {
@@ -27,19 +62,7 @@ export default function MyCardsTab({ decks, dueRows, stats, onReview, onRemove, 
   return (
     <div style={{ display: "grid", gap: 10 }}>
       <PlayerStats stats={stats} />
-      <div style={{ ...cardStyle, padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <div>
-          <div style={{ fontSize: 12, color: colors.muted }}>今の復習 (Due now)</div>
-          <div style={{ fontFamily: fontDisplay, fontSize: 28, color: colors.gold }}>{dueRows.length}</div>
-        </div>
-        <button
-          onClick={() => onReview()}
-          disabled={loading || dueRows.length === 0}
-          style={{ ...btnPrimary, opacity: dueRows.length === 0 ? 0.4 : 1 }}
-        >
-          復習スタート<br />Start Review
-        </button>
-      </div>
+      <ReviewButton dueCount={dueRows.length} loading={loading} onReview={() => onReview()} />
 
       {decks.map((deck) => {
         const due = dueByDeck[deck.id] || 0;
