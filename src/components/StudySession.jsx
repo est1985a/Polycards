@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { colors, fontDisplay, fontBody, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
+import { colors, fontDisplay, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
 import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
 import { levelAfterCorrect, levelAfterWrong } from '../lib/srs';
 import { saveProgress } from '../lib/api';
 import Stamp from './Stamp';
-import WordInfo from './WordInfo';
+import FlipCard from './FlipCard';
 
 const stampFill = (n) => Array.from({ length: CLEAR_TARGET }, (_, i) => i < n);
 
@@ -17,6 +17,7 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
   const [wrongCounts, setWrongCounts] = useState({}); // SRS: misses per card this session
   const [clearedCount, setClearedCount] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [turn, setTurn] = useState(0); // goes up with every answer
 
   const done = pile.length === 0;
   const card = done ? null : activeSet.cards.find((c) => c.id === pile[0]) || null;
@@ -25,6 +26,7 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
     setPile(nextPile);
     setClearedCount((c) => c + clearedDelta);
     setRevealed(false);
+    setTurn((t) => t + 1);
   }
 
   function save(newLevel) {
@@ -100,28 +102,22 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
           <p style={{ fontSize: 14, color: colors.text, margin: 0, textAlign: "center" }}>
             {card.direction === "en2jp" ? "この単語は日本語で何と言いますか？" : "この単語は英語で何と言いますか？"}
           </p>
-          <div onClick={() => setRevealed(true)} style={{ ...cardStyle, minHeight: 180, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, cursor: revealed ? "default" : "pointer", padding: 24 }}>
-            <div style={{ fontSize: 12, color: colors.muted }}>{card.direction === "en2jp" ? "English to Japanese" : "Japanese to English"}</div>
-            <div style={{ fontFamily: fontBody, fontSize: 30, textAlign: "center" }}>{card.front}</div>
-            {revealed && <div style={{ fontSize: 22, color: colors.text, borderTop: `1px solid ${colors.line}`, paddingTop: 12, width: "100%", textAlign: "center" }}>{card.back}</div>}
-          </div>
-          {isSrs ? (
-            <div style={{ textAlign: "center", fontSize: 13, color: colors.muted }}>
-              Lv. {card.level}
-            </div>
-          ) : (
+          {/* A new key per turn: the next card starts on its front without flipping back on screen. */}
+          <FlipCard key={turn} card={card} showLevel={isSrs} revealed={revealed} onFlip={() => setRevealed(true)} />
+          {!isSrs && (
             <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
               {stampFill(counts[card.id] || 0).map((f, i) => <Stamp key={i} filled={f} />)}
             </div>
           )}
-          {revealed && (
-            <>
-              <div style={{ display: "flex", gap: 10 }}>
-                <button style={{ ...btnDanger, flex: 1 }} onClick={() => handleAnswer(false)}>Still learning<br />まだ</button>
-                <button style={{ ...btnPrimary, flex: 1 }} onClick={() => handleAnswer(true)}>I knew it<br />わかった</button>
-              </div>
-              <WordInfo english={card.en} exampleEn={card.exampleEn} exampleJa={card.exampleJa} />
-            </>
+          {revealed ? (
+            <div style={{ display: "flex", gap: 10 }}>
+              <button style={{ ...btnDanger, flex: 1, minHeight: 52 }} onClick={() => handleAnswer(false)}>Still learning<br />まだ</button>
+              <button style={{ ...btnPrimary, flex: 1, minHeight: 52 }} onClick={() => handleAnswer(true)}>I knew it<br />わかった</button>
+            </div>
+          ) : (
+            <button style={{ ...btnPrimary, width: "100%", minHeight: 52, fontSize: 17 }} onClick={() => setRevealed(true)}>
+              答えを見る
+            </button>
           )}
         </>
       )}

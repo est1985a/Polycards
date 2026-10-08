@@ -27,11 +27,13 @@ function LevelChip({ level }) {
 }
 
 // Big word style: Chakra Petch for English, Zen Maru Gothic for Japanese; long text gets smaller.
+// Japanese letters are wider, so Japanese starts at 5/6 of the size (48 → 40 px).
 function wordStyle(text, isEnglish, size) {
   const long = isEnglish ? text.length > 12 : text.length > 7;
+  const base = isEnglish ? size : Math.round(size * 5 / 6);
   return {
     fontFamily: isEnglish ? fontDisplay : fontBody, fontWeight: 700, lineHeight: 1.2, overflowWrap: "anywhere",
-    fontSize: long ? Math.round(size * 0.75) : size,
+    fontSize: long ? Math.round(base * 0.75) : base,
   };
 }
 
@@ -103,9 +105,11 @@ export default function FlipCard({ card, showLevel, revealed, onFlip }) {
             </span>
             {showLevel && <LevelChip level={card.level} />}
           </div>
-          <div style={{ ...wordStyle(card.front, frontIsEnglish, 22), fontWeight: 500, color: colors.muted }}>{card.front}</div>
-          <div style={{ ...wordStyle(card.back, !frontIsEnglish, 32), color: colors.accentText }}>{card.back}</div>
-          <WordInfo english={card.en} exampleEn={card.exampleEn} exampleJa={card.exampleJa} />
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 12 }}>
+            <div style={{ ...wordStyle(card.front, frontIsEnglish, 22), fontWeight: 500, color: colors.muted }}>{card.front}</div>
+            <div style={{ ...wordStyle(card.back, !frontIsEnglish, 32), color: colors.accentText }}>{card.back}</div>
+            <WordInfo english={card.en} exampleEn={card.exampleEn} exampleJa={card.exampleJa} />
+          </div>
         </div>
       </div>
     </div>
