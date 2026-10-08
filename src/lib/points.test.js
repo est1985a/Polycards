@@ -2,7 +2,7 @@
 // Run with: npm test
 import { describe, it, expect } from 'vitest';
 import { CARD_POINTS } from './srs';
-import { cardPoints, totalPoints, levelCounts, playerLevel, newPeak } from './points';
+import { cardPoints, totalPoints, levelCounts, playerLevel, pointsForLevel, newPeak } from './points';
 
 describe('points per card', () => {
   it('uses the agreed values for levels 0 to 7', () => {
@@ -74,5 +74,21 @@ describe('peak points', () => {
 
   it('stays the same when they are equal', () => {
     expect(newPeak(100, 100)).toBe(100);
+  });
+});
+
+describe('points needed for a player level', () => {
+  it('matches the agreed steps', () => {
+    expect(pointsForLevel(1)).toBe(0);
+    expect(pointsForLevel(2)).toBe(20);
+    expect(pointsForLevel(3)).toBe(80);
+    expect(pointsForLevel(9)).toBe(1280);
+  });
+
+  it('is exactly where playerLevel goes up', () => {
+    for (let n = 1; n <= 20; n++) {
+      expect(playerLevel(pointsForLevel(n))).toBe(n);
+      if (n > 1) expect(playerLevel(pointsForLevel(n) - 1)).toBe(n - 1);
+    }
   });
 });

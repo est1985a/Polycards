@@ -28,6 +28,12 @@ export function playerLevel(peakPoints) {
   return Math.floor(Math.sqrt(peakPoints / 20)) + 1;
 }
 
+// Peak points needed to reach a player level (the reverse of playerLevel): 20 × (level − 1)².
+// Used for the "points to the next level" bar. Keep in step with playerLevel above.
+export function pointsForLevel(level) {
+  return 20 * (level - 1) ** 2;
+}
+
 // The peak only goes up: removing a deck or losing levels never lowers it.
 export function newPeak(currentPoints, savedPeak) {
   return Math.max(currentPoints, savedPeak);
