@@ -1,4 +1,4 @@
-import { colors, fontDisplay, cardStyle, btnGhost, btnLink } from '../styles/theme';
+import { colors, fontDisplay, panel } from '../styles/theme';
 import { SESSION_SIZE } from '../lib/srs';
 import PlayerStats from './PlayerStats';
 import LevelChart from './LevelChart';
@@ -37,21 +37,49 @@ function ReviewButton({ dueCount, loading, onReview }) {
   );
 }
 
-export default function MyCardsTab({ decks, dueRows, stats, onReview, onRemove, loading, removingDeckId }) {
-  if (decks.length === 0) {
-    return (
-      <div style={{ display: "grid", gap: 10 }}>
-        <PlayerStats stats={stats} />
-        <div style={{ ...cardStyle, padding: 30, textAlign: "center" }}>
-          <h3 style={{ margin: "0 0 10px", color: colors.text }}>Your Personal Rotation</h3>
-          <p style={{ fontSize: 14, color: colors.text }}>
-            You haven't saved any sets yet! Go to the <strong>Card Sets</strong> tab to find vocabulary lists and add them to your SRS schedule.
-          </p>
-        </div>
-      </div>
-    );
-  }
+// One deck in マイデッキ. Tapping the row reviews this deck's due cards; × removes it.
+function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
+  const source = [deck.units?.textbooks?.name, deck.units?.name].filter(Boolean).join(" · ");
+  return (
+    <div style={{ display: "flex", alignItems: "stretch", minHeight: 44, background: colors.surface, border: `2px solid ${colors.line}`, borderRadius: 16 }}>
+      <button
+        onClick={() => onReview(deck)}
+        disabled={loading || due === 0}
+        style={{
+          flex: 1, minWidth: 0, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+          padding: "14px 4px 14px 16px", background: "transparent", border: "none", borderRadius: 16,
+          textAlign: "left", color: colors.text, cursor: due > 0 && !loading ? "pointer" : "default",
+        }}
+      >
+        <span style={{ minWidth: 0 }}>
+          {source && <span style={{ display: "block", fontSize: 12, color: colors.muted }}>{source}</span>}
+          <span style={{ display: "block", fontSize: 17, fontWeight: 700 }}>{deck.name}</span>
+        </span>
+        {due > 0 ? (
+          <span style={{ flexShrink: 0, fontSize: 13, fontWeight: 700, padding: "4px 12px", borderRadius: 999, background: colors.surface2, whiteSpace: "nowrap" }}>
+            復習 <span style={{ fontFamily: fontDisplay }}>{due}</span>枚
+          </span>
+        ) : (
+          <span style={{ flexShrink: 0, fontSize: 12, color: colors.muted, whiteSpace: "nowrap" }}>今は復習なし</span>
+        )}
+      </button>
+      <button
+        onClick={() => onRemove(deck)}
+        disabled={removing}
+        aria-label={removing ? "削除中..." : "削除 (Remove)"}
+        title="削除 (Remove)"
+        style={{
+          width: 44, flexShrink: 0, marginRight: 4, background: "transparent", border: "none",
+          color: colors.muted, fontSize: 22, lineHeight: 1, cursor: removing ? "default" : "pointer",
+        }}
+      >
+        {removing ? "…" : "×"}
+      </button>
+    </div>
+  );
+}
 
+export default function MyCardsTab({ decks, dueRows, stats, onReview, onRemove, loading, removingDeckId }) {
   // A word can be in several decks, so a due card counts toward each of them.
   const dueByDeck = {};
   dueRows.forEach((r) => {
@@ -61,43 +89,34 @@ export default function MyCardsTab({ decks, dueRows, stats, onReview, onRemove, 
   });
 
   return (
-    <div style={{ display: "grid", gap: 10 }}>
+    <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
       <PlayerStats stats={stats} />
       <ReviewButton dueCount={dueRows.length} loading={loading} onReview={() => onReview()} />
       {stats && <LevelChart counts={stats.levelCounts} />}
 
-      {decks.map((deck) => {
-        const due = dueByDeck[deck.id] || 0;
-        return (
-          <div key={deck.id} style={{ ...cardStyle, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <div>
-              <div style={{ fontSize: 12, color: colors.muted }}>
-                {deck.units?.textbooks?.name} ・ {deck.units?.name}
-              </div>
-              <div style={{ fontSize: 16, fontWeight: "bold", color: colors.text }}>{deck.name}</div>
-              <div style={{ fontSize: 12, color: due > 0 ? colors.gold : colors.muted }}>
-                {due > 0 ? `${due} 枚 復習できます` : "今は復習なし"}
-              </div>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-              <button
-                onClick={() => onReview(deck)}
-                disabled={loading || due === 0}
-                style={{ ...btnGhost, fontSize: 13, padding: "8px 12px", opacity: due === 0 ? 0.4 : 1 }}
-              >
-                復習<br />Review
-              </button>
-              <button
-                onClick={() => onRemove(deck)}
-                disabled={removingDeckId === deck.id}
-                style={{ ...btnLink, fontSize: 12 }}
-              >
-                {removingDeckId === deck.id ? "削除中..." : "削除 (Remove)"}
-              </button>
-            </div>
+      <div style={{ display: "grid", gap: 10 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, margin: "8px 0 0", color: colors.text }}>マイデッキ</h2>
+        {decks.length === 0 ? (
+          <div style={{ ...panel, padding: 24, textAlign: "center" }}>
+            <h3 style={{ margin: "0 0 10px", color: colors.text }}>Your Personal Rotation</h3>
+            <p style={{ fontSize: 14, color: colors.text }}>
+              You haven't saved any sets yet! Go to the <strong>Card Sets</strong> tab to find vocabulary lists and add them to your SRS schedule.
+            </p>
           </div>
-        );
-      })}
+        ) : (
+          decks.map((deck) => (
+            <DeckRow
+              key={deck.id}
+              deck={deck}
+              due={dueByDeck[deck.id] || 0}
+              loading={loading}
+              removing={removingDeckId === deck.id}
+              onReview={onReview}
+              onRemove={onRemove}
+            />
+          ))
+        )}
+      </div>
     </div>
   );
 }
