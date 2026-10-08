@@ -1,6 +1,6 @@
-import { Fragment } from 'react';
 import { colors, fontDisplay } from '../styles/theme';
-import { dictionaryUrl, highlightParts } from '../lib/dictionary';
+import { dictionaryUrl } from '../lib/dictionary';
+import Highlighted from './Highlighted';
 
 // Extra info on the back of a card: an example sentence (if the word has one),
 // with the word highlighted, and a dictionary link.
@@ -13,11 +13,7 @@ export default function WordInfo({ english, exampleEn, exampleJa }) {
         <div style={{ background: colors.surface, borderRadius: 16, padding: "12px 14px", textAlign: "left" }}>
           <div style={{ fontFamily: fontDisplay, fontSize: 12, fontWeight: 700, color: colors.muted, marginBottom: 4 }}>例文</div>
           <div style={{ fontSize: 16, lineHeight: 1.5, color: colors.text }}>
-            {highlightParts(exampleEn, english).map((p, i) =>
-              p.hit
-                ? <strong key={i} style={{ color: colors.gold }}>{p.text}</strong>
-                : <Fragment key={i}>{p.text}</Fragment>
-            )}
+            <Highlighted sentence={exampleEn} english={english} />
           </div>
           {exampleJa && <div style={{ fontSize: 13, lineHeight: 1.5, color: colors.muted, marginTop: 4 }}>{exampleJa}</div>}
         </div>

@@ -4,6 +4,7 @@ import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
 import { levelAfterCorrect, levelAfterWrong } from '../lib/srs';
 import { saveProgress } from '../lib/api';
 import Stamp from './Stamp';
+import AddDeckButton from './AddDeckButton';
 import FlipCard from './FlipCard';
 
 const stampFill = (n) => Array.from({ length: CLEAR_TARGET }, (_, i) => i < n);
@@ -80,13 +81,7 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
     else handleDrillAnswer(knew);
   }
 
-  const addDeckControl = isSrs ? null : isAdded ? (
-    <div style={{ textAlign: "center", fontSize: 13, color: colors.text }}>✓ マイカードに追加済み (Added to My Cards)</div>
-  ) : (
-    <button onClick={onAddDeck} disabled={saving} style={{ ...btnGhost, padding: "8px 12px", fontSize: 13 }}>
-      {saving ? "追加中..." : "＋ マイカードに追加 (Add to My Cards)"}
-    </button>
-  );
+  const addDeckControl = isSrs ? null : <AddDeckButton isAdded={isAdded} saving={saving} onAdd={onAddDeck} />;
 
   return (
     <div style={{ display: "grid", gap: 20 }}>
