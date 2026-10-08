@@ -4,6 +4,7 @@ import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
 import { levelAfterCorrect, levelAfterWrong } from '../lib/srs';
 import { saveProgress } from '../lib/api';
 import Stamp from './Stamp';
+import WordInfo from './WordInfo';
 
 const stampFill = (n) => Array.from({ length: CLEAR_TARGET }, (_, i) => i < n);
 
@@ -114,10 +115,13 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
             </div>
           )}
           {revealed && (
-            <div style={{ display: "flex", gap: 10 }}>
-              <button style={{ ...btnGhost, flex: 1 }} onClick={() => handleAnswer(false)}>Still learning<br />まだ</button>
-              <button style={{ ...btnPrimary, flex: 1 }} onClick={() => handleAnswer(true)}>I knew it<br />わかった</button>
-            </div>
+            <>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button style={{ ...btnGhost, flex: 1 }} onClick={() => handleAnswer(false)}>Still learning<br />まだ</button>
+                <button style={{ ...btnPrimary, flex: 1 }} onClick={() => handleAnswer(true)}>I knew it<br />わかった</button>
+              </div>
+              <WordInfo english={card.en} />
+            </>
           )}
         </>
       )}
