@@ -10,6 +10,7 @@ import Tabs from './components/Tabs';
 import MyCardsTab from './components/MyCardsTab';
 import CardSetsTab from './components/CardSetsTab';
 import StudySession from './components/StudySession';
+import WordList from './components/WordList';
 
 const TABS = [
   { id: 'myCards', label: 'My Cards' },
@@ -20,7 +21,7 @@ function App() {
   const [session, setSession] = useState(null);
   const [authError, setAuthError] = useState(null);
 
-  // Screens: 'dashboard' or 'study'
+  // Screens: 'dashboard', 'wordList' (Card Sets deck, before the drill) or 'study'
   const [view, setView] = useState("dashboard");
   const [activeTab, setActiveTab] = useState("cardSets");
 
@@ -133,13 +134,14 @@ function App() {
     setView("study");
   }
 
-  // Card Sets: open a deck as a "try it" drill
+  // Card Sets: open a deck's word list; the "try it" drill starts from there
   async function startDeck(deck) {
     setLoadingDeck(true);
     try {
       const words = await api.fetchDeckWords(deck.id);
       if (words.length === 0) throw new Error();
-      beginSession({ id: deck.id, name: deck.name, cards: buildCards(words) });
+      setActiveSet({ id: deck.id, name: deck.name, cards: buildCards(words) });
+      setView("wordList");
     } catch {
       alert("No cards found in this deck yet!");
     }
@@ -228,7 +230,16 @@ function App() {
                   ← ダッシュボードに戻る (Back to Dashboard)
                 </button>
               </div>
-              {activeSet && (
+              {activeSet && view === "wordList" && (
+                <WordList
+                  activeSet={activeSet}
+                  isAdded={myDeckIds.includes(activeSet.id)}
+                  saving={savingDeck}
+                  onAddDeck={addDeck}
+                  onStart={() => beginSession(activeSet)}
+                />
+              )}
+              {activeSet && view === "study" && (
                 <StudySession
                   key={sessionKey}
                   activeSet={activeSet}
