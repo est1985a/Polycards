@@ -17,7 +17,7 @@ Library tables (read-only for everyone, I add content myself in the Supabase SQL
 - `textbooks` (id, name, school_level: `JHS` | `HS` | `Other`)
 - `units` (id, textbook_id, name, unit_order)
 - `decks` (id, unit_id, name)
-- `words` (id, english, japanese): one shared word list; a word can appear in several decks
+- `words` (id, english, japanese, example_en, example_ja): one shared word list; a word can appear in several decks. `example_en` / `example_ja` are optional example sentences (some words don't have them yet)
 - `deck_words` (deck_id, word_id, position): which words are in which deck
 - `cards` is the OLD per-deck word table. It still exists but must not be used.
 
@@ -41,7 +41,8 @@ Rules:
 - Card Sets: opening a deck runs the older "try it" drill (a card is cleared after `CLEAR_TARGET = 2` correct answers, set in `src/lib/drill.js`; wrong answers re-insert the card). Students can add the deck to My Cards from there.
 - My Cards: real SRS review. The 2-correct drill does NOT apply here. Decks can also be removed from My Cards.
 - Each word is two cards: `en2jp` and `jp2en`, tracked and leveled separately.
-- Dictionary link (辞書で調べる): shown under the answer buttons only after a card is flipped, in both the drill and SRS review and both directions, so it can't give the answer away. It opens ALC 英辞郎 on the WEB (`https://eow.alc.co.jp/search?q=<word>`) in a new tab with `rel="noopener noreferrer"`. The search term comes from the card's English text: parentheses and the words inside them, `...`, `…` and `?` are removed, spaces tidied and lowercased (e.g. `Call me ...` → `call me`); `~` is kept. Built by `dictionaryUrl()` in `src/lib/dictionary.js` (tests in `src/lib/dictionary.test.js`) and shown by `src/components/WordInfo.jsx`, which has room for an example sentence above the link later.
+- Dictionary link (辞書で調べる): shown under the answer buttons only after a card is flipped, in both the drill and SRS review and both directions, so it can't give the answer away. It opens ALC 英辞郎 on the WEB (`https://eow.alc.co.jp/search?q=<word>`) in a new tab with `rel="noopener noreferrer"`. The search term comes from the card's English text: parentheses and the words inside them, `...`, `…` and `?` are removed, spaces tidied and lowercased (e.g. `Call me ...` → `call me`); `~` is kept. Built by `dictionaryUrl()` in `src/lib/dictionary.js` (tests in `src/lib/dictionary.test.js`) and shown by `src/components/WordInfo.jsx`.
+- Example sentences: in the same info area after the flip (both modes, both directions), `WordInfo` shows the word's English example, the Japanese translation below it in smaller muted text, then the dictionary link. The word is not bolded or highlighted. No English example means only the link is shown (a Japanese sentence is never shown alone). `fetchDeckWords` and `fetchReviewRows` in `src/lib/api.js` load `example_en` / `example_ja`; cards carry them as `exampleEn` / `exampleJa` (blank or missing → `null`), set by `buildCards` / `buildReviewCards` in `src/lib/drill.js`. Tests: `src/lib/drill.test.js` and `src/components/WordInfo.test.jsx`.
 
 ## SRS rules (constants and level logic in `src/lib/srs.js`)
 - Levels 0 to 7. Wait before a card is due again, by the level it just reached: `LEVEL_HOURS = [0, 4, 24, 72, 168, 336, 720, 2880]` (new, 4h, 1d, 3d, 1w, 2w, 30d, ~4 months).
