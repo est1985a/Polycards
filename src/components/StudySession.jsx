@@ -120,7 +120,7 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
                 <button style={{ ...btnGhost, flex: 1 }} onClick={() => handleAnswer(false)}>Still learning<br />まだ</button>
                 <button style={{ ...btnPrimary, flex: 1 }} onClick={() => handleAnswer(true)}>I knew it<br />わかった</button>
               </div>
-              <WordInfo english={card.en} />
+              <WordInfo english={card.en} exampleEn={card.exampleEn} exampleJa={card.exampleJa} />
             </>
           )}
         </>

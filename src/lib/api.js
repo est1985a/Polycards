@@ -57,7 +57,7 @@ async function fetchDeckWordIds(deckId) {
 export async function fetchDeckWords(deckId) {
   const { data, error } = await supabase
     .from('deck_words')
-    .select('position, words ( id, english, japanese )')
+    .select('position, words ( id, english, japanese, example_en, example_ja )')
     .eq('deck_id', deckId)
     .order('position', { ascending: true });
   if (error) throw new Error(error.message);
@@ -134,8 +134,8 @@ export async function removeDeckFromMyCards(userId, deckId) {
 // Due cards for a review session (all decks, or one deck), oldest due first.
 export async function fetchReviewRows(deckId = null) {
   const select = deckId
-    ? 'word_id, direction, level, words!inner ( id, english, japanese, deck_words!inner ( deck_id ) )'
-    : 'word_id, direction, level, words!inner ( id, english, japanese )';
+    ? 'word_id, direction, level, words!inner ( id, english, japanese, example_en, example_ja, deck_words!inner ( deck_id ) )'
+    : 'word_id, direction, level, words!inner ( id, english, japanese, example_en, example_ja )';
   let query = supabase
     .from('user_cards')
     .select(select)

@@ -1,17 +1,24 @@
 import { colors } from '../styles/theme';
 import { dictionaryUrl } from '../lib/dictionary';
 
-// Extra info shown after a card is answered. Only a dictionary link for now;
-// an example sentence can be added above the link later.
-export default function WordInfo({ english }) {
+// Extra info shown after a card is answered: an example sentence (if the word has one)
+// and a dictionary link.
+export default function WordInfo({ english, exampleEn, exampleJa }) {
   const url = dictionaryUrl(english);
-  if (!url) return null;
+  if (!url && !exampleEn) return null;
   return (
-    <div style={{ textAlign: "center", fontSize: 13 }}>
-      {/* Example sentence goes here later. */}
-      <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: colors.navy }}>
-        辞書で調べる
-      </a>
+    <div style={{ display: "grid", gap: 10, textAlign: "center" }}>
+      {exampleEn && (
+        <div>
+          <div style={{ fontSize: 16, lineHeight: 1.5, color: colors.text }}>{exampleEn}</div>
+          {exampleJa && <div style={{ fontSize: 13, lineHeight: 1.5, color: colors.muted, marginTop: 4 }}>{exampleJa}</div>}
+        </div>
+      )}
+      {url && (
+        <a href={url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: colors.navy }}>
+          辞書で調べる
+        </a>
+      )}
     </div>
   );
 }
