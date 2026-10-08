@@ -3,7 +3,7 @@ import { supabase } from './lib/supabaseClient';
 import * as api from './lib/api';
 import { buildCards, buildReviewCards } from './lib/drill';
 import { totalPoints, levelCounts, playerLevel, newPeak } from './lib/points';
-import { colors, wrap, btnLink } from './styles/theme';
+import { colors, wrap, gutter, tabBarHeight, btnLink } from './styles/theme';
 import Header from './components/Header';
 import LoginScreen from './components/LoginScreen';
 import Tabs from './components/Tabs';
@@ -189,14 +189,13 @@ function App() {
 
   return (
     <div style={{ background: colors.bg, minHeight: "100vh" }}>
-      <div style={wrap}>
+      <div style={{ ...wrap, padding: `24px ${gutter}px 60px` }}>
         <Header showSignOut={!!session} onSignOut={handleLogout} />
 
         {!session ? (
           <LoginScreen error={authError} onGoogleLogin={handleGoogleLogin} />
         ) : view === "dashboard" ? (
-          <div>
-            <Tabs tabs={TABS} active={activeTab} onChange={setActiveTab} />
+          <div style={{ paddingBottom: tabBarHeight + 32 }}>
             {activeTab === "myCards" && (
               <MyCardsTab
                 decks={myDecks}
@@ -211,6 +210,7 @@ function App() {
             {activeTab === "cardSets" && (
               <CardSetsTab library={libraryData} loading={loadingLibrary} onOpenDeck={startDeck} disabled={loadingDeck} />
             )}
+            <Tabs tabs={TABS} active={activeTab} onChange={setActiveTab} />
           </div>
         ) : (
           <>

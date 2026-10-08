@@ -24,10 +24,17 @@ export const colors = {
 export const fontDisplay = "'Chakra Petch', 'Zen Maru Gothic', sans-serif"; // headings, numbers
 export const fontBody = "'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif"; // body, Japanese
 
+export const gutter = 16; // side padding of the page column
+export const tabBarHeight = 72; // bottom tab bar (the page needs this much extra bottom padding)
+
+// The page column: 480 px wide on desktop, full width on phones.
 export const wrap = {
-  maxWidth: 480, margin: "0 auto", padding: "24px 20px 60px", minHeight: 500,
+  maxWidth: 480, width: "100%", margin: "0 auto", minHeight: 500, boxSizing: "border-box",
   fontFamily: fontBody, color: colors.text,
 };
+
+// Dashboard panels (player card, level chart).
+export const panel = { background: colors.surface, border: `2px solid ${colors.line}`, borderRadius: 20, padding: 16 };
 
 export const cardStyle = { background: colors.surface, border: `1px solid ${colors.line}`, borderRadius: 10 };
 
@@ -36,6 +43,3 @@ export const btnPrimary = { ...btn, background: colors.accent, color: colors.acc
 export const btnDanger = { ...btn, background: colors.danger, color: colors.dangerInk, border: "none" };
 export const btnGhost = { ...btn, background: "transparent", color: colors.text, border: `1px solid ${colors.line}` };
 export const btnLink = { background: "none", border: "none", color: colors.muted, fontSize: 13, cursor: "pointer", textDecoration: "underline", padding: 0 };
-
-export const tabActive = { padding: "10px 16px", borderBottom: `3px solid ${colors.accent}`, fontWeight: "bold", cursor: "pointer", color: colors.text };
-export const tabInactive = { padding: "10px 16px", borderBottom: "3px solid transparent", cursor: "pointer", color: colors.muted };
