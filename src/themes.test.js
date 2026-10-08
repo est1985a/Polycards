@@ -19,6 +19,7 @@ function contrast(a, b) {
 
 const HEX = /^#[0-9a-f]{6}$/i;
 const MIN = 4.5;
+const MIN_LARGE = 3; // WCAG minimum for large text (24 px, or about 19 px bold)
 
 describe.each(Object.entries(themes))('theme "%s"', (id, theme) => {
   const c = theme.colors;
@@ -41,6 +42,8 @@ describe.each(Object.entries(themes))('theme "%s"', (id, theme) => {
       ['muted', 'bg'], ['muted', 'surface'],
       ['gold', 'surface'],
       ['accentText', 'surface'],
+      ['gold', 'surface2'],  // level chip on the back of a study card
+      ['muted', 'surface2'], // question word on the back of a study card
       ['danger', 'surface'],
       ['accentInk', 'accent'],
       ['dangerInk', 'danger'],
@@ -51,6 +54,11 @@ describe.each(Object.entries(themes))('theme "%s"', (id, theme) => {
     theme.levels.forEach((lv, i) => {
       expect(contrast(lv, c.surface), `Lv${i} on surface`).toBeGreaterThanOrEqual(MIN);
     });
+  });
+
+  it('keeps large text readable (3:1 is enough for big bold text)', () => {
+    // the 32 px bold answer on the back of a study card
+    expect(contrast(c.accentText, c.surface2), 'accentText on surface2').toBeGreaterThanOrEqual(MIN_LARGE);
   });
 });
 
