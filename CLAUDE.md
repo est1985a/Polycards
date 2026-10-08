@@ -5,8 +5,8 @@ A vocabulary spaced-repetition (SRS) web app for Japanese junior high and high s
 ## Stack
 - React + Vite. Code layout:
   - `src/App.jsx`: shared state (session, screen, My Cards data) and which screen to show
-  - `src/components/`: one file per screen part (`StudySession`, `MyCardsTab`, `CardSetsTab`, `LibrarySection`, `LoginScreen`, `Header`, `Tabs`, `Stamp`)
-  - `src/lib/srs.js`: SRS rules; `src/lib/points.js`: points and player level (pure functions); `src/lib/drill.js`: building/shuffling card piles; `src/lib/api.js`: every Supabase query; `src/lib/supabaseClient.js`: creates the Supabase client
+  - `src/components/`: one file per screen part (`StudySession`, `MyCardsTab`, `CardSetsTab`, `LibrarySection`, `LoginScreen`, `Header`, `Tabs`, `Stamp`, `PlayerStats`, `WordInfo`)
+  - `src/lib/srs.js`: SRS rules; `src/lib/points.js`: points and player level (pure functions); `src/lib/drill.js`: building/shuffling card piles; `src/lib/dictionary.js`: builds the dictionary link for a word; `src/lib/api.js`: every Supabase query; `src/lib/supabaseClient.js`: creates the Supabase client
   - `src/styles/theme.js`: shared colors, fonts, and button styles
 - Supabase: PostgreSQL, Auth, Row Level Security
 - Sign-in: Google OAuth, open to any Google account. Signing in is required; the old "Skip login (Test App)" bypass has been removed. Email/password is enabled in Supabase but has no sign-in screen in the app.
@@ -41,6 +41,7 @@ Rules:
 - Card Sets: opening a deck runs the older "try it" drill (a card is cleared after `CLEAR_TARGET = 2` correct answers, set in `src/lib/drill.js`; wrong answers re-insert the card). Students can add the deck to My Cards from there.
 - My Cards: real SRS review. The 2-correct drill does NOT apply here. Decks can also be removed from My Cards.
 - Each word is two cards: `en2jp` and `jp2en`, tracked and leveled separately.
+- Dictionary link (辞書で調べる): shown under the answer buttons only after a card is flipped, in both the drill and SRS review and both directions, so it can't give the answer away. It opens ALC 英辞郎 on the WEB (`https://eow.alc.co.jp/search?q=<word>`) in a new tab with `rel="noopener noreferrer"`. The search term comes from the card's English text: parentheses and the words inside them, `...`, `…` and `?` are removed, spaces tidied and lowercased (e.g. `Call me ...` → `call me`); `~` is kept. Built by `dictionaryUrl()` in `src/lib/dictionary.js` (tests in `src/lib/dictionary.test.js`) and shown by `src/components/WordInfo.jsx`, which has room for an example sentence above the link later.
 
 ## SRS rules (constants and level logic in `src/lib/srs.js`)
 - Levels 0 to 7. Wait before a card is due again, by the level it just reached: `LEVEL_HOURS = [0, 4, 24, 72, 168, 336, 720, 2880]` (new, 4h, 1d, 3d, 1w, 2w, 30d, ~4 months).
