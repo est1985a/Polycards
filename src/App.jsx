@@ -113,7 +113,12 @@ function App() {
 
   const handleGoogleLogin = async () => {
     setAuthError(null);
-    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
+    // Come back to the site we started from (localhost in development, the live site in production).
+    // Supabase only allows addresses listed under Authentication → URL Configuration → Redirect URLs.
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
     if (error) setAuthError(error.message);
   };
 
