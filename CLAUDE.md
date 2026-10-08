@@ -5,7 +5,7 @@ A vocabulary spaced-repetition (SRS) web app for Japanese junior high and high s
 ## Stack
 - React + Vite. Code layout:
   - `src/App.jsx`: shared state (session, screen, My Cards data) and which screen to show
-  - `src/components/`: one file per screen part (`StudySession`, `MyCardsTab`, `CardSetsTab`, `LibrarySection`, `LoginScreen`, `Header`, `Tabs`, `Stamp`, `PlayerStats`, `WordInfo`)
+  - `src/components/`: one file per screen part (`StudySession`, `MyCardsTab`, `CardSetsTab`, `LibrarySection`, `LoginScreen`, `Header`, `Tabs`, `Stamp`, `PlayerStats`, `LevelChart`, `Avatar`, `WordInfo`)
   - `src/lib/srs.js`: SRS rules; `src/lib/points.js`: points and player level (pure functions); `src/lib/drill.js`: building/shuffling card piles; `src/lib/dictionary.js`: builds the dictionary link for a word; `src/lib/api.js`: every Supabase query; `src/lib/supabaseClient.js`: creates the Supabase client
   - `src/styles/theme.js`: shared colors (as CSS variables), fonts, and button styles
   - `src/themes.js`: color themes (values for each color role) and `applyTheme()`
@@ -60,10 +60,17 @@ Rules:
 - Player level never goes down: removing a deck lowers current points but not the peak.
 - Points are recounted each time the dashboard is shown (so after every review), after pending progress saves finish. If the total beats the saved peak, the new peak is upserted to `user_stats`.
 - All card levels are read in pages of 1,000 (`fetchAllCardLevels` in `src/lib/api.js`), so totals are correct beyond Supabase's 1,000-row limit.
-- Shown at the top of My Cards by `src/components/PlayerStats.jsx` (player level, current and peak points, card count per level). Kept plain on purpose; a UI overhaul is in progress (step 1, themes and fonts, done).
+- Shown at the top of My Cards by `src/components/PlayerStats.jsx` (avatar, player level, current and peak points, and a bar showing progress to the next level). The bar uses `pointsForLevel()` in `src/lib/points.js`, the reverse of `playerLevel()`, and is measured from peak points because the level comes from the peak. The card count per level is a bar chart in `src/components/LevelChart.jsx` (tests in `LevelChart.test.jsx`).
 - Tests: `src/lib/points.test.js` (pure, never touches the database or the test account).
 
 ## UI conventions
+- UI overhaul: step 1 (themes, fonts) and step 2 (My Cards dashboard) are done.
+- Layout: phone-first, one 480 px column centered on desktop (`wrap` in theme.js), 16 px side padding (`gutter`), tap targets at least 44 px. Dashboard panels use `panel` (surface, 2 px line border, 20 px radius).
+- My Cards, top to bottom: low-poly header band (`Header` variant `band`, 14 SVG triangles mixed from surface/surface2/bg with `color-mix`, fading into bg; other screens use variant `compact`), player card, review button (pill = due cards capped at `SESSION_SIZE`), level chart, マイデッキ rows (tap = review that deck, × = remove deck with confirm).
+- The account button (round, user's initial) opens a menu with the email and Sign Out.
+- `Tabs.jsx` is a bottom tab bar fixed to the screen (72 px, `tabBarHeight`), shown on the dashboard only; the dashboard has extra bottom padding so nothing hides behind it.
+- `Avatar.jsx` is a PLACEHOLDER low-poly cat in `danger` shades, to be replaced by unlockable models. Keep its props simple (`size`).
+- "Next review in…" (次の復習) is not shown yet: it needs a new query (planned feature).
 - Interface is mostly Japanese. Keep the "English to Japanese" / "Japanese to English" direction labels in English. Answer buttons are bilingual (English plus Japanese). Do not add furigana unless I ask.
 - Use American English spelling in anything written in English for school or work.
 - Inline styles in each component. Colors, fonts and button styles come from `src/styles/theme.js`. Never write hex codes, `rgb()` or color names in `src/App.jsx` or `src/components/`; a test fails if you do.
