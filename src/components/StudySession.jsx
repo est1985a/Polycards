@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { colors, serif, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
+import { colors, fontDisplay, fontBody, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
 import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
 import { levelAfterCorrect, levelAfterWrong } from '../lib/srs';
 import { saveProgress } from '../lib/api';
@@ -102,7 +102,7 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
           </p>
           <div onClick={() => setRevealed(true)} style={{ ...cardStyle, minHeight: 180, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, cursor: revealed ? "default" : "pointer", padding: 24 }}>
             <div style={{ fontSize: 12, color: colors.muted }}>{card.direction === "en2jp" ? "English to Japanese" : "Japanese to English"}</div>
-            <div style={{ fontFamily: serif, fontSize: 30, textAlign: "center" }}>{card.front}</div>
+            <div style={{ fontFamily: fontBody, fontSize: 30, textAlign: "center" }}>{card.front}</div>
             {revealed && <div style={{ fontSize: 22, color: colors.text, borderTop: `1px solid ${colors.line}`, paddingTop: 12, width: "100%", textAlign: "center" }}>{card.back}</div>}
           </div>
           {isSrs ? (
@@ -128,7 +128,7 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
 
       {done && (
         <div style={{ ...cardStyle, padding: 28, textAlign: "center", display: "grid", gap: 10 }}>
-          <div style={{ fontFamily: serif, fontSize: 22, color: colors.text }}>全部クリアしました！</div>
+          <div style={{ fontFamily: fontDisplay, fontSize: 22, color: colors.text }}>全部クリアしました！</div>
           {addDeckControl}
           <button style={btnGhost} onClick={onBack}>ダッシュボードに戻る</button>
         </div>

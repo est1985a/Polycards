@@ -3,7 +3,7 @@
    color-scheme are set by applyTheme() in src/themes.js. */
 
 :root {
-  font: 18px/145% system-ui, 'Segoe UI', Roboto, sans-serif;
+  font: 18px/145% 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif;
   letter-spacing: 0.18px;
   color: var(--text);
   background: var(--bg);
@@ -34,8 +34,12 @@ body {
 
 h1,
 h2 {
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Chakra Petch', 'Zen Maru Gothic', sans-serif;
   font-weight: 500;
+}
+
+h3 {
+  font-family: 'Chakra Petch', 'Zen Maru Gothic', sans-serif;
 }
 
 h1 {

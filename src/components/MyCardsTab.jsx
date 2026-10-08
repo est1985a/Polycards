@@ -1,4 +1,4 @@
-import { colors, serif, cardStyle, btnPrimary, btnGhost, btnLink } from '../styles/theme';
+import { colors, fontDisplay, cardStyle, btnPrimary, btnGhost, btnLink } from '../styles/theme';
 import PlayerStats from './PlayerStats';
 
 export default function MyCardsTab({ decks, dueRows, stats, onReview, onRemove, loading, removingDeckId }) {
@@ -30,7 +30,7 @@ export default function MyCardsTab({ decks, dueRows, stats, onReview, onRemove, 
       <div style={{ ...cardStyle, padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div>
           <div style={{ fontSize: 12, color: colors.muted }}>今の復習 (Due now)</div>
-          <div style={{ fontFamily: serif, fontSize: 28, color: colors.gold }}>{dueRows.length}</div>
+          <div style={{ fontFamily: fontDisplay, fontSize: 28, color: colors.gold }}>{dueRows.length}</div>
         </div>
         <button
           onClick={() => onReview()}

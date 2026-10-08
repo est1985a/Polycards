@@ -19,11 +19,14 @@ export const colors = {
   level: (n) => v(`lv${n}`), // Lv0 to Lv7 chart colors
 };
 
-export const serif = "Georgia, 'Hiragino Mincho ProN', 'Yu Mincho', serif";
+// Fonts are loaded from Google Fonts in index.html.
+// Chakra Petch has no Japanese letters, so Japanese in headings falls back to Zen Maru Gothic.
+export const fontDisplay = "'Chakra Petch', 'Zen Maru Gothic', sans-serif"; // headings, numbers
+export const fontBody = "'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif"; // body, Japanese
 
 export const wrap = {
   maxWidth: 480, margin: "0 auto", padding: "24px 20px 60px", minHeight: 500,
-  fontFamily: "'Hiragino Maru Gothic ProN', 'Yu Gothic', 'Segoe UI', system-ui, sans-serif", color: colors.text,
+  fontFamily: fontBody, color: colors.text,
 };
 
 export const cardStyle = { background: colors.surface, border: `1px solid ${colors.line}`, borderRadius: 10 };
