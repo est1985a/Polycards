@@ -1,6 +1,8 @@
 // Checks that every theme is complete and readable. Run with: npm test
 import { describe, it, expect } from 'vitest';
+import { readFileSync, readdirSync } from 'node:fs';
 import { COLOR_ROLES, themes, getTheme, DEFAULT_THEME, applyTheme } from './themes';
+import { colors } from './styles/theme';
 
 // WCAG contrast ratio between two #rrggbb colors (1 to 21; 4.5 is the minimum for normal text).
 function luminance(hex) {
@@ -69,5 +71,35 @@ describe('applyTheme', () => {
     for (const role of COLOR_ROLES) expect(set[`--${role}`]).toBe(themes.lagoon.colors[role]);
     for (let i = 0; i < 8; i++) expect(set[`--lv${i}`]).toBe(themes.lagoon.levels[i]);
     expect(root.style.colorScheme).toBe('light');
+  });
+});
+
+describe('src/styles/theme.js', () => {
+  it('only points to color roles that themes define', () => {
+    for (const [key, value] of Object.entries(colors)) {
+      if (key === 'level') continue;
+      expect(COLOR_ROLES, key).toContain(key);
+      expect(value).toBe(`var(--${key})`);
+    }
+    expect(colors.level(3)).toBe('var(--lv3)');
+  });
+});
+
+describe('screens', () => {
+  // Colors must come from src/styles/theme.js so every theme can change them.
+  const dir = new URL('./components/', import.meta.url);
+  const files = [
+    ['App.jsx', new URL('./App.jsx', import.meta.url)],
+    ...readdirSync(dir).filter((f) => f.endsWith('.jsx') && !f.includes('.test.')).map((f) => [f, new URL(f, dir)]),
+  ];
+  const hardCoded = [
+    /#[0-9a-f]{3,8}\b/i,
+    /\b(rgba?|hsla?)\(/,
+    /["'`](white|black|red|blue|green|navy|gray|grey|yellow|orange|purple|pink)["'`]/,
+  ];
+
+  it.each(files)('%s has no hard-coded colors', (_, url) => {
+    const source = readFileSync(url, 'utf8');
+    for (const pattern of hardCoded) expect(source).not.toMatch(pattern);
   });
 });

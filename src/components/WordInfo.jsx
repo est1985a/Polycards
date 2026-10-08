@@ -15,7 +15,7 @@ export default function WordInfo({ english, exampleEn, exampleJa }) {
         </div>
       )}
       {url && (
-        <a href={url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: colors.navy }}>
+        <a href={url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: colors.text }}>
           辞書で調べる
         </a>
       )}

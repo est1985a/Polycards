@@ -1,17 +1,22 @@
 // Shared colors, fonts, and button styles.
+// Colors are CSS variables filled in by applyTheme() in src/themes.js, so a theme switch
+// recolors every screen. Use these role names; never write hex codes in components.
+
+const v = (name) => `var(--${name})`;
 
 export const colors = {
-  cream: "#f4efe1",
-  navy: "#22406b",
-  red: "#b23a2f",
-  blue: "#3a6096",     // library deck buttons
-  paper: "#fffdf7",    // card background
-  line: "#e4dcc4",     // borders
-  lineDark: "#d9d2bf",
-  text: "#2c2a24",
-  textSoft: "#5c5744",
-  muted: "#8a8468",
-  link: "#7a7462",
+  bg: v("bg"),               // page background
+  surface: v("surface"),     // cards
+  surface2: v("surface2"),   // raised elements on a card
+  line: v("line"),           // borders
+  text: v("text"),
+  muted: v("muted"),         // labels, hints, links
+  accent: v("accent"),       // fills only, never text
+  accentInk: v("accentInk"),
+  danger: v("danger"),
+  dangerInk: v("dangerInk"),
+  gold: v("gold"),           // points, levels, big numbers
+  level: (n) => v(`lv${n}`), // Lv0 to Lv7 chart colors
 };
 
 export const serif = "Georgia, 'Hiragino Mincho ProN', 'Yu Mincho', serif";
@@ -21,11 +26,13 @@ export const wrap = {
   fontFamily: "'Hiragino Maru Gothic ProN', 'Yu Gothic', 'Segoe UI', system-ui, sans-serif", color: colors.text,
 };
 
-export const cardStyle = { background: colors.paper, border: `1px solid ${colors.line}`, borderRadius: 10 };
+export const cardStyle = { background: colors.surface, border: `1px solid ${colors.line}`, borderRadius: 10 };
 
-export const btnPrimary = { background: colors.navy, color: "#fbf7ec", border: "none", borderRadius: 8, padding: "12px 18px", fontSize: 15, fontWeight: 600, cursor: "pointer" };
-export const btnGhost = { background: "transparent", color: colors.navy, border: `1px solid ${colors.navy}`, borderRadius: 8, padding: "12px 18px", fontSize: 15, fontWeight: 600, cursor: "pointer" };
-export const btnLink = { background: "none", border: "none", color: colors.link, fontSize: 13, cursor: "pointer", textDecoration: "underline", padding: 0 };
+const btn = { borderRadius: 8, padding: "12px 18px", fontSize: 15, fontWeight: 600, cursor: "pointer" };
+export const btnPrimary = { ...btn, background: colors.accent, color: colors.accentInk, border: "none" };
+export const btnDanger = { ...btn, background: colors.danger, color: colors.dangerInk, border: "none" };
+export const btnGhost = { ...btn, background: "transparent", color: colors.text, border: `1px solid ${colors.line}` };
+export const btnLink = { background: "none", border: "none", color: colors.muted, fontSize: 13, cursor: "pointer", textDecoration: "underline", padding: 0 };
 
-export const tabActive = { padding: "10px 16px", borderBottom: `3px solid ${colors.red}`, fontWeight: "bold", cursor: "pointer", color: colors.navy };
+export const tabActive = { padding: "10px 16px", borderBottom: `3px solid ${colors.accent}`, fontWeight: "bold", cursor: "pointer", color: colors.text };
 export const tabInactive = { padding: "10px 16px", borderBottom: "3px solid transparent", cursor: "pointer", color: colors.muted };

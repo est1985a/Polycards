@@ -6,8 +6,8 @@ export default function Stamp({ filled }) {
     <span
       style={{
         width: 22, height: 22, borderRadius: "50%",
-        border: `2px solid ${filled ? colors.red : colors.lineDark}`,
-        background: filled ? colors.red : "transparent",
+        border: `2px solid ${filled ? colors.accent : colors.muted}`,
+        background: filled ? colors.accent : "transparent",
         display: "inline-block",
       }}
     />

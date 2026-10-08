@@ -1,12 +1,12 @@
 /* Page-wide base styles. Colors and layout for each screen are inline in the components
-   (shared values in src/styles/theme.js). */
+   (shared values in src/styles/theme.js). Color variables (--bg, --text, ...) and
+   color-scheme are set by applyTheme() in src/themes.js. */
 
 :root {
   font: 18px/145% system-ui, 'Segoe UI', Roboto, sans-serif;
   letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: #6b6375;
-  background: #fff;
+  color: var(--text);
+  background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -26,7 +26,6 @@ body {
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
-  border-inline: 1px solid #e5e4e7;
   min-height: 100svh;
   display: flex;
   flex-direction: column;
@@ -51,15 +50,4 @@ h2 {
 
 p {
   margin: 0;
-}
-
-/* Side margins on wide screens in dark mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #9ca3af;
-    background: #16171d;
-  }
-  #root {
-    border-color: #2e303a;
-  }
 }

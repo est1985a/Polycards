@@ -11,11 +11,11 @@ export default function PlayerStats({ stats }) {
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
         <div>
           <div style={{ fontSize: 12, color: colors.muted }}>プレイヤーレベル</div>
-          <div style={{ fontFamily: serif, fontSize: 28, color: colors.navy }}>Lv. {stats.playerLevel}</div>
+          <div style={{ fontFamily: serif, fontSize: 28, color: colors.gold }}>Lv. {stats.playerLevel}</div>
         </div>
         <div style={{ textAlign: "right" }}>
           <div style={{ fontSize: 12, color: colors.muted }}>ポイント</div>
-          <div style={{ fontSize: 18, fontWeight: "bold", color: colors.navy }}>{fmt(stats.currentPoints)}</div>
+          <div style={{ fontSize: 18, fontWeight: "bold", color: colors.gold }}>{fmt(stats.currentPoints)}</div>
           <div style={{ fontSize: 12, color: colors.muted }}>最高 {fmt(stats.peakPoints)}</div>
         </div>
       </div>
@@ -25,7 +25,7 @@ export default function PlayerStats({ stats }) {
           {stats.levelCounts.map((count, level) => (
             <div key={level} style={{ border: `1px solid ${colors.line}`, borderRadius: 6, padding: "4px 0", textAlign: "center" }}>
               <div style={{ fontSize: 10, color: colors.muted }}>Lv.{level}</div>
-              <div style={{ fontSize: 14, fontWeight: "bold", color: count > 0 ? colors.navy : colors.lineDark }}>{count}</div>
+              <div style={{ fontSize: 14, fontWeight: "bold", color: count > 0 ? colors.level(level) : colors.muted }}>{count}</div>
             </div>
           ))}
         </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { colors, serif, cardStyle, btnPrimary, btnGhost } from '../styles/theme';
+import { colors, serif, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
 import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
 import { levelAfterCorrect, levelAfterWrong } from '../lib/srs';
 import { saveProgress } from '../lib/api';
@@ -79,7 +79,7 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
   }
 
   const addDeckControl = isSrs ? null : isAdded ? (
-    <div style={{ textAlign: "center", fontSize: 13, color: colors.navy }}>✓ マイカードに追加済み (Added to My Cards)</div>
+    <div style={{ textAlign: "center", fontSize: 13, color: colors.text }}>✓ マイカードに追加済み (Added to My Cards)</div>
   ) : (
     <button onClick={onAddDeck} disabled={saving} style={{ ...btnGhost, padding: "8px 12px", fontSize: 13 }}>
       {saving ? "追加中..." : "＋ マイカードに追加 (Add to My Cards)"}
@@ -88,7 +88,7 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
 
   return (
     <div style={{ display: "grid", gap: 20 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: colors.textSoft }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: colors.text }}>
         <span>{activeSet.name}</span>
         <span>覚えた: {clearedCount} ・ 残り: {pile.length}</span>
       </div>
@@ -97,13 +97,13 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
 
       {card && (
         <>
-          <p style={{ fontSize: 14, color: colors.textSoft, margin: 0, textAlign: "center" }}>
+          <p style={{ fontSize: 14, color: colors.text, margin: 0, textAlign: "center" }}>
             {card.direction === "en2jp" ? "この単語は日本語で何と言いますか？" : "この単語は英語で何と言いますか？"}
           </p>
           <div onClick={() => setRevealed(true)} style={{ ...cardStyle, minHeight: 180, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, cursor: revealed ? "default" : "pointer", padding: 24 }}>
             <div style={{ fontSize: 12, color: colors.muted }}>{card.direction === "en2jp" ? "English to Japanese" : "Japanese to English"}</div>
             <div style={{ fontFamily: serif, fontSize: 30, textAlign: "center" }}>{card.front}</div>
-            {revealed && <div style={{ fontSize: 22, color: colors.navy, borderTop: `1px solid ${colors.line}`, paddingTop: 12, width: "100%", textAlign: "center" }}>{card.back}</div>}
+            {revealed && <div style={{ fontSize: 22, color: colors.text, borderTop: `1px solid ${colors.line}`, paddingTop: 12, width: "100%", textAlign: "center" }}>{card.back}</div>}
           </div>
           {isSrs ? (
             <div style={{ textAlign: "center", fontSize: 13, color: colors.muted }}>
@@ -117,7 +117,7 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
           {revealed && (
             <>
               <div style={{ display: "flex", gap: 10 }}>
-                <button style={{ ...btnGhost, flex: 1 }} onClick={() => handleAnswer(false)}>Still learning<br />まだ</button>
+                <button style={{ ...btnDanger, flex: 1 }} onClick={() => handleAnswer(false)}>Still learning<br />まだ</button>
                 <button style={{ ...btnPrimary, flex: 1 }} onClick={() => handleAnswer(true)}>I knew it<br />わかった</button>
               </div>
               <WordInfo english={card.en} exampleEn={card.exampleEn} exampleJa={card.exampleJa} />
@@ -128,7 +128,7 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
 
       {done && (
         <div style={{ ...cardStyle, padding: 28, textAlign: "center", display: "grid", gap: 10 }}>
-          <div style={{ fontFamily: serif, fontSize: 22, color: colors.navy }}>全部クリアしました！</div>
+          <div style={{ fontFamily: serif, fontSize: 22, color: colors.text }}>全部クリアしました！</div>
           {addDeckControl}
           <button style={btnGhost} onClick={onBack}>ダッシュボードに戻る</button>
         </div>

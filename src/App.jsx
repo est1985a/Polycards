@@ -188,7 +188,7 @@ function App() {
   }
 
   return (
-    <div style={{ background: colors.cream, minHeight: "100vh" }}>
+    <div style={{ background: colors.bg, minHeight: "100vh" }}>
       <div style={wrap}>
         <Header showSignOut={!!session} onSignOut={handleLogout} />
 
