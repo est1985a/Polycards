@@ -5,7 +5,7 @@ A vocabulary spaced-repetition (SRS) web app for Japanese junior high and high s
 ## Stack
 - React + Vite. Code layout:
   - `src/App.jsx`: shared state (session, screen, My Cards data) and which screen to show
-  - `src/components/`: one file per screen part (`StudySession`, `MyCardsTab`, `CardSetsTab`, `LibrarySection`, `LoginScreen`, `Header`, `Tabs`, `Stamp`, `PlayerStats`, `LevelChart`, `Avatar`, `FlipCard`, `WordInfo`)
+  - `src/components/`: one file per screen part (`StudySession`, `MyCardsTab`, `CardSetsTab`, `LibrarySection`, `LoginScreen`, `Header`, `Tabs`, `Stamp`, `PlayerStats`, `LevelChart`, `Avatar`, `FlipCard`, `WordInfo`, `WordList`, `Highlighted`, `AddDeckButton`)
   - `src/lib/srs.js`: SRS rules; `src/lib/points.js`: points and player level (pure functions); `src/lib/drill.js`: building/shuffling card piles; `src/lib/dictionary.js`: builds the dictionary link for a word; `src/lib/api.js`: every Supabase query; `src/lib/supabaseClient.js`: creates the Supabase client
   - `src/styles/theme.js`: shared colors (as CSS variables), fonts, and button styles
   - `src/themes.js`: color themes (values for each color role) and `applyTheme()`
@@ -39,7 +39,7 @@ Rules:
 
 ## App structure
 - Two dashboard tabs: **My Cards** (decks the student added, due counts, SRS review) and **Card Sets** (global library grouped by JHS/HS, then textbook, unit, deck).
-- Card Sets: opening a deck runs the older "try it" drill (a card is cleared after `CLEAR_TARGET = 2` correct answers, set in `src/lib/drill.js`; wrong answers re-insert the card). Students can add the deck to My Cards from there.
+- Card Sets: opening a deck first shows a word list (`WordList.jsx`, view `wordList` in App.jsx): every word in deck order with its example sentence (word highlighted in gold by `Highlighted.jsx`), a 日本語をかくす switch that blurs the Japanese (tap a row to reveal one word), and a fixed ドリルを始める (Start drill) button at the bottom. No extra query: it uses the cards `startDeck` already built. The button runs the older "try it" drill (a card is cleared after `CLEAR_TARGET = 2` correct answers, set in `src/lib/drill.js`; wrong answers re-insert the card). Students can add the deck to My Cards from the list or the drill (`AddDeckButton.jsx`). SRS review in My Cards has no word list. Tests: `WordList.test.jsx`.
 - My Cards: real SRS review. The 2-correct drill does NOT apply here. Decks can also be removed from My Cards.
 - Each word is two cards: `en2jp` and `jp2en`, tracked and leveled separately.
 - Dictionary link (辞書で調べる): shown on the back of the card (so only after it is flipped), in both the drill and SRS review and both directions, so it can't give the answer away. It opens ALC 英辞郎 on the WEB (`https://eow.alc.co.jp/search?q=<word>`) in a new tab with `rel="noopener noreferrer"`. The search term comes from the card's English text: parentheses and the words inside them, `...`, `…` and `?` are removed, spaces tidied and lowercased (e.g. `Call me ...` → `call me`); `~` is kept. Built by `dictionaryUrl()` in `src/lib/dictionary.js` (tests in `src/lib/dictionary.test.js`) and shown by `src/components/WordInfo.jsx`.
