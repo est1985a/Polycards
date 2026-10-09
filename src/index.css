@@ -72,3 +72,22 @@ p {
   .flip-card-inner { transition: none !important; }
   .tap-hint { animation: none !important; }
 }
+
+/* "Level Up!" float in SRS review: rises from the card and fades out over 1 s. */
+@keyframes polycards-level-up {
+  0% { opacity: 0; transform: translateY(12px) scale(0.9); }
+  20% { opacity: 1; transform: translateY(0) scale(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-40px) scale(1); }
+}
+@keyframes polycards-level-up-fade {
+  0% { opacity: 0; }
+  20%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.level-up-float {
+  animation: polycards-level-up 1s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .level-up-float { animation-name: polycards-level-up-fade; }
+}

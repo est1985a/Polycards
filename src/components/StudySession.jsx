@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { colors, fontDisplay, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
 import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
-import { levelAfterCorrect, levelAfterWrong } from '../lib/srs';
+import { levelAfterCorrect, levelAfterWrong, levelUpLabel } from '../lib/srs';
 import { saveProgress } from '../lib/api';
 import Stamp from './Stamp';
 import AddDeckButton from './AddDeckButton';
 import FlipCard from './FlipCard';
+
+// Visually hidden but read by screen readers.
+const srOnly = { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)", whiteSpace: "nowrap" };
 
 const stampFill = (n) => Array.from({ length: CLEAR_TARGET }, (_, i) => i < n);
 
@@ -19,6 +22,7 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
   const [clearedCount, setClearedCount] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [turn, setTurn] = useState(0); // goes up with every answer
+  const [levelUp, setLevelUp] = useState(null); // SRS: { id, label } of the "Level Up!" float
 
   const done = pile.length === 0;
   const card = done ? null : activeSet.cards.find((c) => c.id === pile[0]) || null;
@@ -37,6 +41,9 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
   function handleSrsAnswer(knew) {
     let nextPile = pile.slice(1);
     let clearedDelta = 0;
+
+    const label = levelUpLabel(card.level, knew, wrongCounts[card.id] || 0);
+    if (label) setLevelUp({ id: turn, label });
 
     if (knew) {
       // Only a clean answer (no misses on this card yet this session) moves it UP.
@@ -81,6 +88,24 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
     else handleDrillAnswer(knew);
   }
 
+  // "Level Up!" floats up over the next card (or the finish panel) and fades (1 s, see src/index.css).
+  // It can't be tapped, so the answer buttons keep working underneath.
+  const levelUpFloat = levelUp && (
+    <div
+      key={levelUp.id}
+      className="level-up-float"
+      aria-hidden="true"
+      onAnimationEnd={() => setLevelUp(null)}
+      style={{
+        position: "absolute", left: 0, right: 0, top: -18, textAlign: "center", pointerEvents: "none",
+        fontFamily: fontDisplay, fontWeight: 700, fontSize: 28, color: colors.gold, zIndex: 2,
+        textShadow: `0 2px 10px ${colors.bg}, 0 0 4px ${colors.bg}`,
+      }}
+    >
+      {levelUp.label}
+    </div>
+  );
+
   const addDeckControl = isSrs ? null : <AddDeckButton isAdded={isAdded} saving={saving} onAdd={onAddDeck} />;
 
   return (
@@ -92,13 +117,18 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
 
       {addDeckControl}
 
+      {isSrs && <div role="status" style={srOnly}>{levelUp?.label || ""}</div>}
+
       {card && (
         <>
           <p style={{ fontSize: 14, color: colors.text, margin: 0, textAlign: "center" }}>
             {card.direction === "en2jp" ? "この単語は日本語で何と言いますか？" : "この単語は英語で何と言いますか？"}
           </p>
-          {/* A new key per turn: the next card starts on its front without flipping back on screen. */}
-          <FlipCard key={turn} card={card} showLevel={isSrs} revealed={revealed} onFlip={() => setRevealed(true)} />
+          <div style={{ position: "relative" }}>
+            {/* A new key per turn: the next card starts on its front without flipping back on screen. */}
+            <FlipCard key={turn} card={card} showLevel={isSrs} revealed={revealed} onFlip={() => setRevealed(true)} />
+            {levelUpFloat}
+          </div>
           {!isSrs && (
             <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
               {stampFill(counts[card.id] || 0).map((f, i) => <Stamp key={i} filled={f} />)}
@@ -118,7 +148,8 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
       )}
 
       {done && (
-        <div style={{ ...cardStyle, padding: 28, textAlign: "center", display: "grid", gap: 10 }}>
+        <div style={{ ...cardStyle, position: "relative", padding: 28, textAlign: "center", display: "grid", gap: 10 }}>
+          {levelUpFloat}
           <div style={{ fontFamily: fontDisplay, fontSize: 22, color: colors.text }}>全部クリアしました！</div>
           {addDeckControl}
           <button style={btnGhost} onClick={onBack}>ダッシュボードに戻る</button>

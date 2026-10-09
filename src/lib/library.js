@@ -102,3 +102,8 @@ export function saveSchoolLevel(storage, level) {
     // ignore: private browsing or blocked site data
   }
 }
+
+// True when the deck is already in the student's My Cards (myDeckIds from user_decks).
+export function isDeckAdded(myDeckIds, deckId) {
+  return Array.isArray(myDeckIds) && myDeckIds.includes(deckId);
+}

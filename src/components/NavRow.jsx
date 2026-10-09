@@ -2,7 +2,8 @@ import { colors } from '../styles/theme';
 
 // One tappable row in the Card Sets lists (textbooks, units, decks).
 // Same look as the deck rows in マイデッキ: small subtitle, bold title, a pill on the right, then ›.
-export default function NavRow({ title, subtitle, pill, onClick, disabled }) {
+// badge: optional extra pill before it (e.g. 追加済み); on a narrow screen the two stack.
+export default function NavRow({ title, subtitle, pill, badge, onClick, disabled }) {
   return (
     <button
       onClick={onClick}
@@ -18,9 +19,14 @@ export default function NavRow({ title, subtitle, pill, onClick, disabled }) {
         {subtitle && <span style={{ display: "block", fontSize: 12, color: colors.muted }}>{subtitle}</span>}
         <span style={{ display: "block", fontSize: 17, fontWeight: 700 }}>{title}</span>
       </span>
-      {pill != null && (
-        <span style={{ flexShrink: 0, fontSize: 13, fontWeight: 700, padding: "4px 12px", borderRadius: 999, background: colors.surface2, whiteSpace: "nowrap" }}>
-          {pill}
+      {(pill != null || badge) && (
+        <span style={{ flexShrink: 0, maxWidth: "50%", display: "flex", flexWrap: "wrap", justifyContent: "flex-end", alignItems: "center", gap: 6 }}>
+          {badge}
+          {pill != null && (
+            <span style={{ fontSize: 13, fontWeight: 700, padding: "4px 12px", borderRadius: 999, background: colors.surface2, whiteSpace: "nowrap" }}>
+              {pill}
+            </span>
+          )}
         </span>
       )}
       <span aria-hidden="true" style={{ flexShrink: 0, fontSize: 22, lineHeight: 1, color: colors.muted }}>›</span>

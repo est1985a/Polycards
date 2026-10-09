@@ -27,3 +27,13 @@ export function levelAfterWrong(level, wrongCount) {
 export function nextReviewDate(level, now = Date.now()) {
   return new Date(now + LEVEL_HOURS[level] * 3600 * 1000);
 }
+
+// Text of the "Level Up!" float after an SRS answer, or null when nothing should show.
+// level: the card's level at the start of the session. wrongsSoFar: misses on it this session.
+// Only a clean correct answer moves a card up (same rule as StudySession's save); a card already
+// at the top level shows "MAX".
+export function levelUpLabel(level, knew, wrongsSoFar = 0) {
+  if (!knew || wrongsSoFar > 0) return null;
+  if (level >= MAX_LEVEL) return "MAX";
+  return `Level Up! Lv ${levelAfterCorrect(level)}`;
+}

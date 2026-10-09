@@ -1,5 +1,5 @@
 import { colors, fontDisplay, panel } from '../styles/theme';
-import { parentPath, resolvePath, schoolLabel, levelOptions, pickLevel, textbooksForLevel } from '../lib/library';
+import { parentPath, resolvePath, schoolLabel, levelOptions, pickLevel, textbooksForLevel, isDeckAdded } from '../lib/library';
 import CardSetsHub from './CardSetsHub';
 import NavRow from './NavRow';
 import LevelSwitch from './LevelSwitch';
@@ -38,10 +38,27 @@ function EmptyPanel({ children }) {
 // Number in a pill (e.g. 6 ユニット, 12語), in Chakra Petch.
 const count = (n) => <span style={{ fontFamily: fontDisplay }}>{n}</span>;
 
+// Small accent pill on a deck that is already in My Cards: a check mark and 追加済み.
+function AddedBadge() {
+  return (
+    <span
+      style={{
+        display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 700, padding: "4px 10px",
+        borderRadius: 999, background: colors.accent, color: colors.accentInk, whiteSpace: "nowrap",
+      }}
+    >
+      <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+        <polyline points="2,6.5 5,9.5 10,3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      追加済み
+    </span>
+  );
+}
+
 // Card Sets tab: hub → textbooks → units → decks (→ word list, shown by App), or Tests & Themes.
 // path: which screen to show, plus the chosen school level (kept in App so it survives opening a deck);
-// onNavigate(path) changes it.
-export default function CardSetsTab({ textbooks, loading, path, onNavigate, onOpenDeck, disabled }) {
+// onNavigate(path) changes it. myDeckIds: decks already in My Cards (they get a 追加済み badge).
+export default function CardSetsTab({ textbooks, loading, path, onNavigate, onOpenDeck, myDeckIds, disabled }) {
   const { path: current, textbook, unit } = resolvePath(textbooks, path);
   const back = () => onNavigate(parentPath(current));
   const { level } = current;
@@ -118,6 +135,7 @@ export default function CardSetsTab({ textbooks, loading, path, onNavigate, onOp
         key={deck.id}
         title={deck.name}
         pill={<>{count(deck.wordCount)}語</>}
+        badge={isDeckAdded(myDeckIds, deck.id) && <AddedBadge />}
         onClick={() => onOpenDeck(deck)}
         disabled={disabled}
       />

@@ -90,6 +90,17 @@ describe('CardSetsTab', () => {
     expect(t).toContain('3 語');
   });
 
+  it('decks: 追加済み only on decks already in My Cards', () => {
+    const path = { screen: 'decks', textbookId: 2, unitId: 20 };
+    expect(text(render(path))).not.toContain('追加済み');
+    const t = text(render(path, { myDeckIds: [202] }));
+    expect(t.match(/追加済み/g)).toHaveLength(1);
+    // the badge sits on Part 2, not Part 1
+    expect(t.indexOf('追加済み')).toBeGreaterThan(t.indexOf('Part 2'));
+    // new ids (e.g. right after Add to My Cards) show without anything else changing
+    expect(text(render(path, { myDeckIds: [201, 202] })).match(/追加済み/g)).toHaveLength(2);
+  });
+
   it('decks: an empty unit says so', () => {
     expect(text(render({ screen: 'decks', textbookId: 2, unitId: 21 }))).toContain('まだデッキがありません');
   });

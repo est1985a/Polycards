@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   shapeLibrary, findTextbook, findUnit, parentPath, resolvePath, schoolLabel,
-  levelOf, levelOptions, textbooksForLevel, pickLevel, loadSchoolLevel, saveSchoolLevel,
+  levelOf, levelOptions, textbooksForLevel, pickLevel, loadSchoolLevel, saveSchoolLevel, isDeckAdded,
 } from './library';
 
 const ROWS = [
@@ -152,5 +152,17 @@ describe('saved school level', () => {
   it('does not crash when storage is blocked', () => {
     expect(loadSchoolLevel(blocked)).toBe('JHS');
     expect(() => saveSchoolLevel(blocked, 'HS')).not.toThrow();
+  });
+});
+
+describe('isDeckAdded', () => {
+  it('is true only for decks in My Cards', () => {
+    expect(isDeckAdded([100, 201], 201)).toBe(true);
+    expect(isDeckAdded([100, 201], 202)).toBe(false);
+  });
+
+  it('is false when nothing is added or the list is not loaded yet', () => {
+    expect(isDeckAdded([], 201)).toBe(false);
+    expect(isDeckAdded(undefined, 201)).toBe(false);
   });
 });

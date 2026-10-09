@@ -24,17 +24,26 @@ const TRIANGLES = [
   ["320,90 390,115 390,230", mix(colors.surface2, colors.bg, 40)],
 ];
 
-function Logo() {
+// The logo is also the "home" button: it goes back to the My Cards dashboard.
+function Logo({ onHome }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <svg width="24" height="22" viewBox="0 0 24 22" aria-hidden="true">
-        <polygon points="12,0 24,22 12,16" fill={colors.accent} />
-        <polygon points="12,0 12,16 0,22" fill={mix(colors.accent, colors.bg, 65)} />
-      </svg>
-      <h1 style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 24, letterSpacing: 0, lineHeight: 1, margin: 0, color: colors.text }}>
+    <h1 style={{ margin: 0, lineHeight: 1 }}>
+      <button
+        onClick={onHome}
+        aria-label="My Cards"
+        style={{
+          display: "flex", alignItems: "center", gap: 8, minHeight: 44, padding: "0 4px", margin: "0 -4px",
+          background: "transparent", border: "none", borderRadius: 12, cursor: "pointer",
+          fontFamily: fontDisplay, fontWeight: 700, fontSize: 24, letterSpacing: 0, lineHeight: 1, color: colors.text,
+        }}
+      >
+        <svg width="24" height="22" viewBox="0 0 24 22" aria-hidden="true">
+          <polygon points="12,0 24,22 12,16" fill={colors.accent} />
+          <polygon points="12,0 12,16 0,22" fill={mix(colors.accent, colors.bg, 65)} />
+        </svg>
         Polycards
-      </h1>
-    </div>
+      </button>
+    </h1>
   );
 }
 
@@ -84,10 +93,11 @@ function AccountButton({ user, onSignOut }) {
 
 // variant "band": tall low-poly background (My Cards). "compact": just the top row (other screens).
 // user: the Supabase user, or null when signed out (then no account button).
-export default function Header({ variant = "compact", user, onSignOut }) {
+// onHome: called when the logo is tapped.
+export default function Header({ variant = "compact", user, onSignOut, onHome }) {
   const row = (
     <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", padding: `16px ${gutter}px` }}>
-      <Logo />
+      <Logo onHome={onHome} />
       {user && <AccountButton user={user} onSignOut={onSignOut} />}
     </div>
   );

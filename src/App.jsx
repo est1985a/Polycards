@@ -24,7 +24,7 @@ function App() {
 
   // Screens: 'dashboard', 'wordList' (Card Sets deck, before the drill) or 'study'
   const [view, setView] = useState("dashboard");
-  const [activeTab, setActiveTab] = useState("cardSets");
+  const [activeTab, setActiveTab] = useState("myCards"); // always open on My Cards
 
   // Card Sets (global library)
   const [libraryData, setLibraryData] = useState([]); // textbooks, from shapeLibrary
@@ -130,8 +130,17 @@ function App() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    setView("dashboard");
+    goHome(); // the next sign-in starts on My Cards too
   };
+
+  // Logo: back to the My Cards dashboard, with Card Sets reset to its hub (the school level is kept).
+  // Leaving a review loses nothing: each answer is saved as soon as it is given.
+  function goHome() {
+    setView("dashboard");
+    setActiveTab("myCards");
+    setCardSetsPath((p) => ({ screen: "hub", level: p.level }));
+    window.scrollTo(0, 0);
+  }
 
   function beginSession(set) {
     setActiveSet(set);
@@ -218,7 +227,7 @@ function App() {
   return (
     <div style={{ background: colors.bg, minHeight: "100vh" }}>
       <div style={wrap}>
-        <Header variant={bandHeader ? "band" : "compact"} user={session?.user} onSignOut={handleLogout} />
+        <Header variant={bandHeader ? "band" : "compact"} user={session?.user} onSignOut={handleLogout} onHome={goHome} />
 
         <div style={{ position: "relative", padding: `0 ${gutter}px 60px`, marginTop: bandHeader ? -headerBand.overlap : 0 }}>
           {!session ? (
@@ -243,6 +252,7 @@ function App() {
                   path={cardSetsPath}
                   onNavigate={navigateCardSets}
                   onOpenDeck={startDeck}
+                  myDeckIds={myDeckIds}
                   disabled={loadingDeck}
                 />
               )}

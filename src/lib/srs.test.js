@@ -1,6 +1,6 @@
 // Tests for the SRS rules. Run with: npm test
 import { describe, it, expect } from 'vitest';
-import { LEVEL_HOURS, MAX_LEVEL, SESSION_SIZE, levelAfterCorrect, levelAfterWrong, nextReviewDate } from './srs';
+import { LEVEL_HOURS, MAX_LEVEL, SESSION_SIZE, levelAfterCorrect, levelAfterWrong, nextReviewDate, levelUpLabel } from './srs';
 
 describe('settings', () => {
   it('has the agreed wait times: new, 4h, 1d, 3d, 1w, 2w, 30d, ~4 months', () => {
@@ -72,5 +72,26 @@ describe('next review date', () => {
     expect(hoursLater(2)).toBe(24);
     expect(hoursLater(4)).toBe(168);
     expect(hoursLater(7)).toBe(2880); // 120 days
+  });
+});
+
+describe('levelUpLabel ("Level Up!" float)', () => {
+  it('shows the new level after a clean correct answer', () => {
+    expect(levelUpLabel(0, true)).toBe('Level Up! Lv 1');
+    expect(levelUpLabel(3, true)).toBe('Level Up! Lv 4');
+    expect(levelUpLabel(6, true)).toBe('Level Up! Lv 7');
+  });
+
+  it('shows MAX for a card already at the top level', () => {
+    expect(levelUpLabel(MAX_LEVEL, true)).toBe('MAX');
+  });
+
+  it('shows nothing on a miss', () => {
+    expect(levelUpLabel(3, false)).toBeNull();
+    expect(levelUpLabel(3, false, 2)).toBeNull();
+  });
+
+  it('shows nothing when a card missed earlier this session is answered correctly (it does not move up)', () => {
+    expect(levelUpLabel(3, true, 1)).toBeNull();
   });
 });
