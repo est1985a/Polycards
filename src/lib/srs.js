@@ -9,6 +9,11 @@ export const MASTERED = MAX_LEVEL + 1;
 // the last entry is for Mastered cards.
 export const CARD_POINTS = [0, 1, 2, 3, 5, 8, 13, 21, 34];
 export const SESSION_SIZE = 20; // max cards per review session
+
+// The full due total, but only when it is more than one session can hold (otherwise null).
+export function extraDueTotal(dueCount) {
+  return dueCount > SESSION_SIZE ? dueCount : null;
+}
 // A mastered card put back into reviews starts again at this level, due right away.
 export const RESTORED_LEVEL = 1;
 

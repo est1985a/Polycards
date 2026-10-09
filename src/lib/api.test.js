@@ -43,6 +43,13 @@ describe('Mastered cards are never due', () => {
   });
 });
 
+describe('due cards', () => {
+  it('reads due cards in pages, so counts stay right beyond 1,000 rows', async () => {
+    await fetchDueRows();
+    expect(calls).toContainEqual(['range', 0, 999]);
+  });
+});
+
 describe('saving answers', () => {
   it('saves a Mastered card with no next review and a mastered_at time', async () => {
     await saveProgress('u1', { wordId: 3, direction: 'en2jp' }, MASTERED);

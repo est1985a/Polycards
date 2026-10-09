@@ -30,14 +30,19 @@ export async function fetchMyDecks() {
 
 // Cards that are due now (used for the due counts). Mastered cards are never due.
 // Each row lists every deck its word belongs to, since words can be shared between decks.
+// Read in pages, so the totals stay right beyond 1,000 due cards.
 export async function fetchDueRows() {
-  const { data, error } = await supabase
-    .from('user_cards')
-    .select('word_id, direction, words ( deck_words ( deck_id ) )')
-    .lt('level', MASTERED)
-    .lte('next_review_at', new Date().toISOString());
-  if (error) throw new Error(error.message);
-  return data || [];
+  const now = new Date().toISOString();
+  return fetchAllPages(
+    (withCount) => supabase
+      .from('user_cards')
+      .select('word_id, direction, words ( deck_words ( deck_id ) )', withCount ? { count: 'exact' } : undefined)
+      .lt('level', MASTERED)
+      .lte('next_review_at', now)
+      .order('word_id', { ascending: true })
+      .order('direction', { ascending: true }),
+    "Could not load due cards: ",
+  );
 }
 
 // Word ids in one deck.

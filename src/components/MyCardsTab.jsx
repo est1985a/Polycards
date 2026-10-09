@@ -1,19 +1,20 @@
 import { colors, fontDisplay, panel } from '../styles/theme';
-import { SESSION_SIZE, MASTERED } from '../lib/srs';
+import { SESSION_SIZE, MASTERED, extraDueTotal } from '../lib/srs';
 import PlayerStats from './PlayerStats';
 import LevelChart from './LevelChart';
 import StarIcon from './StarIcon';
 
 // Big "start review" button. The pill shows how many cards the session will have
-// (all due cards, up to SESSION_SIZE).
-function ReviewButton({ dueCount, loading, onReview }) {
+// (all due cards, up to SESSION_SIZE); a small line under the label shows the full total when there are more.
+export function ReviewButton({ dueCount, loading, onReview }) {
   const ready = dueCount > 0;
+  const total = extraDueTotal(dueCount);
   return (
     <button
       onClick={onReview}
       disabled={loading || !ready}
       style={{
-        width: "100%", height: 64, borderRadius: 16, border: "none", padding: "0 20px",
+        width: "100%", minHeight: 64, borderRadius: 16, border: "none", padding: "10px 20px",
         display: "flex", alignItems: "center", justifyContent: ready ? "space-between" : "center", gap: 12,
         background: ready ? colors.accent : colors.surface2, color: ready ? colors.accentInk : colors.muted,
         cursor: ready && !loading ? "pointer" : "default", opacity: loading ? 0.7 : 1,
@@ -21,9 +22,17 @@ function ReviewButton({ dueCount, loading, onReview }) {
     >
       {ready ? (
         <>
-          <span style={{ fontSize: 20, fontWeight: 700 }}>復習を始める</span>
+          <span style={{ minWidth: 0, display: "grid", gap: 2, textAlign: "left" }}>
+            <span style={{ fontSize: 20, fontWeight: 700 }}>復習を始める</span>
+            {total !== null && (
+              <span style={{ fontSize: 13, fontWeight: 700, color: `color-mix(in srgb, ${colors.accentInk} 75%, transparent)` }}>
+                全<span style={{ fontFamily: fontDisplay }}>{total.toLocaleString('en-US')}</span>枚の復習があります
+              </span>
+            )}
+          </span>
           <span
             style={{
+              flexShrink: 0, whiteSpace: "nowrap",
               fontFamily: fontDisplay, fontWeight: 700, fontSize: 16, padding: "4px 14px", borderRadius: 999,
               background: `color-mix(in srgb, ${colors.accentInk} 15%, transparent)`,
             }}
