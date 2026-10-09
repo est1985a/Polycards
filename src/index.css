@@ -88,6 +88,16 @@ p {
 .level-up-float {
   animation: polycards-level-up 1s ease-out forwards;
 }
+/* Normal level-up ("Lv 2!"): a small tick that rises 14 px above the level chip and fades over 0.8 s. */
+@keyframes polycards-level-tick {
+  0% { opacity: 0; transform: translateY(0); }
+  15% { opacity: 1; }
+  65% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-14px); }
+}
+.level-up-tick {
+  animation: polycards-level-tick 0.8s ease-out forwards;
+}
 @media (prefers-reduced-motion: reduce) {
-  .level-up-float { animation-name: polycards-level-up-fade; }
+  .level-up-float, .level-up-tick { animation-name: polycards-level-up-fade; }
 }

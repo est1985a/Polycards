@@ -139,11 +139,11 @@ describe('putting a Mastered card back (restoreUpdate)', () => {
   });
 });
 
-describe('levelUpLabel ("Level Up!" float)', () => {
+describe('levelUpLabel (level-up float)', () => {
   it('shows the new level after a clean correct answer', () => {
-    expect(levelUpLabel(0, true)).toBe('Level Up! Lv 1');
-    expect(levelUpLabel(3, true)).toBe('Level Up! Lv 4');
-    expect(levelUpLabel(6, true)).toBe('Level Up! Lv 7');
+    expect(levelUpLabel(0, true)).toBe('Lv 1!');
+    expect(levelUpLabel(3, true)).toBe('Lv 4!');
+    expect(levelUpLabel(6, true)).toBe('Lv 7!');
   });
 
   it('shows Mastered! (not MAX) when a level 7 card is answered correctly', () => {

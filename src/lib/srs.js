@@ -66,5 +66,5 @@ export function levelUpLabel(level, knew, wrongsSoFar = 0) {
   if (!knew || wrongsSoFar > 0) return null;
   const next = levelAfterCorrect(level);
   if (isMastered(next)) return "Mastered!";
-  return `Level Up! Lv ${next}`;
+  return `Lv ${next}!`;
 }

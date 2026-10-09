@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { colors, fontDisplay, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
 import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
-import { levelAfterCorrect, levelAfterWrong, levelUpLabel } from '../lib/srs';
+import { levelAfterCorrect, levelAfterWrong, levelUpLabel, isMastered } from '../lib/srs';
 import { saveProgress } from '../lib/api';
 import Stamp from './Stamp';
 import AddDeckButton from './AddDeckButton';
@@ -22,7 +22,7 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
   const [clearedCount, setClearedCount] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [turn, setTurn] = useState(0); // goes up with every answer
-  const [levelUp, setLevelUp] = useState(null); // SRS: { id, label } of the "Level Up!" float
+  const [levelUp, setLevelUp] = useState(null); // SRS: { id, label, mastered } of the level-up float
 
   const done = pile.length === 0;
   const card = done ? null : activeSet.cards.find((c) => c.id === pile[0]) || null;
@@ -43,7 +43,7 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
     let clearedDelta = 0;
 
     const label = levelUpLabel(card.level, knew, wrongCounts[card.id] || 0);
-    if (label) setLevelUp({ id: turn, label });
+    if (label) setLevelUp({ id: turn, label, mastered: isMastered(levelAfterCorrect(card.level)) });
 
     if (knew) {
       // Only a clean answer (no misses on this card yet this session) moves it UP.
@@ -88,9 +88,11 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
     else handleDrillAnswer(knew);
   }
 
-  // "Level Up!" floats up over the next card (or the finish panel) and fades (1 s, see src/index.css).
-  // It can't be tapped, so the answer buttons keep working underneath.
-  const levelUpFloat = levelUp && (
+  // Level-up float over the next card (or the finish panel), see src/index.css. It can't be tapped,
+  // so the answer buttons keep working underneath.
+  // Mastered!: big and gold, rising from the card's top edge (1 s).
+  // Lv N!: small, rising from just above the level chip in the top-right corner (0.8 s).
+  const levelUpFloat = levelUp && (levelUp.mastered ? (
     <div
       key={levelUp.id}
       className="level-up-float"
@@ -104,7 +106,21 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
     >
       {levelUp.label}
     </div>
-  );
+  ) : (
+    <div
+      key={levelUp.id}
+      className="level-up-tick"
+      aria-hidden="true"
+      onAnimationEnd={() => setLevelUp(null)}
+      style={{
+        position: "absolute", right: 22, top: 2, whiteSpace: "nowrap", pointerEvents: "none", zIndex: 2,
+        fontFamily: fontDisplay, fontWeight: 700, fontSize: 15, lineHeight: 1.2, color: colors.accentText,
+        textShadow: `0 2px 10px ${colors.bg}, 0 0 4px ${colors.bg}`,
+      }}
+    >
+      {levelUp.label}
+    </div>
+  ));
 
   const addDeckControl = isSrs ? null : <AddDeckButton isAdded={isAdded} saving={saving} onAdd={onAddDeck} />;
 
