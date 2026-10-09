@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from './lib/supabaseClient';
 import * as api from './lib/api';
 import { buildCards, buildReviewCards } from './lib/drill';
+import { loadSchoolLevel, saveSchoolLevel } from './lib/library';
 import { totalPoints, levelCounts, playerLevel, newPeak } from './lib/points';
 import { colors, wrap, gutter, headerBand, tabBarHeight, btnLink } from './styles/theme';
 import Header from './components/Header';
@@ -26,8 +27,12 @@ function App() {
   const [activeTab, setActiveTab] = useState("cardSets");
 
   // Card Sets (global library)
-  const [libraryData, setLibraryData] = useState({ JHS: [], HS: [], Other: [] });
+  const [libraryData, setLibraryData] = useState([]); // textbooks, from shapeLibrary
   const [loadingLibrary, setLoadingLibrary] = useState(false);
+  // Which Card Sets screen is open, plus the chosen school level (see src/lib/library.js).
+  // Kept here so that coming back from a deck's word list or drill returns to the same deck list.
+  // The level starts from the one saved on the last visit.
+  const [cardSetsPath, setCardSetsPath] = useState(() => ({ screen: "hub", level: loadSchoolLevel(window.localStorage) }));
 
   // Study session
   const [activeSet, setActiveSet] = useState(null);
@@ -194,6 +199,19 @@ function App() {
     setRemovingDeckId(null);
   }
 
+  // Each Card Sets screen starts at the top of the page. The school level is saved for next visit.
+  function navigateCardSets(path) {
+    if (path.level !== cardSetsPath.level) saveSchoolLevel(window.localStorage, path.level);
+    setCardSetsPath(path);
+    window.scrollTo(0, 0);
+  }
+
+  // Tapping Card Sets while already on it goes back to the hub.
+  function changeTab(id) {
+    if (id === "cardSets" && activeTab === "cardSets") setCardSetsPath((p) => ({ screen: "hub", level: p.level }));
+    setActiveTab(id);
+  }
+
   // The tall low-poly header is only on My Cards; other screens get the compact one.
   const bandHeader = !!session && view === "dashboard" && activeTab === "myCards";
 
@@ -219,9 +237,16 @@ function App() {
                 />
               )}
               {activeTab === "cardSets" && (
-                <CardSetsTab library={libraryData} loading={loadingLibrary} onOpenDeck={startDeck} disabled={loadingDeck} />
+                <CardSetsTab
+                  textbooks={libraryData}
+                  loading={loadingLibrary}
+                  path={cardSetsPath}
+                  onNavigate={navigateCardSets}
+                  onOpenDeck={startDeck}
+                  disabled={loadingDeck}
+                />
               )}
-              <Tabs tabs={TABS} active={activeTab} onChange={setActiveTab} />
+              <Tabs tabs={TABS} active={activeTab} onChange={changeTab} />
             </div>
           ) : (
             <>

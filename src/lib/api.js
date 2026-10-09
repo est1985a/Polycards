@@ -2,24 +2,20 @@
 // Each function throws an Error if something goes wrong, so screens can show the message.
 import { supabase } from './supabaseClient';
 import { SESSION_SIZE, nextReviewDate } from './srs';
+import { shapeLibrary } from './library';
 
-// Global library: textbooks → units → decks, grouped by school level.
+// Global library: textbooks → units → decks (with each deck's word count), as a flat list
+// shaped by shapeLibrary. deck_words ( count ) returns only a number per deck, not the rows.
 export async function fetchLibrary() {
   const { data, error } = await supabase
     .from('textbooks')
     .select(`
       id, name, school_level,
-      units ( id, name, unit_order, decks ( id, name ) )
+      units ( id, name, unit_order, decks ( id, name, deck_words ( count ) ) )
     `)
     .order('created_at', { ascending: true });
   if (error) throw new Error("Supabase Error: " + error.message);
-
-  const grouped = { JHS: [], HS: [], Other: [] };
-  (data || []).forEach((tb) => {
-    if (tb.units) tb.units.sort((a, b) => a.unit_order - b.unit_order);
-    (grouped[tb.school_level] || grouped.Other).push(tb);
-  });
-  return grouped;
+  return shapeLibrary(data);
 }
 
 // Decks this student added to My Cards, oldest first.
