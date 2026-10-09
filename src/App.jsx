@@ -196,11 +196,10 @@ function App() {
     setLoadingDeck(false);
   }
 
-  // Puts a Mastered card back into reviews (level 1, due now). Due counts and points
-  // are reloaded when the dashboard is shown again.
+  // Puts a Mastered card back into reviews (level 1, due now). MasteredList asks first.
+  // Due counts and points are reloaded when the dashboard is shown again.
   async function restoreCard(card) {
     if (!session) return;
-    if (!window.confirm("復習に戻しますか？")) return;
     setRestoringCardId(card.id);
     try {
       await api.restoreMasteredCard(session.user.id, card);

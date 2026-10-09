@@ -1,7 +1,7 @@
 // Tests for the Mastered list (My Cards). Run with: npm test
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import MasteredList from './MasteredList';
+import MasteredList, { MasteredRow } from './MasteredList';
 
 const CARDS = [
   { id: '5-jp2en', wordId: 5, direction: 'jp2en', en: 'harvest', jp: '収穫' },
@@ -32,5 +32,25 @@ describe('MasteredList', () => {
     const html = render([]);
     expect(html).toContain('まだマスターしたカードはありません');
     expect(html).not.toContain('復習に戻す');
+  });
+});
+
+describe('MasteredRow (asking before putting a card back)', () => {
+  const row = (props) => renderToStaticMarkup(
+    <MasteredRow card={CARDS[0]} confirming={false} restoring={false} onAsk={() => {}} onCancel={() => {}} onRestore={() => {}} {...props} />
+  );
+
+  it('shows only the 復習に戻す button at first', () => {
+    const html = row();
+    expect(html).toContain('復習に戻す');
+    expect(html).not.toContain('復習に戻しますか？');
+  });
+
+  it('asks 復習に戻しますか？ on the card, with キャンセル and 戻す buttons', () => {
+    const html = row({ confirming: true });
+    expect(html).toContain('復習に戻しますか？');
+    expect(html).toContain('>キャンセル</button>');
+    expect(html).toContain('>戻す</button>');
+    expect(html).not.toContain('>復習に戻す</button>');
   });
 });
