@@ -12,6 +12,7 @@ import MyCardsTab from './components/MyCardsTab';
 import CardSetsTab from './components/CardSetsTab';
 import StudySession from './components/StudySession';
 import WordList from './components/WordList';
+import MasteredList from './components/MasteredList';
 
 const TABS = [
   { id: 'myCards', label: 'My Cards' },
@@ -22,7 +23,7 @@ function App() {
   const [session, setSession] = useState(null);
   const [authError, setAuthError] = useState(null);
 
-  // Screens: 'dashboard', 'wordList' (Card Sets deck, before the drill) or 'study'
+  // Screens: 'dashboard', 'wordList' (Card Sets deck, before the drill), 'study' or 'mastered'
   const [view, setView] = useState("dashboard");
   const [activeTab, setActiveTab] = useState("myCards"); // always open on My Cards
 
@@ -46,6 +47,8 @@ function App() {
   const [savingDeck, setSavingDeck] = useState(false);
   const [removingDeckId, setRemovingDeckId] = useState(null);
   const [stats, setStats] = useState(null); // points and player level
+  const [masteredCards, setMasteredCards] = useState([]);
+  const [restoringCardId, setRestoringCardId] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
@@ -179,6 +182,35 @@ function App() {
     setLoadingDeck(false);
   }
 
+  // My Cards: list of Mastered cards
+  async function openMastered() {
+    setLoadingDeck(true);
+    try {
+      await api.waitForPendingSaves(); // include a card mastered in the review that just ended
+      setMasteredCards(await api.fetchMasteredCards());
+      setView("mastered");
+      window.scrollTo(0, 0);
+    } catch (e) {
+      alert(e.message);
+    }
+    setLoadingDeck(false);
+  }
+
+  // Puts a Mastered card back into reviews (level 1, due now). Due counts and points
+  // are reloaded when the dashboard is shown again.
+  async function restoreCard(card) {
+    if (!session) return;
+    if (!window.confirm("復習に戻しますか？")) return;
+    setRestoringCardId(card.id);
+    try {
+      await api.restoreMasteredCard(session.user.id, card);
+      setMasteredCards((cards) => cards.filter((c) => c.id !== card.id));
+    } catch (e) {
+      alert(e.message);
+    }
+    setRestoringCardId(null);
+  }
+
   async function addDeck() {
     if (!session) {
       alert("Sign in with Google to save decks to My Cards.");
@@ -241,6 +273,7 @@ function App() {
                   stats={stats}
                   onReview={startReview}
                   onRemove={removeDeck}
+                  onOpenMastered={openMastered}
                   loading={loadingDeck}
                   removingDeckId={removingDeckId}
                 />
@@ -265,6 +298,9 @@ function App() {
                   ← ダッシュボードに戻る (Back to Dashboard)
                 </button>
               </div>
+              {view === "mastered" && (
+                <MasteredList cards={masteredCards} restoringId={restoringCardId} onRestore={restoreCard} />
+              )}
               {activeSet && view === "wordList" && (
                 <WordList
                   activeSet={activeSet}

@@ -1,7 +1,8 @@
 import { colors, fontDisplay, panel } from '../styles/theme';
-import { SESSION_SIZE } from '../lib/srs';
+import { SESSION_SIZE, MASTERED } from '../lib/srs';
 import PlayerStats from './PlayerStats';
 import LevelChart from './LevelChart';
+import StarIcon from './StarIcon';
 
 // Big "start review" button. The pill shows how many cards the session will have
 // (all due cards, up to SESSION_SIZE).
@@ -33,6 +34,27 @@ function ReviewButton({ dueCount, loading, onReview }) {
       ) : (
         <span style={{ fontSize: 16, fontWeight: 700 }}>復習するカードはありません</span>
       )}
+    </button>
+  );
+}
+
+// Opens the Mastered list. Shows how many cards are Mastered.
+function MasteredButton({ count, loading, onOpen }) {
+  return (
+    <button
+      onClick={onOpen}
+      disabled={loading}
+      style={{
+        width: "100%", minHeight: 52, display: "flex", alignItems: "center", gap: 10, padding: "0 16px",
+        background: colors.surface, border: `2px solid ${colors.gold}`, borderRadius: 16,
+        color: colors.text, cursor: loading ? "default" : "pointer", opacity: loading ? 0.7 : 1, textAlign: "left",
+      }}
+    >
+      <StarIcon size={22} />
+      <span style={{ flex: 1, fontFamily: fontDisplay, fontSize: 17, fontWeight: 700 }}>
+        Mastered <span style={{ color: colors.gold }}>{count.toLocaleString('en-US')}</span>
+      </span>
+      <span aria-hidden="true" style={{ fontSize: 22, lineHeight: 1, color: colors.muted }}>›</span>
     </button>
   );
 }
@@ -79,7 +101,7 @@ function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
   );
 }
 
-export default function MyCardsTab({ decks, dueRows, stats, onReview, onRemove, loading, removingDeckId }) {
+export default function MyCardsTab({ decks, dueRows, stats, onReview, onRemove, onOpenMastered, loading, removingDeckId }) {
   // A word can be in several decks, so a due card counts toward each of them.
   const dueByDeck = {};
   dueRows.forEach((r) => {
@@ -93,6 +115,7 @@ export default function MyCardsTab({ decks, dueRows, stats, onReview, onRemove, 
       <PlayerStats stats={stats} />
       <ReviewButton dueCount={dueRows.length} loading={loading} onReview={() => onReview()} />
       {stats && <LevelChart counts={stats.levelCounts} />}
+      {stats && <MasteredButton count={stats.levelCounts[MASTERED]} loading={loading} onOpen={onOpenMastered} />}
 
       <div style={{ display: "grid", gap: 10 }}>
         <h2 style={{ fontSize: 16, fontWeight: 700, margin: "8px 0 0", color: colors.text }}>マイデッキ</h2>

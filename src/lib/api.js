@@ -1,7 +1,7 @@
 // Every Supabase query the app makes lives here.
 // Each function throws an Error if something goes wrong, so screens can show the message.
 import { supabase } from './supabaseClient';
-import { SESSION_SIZE, nextReviewDate } from './srs';
+import { SESSION_SIZE, MASTERED, progressUpdate, restoreUpdate } from './srs';
 import { shapeLibrary } from './library';
 
 // Global library: textbooks → units → decks (with each deck's word count), as a flat list
@@ -28,12 +28,13 @@ export async function fetchMyDecks() {
   return data || [];
 }
 
-// Cards that are due now (used for the due counts).
+// Cards that are due now (used for the due counts). Mastered cards are never due.
 // Each row lists every deck its word belongs to, since words can be shared between decks.
 export async function fetchDueRows() {
   const { data, error } = await supabase
     .from('user_cards')
     .select('word_id, direction, words ( deck_words ( deck_id ) )')
+    .lt('level', MASTERED)
     .lte('next_review_at', new Date().toISOString());
   if (error) throw new Error(error.message);
   return data || [];
@@ -127,7 +128,7 @@ export async function removeDeckFromMyCards(userId, deckId) {
   }
 }
 
-// Due cards for a review session (all decks, or one deck), oldest due first.
+// Due cards for a review session (all decks, or one deck), oldest due first. Never Mastered cards.
 export async function fetchReviewRows(deckId = null) {
   const select = deckId
     ? 'word_id, direction, level, words!inner ( id, english, japanese, example_en, example_ja, deck_words!inner ( deck_id ) )'
@@ -135,6 +136,7 @@ export async function fetchReviewRows(deckId = null) {
   let query = supabase
     .from('user_cards')
     .select(select)
+    .lt('level', MASTERED)
     .lte('next_review_at', new Date().toISOString())
     .order('next_review_at', { ascending: true })
     .limit(SESSION_SIZE);
@@ -160,11 +162,7 @@ export function saveProgress(userId, card, newLevel) {
 async function writeProgress(userId, card, newLevel) {
   const { error } = await supabase
     .from('user_cards')
-    .update({
-      level: newLevel,
-      next_review_at: nextReviewDate(newLevel).toISOString(),
-      updated_at: new Date().toISOString(),
-    })
+    .update({ ...progressUpdate(newLevel), updated_at: new Date().toISOString() })
     .eq('user_id', userId)
     .eq('word_id', card.wordId)
     .eq('direction', card.direction);
@@ -175,25 +173,67 @@ export async function waitForPendingSaves() {
   await Promise.allSettled([...pendingSaves]);
 }
 
-// Level of every one of the student's cards. Read in pages, because Supabase
-// returns at most 1,000 rows per request and a big collection has more cards than that.
-export async function fetchAllCardLevels() {
+// Reads every row of a query in pages, because Supabase returns at most 1,000 rows per request
+// and a big collection has more cards than that. makeQuery() must return a new, sorted query each time.
+async function fetchAllPages(makeQuery, errorText) {
   const PAGE = 1000;
-  const levels = [];
+  const rows = [];
   let total = null;
-  while (total === null || levels.length < total) {
-    const { data, error, count } = await supabase
-      .from('user_cards')
-      .select('level', total === null ? { count: 'exact' } : undefined)
-      .order('word_id', { ascending: true })
-      .order('direction', { ascending: true })
-      .range(levels.length, levels.length + PAGE - 1);
-    if (error) throw new Error("Could not load card levels: " + error.message);
+  while (total === null || rows.length < total) {
+    const { data, error, count } = await makeQuery(total === null)
+      .range(rows.length, rows.length + PAGE - 1);
+    if (error) throw new Error(errorText + error.message);
     if (total === null) total = count ?? 0;
     if (!data || data.length === 0) break; // safety: rows were removed while reading
-    data.forEach((r) => levels.push(r.level));
+    rows.push(...data);
   }
-  return levels;
+  return rows;
+}
+
+// Level of every one of the student's cards.
+export async function fetchAllCardLevels() {
+  const rows = await fetchAllPages(
+    (withCount) => supabase
+      .from('user_cards')
+      .select('level', withCount ? { count: 'exact' } : undefined)
+      .order('word_id', { ascending: true })
+      .order('direction', { ascending: true }),
+    "Could not load card levels: ",
+  );
+  return rows.map((r) => r.level);
+}
+
+// The student's Mastered cards with their words, newest mastered first.
+export async function fetchMasteredCards() {
+  const rows = await fetchAllPages(
+    (withCount) => supabase
+      .from('user_cards')
+      .select('word_id, direction, mastered_at, words ( english, japanese )', withCount ? { count: 'exact' } : undefined)
+      .eq('level', MASTERED)
+      .order('mastered_at', { ascending: false, nullsFirst: false })
+      .order('word_id', { ascending: true })
+      .order('direction', { ascending: true }),
+    "Could not load Mastered cards: ",
+  );
+  return rows.filter((r) => r.words).map((r) => ({
+    id: `${r.word_id}-${r.direction}`,
+    wordId: r.word_id,
+    direction: r.direction,
+    en: r.words.english,
+    jp: r.words.japanese,
+    masteredAt: r.mastered_at,
+  }));
+}
+
+// Puts a Mastered card back into reviews (level 1, due now).
+export async function restoreMasteredCard(userId, card) {
+  const { error } = await supabase
+    .from('user_cards')
+    .update({ ...restoreUpdate(), updated_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .eq('word_id', card.wordId)
+    .eq('direction', card.direction);
+  if (error) throw new Error("Could not put the card back: " + error.message);
 }
 
 // Highest points the student has ever had (0 if they have no user_stats row yet).

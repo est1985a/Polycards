@@ -1,6 +1,9 @@
 // Tests for the SRS rules. Run with: npm test
 import { describe, it, expect } from 'vitest';
-import { LEVEL_HOURS, MAX_LEVEL, SESSION_SIZE, levelAfterCorrect, levelAfterWrong, nextReviewDate, levelUpLabel } from './srs';
+import {
+  LEVEL_HOURS, MAX_LEVEL, MASTERED, SESSION_SIZE, RESTORED_LEVEL, isMastered,
+  levelAfterCorrect, levelAfterWrong, nextReviewDate, progressUpdate, restoreUpdate, levelUpLabel,
+} from './srs';
 
 describe('settings', () => {
   it('has the agreed wait times: new, 4h, 1d, 3d, 1w, 2w, 30d, ~4 months', () => {
@@ -20,8 +23,29 @@ describe('correct answer', () => {
     expect(levelAfterCorrect(6)).toBe(7);
   });
 
-  it('never goes above level 7', () => {
-    expect(levelAfterCorrect(7)).toBe(7);
+  it('makes a level 7 card Mastered (level 8), and never goes higher', () => {
+    expect(MASTERED).toBe(8);
+    expect(levelAfterCorrect(7)).toBe(MASTERED);
+    expect(isMastered(levelAfterCorrect(7))).toBe(true);
+    expect(levelAfterCorrect(MASTERED)).toBe(MASTERED);
+  });
+
+  it('only counts level 8 as Mastered', () => {
+    expect(isMastered(7)).toBe(false);
+    expect(isMastered(0)).toBe(false);
+    expect(isMastered(8)).toBe(true);
+  });
+});
+
+describe('a miss at level 7 works as before (not Mastered)', () => {
+  it('drops 2 levels for the 1st and 2nd miss, 4 for the 3rd and 4th', () => {
+    expect(levelAfterWrong(7, 1)).toBe(5);
+    expect(levelAfterWrong(7, 2)).toBe(5);
+    expect(levelAfterWrong(7, 3)).toBe(3);
+  });
+
+  it('shows no float on a miss at level 7', () => {
+    expect(levelUpLabel(7, false)).toBeNull();
   });
 });
 
@@ -73,6 +97,46 @@ describe('next review date', () => {
     expect(hoursLater(4)).toBe(168);
     expect(hoursLater(7)).toBe(2880); // 120 days
   });
+
+  it('never schedules a Mastered card', () => {
+    expect(nextReviewDate(MASTERED, now)).toBeNull();
+  });
+});
+
+describe('saved fields (progressUpdate)', () => {
+  const now = Date.UTC(2026, 0, 1, 9, 0, 0);
+
+  it('schedules a normal level and clears mastered_at', () => {
+    expect(progressUpdate(3, now)).toEqual({
+      level: 3, next_review_at: new Date(now + 72 * 3600000).toISOString(), mastered_at: null,
+    });
+  });
+
+  it('gives a Mastered card no next review and records when it was mastered', () => {
+    expect(progressUpdate(MASTERED, now)).toEqual({
+      level: MASTERED, next_review_at: null, mastered_at: new Date(now).toISOString(),
+    });
+  });
+
+  it('saves a level 7 miss as a normal, scheduled level', () => {
+    const saved = progressUpdate(levelAfterWrong(7, 1), now);
+    expect(saved.level).toBe(5);
+    expect(saved.next_review_at).not.toBeNull();
+    expect(saved.mastered_at).toBeNull();
+  });
+});
+
+describe('putting a Mastered card back (restoreUpdate)', () => {
+  const now = Date.UTC(2026, 0, 1, 9, 0, 0);
+
+  it('returns it to level 1, due right now, no longer Mastered', () => {
+    expect(RESTORED_LEVEL).toBe(1);
+    expect(restoreUpdate(now)).toEqual({ level: 1, next_review_at: new Date(now).toISOString(), mastered_at: null });
+  });
+
+  it('is due straight away (next review is not later than now)', () => {
+    expect(new Date(restoreUpdate(now).next_review_at).getTime()).toBeLessThanOrEqual(now);
+  });
 });
 
 describe('levelUpLabel ("Level Up!" float)', () => {
@@ -82,8 +146,12 @@ describe('levelUpLabel ("Level Up!" float)', () => {
     expect(levelUpLabel(6, true)).toBe('Level Up! Lv 7');
   });
 
-  it('shows MAX for a card already at the top level', () => {
-    expect(levelUpLabel(MAX_LEVEL, true)).toBe('MAX');
+  it('shows Mastered! (not MAX) when a level 7 card is answered correctly', () => {
+    expect(levelUpLabel(MAX_LEVEL, true)).toBe('Mastered!');
+  });
+
+  it('shows nothing when a level 7 card missed earlier this session is answered correctly', () => {
+    expect(levelUpLabel(7, true, 1)).toBeNull();
   });
 
   it('shows nothing on a miss', () => {

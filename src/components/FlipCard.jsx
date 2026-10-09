@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { colors, fontDisplay, fontBody } from '../styles/theme';
 import WordInfo from './WordInfo';
+import { directionLabel } from '../lib/drill';
 
 // Flip: 650 ms with a small overshoot. Turned off for "reduce motion" in src/index.css.
 const FLIP = "transform 650ms cubic-bezier(0.34, 1.45, 0.55, 1)";
@@ -68,7 +69,7 @@ export default function FlipCard({ card, showLevel, revealed, onFlip }) {
         >
           <span style={topRow}>
             <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 14, color: colors.accentText }}>
-              {frontIsEnglish ? "English to Japanese" : "Japanese to English"}
+              {directionLabel(card.direction)}
             </span>
             {showLevel && <LevelChip level={card.level} />}
           </span>

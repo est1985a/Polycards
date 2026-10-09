@@ -1,17 +1,21 @@
 // Tests for points and player level. Pure functions only: no database, no test account.
 // Run with: npm test
 import { describe, it, expect } from 'vitest';
-import { CARD_POINTS } from './srs';
+import { CARD_POINTS, MASTERED, RESTORED_LEVEL } from './srs';
 import { cardPoints, totalPoints, levelCounts, playerLevel, pointsForLevel, newPeak } from './points';
 
 describe('points per card', () => {
-  it('uses the agreed values for levels 0 to 7', () => {
-    expect(CARD_POINTS).toEqual([0, 1, 2, 3, 5, 8, 13, 21]);
+  it('uses the agreed values for levels 0 to 7 and Mastered', () => {
+    expect(CARD_POINTS).toEqual([0, 1, 2, 3, 5, 8, 13, 21, 34]);
     expect([0, 1, 2, 3, 4, 5, 6, 7].map(cardPoints)).toEqual([0, 1, 2, 3, 5, 8, 13, 21]);
   });
 
-  it('gives 0 for a level outside 0 to 7', () => {
-    expect(cardPoints(8)).toBe(0);
+  it('makes a Mastered card worth 34 points', () => {
+    expect(cardPoints(MASTERED)).toBe(34);
+  });
+
+  it('gives 0 for a level outside 0 to 8', () => {
+    expect(cardPoints(9)).toBe(0);
     expect(cardPoints(undefined)).toBe(0);
   });
 });
@@ -29,15 +33,20 @@ describe('total points', () => {
     expect(totalPoints([0, 0, 2])).toBe(2);
   });
 
+  it('counts Mastered cards', () => {
+    expect(totalPoints([7, MASTERED, MASTERED])).toBe(21 + 34 + 34);
+  });
+
   it('is 0 with no cards at all', () => {
     expect(totalPoints([])).toBe(0);
   });
 });
 
 describe('cards per level', () => {
-  it('counts how many cards are at each level 0 to 7', () => {
-    expect(levelCounts([0, 0, 1, 3, 7, 7, 7])).toEqual([2, 1, 0, 1, 0, 0, 0, 3]);
-    expect(levelCounts([])).toEqual([0, 0, 0, 0, 0, 0, 0, 0]);
+  it('counts how many cards are at each level 0 to 7, then Mastered', () => {
+    expect(levelCounts([0, 0, 1, 3, 7, 7, 7])).toEqual([2, 1, 0, 1, 0, 0, 0, 3, 0]);
+    expect(levelCounts([7, MASTERED, MASTERED])).toEqual([0, 0, 0, 0, 0, 0, 0, 1, 2]);
+    expect(levelCounts([])).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0]);
   });
 });
 
@@ -74,6 +83,13 @@ describe('peak points', () => {
 
   it('stays the same when they are equal', () => {
     expect(newPeak(100, 100)).toBe(100);
+  });
+
+  it('never goes down when a Mastered card is put back (34 → 1 point)', () => {
+    const before = totalPoints([MASTERED]);
+    const after = totalPoints([RESTORED_LEVEL]);
+    expect([before, after]).toEqual([34, 1]);
+    expect(newPeak(after, newPeak(before, 0))).toBe(34);
   });
 });
 

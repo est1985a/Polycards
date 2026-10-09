@@ -10,6 +10,11 @@ function wordFields(w) {
   return { jp: w.japanese, en: w.english, exampleEn: example(w.example_en), exampleJa: example(w.example_ja) };
 }
 
+// Direction label, always in English (FlipCard, Mastered list).
+export function directionLabel(direction) {
+  return direction === "en2jp" ? "English to Japanese" : "Japanese to English";
+}
+
 // Each word becomes two cards: English to Japanese and Japanese to English.
 export function buildCards(words) {
   const cards = [];

@@ -1,6 +1,6 @@
 // Points and player level. Pure functions only (no database), so they are easy to test
 // and the screens can show the results however they like.
-import { CARD_POINTS, MAX_LEVEL } from './srs';
+import { CARD_POINTS, MASTERED } from './srs';
 
 // Points for one card at this level.
 export function cardPoints(level) {
@@ -13,9 +13,9 @@ export function totalPoints(levels) {
   return levels.reduce((sum, level) => sum + cardPoints(level), 0);
 }
 
-// How many cards are at each level: [level 0 count, level 1 count, ..., level 7 count].
+// How many cards are at each level: [level 0 count, ..., level 7 count, Mastered count].
 export function levelCounts(levels) {
-  const counts = Array(MAX_LEVEL + 1).fill(0);
+  const counts = Array(MASTERED + 1).fill(0);
   levels.forEach((level) => {
     if (counts[level] !== undefined) counts[level]++;
   });
