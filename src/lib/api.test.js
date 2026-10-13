@@ -21,7 +21,7 @@ function fakeQuery() {
 
 vi.mock('./supabaseClient', () => ({ supabase: { from: (table) => { calls.push(['from', table]); return fakeQuery(); } } }));
 
-const { fetchDueRows, fetchReviewRows, restoreMasteredCard, saveProgress } = await import('./api');
+const { fetchDueRows, fetchReviewRows, restoreMasteredCard, saveProgress, fetchNextReview, fetchReviewPlanRows } = await import('./api');
 
 beforeEach(() => {
   calls.length = 0;
@@ -78,5 +78,25 @@ describe('putting a card back', () => {
   it('reports an error from Supabase', async () => {
     result = { data: null, error: { message: 'nope' } };
     await expect(restoreMasteredCard('u1', { wordId: 3, direction: 'jp2en' })).rejects.toThrow('nope');
+  });
+});
+
+describe('next review', () => {
+  it('returns null when no card is waiting (no cards, or all Mastered)', async () => {
+    expect(await fetchNextReview()).toBeNull();
+    expect(calls).toContainEqual(['lt', 'level', MASTERED]);
+  });
+
+  it('returns the first review time and the count for that hour', async () => {
+    result = { data: [{ next_review_at: '2026-10-13T09:42:00Z' }], error: null, count: 7 };
+    expect(await fetchNextReview()).toEqual({ at: Date.parse('2026-10-13T09:42:00Z'), count: 7 });
+    expect(calls).toContainEqual(['lt', 'next_review_at', '2026-10-13T10:00:00.000Z']); // end of that clock hour
+    expect(calls).toContainEqual(['select', 'word_id', { count: 'exact', head: true }]);
+  });
+
+  it('reads the review plan in pages, without Mastered cards', async () => {
+    await fetchReviewPlanRows();
+    expect(calls).toContainEqual(['range', 0, 999]);
+    expect(calls).toContainEqual(['lt', 'level', MASTERED]);
   });
 });

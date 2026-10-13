@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './lib/supabaseClient';
 import * as api from './lib/api';
 import { buildCards, buildReviewCards } from './lib/drill';
 import { loadSchoolLevel, saveSchoolLevel } from './lib/library';
 import { totalPoints, levelCounts, playerLevel, newPeak } from './lib/points';
+import { nextReviewSummary } from './lib/schedule';
 import { colors, wrap, gutter, headerBand, tabBarHeight, btnLink } from './styles/theme';
 import Header from './components/Header';
 import LoginScreen from './components/LoginScreen';
@@ -13,6 +14,7 @@ import CardSetsTab from './components/CardSetsTab';
 import StudySession from './components/StudySession';
 import WordList from './components/WordList';
 import MasteredList from './components/MasteredList';
+import ReviewPlanSheet from './components/ReviewPlanSheet';
 
 const TABS = [
   { id: 'myCards', label: 'My Cards' },
@@ -44,6 +46,10 @@ function App() {
   const [myDeckIds, setMyDeckIds] = useState([]);
   const [myDecks, setMyDecks] = useState([]);
   const [dueRows, setDueRows] = useState([]);
+  const [nextReview, setNextReview] = useState(null); // { at, count } of the next review, from fetchNextReview
+  const [now, setNow] = useState(() => Date.now()); // for the "2時間後" wording; updated every minute
+  const [planRows, setPlanRows] = useState(null); // review plan pop-up rows (null while loading)
+  const [planOpen, setPlanOpen] = useState(false);
   const [savingDeck, setSavingDeck] = useState(false);
   const [removingDeckId, setRemovingDeckId] = useState(null);
   const [stats, setStats] = useState(null); // points and player level
@@ -79,6 +85,27 @@ function App() {
     if (session && view === "dashboard") loadStats(session.user.id);
   }, [session, view]);
 
+  // Notice when the next review time arrives. A one-minute timer keeps "2時間後" up to date and
+  // reloads the due cards once the time has passed. Phones pause timers while the screen is off,
+  // so the due cards are also reloaded whenever the app comes back into view.
+  const waitingForNext = !!session && view === "dashboard" && dueRows.length === 0 && !!nextReview;
+  useEffect(() => {
+    if (!waitingForNext) return;
+    const timer = setInterval(() => {
+      const t = Date.now();
+      setNow(t);
+      if (t >= nextReview.at) loadDueRows();
+    }, 60 * 1000);
+    return () => clearInterval(timer);
+  }, [waitingForNext, nextReview]);
+
+  useEffect(() => {
+    if (!session || view !== "dashboard") return;
+    const onVisible = () => { if (document.visibilityState === "visible") loadDueRows(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [session, view]);
+
   async function loadLibrary() {
     setLoadingLibrary(true);
     try {
@@ -99,13 +126,28 @@ function App() {
     }
   }
 
+  // Due cards, plus the next review after now (for the 次の復習 line when nothing is due).
   async function loadDueRows() {
+    const [due, next] = await Promise.allSettled([api.fetchDueRows(), api.fetchNextReview()]);
+    setNow(Date.now());
+    if (due.status === "fulfilled") setDueRows(due.value); else console.error(due.reason);
+    if (next.status === "fulfilled") setNextReview(next.value); else console.error(next.reason);
+  }
+
+  // Review plan pop-up: open it right away (showing 読み込み中…), then load the plan.
+  async function openPlan() {
+    setPlanRows(null);
+    setNow(Date.now());
+    setPlanOpen(true);
     try {
-      setDueRows(await api.fetchDueRows());
+      setPlanRows(await api.fetchReviewPlanRows());
     } catch (e) {
-      console.error(e);
+      setPlanOpen(false);
+      alert(e.message);
     }
   }
+
+  const closePlan = useCallback(() => setPlanOpen(false), []);
 
   async function loadStats(userId) {
     try {
@@ -139,6 +181,7 @@ function App() {
   // Logo: back to the My Cards dashboard, with Card Sets reset to its hub (the school level is kept).
   // Leaving a review loses nothing: each answer is saved as soon as it is given.
   function goHome() {
+    setPlanOpen(false);
     setView("dashboard");
     setActiveTab("myCards");
     setCardSetsPath((p) => ({ screen: "hub", level: p.level }));
@@ -269,8 +312,10 @@ function App() {
                 <MyCardsTab
                   decks={myDecks}
                   dueRows={dueRows}
+                  nextReview={dueRows.length === 0 ? nextReviewSummary(nextReview, now) : null}
                   stats={stats}
                   onReview={startReview}
+                  onOpenPlan={openPlan}
                   onRemove={removeDeck}
                   onOpenMastered={openMastered}
                   loading={loadingDeck}
@@ -289,6 +334,7 @@ function App() {
                 />
               )}
               <Tabs tabs={TABS} active={activeTab} onChange={changeTab} />
+              {planOpen && <ReviewPlanSheet rows={planRows} now={now} onClose={closePlan} />}
             </div>
           ) : (
             <>

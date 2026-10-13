@@ -6,18 +6,22 @@ import StarIcon from './StarIcon';
 
 // Big "start review" button. The pill shows how many cards the session will have
 // (all due cards, up to SESSION_SIZE); a small line under the label shows the full total when there are more.
-export function ReviewButton({ dueCount, loading, onReview }) {
+// When nothing is due, nextReview (from nextReviewSummary) adds the 次の復習 line; if that review is
+// today or tomorrow, the button opens the review plan pop-up instead.
+export function ReviewButton({ dueCount, loading, onReview, nextReview = null, onOpenPlan }) {
   const ready = dueCount > 0;
+  const showsPlan = !ready && !!nextReview?.tappable;
   const total = extraDueTotal(dueCount);
   return (
     <button
-      onClick={onReview}
-      disabled={loading || !ready}
+      onClick={ready ? onReview : onOpenPlan}
+      disabled={loading || !(ready || showsPlan)}
+      aria-haspopup={showsPlan ? "dialog" : undefined}
       style={{
         width: "100%", minHeight: 64, borderRadius: 16, border: "none", padding: "10px 20px",
         display: "flex", alignItems: "center", justifyContent: ready ? "space-between" : "center", gap: 12,
         background: ready ? colors.accent : colors.surface2, color: ready ? colors.accentInk : colors.muted,
-        cursor: ready && !loading ? "pointer" : "default", opacity: loading ? 0.7 : 1,
+        cursor: (ready || showsPlan) && !loading ? "pointer" : "default", opacity: loading ? 0.7 : 1,
       }}
     >
       {ready ? (
@@ -41,7 +45,15 @@ export function ReviewButton({ dueCount, loading, onReview }) {
           </span>
         </>
       ) : (
-        <span style={{ fontSize: 16, fontWeight: 700 }}>復習するカードはありません</span>
+        <span style={{ display: "grid", gap: 2 }}>
+          <span style={{ fontSize: 16, fontWeight: 700 }}>復習するカードはありません</span>
+          {nextReview && (
+            <span style={{ fontSize: 14, fontWeight: 700, color: colors.text }}>
+              {nextReview.text}
+              {showsPlan && <span aria-hidden="true" style={{ marginLeft: 6, color: colors.muted }}>›</span>}
+            </span>
+          )}
+        </span>
       )}
     </button>
   );
@@ -110,7 +122,7 @@ function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
   );
 }
 
-export default function MyCardsTab({ decks, dueRows, stats, onReview, onRemove, onOpenMastered, loading, removingDeckId }) {
+export default function MyCardsTab({ decks, dueRows, nextReview, stats, onReview, onOpenPlan, onRemove, onOpenMastered, loading, removingDeckId }) {
   // A word can be in several decks, so a due card counts toward each of them.
   const dueByDeck = {};
   dueRows.forEach((r) => {
@@ -122,7 +134,7 @@ export default function MyCardsTab({ decks, dueRows, stats, onReview, onRemove, 
   return (
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
       <PlayerStats stats={stats} />
-      <ReviewButton dueCount={dueRows.length} loading={loading} onReview={() => onReview()} />
+      <ReviewButton dueCount={dueRows.length} loading={loading} onReview={() => onReview()} nextReview={nextReview} onOpenPlan={onOpenPlan} />
       {stats && <LevelChart counts={stats.levelCounts} />}
       {stats && <MasteredButton count={stats.levelCounts[MASTERED]} loading={loading} onOpen={onOpenMastered} />}
 

@@ -36,3 +36,34 @@ describe('review button', () => {
     expect(extraDueTotal(0)).toBeNull();
   });
 });
+
+describe('next review line (nothing due)', () => {
+  const line = (nextReview, dueCount = 0) => renderToStaticMarkup(
+    <ReviewButton dueCount={dueCount} loading={false} onReview={() => {}} nextReview={nextReview} onOpenPlan={() => {}} />
+  );
+  const soon = { text: '次の復習：2時間後に 7枚', tappable: true };
+
+  it('shows the line under 復習するカードはありません, and the button opens the plan', () => {
+    const html = line(soon);
+    expect(html).toContain('復習するカードはありません');
+    expect(html).toContain('次の復習：2時間後に 7枚');
+    expect(html).toContain('›');
+    expect(html).not.toContain('disabled');
+    expect(html).toContain('aria-haspopup="dialog"');
+  });
+
+  it('shows the line but cannot be tapped when the review is after tomorrow', () => {
+    const html = line({ text: '次の復習：10月20日に 7枚', tappable: false });
+    expect(html).toContain('次の復習：10月20日に 7枚');
+    expect(html).not.toContain('›');
+    expect(html).toContain('disabled');
+  });
+
+  it('looks like before with no next review (no cards, or all Mastered)', () => {
+    expect(line(null)).toBe(render(0));
+  });
+
+  it('only shows the line when nothing is due', () => {
+    expect(line(soon, 5)).not.toContain('次の復習');
+  });
+});

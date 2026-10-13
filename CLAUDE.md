@@ -5,8 +5,8 @@ A vocabulary spaced-repetition (SRS) web app for Japanese junior high and high s
 ## Stack
 - React + Vite. Code layout:
   - `src/App.jsx`: shared state (session, screen, My Cards data) and which screen to show
-  - `src/components/`: one file per screen part (`StudySession`, `MyCardsTab`, `MasteredList`, `StarIcon`, `CardSetsTab`, `CardSetsHub`, `NavRow`, `LevelSwitch`, `LoginScreen`, `Header`, `Tabs`, `Stamp`, `PlayerStats`, `LevelChart`, `Avatar`, `FlipCard`, `WordInfo`, `WordList`, `Highlighted`, `AddDeckButton`)
-  - `src/lib/srs.js`: SRS rules; `src/lib/points.js`: points and player level (pure functions); `src/lib/drill.js`: building/shuffling card piles; `src/lib/dictionary.js`: builds the dictionary link for a word; `src/lib/library.js`: shapes the Card Sets library and its back-button rules (pure functions); `src/lib/api.js`: every Supabase query; `src/lib/supabaseClient.js`: creates the Supabase client
+  - `src/components/`: one file per screen part (`StudySession`, `MyCardsTab`, `MasteredList`, `StarIcon`, `CardSetsTab`, `CardSetsHub`, `NavRow`, `LevelSwitch`, `LoginScreen`, `Header`, `Tabs`, `Stamp`, `PlayerStats`, `LevelChart`, `ReviewPlanSheet`, `Avatar`, `FlipCard`, `WordInfo`, `WordList`, `Highlighted`, `AddDeckButton`)
+  - `src/lib/srs.js`: SRS rules; `src/lib/points.js`: points and player level (pure functions); `src/lib/drill.js`: building/shuffling card piles; `src/lib/dictionary.js`: builds the dictionary link for a word; `src/lib/library.js`: shapes the Card Sets library and its back-button rules (pure functions); `src/lib/schedule.js`: next-review wording and the review plan, in Japan time (pure functions); `src/lib/sheet.js`: when a pop-up closes; `src/lib/api.js`: every Supabase query; `src/lib/supabaseClient.js`: creates the Supabase client
   - `src/styles/theme.js`: shared colors (as CSS variables), fonts, and button styles
   - `src/themes.js`: color themes (values for each color role) and `applyTheme()`
 - Supabase: PostgreSQL, Auth, Row Level Security
@@ -77,7 +77,10 @@ Rules:
 - The account button (round, user's initial) opens a menu with the email and Sign Out.
 - `Tabs.jsx` is a bottom tab bar fixed to the screen (72 px, `tabBarHeight`), shown on the dashboard only; the dashboard has extra bottom padding so nothing hides behind it.
 - `Avatar.jsx` is a PLACEHOLDER low-poly cat in `danger` shades, to be replaced by unlockable models. Keep its props simple (`size`).
-- "Next review in…" (次の復習) is not shown yet: it needs a new query (planned feature).
+- Next review (次の復習): when nothing is due, the gray review button shows a second line like 次の復習：2時間後に 7枚 (`nextReviewSummary()` in `src/lib/schedule.js`). The time is the earliest future `next_review_at` (Mastered never counts); the number is how many cards come due in that same Japan-time clock hour (`fetchNextReview()`: one query for the earliest time, one count-only query). Wording rounds up: under 1 hour 45分後, under 24 hours 2時間後, otherwise 10月15日. No line when the student has no cards or only Mastered ones. If the review is today or tomorrow, the button is tappable (›) and opens the review plan; after tomorrow it stays disabled.
+- Review plan pop-up (`ReviewPlanSheet.jsx`): bottom sheet on phones, centered box from 600 px (classes `review-plan-backdrop` / `review-plan-sheet` in `src/index.css`). 今日 (now until midnight) and 明日 (all of tomorrow), one row per hour with cards (18:00　7枚) and a 合計 per day, or 今日はもう復習はありません / 明日の復習はありません. "Today", "tomorrow" and hours are always Japan time (UTC + 9, no daylight saving), whatever the device timezone. Rows come from `fetchReviewPlanRows()` (paged, loaded each time it opens), grouped by `groupReviewPlan()`. Closes with ×, Escape or a tap on the backdrop (`shouldCloseSheet()`). Tests: `src/lib/schedule.test.js`, `src/lib/sheet.test.js`, `ReviewPlanSheet.test.jsx`, `MyCardsTab.test.jsx`.
+- Refresh: on the dashboard, due cards and the next review reload whenever the app comes back into view (`visibilitychange`). While nothing is due, a 60-second timer keeps the wording current and reloads once the next review time has passed, so 復習を始める can appear up to about a minute late.
+- New cards (level 0) get `next_review_at = now()` from the database default when a deck is added, so they are due right away.
 - Interface is mostly Japanese. Keep the "English to Japanese" / "Japanese to English" direction labels in English. Answer buttons are bilingual (English plus Japanese). Do not add furigana unless I ask.
 - Use American English spelling in anything written in English for school or work.
 - Inline styles in each component. Colors, fonts and button styles come from `src/styles/theme.js`. Never write hex codes, `rgb()` or color names in `src/App.jsx` or `src/components/`; a test fails if you do.
@@ -95,7 +98,6 @@ Rules:
 - Never push to `main` (or merge into it) unless I say so, because that deploys to students. Don't push other branches unless I ask.
 
 ## Planned features (not built yet)
-- Show when the next cards come due
 - Word game for cleared sets
 - Vocabulary categories and test-prep sets (e.g. EIKEN)
 - Low-poly visual style (inspired by Poly Pizza): retro poly avatar that levels up and unlocks new poly models as a student's decks grow

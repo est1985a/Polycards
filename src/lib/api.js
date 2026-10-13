@@ -3,6 +3,7 @@
 import { supabase } from './supabaseClient';
 import { SESSION_SIZE, MASTERED, progressUpdate, restoreUpdate } from './srs';
 import { shapeLibrary } from './library';
+import { jstDayBounds, jstHourStart } from './schedule';
 
 // Global library: textbooks → units → decks (with each deck's word count), as a flat list
 // shaped by shapeLibrary. deck_words ( count ) returns only a number per deck, not the rows.
@@ -193,6 +194,51 @@ async function fetchAllPages(makeQuery, errorText) {
     rows.push(...data);
   }
   return rows;
+}
+
+// The next review after now: { at, count }, where count is how many cards come due in that
+// Japan-time clock hour (one user_cards row = one card, like the due count). null when no card is
+// waiting (no cards, or all Mastered). The count is a head-only query, so the 1,000-row limit never applies.
+export async function fetchNextReview() {
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('user_cards')
+    .select('next_review_at')
+    .lt('level', MASTERED)
+    .gt('next_review_at', now)
+    .order('next_review_at', { ascending: true })
+    .limit(1);
+  if (error) throw new Error("Could not load the next review: " + error.message);
+  if (!data || data.length === 0) return null;
+
+  const at = Date.parse(data[0].next_review_at);
+  const hourEnd = new Date(jstHourStart(at) + 3600 * 1000).toISOString();
+  const { count, error: countError } = await supabase
+    .from('user_cards')
+    .select('word_id', { count: 'exact', head: true })
+    .lt('level', MASTERED)
+    .gt('next_review_at', now)
+    .lt('next_review_at', hourEnd);
+  if (countError) throw new Error("Could not load the next review: " + countError.message);
+  return { at, count: count ?? 0 };
+}
+
+// Review times of cards due between now and the end of tomorrow (Japan time), for the
+// review plan pop-up (grouped by groupReviewPlan). Read in pages, so nothing is cut off at 1,000.
+export async function fetchReviewPlanRows() {
+  const now = Date.now();
+  const { endOfTomorrow } = jstDayBounds(now);
+  return fetchAllPages(
+    (withCount) => supabase
+      .from('user_cards')
+      .select('next_review_at, level', withCount ? { count: 'exact' } : undefined)
+      .lt('level', MASTERED)
+      .gt('next_review_at', new Date(now).toISOString())
+      .lt('next_review_at', new Date(endOfTomorrow).toISOString())
+      .order('word_id', { ascending: true })
+      .order('direction', { ascending: true }),
+    "Could not load the review plan: ",
+  );
 }
 
 // Level of every one of the student's cards.
