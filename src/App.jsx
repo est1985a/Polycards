@@ -3,7 +3,7 @@ import { supabase } from './lib/supabaseClient';
 import * as api from './lib/api';
 import { buildCards, buildReviewCards } from './lib/drill';
 import { loadSchoolLevel, saveSchoolLevel } from './lib/library';
-import { totalPoints, levelCounts, playerLevel, newPeak } from './lib/points';
+import { totalPoints, levelCounts, playerRank, newPeak } from './lib/points';
 import { nextReviewSummary } from './lib/schedule';
 import { singleFlight } from './lib/gacha';
 import { colors, wrap, gutter, headerBand, tabBarHeight, btnLink, wideLayout } from './styles/theme';
@@ -58,7 +58,7 @@ function App() {
   const [planOpen, setPlanOpen] = useState(false);
   const [savingDeck, setSavingDeck] = useState(false);
   const [removingDeckId, setRemovingDeckId] = useState(null);
-  const [stats, setStats] = useState(null); // points and player level
+  const [stats, setStats] = useState(null); // points and rank
   const [masteredCards, setMasteredCards] = useState([]);
   const [restoringCardId, setRestoringCardId] = useState(null);
 
@@ -218,7 +218,7 @@ function App() {
       const currentPoints = totalPoints(levels);
       const peakPoints = newPeak(currentPoints, savedPeak);
       if (peakPoints > savedPeak) await api.savePeakPoints(userId, peakPoints);
-      setStats({ currentPoints, peakPoints, playerLevel: playerLevel(peakPoints), levelCounts: levelCounts(levels) });
+      setStats({ currentPoints, peakPoints, playerRank: playerRank(peakPoints), levelCounts: levelCounts(levels) });
     } catch (e) {
       console.error(e);
     }

@@ -13,7 +13,7 @@ export const COLOR_ROLES = [
   "muted",     // labels, hints, links
   "accent",    // main buttons, active tab, filled stamps (fills only, never text)
   "accentInk", // text on accent
-  "accentText", // accent as readable text (player level); same as accent unless accent is too light
+  "accentText", // accent as readable text (rank); same as accent unless accent is too light
   "danger",    // "Still learning" button, error text
   "dangerInk", // text on danger
   "gold",      // points, levels, big numbers

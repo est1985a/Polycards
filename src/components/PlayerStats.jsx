@@ -1,20 +1,20 @@
 import { colors, fontDisplay, panel } from '../styles/theme';
-import { pointsForLevel } from '../lib/points';
+import { pointsForRank } from '../lib/points';
 import AvatarPicture from './AvatarPicture';
 
 const fmt = (n) => n.toLocaleString('en-US');
 
-// Player card: avatar, player level, points, and progress to the next level.
-// stats: { playerLevel, currentPoints, peakPoints, levelCounts } (from src/lib/points.js)
+// Player card: avatar, rank, points, and progress to the next rank.
+// stats: { playerRank, currentPoints, peakPoints, levelCounts } (from src/lib/points.js)
 // avatar: the equipped avatar from gacha_status (null = the starter cat). wide: a bigger avatar.
 export default function PlayerStats({ stats, avatar = null, wide = false }) {
   // Keep the space while points are loading, so the page doesn't jump.
   if (!stats) return <div style={{ ...panel, minHeight: 190 }} aria-busy="true" />;
 
-  // Player level comes from the peak, so progress is measured with the peak too.
-  const level = stats.playerLevel;
-  const start = pointsForLevel(level);
-  const next = pointsForLevel(level + 1);
+  // Rank comes from the peak, so progress is measured with the peak too.
+  const rank = stats.playerRank;
+  const start = pointsForRank(rank);
+  const next = pointsForRank(rank + 1);
   const toNext = next - stats.peakPoints;
   const progress = Math.min(1, Math.max(0, (stats.peakPoints - start) / (next - start)));
 
@@ -30,8 +30,8 @@ export default function PlayerStats({ stats, avatar = null, wide = false }) {
           <AvatarPicture avatar={avatar} size={wide ? 104 : 84} />
         </div>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontSize: 12, color: colors.muted }}>プレイヤーレベル</div>
-          <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 46, lineHeight: 1.05, color: colors.accentText }}>Lv {level}</div>
+          <div style={{ fontSize: 12, color: colors.muted }}>ランク</div>
+          <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 46, lineHeight: 1.05, color: colors.accentText }}>Rank {rank}</div>
           <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 22, lineHeight: 1.3, color: colors.gold }}>{fmt(stats.currentPoints)} pt</div>
           <div style={{ fontSize: 13, color: colors.muted }}>ベスト {fmt(stats.peakPoints)} pt</div>
         </div>
@@ -39,9 +39,9 @@ export default function PlayerStats({ stats, avatar = null, wide = false }) {
 
       <div style={{ display: "grid", gap: 6 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, fontSize: 13 }}>
-          <span style={{ color: colors.muted }}>次のレベルまで</span>
+          <span style={{ color: colors.muted }}>次のランクまで</span>
           <span style={{ color: colors.text }}>
-            あと<span style={{ fontFamily: fontDisplay, fontWeight: 700 }}>{fmt(toNext)} pt → Lv {level + 1}</span>
+            あと<span style={{ fontFamily: fontDisplay, fontWeight: 700 }}>{fmt(toNext)} pt → Rank {rank + 1}</span>
           </span>
         </div>
         <div

@@ -1,4 +1,4 @@
-// Points and player level. Pure functions only (no database), so they are easy to test
+// Points and rank (the player's level, called player_level in the database). Pure functions only (no database), so they are easy to test
 // and the screens can show the results however they like.
 import { CARD_POINTS, MASTERED } from './srs';
 
@@ -22,16 +22,16 @@ export function levelCounts(levels) {
   return counts;
 }
 
-// Player level from peak points. Change this formula to make levels faster or slower.
-// Level 2 at 20 points, 3 at 80, 4 at 180, 5 at 320 ... (points needed = 20 × (level − 1)²).
-export function playerLevel(peakPoints) {
+// Rank from peak points. Change this formula to make ranks go up faster or slower.
+// Rank 2 at 20 points, 3 at 80, 4 at 180, 5 at 320 ... (points needed = 20 × (rank − 1)²).
+export function playerRank(peakPoints) {
   return Math.floor(Math.sqrt(peakPoints / 20)) + 1;
 }
 
-// Peak points needed to reach a player level (the reverse of playerLevel): 20 × (level − 1)².
-// Used for the "points to the next level" bar. Keep in step with playerLevel above.
-export function pointsForLevel(level) {
-  return 20 * (level - 1) ** 2;
+// Peak points needed to reach a rank (the reverse of playerRank): 20 × (rank − 1)².
+// Used for the "points to the next rank" bar. Keep in step with playerRank above.
+export function pointsForRank(rank) {
+  return 20 * (rank - 1) ** 2;
 }
 
 // The peak only goes up: removing a deck or losing levels never lowers it.

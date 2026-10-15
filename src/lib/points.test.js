@@ -1,8 +1,8 @@
-// Tests for points and player level. Pure functions only: no database, no test account.
+// Tests for points and rank. Pure functions only: no database, no test account.
 // Run with: npm test
 import { describe, it, expect } from 'vitest';
 import { CARD_POINTS, MASTERED, RESTORED_LEVEL } from './srs';
-import { cardPoints, totalPoints, levelCounts, playerLevel, pointsForLevel, newPeak } from './points';
+import { cardPoints, totalPoints, levelCounts, playerRank, pointsForRank, newPeak } from './points';
 
 describe('points per card', () => {
   it('uses the agreed values for levels 0 to 7 and Mastered', () => {
@@ -50,24 +50,24 @@ describe('cards per level', () => {
   });
 });
 
-describe('player level', () => {
-  it('starts at level 1', () => {
-    expect(playerLevel(0)).toBe(1);
-    expect(playerLevel(19)).toBe(1);
+describe('rank', () => {
+  it('starts at rank 1', () => {
+    expect(playerRank(0)).toBe(1);
+    expect(playerRank(19)).toBe(1);
   });
 
   it('goes up at 20, 80, 180 points ...', () => {
-    expect(playerLevel(20)).toBe(2);
-    expect(playerLevel(79)).toBe(2);
-    expect(playerLevel(80)).toBe(3);
-    expect(playerLevel(180)).toBe(4);
+    expect(playerRank(20)).toBe(2);
+    expect(playerRank(79)).toBe(2);
+    expect(playerRank(80)).toBe(3);
+    expect(playerRank(180)).toBe(4);
   });
 
   it('matches the approved example table', () => {
-    expect(playerLevel(120)).toBe(3);    // 20 words at level 3
-    expect(playerLevel(1000)).toBe(8);   // 100 words at level 4
-    expect(playerLevel(4200)).toBe(15);  // 100 words at level 7
-    expect(playerLevel(21000)).toBe(33); // 500 words at level 7
+    expect(playerRank(120)).toBe(3);    // 20 words at level 3
+    expect(playerRank(1000)).toBe(8);   // 100 words at level 4
+    expect(playerRank(4200)).toBe(15);  // 100 words at level 7
+    expect(playerRank(21000)).toBe(33); // 500 words at level 7
   });
 });
 
@@ -93,18 +93,18 @@ describe('peak points', () => {
   });
 });
 
-describe('points needed for a player level', () => {
+describe('points needed for a rank', () => {
   it('matches the agreed steps', () => {
-    expect(pointsForLevel(1)).toBe(0);
-    expect(pointsForLevel(2)).toBe(20);
-    expect(pointsForLevel(3)).toBe(80);
-    expect(pointsForLevel(9)).toBe(1280);
+    expect(pointsForRank(1)).toBe(0);
+    expect(pointsForRank(2)).toBe(20);
+    expect(pointsForRank(3)).toBe(80);
+    expect(pointsForRank(9)).toBe(1280);
   });
 
-  it('is exactly where playerLevel goes up', () => {
+  it('is exactly where playerRank goes up', () => {
     for (let n = 1; n <= 20; n++) {
-      expect(playerLevel(pointsForLevel(n))).toBe(n);
-      if (n > 1) expect(playerLevel(pointsForLevel(n) - 1)).toBe(n - 1);
+      expect(playerRank(pointsForRank(n))).toBe(n);
+      if (n > 1) expect(playerRank(pointsForRank(n) - 1)).toBe(n - 1);
     }
   });
 });
