@@ -24,10 +24,18 @@ export function dictionaryUrl(english) {
 
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+// Any form of "be", for phrases like "be interested in".
+const BE_FORMS = "(?:be|am|is|are|was|were|been|being|['’](?:m|s|re))";
+
+// True if a phrase (2+ words) contains the word "be".
+const hasBe = (term) => term.includes(' ') && term.split(' ').includes('be');
+
 // Regular expression text for one word or phrase, including common English endings
 // for single words of 3+ letters (eat → eats/eating, study → studied, stop → stopped).
+// In a phrase, "be" matches any form of be (is, was, 'm ...).
 function termPattern(term) {
-  const words = term.split(' ').map(escapeRegExp);
+  const multi = term.includes(' ');
+  const words = term.split(' ').map((w) => (multi && w === 'be' ? BE_FORMS : escapeRegExp(w)));
   const forms = [words.join('\\s+')];
   if (words.length === 1 && term.length >= 3 && /^[a-z]+$/.test(term)) {
     forms[0] = `${term}(?:s|es|d|ed|ing|n|en|er|est|ly)?`;
@@ -51,6 +59,18 @@ export function highlightParts(sentence, english) {
   const terms = cleanSearchTerm(english).split('~').map((t) => t.trim()).filter(Boolean);
   if (terms.length === 0) return [{ text: sentence, hit: false }];
 
+  const parts = markTerms(sentence, terms);
+  if (parts.some((p) => p.hit) || !terms.some(hasBe)) return parts;
+
+  // Nothing found: try again without "be" (e.g. "She is not interested in" → "interested in").
+  const withoutBe = terms
+    .map((t) => (hasBe(t) ? t.split(' ').filter((w) => w !== 'be').join(' ') : t))
+    .filter(Boolean);
+  return markTerms(sentence, withoutBe);
+}
+
+// Marks every match of the terms in the sentence: [{ text, hit }].
+function markTerms(sentence, terms) {
   // Longer terms first, so "look for" wins over "look".
   const pattern = terms.sort((a, b) => b.length - a.length).map(termPattern).join('|');
   const re = new RegExp(pattern, 'gi');

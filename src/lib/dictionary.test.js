@@ -89,6 +89,28 @@ describe('highlightParts', () => {
     expect(highlightParts('He went home.', 'go')).toEqual([{ text: 'He went home.', hit: false }]);
   });
 
+  it('matches any form of "be" inside a phrase', () => {
+    expect(hits('She is interested in music.', 'be interested in ~')).toEqual(['is interested in']);
+    expect(hits('He was interested in art.', 'be interested in ~')).toEqual(['was interested in']);
+    expect(hits("I'm interested in music.", 'be interested in ~')).toEqual(["'m interested in"]);
+    expect(hits('They are good at tennis.', 'be good at ~')).toEqual(['are good at']);
+  });
+
+  it('tries again without "be" only when the full phrase is not found', () => {
+    expect(hits('She is not interested in music.', 'be interested in ~')).toEqual(['interested in']);
+  });
+
+  it('returns one plain piece when a "be" phrase is not found at all', () => {
+    expect(highlightParts('He likes music.', 'be interested in ~')).toEqual([
+      { text: 'He likes music.', hit: false },
+    ]);
+  });
+
+  it('keeps the single word "be" as it was', () => {
+    expect(hits('Be careful.', 'be')).toEqual(['Be']);
+    expect(hits('She is kind.', 'be')).toEqual([]);
+  });
+
   it('returns nothing for a missing sentence', () => {
     expect(highlightParts(null, 'go')).toEqual([]);
     expect(highlightParts('', 'go')).toEqual([]);
