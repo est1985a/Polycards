@@ -28,10 +28,10 @@ function LevelChip({ level }) {
 }
 
 // Big word style: Chakra Petch for English, Zen Maru Gothic for Japanese; long text gets smaller.
-// Japanese letters are wider, so Japanese starts at 5/6 of the size (48 → 40 px).
-function wordStyle(text, isEnglish, size) {
+// Japanese letters are wider, so Japanese starts at 5/6 of the size (48 → 40 px) unless jaSize is given.
+function wordStyle(text, isEnglish, size, jaSize = Math.round(size * 5 / 6)) {
   const long = isEnglish ? text.length > 12 : text.length > 7;
-  const base = isEnglish ? size : Math.round(size * 5 / 6);
+  const base = isEnglish ? size : jaSize;
   return {
     fontFamily: isEnglish ? fontDisplay : fontBody, fontWeight: 700, lineHeight: 1.2, overflowWrap: "anywhere",
     fontSize: long ? Math.round(base * 0.75) : base,
@@ -43,7 +43,8 @@ function wordStyle(text, isEnglish, size) {
 // holds the dictionary link. The hidden face is `inert`, so it can't be tabbed to or read aloud.
 // Give it a new `key` for each new card so it starts on the front without flipping back on screen.
 // card: { front, back, direction, level, en, exampleEn, exampleJa }; showLevel: SRS review only.
-export default function FlipCard({ card, showLevel, revealed, onFlip }) {
+// wide: a taller card with bigger text on the back (question 30 px, answer 48 px).
+export default function FlipCard({ card, showLevel, revealed, onFlip, wide = false }) {
   const backRef = useRef(null);
   const frontIsEnglish = card.direction === "en2jp";
 
@@ -65,7 +66,7 @@ export default function FlipCard({ card, showLevel, revealed, onFlip }) {
         <button
           onClick={onFlip}
           inert={revealed}
-          style={{ ...face, background: colors.surface, border: `2px solid ${colors.line}`, color: colors.text, cursor: "pointer" }}
+          style={{ ...face, minHeight: wide ? 420 : 320, background: colors.surface, border: `2px solid ${colors.line}`, color: colors.text, cursor: "pointer" }}
         >
           <span style={topRow}>
             <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 14, color: colors.accentText }}>
@@ -90,7 +91,7 @@ export default function FlipCard({ card, showLevel, revealed, onFlip }) {
           tabIndex={-1}
           inert={!revealed}
           style={{
-            ...face, transform: "rotateY(180deg)", outline: "none",
+            ...face, minHeight: wide ? 420 : 320, transform: "rotateY(180deg)", outline: "none",
             background: colors.surface2, border: `2px solid ${colors.accent}`,
             boxShadow: `0 0 24px color-mix(in srgb, ${colors.accent} 28%, transparent)`,
           }}
@@ -107,9 +108,9 @@ export default function FlipCard({ card, showLevel, revealed, onFlip }) {
             {showLevel && <LevelChip level={card.level} />}
           </div>
           <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 12 }}>
-            <div style={{ ...wordStyle(card.front, frontIsEnglish, 22), fontWeight: 500, color: colors.muted }}>{card.front}</div>
-            <div style={{ ...wordStyle(card.back, !frontIsEnglish, 32), color: colors.accentText }}>{card.back}</div>
-            <WordInfo english={card.en} exampleEn={card.exampleEn} exampleJa={card.exampleJa} />
+            <div style={{ ...wordStyle(card.front, frontIsEnglish, wide ? 30 : 22), fontWeight: 500, color: colors.muted }}>{card.front}</div>
+            <div style={{ ...(wide ? wordStyle(card.back, !frontIsEnglish, 48, 48) : wordStyle(card.back, !frontIsEnglish, 32)), color: colors.accentText }}>{card.back}</div>
+            <WordInfo english={card.en} exampleEn={card.exampleEn} exampleJa={card.exampleJa} wide={wide} />
           </div>
         </div>
       </div>

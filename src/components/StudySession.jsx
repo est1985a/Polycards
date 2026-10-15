@@ -13,8 +13,8 @@ const srOnly = { position: "absolute", width: 1, height: 1, overflow: "hidden", 
 const stampFill = (n) => Array.from({ length: CLEAR_TARGET }, (_, i) => i < n);
 
 // One study session: either the Card Sets drill or an SRS review (activeSet.mode === 'srs').
-// Give it a new `key` to start a fresh session.
-export default function StudySession({ activeSet, userId, isAdded, saving, onAddDeck, onBack }) {
+// Give it a new `key` to start a fresh session. wide: bigger card text and taller answer buttons.
+export default function StudySession({ activeSet, userId, isAdded, saving, onAddDeck, onBack, wide = false }) {
   const isSrs = activeSet.mode === 'srs';
   const [pile, setPile] = useState(() => shuffle(activeSet.cards.map((c) => c.id)));
   const [counts, setCounts] = useState({});           // drill: correct answers per card
@@ -123,6 +123,7 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
   ));
 
   const addDeckControl = isSrs ? null : <AddDeckButton isAdded={isAdded} saving={saving} onAdd={onAddDeck} />;
+  const answerSize = wide ? { minHeight: 76, fontSize: 18 } : { minHeight: 52 };
 
   return (
     <div style={{ display: "grid", gap: 20 }}>
@@ -137,12 +138,12 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
 
       {card && (
         <>
-          <p style={{ fontSize: 14, color: colors.text, margin: 0, textAlign: "center" }}>
+          <p style={{ fontSize: wide ? 17 : 14, color: colors.text, margin: 0, textAlign: "center" }}>
             {card.direction === "en2jp" ? "この単語は日本語で何と言いますか？" : "この単語は英語で何と言いますか？"}
           </p>
           <div style={{ position: "relative" }}>
             {/* A new key per turn: the next card starts on its front without flipping back on screen. */}
-            <FlipCard key={turn} card={card} showLevel={isSrs} revealed={revealed} onFlip={() => setRevealed(true)} />
+            <FlipCard key={turn} card={card} showLevel={isSrs} revealed={revealed} onFlip={() => setRevealed(true)} wide={wide} />
             {levelUpFloat}
           </div>
           {!isSrs && (
@@ -152,11 +153,11 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
           )}
           {revealed ? (
             <div style={{ display: "flex", gap: 10 }}>
-              <button style={{ ...btnDanger, flex: 1, minHeight: 52 }} onClick={() => handleAnswer(false)}>Still learning<br />まだ</button>
-              <button style={{ ...btnPrimary, flex: 1, minHeight: 52 }} onClick={() => handleAnswer(true)}>I knew it<br />わかった</button>
+              <button style={{ ...btnDanger, flex: 1, ...answerSize }} onClick={() => handleAnswer(false)}>Still learning<br />まだ</button>
+              <button style={{ ...btnPrimary, flex: 1, ...answerSize }} onClick={() => handleAnswer(true)}>I knew it<br />わかった</button>
             </div>
           ) : (
-            <button style={{ ...btnPrimary, width: "100%", minHeight: 52, fontSize: 17 }} onClick={() => setRevealed(true)}>
+            <button style={{ ...btnPrimary, width: "100%", minHeight: 52, fontSize: 17, ...answerSize }} onClick={() => setRevealed(true)}>
               答えを見る
             </button>
           )}

@@ -1,7 +1,7 @@
 // Tests for the review button on My Cards. Run with: npm test
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { ReviewButton } from './MyCardsTab';
+import MyCardsTab, { ReviewButton } from './MyCardsTab';
 import { extraDueTotal } from '../lib/srs';
 
 const render = (dueCount) => renderToStaticMarkup(<ReviewButton dueCount={dueCount} loading={false} onReview={() => {}} />);
@@ -34,6 +34,29 @@ describe('review button', () => {
     expect(extraDueTotal(21)).toBe(21);
     expect(extraDueTotal(20)).toBeNull();
     expect(extraDueTotal(0)).toBeNull();
+  });
+});
+
+describe('wide screens', () => {
+  const tab = (wide) => renderToStaticMarkup(
+    <MyCardsTab
+      decks={[{ id: 1, name: 'Unit 1' }, { id: 2, name: 'Unit 2' }]} dueRows={[]} nextReview={null} stats={null}
+      onReview={() => {}} onOpenPlan={() => {}} onRemove={() => {}} onOpenMastered={() => {}} loading={false} removingDeckId={null}
+      wide={wide}
+    />
+  );
+
+  it('uses two columns, with the decks in a 2-column grid', () => {
+    const html = tab(true);
+    expect(html).toContain('grid-template-columns:440px minmax(0, 1fr)');
+    expect(html).toContain('grid-template-columns:repeat(2, minmax(0, 1fr))');
+    expect(html).toContain('min-height:76px');
+  });
+
+  it('keeps one column on phones', () => {
+    const html = tab(false);
+    expect(html).not.toContain('grid-template-columns');
+    expect(html).toContain('min-height:64px');
   });
 });
 

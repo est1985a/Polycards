@@ -1,4 +1,4 @@
-import { colors, fontDisplay, panel } from '../styles/theme';
+import { colors, fontDisplay, panel, wideLayout } from '../styles/theme';
 import { SESSION_SIZE, MASTERED, extraDueTotal } from '../lib/srs';
 import PlayerStats from './PlayerStats';
 import LevelChart from './LevelChart';
@@ -7,8 +7,8 @@ import StarIcon from './StarIcon';
 // Big "start review" button. The pill shows how many cards the session will have
 // (all due cards, up to SESSION_SIZE); a small line under the label shows the full total when there are more.
 // When nothing is due, nextReview (from nextReviewSummary) adds the 次の復習 line; if that review is
-// today or tomorrow, the button opens the review plan pop-up instead.
-export function ReviewButton({ dueCount, loading, onReview, nextReview = null, onOpenPlan }) {
+// today or tomorrow, the button opens the review plan pop-up instead. wide: a taller button.
+export function ReviewButton({ dueCount, loading, onReview, nextReview = null, onOpenPlan, wide = false }) {
   const ready = dueCount > 0;
   const showsPlan = !ready && !!nextReview?.tappable;
   const total = extraDueTotal(dueCount);
@@ -18,7 +18,7 @@ export function ReviewButton({ dueCount, loading, onReview, nextReview = null, o
       disabled={loading || !(ready || showsPlan)}
       aria-haspopup={showsPlan ? "dialog" : undefined}
       style={{
-        width: "100%", minHeight: 64, borderRadius: 16, border: "none", padding: "10px 20px",
+        width: "100%", minHeight: wide ? 76 : 64, borderRadius: 16, border: "none", padding: "10px 20px",
         display: "flex", alignItems: "center", justifyContent: ready ? "space-between" : "center", gap: 12,
         background: ready ? colors.accent : colors.surface2, color: ready ? colors.accentInk : colors.muted,
         cursor: (ready || showsPlan) && !loading ? "pointer" : "default", opacity: loading ? 0.7 : 1,
@@ -122,7 +122,8 @@ function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
   );
 }
 
-export default function MyCardsTab({ decks, dueRows, nextReview, stats, onReview, onOpenPlan, onRemove, onOpenMastered, loading, removingDeckId }) {
+// wide: two columns (player card, review button, chart, Mastered | マイデッキ in a 2-column grid).
+export default function MyCardsTab({ decks, dueRows, nextReview, stats, onReview, onOpenPlan, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
   // A word can be in several decks, so a due card counts toward each of them.
   const dueByDeck = {};
   dueRows.forEach((r) => {
@@ -131,36 +132,54 @@ export default function MyCardsTab({ decks, dueRows, nextReview, stats, onReview
     });
   });
 
-  return (
-    <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
-      <PlayerStats stats={stats} />
-      <ReviewButton dueCount={dueRows.length} loading={loading} onReview={() => onReview()} nextReview={nextReview} onOpenPlan={onOpenPlan} />
+  const overview = (
+    <>
+      <PlayerStats stats={stats} wide={wide} />
+      <ReviewButton dueCount={dueRows.length} loading={loading} onReview={() => onReview()} nextReview={nextReview} onOpenPlan={onOpenPlan} wide={wide} />
       {stats && <LevelChart counts={stats.levelCounts} />}
       {stats && <MasteredButton count={stats.levelCounts[MASTERED]} loading={loading} onOpen={onOpenMastered} />}
+    </>
+  );
 
-      <div style={{ display: "grid", gap: 10 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, margin: "8px 0 0", color: colors.text }}>マイデッキ</h2>
-        {decks.length === 0 ? (
-          <div style={{ ...panel, padding: 24, textAlign: "center" }}>
-            <h3 style={{ margin: "0 0 10px", color: colors.text }}>Your Personal Rotation</h3>
-            <p style={{ fontSize: 14, color: colors.text }}>
-              You haven't saved any sets yet! Go to the <strong>Card Sets</strong> tab to find vocabulary lists and add them to your SRS schedule.
-            </p>
-          </div>
-        ) : (
-          decks.map((deck) => (
-            <DeckRow
-              key={deck.id}
-              deck={deck}
-              due={dueByDeck[deck.id] || 0}
-              loading={loading}
-              removing={removingDeckId === deck.id}
-              onReview={onReview}
-              onRemove={onRemove}
-            />
-          ))
-        )}
+  const myDecks = (
+    <div style={{ display: "grid", gap: 10, alignContent: "start", gridTemplateColumns: wide ? "repeat(2, minmax(0, 1fr))" : undefined }}>
+      <h2 style={{ fontSize: 16, fontWeight: 700, margin: wide ? 0 : "8px 0 0", color: colors.text, gridColumn: "1 / -1" }}>マイデッキ</h2>
+      {decks.length === 0 ? (
+        <div style={{ ...panel, padding: 24, textAlign: "center", gridColumn: "1 / -1" }}>
+          <h3 style={{ margin: "0 0 10px", color: colors.text }}>Your Personal Rotation</h3>
+          <p style={{ fontSize: 14, color: colors.text }}>
+            You haven't saved any sets yet! Go to the <strong>Card Sets</strong> tab to find vocabulary lists and add them to your SRS schedule.
+          </p>
+        </div>
+      ) : (
+        decks.map((deck) => (
+          <DeckRow
+            key={deck.id}
+            deck={deck}
+            due={dueByDeck[deck.id] || 0}
+            loading={loading}
+            removing={removingDeckId === deck.id}
+            onReview={onReview}
+            onRemove={onRemove}
+          />
+        ))
+      )}
+    </div>
+  );
+
+  if (!wide) {
+    return (
+      <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
+        {overview}
+        {myDecks}
       </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: `${wideLayout.leftColumn}px minmax(0, 1fr)`, gap: 32, alignItems: "start", textAlign: "left" }}>
+      <div style={{ display: "grid", gap: 16 }}>{overview}</div>
+      {myDecks}
     </div>
   );
 }

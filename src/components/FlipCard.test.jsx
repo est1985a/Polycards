@@ -47,6 +47,15 @@ describe('FlipCard', () => {
     expect(back).toContain('辞書で調べる');
   });
 
+  it('uses bigger text on wide screens', () => {
+    const wide = faces(render({ revealed: true, wide: true })).back;
+    expect(wide).toMatch(/font-size:48px[^>]*>もう、すでに</);
+    expect(wide).toMatch(/font-size:24px[^>]*>.*She has/);
+    const phone = faces(render({ revealed: true })).back;
+    expect(phone).toMatch(/font-size:27px[^>]*>もう、すでに</);
+    expect(phone).toMatch(/font-size:16px[^>]*>.*She has/);
+  });
+
   it('shows the level chip only when asked (SRS review, not the drill)', () => {
     expect(render({ showLevel: true })).toContain('Lv 3');
     expect(render({ showLevel: false })).not.toContain('Lv ');

@@ -6,7 +6,8 @@ const fmt = (n) => n.toLocaleString('en-US');
 
 // Player card: avatar, player level, points, and progress to the next level.
 // stats: { playerLevel, currentPoints, peakPoints, levelCounts } (from src/lib/points.js)
-export default function PlayerStats({ stats }) {
+// wide: a bigger avatar.
+export default function PlayerStats({ stats, wide = false }) {
   // Keep the space while points are loading, so the page doesn't jump.
   if (!stats) return <div style={{ ...panel, minHeight: 190 }} aria-busy="true" />;
 
@@ -22,11 +23,11 @@ export default function PlayerStats({ stats }) {
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         <div
           style={{
-            width: 104, height: 104, flexShrink: 0, borderRadius: 16, background: colors.surface2,
+            width: wide ? 128 : 104, height: wide ? 128 : 104, flexShrink: 0, borderRadius: 16, background: colors.surface2,
             display: "flex", alignItems: "center", justifyContent: "center",
           }}
         >
-          <Avatar size={84} />
+          <Avatar size={wide ? 104 : 84} />
         </div>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 12, color: colors.muted }}>プレイヤーレベル</div>

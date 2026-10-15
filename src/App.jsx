@@ -5,7 +5,8 @@ import { buildCards, buildReviewCards } from './lib/drill';
 import { loadSchoolLevel, saveSchoolLevel } from './lib/library';
 import { totalPoints, levelCounts, playerLevel, newPeak } from './lib/points';
 import { nextReviewSummary } from './lib/schedule';
-import { colors, wrap, gutter, headerBand, tabBarHeight, btnLink } from './styles/theme';
+import { colors, wrap, gutter, headerBand, tabBarHeight, btnLink, wideLayout } from './styles/theme';
+import { useWide } from './lib/useWide';
 import Header from './components/Header';
 import LoginScreen from './components/LoginScreen';
 import Tabs from './components/Tabs';
@@ -55,6 +56,8 @@ function App() {
   const [stats, setStats] = useState(null); // points and player level
   const [masteredCards, setMasteredCards] = useState([]);
   const [restoringCardId, setRestoringCardId] = useState(null);
+
+  const wide = useWide(); // landscape iPad or bigger: wider layout
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
@@ -298,76 +301,85 @@ function App() {
   // The tall low-poly header is only on My Cards; other screens get the compact one.
   const bandHeader = !!session && view === "dashboard" && activeTab === "myCards";
 
+  // Wide screens: My Cards uses the full column, study is 780 px, other screens 720 px (centered).
+  const contentWidth = !wide || bandHeader ? "none"
+    : view === "study" ? wideLayout.studyWidth : wideLayout.readWidth;
+
   return (
     <div style={{ background: colors.bg, minHeight: "100vh" }}>
-      <div style={wrap}>
-        <Header variant={bandHeader ? "band" : "compact"} user={session?.user} onSignOut={handleLogout} onHome={goHome} />
+      <div style={wide ? { ...wrap, maxWidth: wideLayout.maxWidth } : wrap}>
+        <Header variant={bandHeader ? "band" : "compact"} user={session?.user} onSignOut={handleLogout} onHome={goHome} wide={wide} />
 
-        <div style={{ position: "relative", padding: `0 ${gutter}px 60px`, marginTop: bandHeader ? -headerBand.overlap : 0 }}>
-          {!session ? (
-            <LoginScreen error={authError} onGoogleLogin={handleGoogleLogin} />
-          ) : view === "dashboard" ? (
-            <div style={{ paddingBottom: tabBarHeight + 32 }}>
-              {activeTab === "myCards" && (
-                <MyCardsTab
-                  decks={myDecks}
-                  dueRows={dueRows}
-                  nextReview={dueRows.length === 0 ? nextReviewSummary(nextReview, now) : null}
-                  stats={stats}
-                  onReview={startReview}
-                  onOpenPlan={openPlan}
-                  onRemove={removeDeck}
-                  onOpenMastered={openMastered}
-                  loading={loadingDeck}
-                  removingDeckId={removingDeckId}
-                />
-              )}
-              {activeTab === "cardSets" && (
-                <CardSetsTab
-                  textbooks={libraryData}
-                  loading={loadingLibrary}
-                  path={cardSetsPath}
-                  onNavigate={navigateCardSets}
-                  onOpenDeck={startDeck}
-                  myDeckIds={myDeckIds}
-                  disabled={loadingDeck}
-                />
-              )}
-              <Tabs tabs={TABS} active={activeTab} onChange={changeTab} />
-              {planOpen && <ReviewPlanSheet rows={planRows} now={now} onClose={closePlan} />}
-            </div>
-          ) : (
-            <>
-              <div style={{ marginBottom: 14 }}>
-                <button onClick={() => setView("dashboard")} style={btnLink}>
-                  ← ダッシュボードに戻る (Back to Dashboard)
-                </button>
+        <div style={{ position: "relative", padding: `0 ${wide ? wideLayout.gutter : gutter}px 60px`, marginTop: bandHeader ? -headerBand.overlap : 0 }}>
+          <div style={{ maxWidth: contentWidth, margin: "0 auto" }}>
+            {!session ? (
+              <LoginScreen error={authError} onGoogleLogin={handleGoogleLogin} />
+            ) : view === "dashboard" ? (
+              <div style={{ paddingBottom: tabBarHeight + 32 }}>
+                {activeTab === "myCards" && (
+                  <MyCardsTab
+                    decks={myDecks}
+                    dueRows={dueRows}
+                    nextReview={dueRows.length === 0 ? nextReviewSummary(nextReview, now) : null}
+                    stats={stats}
+                    onReview={startReview}
+                    onOpenPlan={openPlan}
+                    onRemove={removeDeck}
+                    onOpenMastered={openMastered}
+                    loading={loadingDeck}
+                    removingDeckId={removingDeckId}
+                    wide={wide}
+                  />
+                )}
+                {activeTab === "cardSets" && (
+                  <CardSetsTab
+                    textbooks={libraryData}
+                    loading={loadingLibrary}
+                    path={cardSetsPath}
+                    onNavigate={navigateCardSets}
+                    onOpenDeck={startDeck}
+                    myDeckIds={myDeckIds}
+                    disabled={loadingDeck}
+                  />
+                )}
+                <Tabs tabs={TABS} active={activeTab} onChange={changeTab} wide={wide} />
+                {planOpen && <ReviewPlanSheet rows={planRows} now={now} onClose={closePlan} />}
               </div>
-              {view === "mastered" && (
-                <MasteredList cards={masteredCards} restoringId={restoringCardId} onRestore={restoreCard} />
-              )}
-              {activeSet && view === "wordList" && (
-                <WordList
-                  activeSet={activeSet}
-                  isAdded={myDeckIds.includes(activeSet.id)}
-                  saving={savingDeck}
-                  onAddDeck={addDeck}
-                  onStart={() => beginSession(activeSet)}
-                />
-              )}
-              {activeSet && view === "study" && (
-                <StudySession
-                  key={sessionKey}
-                  activeSet={activeSet}
-                  userId={session?.user.id}
-                  isAdded={myDeckIds.includes(activeSet.id)}
-                  saving={savingDeck}
-                  onAddDeck={addDeck}
-                  onBack={() => setView("dashboard")}
-                />
-              )}
-            </>
-          )}
+            ) : (
+              <>
+                <div style={{ marginBottom: 14 }}>
+                  <button onClick={() => setView("dashboard")} style={btnLink}>
+                    ← ダッシュボードに戻る (Back to Dashboard)
+                  </button>
+                </div>
+                {view === "mastered" && (
+                  <MasteredList cards={masteredCards} restoringId={restoringCardId} onRestore={restoreCard} />
+                )}
+                {activeSet && view === "wordList" && (
+                  <WordList
+                    activeSet={activeSet}
+                    isAdded={myDeckIds.includes(activeSet.id)}
+                    saving={savingDeck}
+                    onAddDeck={addDeck}
+                    onStart={() => beginSession(activeSet)}
+                    wide={wide}
+                  />
+                )}
+                {activeSet && view === "study" && (
+                  <StudySession
+                    key={sessionKey}
+                    activeSet={activeSet}
+                    userId={session?.user.id}
+                    isAdded={myDeckIds.includes(activeSet.id)}
+                    saving={savingDeck}
+                    onAddDeck={addDeck}
+                    onBack={() => setView("dashboard")}
+                    wide={wide}
+                  />
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

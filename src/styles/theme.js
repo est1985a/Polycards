@@ -36,6 +36,15 @@ export const wrap = {
   fontFamily: fontBody, color: colors.text,
 };
 
+// Wide screens (900 px and up, see src/lib/useWide.js): bigger page column and screen widths.
+export const wideLayout = {
+  maxWidth: 1100,  // page column
+  gutter: 32,      // side padding
+  readWidth: 720,  // Card Sets, word list, Mastered, login
+  studyWidth: 780, // study card and answer buttons
+  leftColumn: 440, // My Cards: player card, review button, chart
+};
+
 // Dashboard panels (player card, level chart).
 export const panel = { background: colors.surface, border: `2px solid ${colors.line}`, borderRadius: 20, padding: 16 };
 

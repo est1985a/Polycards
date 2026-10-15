@@ -24,15 +24,16 @@ const ICONS = {
 // tabs: [{ id: 'myCards', label: 'My Cards' }, ...]
 // The active tab's icon and top line use accent (a fill); its label stays in text color,
 // because accent is not readable as text in every theme.
-export default function Tabs({ tabs, active, onChange }) {
+// wide: the bar spans the whole screen and the tabs stay centered (240 px each).
+export default function Tabs({ tabs, active, onChange, wide = false }) {
   return (
     <nav
       style={{
         position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
-        width: "100%", maxWidth: 480, boxSizing: "border-box",
+        width: "100%", maxWidth: wide ? "none" : 480, boxSizing: "border-box",
         background: colors.surface, borderTop: `2px solid ${colors.line}`,
         paddingBottom: "env(safe-area-inset-bottom)",
-        display: "flex", zIndex: 10,
+        display: "flex", justifyContent: "center", zIndex: 10,
       }}
     >
       {tabs.map((t) => {
@@ -43,7 +44,7 @@ export default function Tabs({ tabs, active, onChange }) {
             onClick={() => onChange(t.id)}
             aria-current={isActive ? "page" : undefined}
             style={{
-              flex: 1, height: tabBarHeight, background: "transparent",
+              flex: wide ? "0 1 240px" : 1, height: tabBarHeight, background: "transparent",
               borderWidth: "3px 0 0", borderStyle: "solid", borderColor: isActive ? colors.accent : "transparent",
               display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
               cursor: "pointer", padding: 0,

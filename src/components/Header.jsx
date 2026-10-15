@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { colors, fontDisplay, fontBody, gutter, headerBand, btnGhost } from '../styles/theme';
+import { colors, fontDisplay, fontBody, gutter, headerBand, btnGhost, wideLayout } from '../styles/theme';
 
 // Mix of two theme colors, so the shades follow the theme without hard-coded colors.
 const mix = (a, b, pct) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
@@ -93,10 +93,11 @@ function AccountButton({ user, onSignOut }) {
 
 // variant "band": tall low-poly background (My Cards). "compact": just the top row (other screens).
 // user: the Supabase user, or null when signed out (then no account button).
-// onHome: called when the logo is tapped.
-export default function Header({ variant = "compact", user, onSignOut, onHome }) {
+// onHome: called when the logo is tapped. wide: wide-screen side padding.
+export default function Header({ variant = "compact", user, onSignOut, onHome, wide = false }) {
+  const side = wide ? wideLayout.gutter : gutter;
   const row = (
-    <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", padding: `16px ${gutter}px` }}>
+    <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", padding: `16px ${side}px` }}>
       <Logo onHome={onHome} />
       {user && <AccountButton user={user} onSignOut={onSignOut} />}
     </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { colors, fontDisplay, fontBody, gutter, panel, btnPrimary } from '../styles/theme';
+import { colors, fontDisplay, fontBody, gutter, panel, btnPrimary, wideLayout } from '../styles/theme';
 import AddDeckButton from './AddDeckButton';
 import Highlighted from './Highlighted';
 
@@ -54,7 +54,8 @@ export function WordRow({ word, hidden, first, onReveal }) {
 
 // Card Sets: every word of a deck, shown before the drill starts.
 // activeSet.cards comes from buildCards (two cards per word, in deck order).
-export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStart }) {
+// wide: the fixed start bar matches the 720 px list instead of 480 px.
+export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStart, wide = false }) {
   const words = activeSet.cards.filter((c) => c.direction === "en2jp");
   const [hideJa, setHideJa] = useState(false);
   const [revealed, setRevealed] = useState(() => new Set()); // words tapped open while hidden
@@ -117,7 +118,7 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
       <div
         style={{
           position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", zIndex: 10,
-          width: "100%", maxWidth: 480, boxSizing: "border-box",
+          width: "100%", maxWidth: wide ? wideLayout.readWidth + 2 * gutter : 480, boxSizing: "border-box",
           padding: `12px ${gutter}px calc(12px + env(safe-area-inset-bottom))`,
           background: colors.surface, borderTop: `2px solid ${colors.line}`,
         }}
