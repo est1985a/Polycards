@@ -1,13 +1,13 @@
 import { colors, fontDisplay, panel } from '../styles/theme';
 import { pointsForLevel } from '../lib/points';
-import Avatar from './Avatar';
+import AvatarPicture from './AvatarPicture';
 
 const fmt = (n) => n.toLocaleString('en-US');
 
 // Player card: avatar, player level, points, and progress to the next level.
 // stats: { playerLevel, currentPoints, peakPoints, levelCounts } (from src/lib/points.js)
-// wide: a bigger avatar.
-export default function PlayerStats({ stats, wide = false }) {
+// avatar: the equipped avatar from gacha_status (null = the starter cat). wide: a bigger avatar.
+export default function PlayerStats({ stats, avatar = null, wide = false }) {
   // Keep the space while points are loading, so the page doesn't jump.
   if (!stats) return <div style={{ ...panel, minHeight: 190 }} aria-busy="true" />;
 
@@ -27,7 +27,7 @@ export default function PlayerStats({ stats, wide = false }) {
             display: "flex", alignItems: "center", justifyContent: "center",
           }}
         >
-          <Avatar size={wide ? 104 : 84} />
+          <AvatarPicture avatar={avatar} size={wide ? 104 : 84} />
         </div>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 12, color: colors.muted }}>プレイヤーレベル</div>

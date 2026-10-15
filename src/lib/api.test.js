@@ -19,9 +19,17 @@ function fakeQuery() {
   return query;
 }
 
-vi.mock('./supabaseClient', () => ({ supabase: { from: (table) => { calls.push(['from', table]); return fakeQuery(); } } }));
+vi.mock('./supabaseClient', () => ({
+  supabase: {
+    from: (table) => { calls.push(['from', table]); return fakeQuery(); },
+    rpc: async (name, args) => { calls.push(['rpc', name, args]); return result; },
+  },
+}));
 
-const { fetchDueRows, fetchReviewRows, restoreMasteredCard, saveProgress, fetchNextReview, fetchReviewPlanRows } = await import('./api');
+const {
+  fetchDueRows, fetchReviewRows, restoreMasteredCard, saveProgress, fetchNextReview, fetchReviewPlanRows,
+  fetchGachaStatus, pullGacha, fetchGachaCollection, equipAvatar, setGachaTheme, gachaErrorMessage,
+} = await import('./api');
 
 beforeEach(() => {
   calls.length = 0;
@@ -98,5 +106,44 @@ describe('next review', () => {
     await fetchReviewPlanRows();
     expect(calls).toContainEqual(['range', 0, 999]);
     expect(calls).toContainEqual(['lt', 'level', MASTERED]);
+  });
+});
+
+describe('gacha', () => {
+  it('only calls the database functions, never the gacha tables', async () => {
+    await fetchGachaStatus();
+    await pullGacha();
+    await fetchGachaCollection();
+    await equipAvatar(12);
+    await setGachaTheme('pizza');
+    expect(calls).toEqual([
+      ['rpc', 'gacha_status', undefined],
+      ['rpc', 'gacha_pull', undefined],
+      ['rpc', 'gacha_collection', undefined],
+      ['rpc', 'gacha_equip_avatar', { p_avatar_id: 12 }],
+      ['rpc', 'gacha_set_theme', { p_theme: 'pizza' }],
+    ]);
+  });
+
+  it('returns what the database sends', async () => {
+    result = { data: { tickets: 2, owned: 3, total: 50 }, error: null };
+    expect(await fetchGachaStatus()).toEqual({ tickets: 2, owned: 3, total: 50 });
+    result = { data: null, error: null };
+    expect(await fetchGachaCollection()).toEqual([]);
+  });
+
+  it('turns database error codes into friendly Japanese messages', async () => {
+    result = { data: null, error: { message: 'no_tickets' } };
+    await expect(pullGacha()).rejects.toThrow('ガチャ券がありません');
+    result = { data: null, error: { message: 'collection_complete' } };
+    await expect(pullGacha()).rejects.toThrow('全部そろいました！新しいアバターをお楽しみに');
+    result = { data: null, error: { message: 'not_owned' } };
+    await expect(equipAvatar(1)).rejects.toThrow('このアバターはまだ持っていません');
+    result = { data: null, error: { message: 'theme_locked' } };
+    await expect(setGachaTheme('neon')).rejects.toThrow('このテーマはまだ使えません');
+  });
+
+  it('keeps the original text for unknown errors', () => {
+    expect(gachaErrorMessage({ message: 'network down' })).toContain('network down');
   });
 });

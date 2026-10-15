@@ -304,3 +304,53 @@ export async function savePeakPoints(userId, peakPoints) {
     .upsert({ user_id: userId, peak_points: peakPoints, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
   if (error) throw new Error("Could not save points: " + error.message);
 }
+
+// ---------------------------------------------------------------------
+// Gacha. The app only calls these database functions (see supabase/polycards-gacha.sql),
+// never the gacha tables. Reviews and tickets are counted by the database.
+// ---------------------------------------------------------------------
+
+const GACHA_ERRORS = {
+  no_tickets: "ガチャ券がありません",
+  collection_complete: "全部そろいました！新しいアバターをお楽しみに",
+  not_owned: "このアバターはまだ持っていません",
+  theme_locked: "このテーマはまだ使えません",
+  not_signed_in: "ログインしてください",
+};
+
+// Turns a database error code (e.g. "no_tickets") into a friendly Japanese message.
+export function gachaErrorMessage(error) {
+  const text = error?.message || "";
+  const code = Object.keys(GACHA_ERRORS).find((c) => text.includes(c));
+  return code ? GACHA_ERRORS[code] : `ガチャを読み込めませんでした (${text || "unknown error"})`;
+}
+
+async function callGacha(name, args) {
+  const { data, error } = await supabase.rpc(name, args);
+  if (error) throw new Error(gachaErrorMessage(error));
+  return data;
+}
+
+// Tickets, progress to the next ticket, live odds, owned/total and the equipped avatar.
+export function fetchGachaStatus() {
+  return callGacha('gacha_status');
+}
+
+// One pull: { avatar: { id, slug, name_ja, name_en, rarity, series, image_url }, tickets_left }
+export function pullGacha() {
+  return callGacha('gacha_pull');
+}
+
+// Every avatar for the collection. Unowned ones come without a name; unowned Secrets also without a picture.
+export async function fetchGachaCollection() {
+  return (await callGacha('gacha_collection')) || [];
+}
+
+export function equipAvatar(avatarId) {
+  return callGacha('gacha_equip_avatar', { p_avatar_id: avatarId });
+}
+
+// Not used by the app yet (themes come later).
+export function setGachaTheme(theme) {
+  return callGacha('gacha_set_theme', { p_theme: theme });
+}

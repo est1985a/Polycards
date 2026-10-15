@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { colors, fontDisplay, fontBody, gutter, headerBand, btnGhost, wideLayout } from '../styles/theme';
+import { CapsuleIcon } from './GachaIcons';
 
 // Mix of two theme colors, so the shades follow the theme without hard-coded colors.
 const mix = (a, b, pct) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
@@ -91,15 +92,54 @@ function AccountButton({ user, onSignOut }) {
   );
 }
 
+// Round gacha button next to the account button. With tickets waiting it turns gold and shows
+// a badge with the number; pulse: one gentle pulse (when the app opens with tickets waiting).
+export function GachaButton({ tickets = 0, pulse = false, onOpen }) {
+  const has = tickets > 0;
+  const tone = has ? colors.gold : colors.accent;
+  return (
+    <button
+      onClick={onOpen}
+      className={pulse && has ? "gacha-pulse" : undefined}
+      aria-label={has ? `ガチャ (券 ${tickets}枚)` : "ガチャ"}
+      style={{
+        position: "relative", width: 44, height: 44, borderRadius: "50%", padding: 0, cursor: "pointer",
+        background: colors.surface2, border: `2px solid ${tone}`, color: tone,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}
+    >
+      <CapsuleIcon />
+      {has && (
+        <span
+          data-badge=""
+          style={{
+            position: "absolute", top: -4, right: -4, minWidth: 20, height: 20, padding: "0 5px", boxSizing: "border-box",
+            borderRadius: 10, background: colors.danger, color: colors.dangerInk,
+            fontFamily: fontDisplay, fontWeight: 700, fontSize: 12, lineHeight: "20px", textAlign: "center",
+          }}
+        >
+          {tickets > 99 ? "99+" : tickets}
+        </span>
+      )}
+    </button>
+  );
+}
+
 // variant "band": tall low-poly background (My Cards). "compact": just the top row (other screens).
 // user: the Supabase user, or null when signed out (then no account button).
 // onHome: called when the logo is tapped. wide: wide-screen side padding.
-export default function Header({ variant = "compact", user, onSignOut, onHome, wide = false }) {
+// gacha: the gacha status (null while loading); pulseGacha / onOpenGacha: for the gacha button.
+export default function Header({ variant = "compact", user, onSignOut, onHome, wide = false, gacha = null, pulseGacha = false, onOpenGacha }) {
   const side = wide ? wideLayout.gutter : gutter;
   const row = (
     <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", padding: `16px ${side}px` }}>
       <Logo onHome={onHome} />
-      {user && <AccountButton user={user} onSignOut={onSignOut} />}
+      {user && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <GachaButton tickets={gacha?.tickets ?? 0} pulse={pulseGacha} onOpen={onOpenGacha} />
+          <AccountButton user={user} onSignOut={onSignOut} />
+        </div>
+      )}
     </div>
   );
 

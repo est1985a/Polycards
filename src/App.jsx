@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from './lib/supabaseClient';
 import * as api from './lib/api';
 import { buildCards, buildReviewCards } from './lib/drill';
 import { loadSchoolLevel, saveSchoolLevel } from './lib/library';
 import { totalPoints, levelCounts, playerLevel, newPeak } from './lib/points';
 import { nextReviewSummary } from './lib/schedule';
+import { singleFlight } from './lib/gacha';
 import { colors, wrap, gutter, headerBand, tabBarHeight, btnLink, wideLayout } from './styles/theme';
 import { useWide } from './lib/useWide';
 import Header from './components/Header';
@@ -16,6 +17,9 @@ import StudySession from './components/StudySession';
 import WordList from './components/WordList';
 import MasteredList from './components/MasteredList';
 import ReviewPlanSheet from './components/ReviewPlanSheet';
+import GachaScreen from './components/GachaScreen';
+import GachaReveal from './components/GachaReveal';
+import GachaCollection from './components/GachaCollection';
 
 const TABS = [
   { id: 'myCards', label: 'My Cards' },
@@ -26,7 +30,8 @@ function App() {
   const [session, setSession] = useState(null);
   const [authError, setAuthError] = useState(null);
 
-  // Screens: 'dashboard', 'wordList' (Card Sets deck, before the drill), 'study' or 'mastered'
+  // Screens: 'dashboard', 'wordList' (Card Sets deck, before the drill), 'study', 'mastered',
+  // 'gacha' or 'collection' (アバター図鑑)
   const [view, setView] = useState("dashboard");
   const [activeTab, setActiveTab] = useState("myCards"); // always open on My Cards
 
@@ -57,13 +62,47 @@ function App() {
   const [masteredCards, setMasteredCards] = useState([]);
   const [restoringCardId, setRestoringCardId] = useState(null);
 
+  // Gacha (tickets and avatars come only from the database functions, see api.js)
+  const [gacha, setGacha] = useState(null); // gacha_status, null while loading
+  const [gachaPulse, setGachaPulse] = useState(false); // one pulse of the header button
+  const pulseChecked = useRef(false); // the pulse is only for the first status after sign-in
+  const [pulling, setPulling] = useState(false);
+  const [gachaError, setGachaError] = useState(null);
+  const [reveal, setReveal] = useState(null); // gacha_pull result being shown
+  const [revealKey, setRevealKey] = useState(0); // new reveal animation for each pull
+  const [collection, setCollection] = useState(null); // gacha_collection rows
+  const [equippingId, setEquippingId] = useState(null);
+
+  // The pull is wrapped once (kept across re-renders), so a double tap only pulls once.
+  // It only uses state setters, which never change, so the first copy stays correct.
+  const [pullOnce] = useState(() => singleFlight(async () => {
+    setPulling(true);
+    setGachaError(null);
+    try {
+      setReveal(await api.pullGacha());
+      setRevealKey((k) => k + 1);
+    } catch (e) {
+      setReveal(null);
+      setGachaError(e.message);
+    }
+    setPulling(false);
+    try {
+      setGacha(await api.fetchGachaStatus()); // fewer tickets, new odds
+    } catch (e) {
+      console.error(e);
+    }
+  }));
+
   const wide = useWide(); // landscape iPad or bigger: wider layout
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (!session) { setMyDeckIds([]); setMyDecks([]); setStats(null); }
+      if (!session) {
+        setMyDeckIds([]); setMyDecks([]); setStats(null);
+        setGacha(null); setReveal(null); setCollection(null); pulseChecked.current = false;
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -87,6 +126,26 @@ function App() {
   useEffect(() => {
     if (session && view === "dashboard") loadStats(session.user.id);
   }, [session, view]);
+
+  // Gacha status: when the app opens, after every review (the dashboard is shown again),
+  // when the gacha screen opens, and whenever the app comes back into view.
+  useEffect(() => {
+    if (session && (view === "dashboard" || view === "gacha")) loadGacha();
+  }, [session, view]);
+
+  useEffect(() => {
+    if (!session) return;
+    const onVisible = () => { if (document.visibilityState === "visible") loadGacha(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [session]);
+
+  // The header pulse plays once; switch it off so it doesn't replay when the header changes.
+  useEffect(() => {
+    if (!gachaPulse) return;
+    const timer = setTimeout(() => setGachaPulse(false), 1500);
+    return () => clearTimeout(timer);
+  }, [gachaPulse]);
 
   // Notice when the next review time arrives. A one-minute timer keeps "2時間後" up to date and
   // reloads the due cards once the time has passed. Phones pause timers while the screen is off,
@@ -165,6 +224,59 @@ function App() {
     }
   }
 
+  async function loadGacha() {
+    try {
+      await api.waitForPendingSaves(); // answers just given may earn a ticket
+      const status = await api.fetchGachaStatus();
+      setGacha(status);
+      if (!pulseChecked.current) {
+        pulseChecked.current = true;
+        if (status.tickets > 0) setGachaPulse(true);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function openGacha() {
+    setPlanOpen(false);
+    setGachaError(null);
+    setView("gacha");
+    window.scrollTo(0, 0);
+  }
+
+  async function openCollection() {
+    setCollection(null);
+    setView("collection");
+    window.scrollTo(0, 0);
+    try {
+      setCollection(await api.fetchGachaCollection());
+    } catch (e) {
+      alert(e.message);
+      setView("gacha");
+    }
+  }
+
+  // Wear an owned avatar (from the reveal or the collection).
+  async function equip(avatarId) {
+    setEquippingId(avatarId);
+    try {
+      await api.equipAvatar(avatarId);
+      setCollection((rows) => rows && rows.map((r) => ({ ...r, equipped: r.id === avatarId })));
+      setGacha(await api.fetchGachaStatus());
+    } catch (e) {
+      alert(e.message);
+    }
+    setEquippingId(null);
+  }
+
+  // A tab tapped on the gacha screens goes back to the dashboard on that tab.
+  function leaveGachaTo(id) {
+    setView("dashboard");
+    setActiveTab(id);
+    window.scrollTo(0, 0);
+  }
+
   const handleGoogleLogin = async () => {
     setAuthError(null);
     // Come back to the site we started from (localhost in development, the live site in production).
@@ -185,6 +297,7 @@ function App() {
   // Leaving a review loses nothing: each answer is saved as soon as it is given.
   function goHome() {
     setPlanOpen(false);
+    setReveal(null);
     setView("dashboard");
     setActiveTab("myCards");
     setCardSetsPath((p) => ({ screen: "hub", level: p.level }));
@@ -302,13 +415,17 @@ function App() {
   const bandHeader = !!session && view === "dashboard" && activeTab === "myCards";
 
   // Wide screens: My Cards uses the full column, study is 780 px, other screens 720 px (centered).
-  const contentWidth = !wide || bandHeader ? "none"
+  const gachaView = view === "gacha" || view === "collection";
+  const contentWidth = !wide || bandHeader || gachaView ? "none"
     : view === "study" ? wideLayout.studyWidth : wideLayout.readWidth;
 
   return (
     <div style={{ background: colors.bg, minHeight: "100vh" }}>
       <div style={wide ? { ...wrap, maxWidth: wideLayout.maxWidth } : wrap}>
-        <Header variant={bandHeader ? "band" : "compact"} user={session?.user} onSignOut={handleLogout} onHome={goHome} wide={wide} />
+        <Header
+          variant={bandHeader ? "band" : "compact"} user={session?.user} onSignOut={handleLogout} onHome={goHome} wide={wide}
+          gacha={gacha} pulseGacha={gachaPulse} onOpenGacha={openGacha}
+        />
 
         <div style={{ position: "relative", padding: `0 ${wide ? wideLayout.gutter : gutter}px 60px`, marginTop: bandHeader ? -headerBand.overlap : 0 }}>
           <div style={{ maxWidth: contentWidth, margin: "0 auto" }}>
@@ -322,6 +439,7 @@ function App() {
                     dueRows={dueRows}
                     nextReview={dueRows.length === 0 ? nextReviewSummary(nextReview, now) : null}
                     stats={stats}
+                    avatar={gacha?.equipped_avatar ?? null}
                     onReview={startReview}
                     onOpenPlan={openPlan}
                     onRemove={removeDeck}
@@ -344,6 +462,41 @@ function App() {
                 )}
                 <Tabs tabs={TABS} active={activeTab} onChange={changeTab} wide={wide} />
                 {planOpen && <ReviewPlanSheet rows={planRows} now={now} onClose={closePlan} />}
+              </div>
+            ) : gachaView ? (
+              <div style={{ paddingBottom: tabBarHeight + 32 }}>
+                {view === "gacha" ? (
+                  <GachaScreen
+                    status={gacha}
+                    pulling={pulling}
+                    error={gachaError}
+                    onPull={pullOnce}
+                    onOpenCollection={openCollection}
+                    wide={wide}
+                  />
+                ) : (
+                  <GachaCollection
+                    rows={collection}
+                    equippingId={equippingId}
+                    onEquip={equip}
+                    onBack={() => setView("gacha")}
+                    wide={wide}
+                  />
+                )}
+                {/* Neither tab is highlighted on the gacha screens. */}
+                <Tabs tabs={TABS} active={null} onChange={leaveGachaTo} wide={wide} />
+                {reveal && (
+                  <GachaReveal
+                    key={revealKey}
+                    result={reveal}
+                    equipped={gacha?.equipped_avatar?.id === reveal.avatar.id}
+                    equipping={equippingId != null}
+                    pulling={pulling}
+                    onEquip={equip}
+                    onAgain={pullOnce}
+                    onClose={() => setReveal(null)}
+                  />
+                )}
               </div>
             ) : (
               <>

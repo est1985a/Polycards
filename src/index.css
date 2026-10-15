@@ -139,3 +139,57 @@ p {
 @media (prefers-reduced-motion: reduce) {
   .review-plan-sheet { animation: none; }
 }
+
+/* Gacha button (Header.jsx): one gentle pulse when the app opens with tickets waiting. */
+@keyframes polycards-gacha-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 color-mix(in srgb, var(--gold) 70%, transparent); }
+  30% { transform: scale(1.12); }
+  60% { transform: scale(1); }
+  100% { transform: scale(1); box-shadow: 0 0 0 14px color-mix(in srgb, var(--gold) 0%, transparent); }
+}
+.gacha-pulse {
+  animation: polycards-gacha-pulse 1.4s ease-out 1;
+}
+
+/* Gacha reveal (GachaReveal.jsx), 2 s: the capsule drops and wobbles, then pops open. */
+@keyframes polycards-gacha-drop {
+  0% { transform: translateY(-120vh); }
+  30% { transform: translateY(0); }
+  38% { transform: translateY(-18px); }
+  45% { transform: translateY(0) rotate(0); }
+  52% { transform: rotate(-10deg); }
+  59% { transform: rotate(10deg); }
+  66%, 100% { transform: rotate(0); }
+}
+@keyframes polycards-gacha-top {
+  0%, 68% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  100% { transform: translate(-30px, -60px) rotate(-35deg); opacity: 0; }
+}
+@keyframes polycards-gacha-bottom {
+  0%, 68% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  100% { transform: translate(30px, 50px) rotate(25deg); opacity: 0; }
+}
+@keyframes polycards-gacha-burst {
+  0%, 66% { transform: scale(0.2); opacity: 0; }
+  75% { opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+@keyframes polycards-gacha-reveal-in {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes polycards-gacha-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.gacha-capsule { animation: polycards-gacha-drop 2s ease-out forwards; }
+.gacha-half-top { animation: polycards-gacha-top 2s ease-in forwards; transform-box: fill-box; transform-origin: center; }
+.gacha-half-bottom { animation: polycards-gacha-bottom 2s ease-in forwards; transform-box: fill-box; transform-origin: center; }
+.gacha-burst { animation: polycards-gacha-burst 2s ease-out forwards; opacity: 0; }
+.gacha-reveal-in { animation: polycards-gacha-reveal-in 0.35s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gacha-pulse { animation: none; }
+  .gacha-capsule, .gacha-half-top, .gacha-half-bottom, .gacha-burst { animation: none; }
+  .gacha-reveal-in { animation: polycards-gacha-fade-in 0.4s ease-out; }
+}

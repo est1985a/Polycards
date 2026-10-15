@@ -123,7 +123,7 @@ function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
 }
 
 // wide: two columns (player card, review button, chart, Mastered | マイデッキ in a 2-column grid).
-export default function MyCardsTab({ decks, dueRows, nextReview, stats, onReview, onOpenPlan, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
+export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, onReview, onOpenPlan, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
   // A word can be in several decks, so a due card counts toward each of them.
   const dueByDeck = {};
   dueRows.forEach((r) => {
@@ -134,7 +134,7 @@ export default function MyCardsTab({ decks, dueRows, nextReview, stats, onReview
 
   const overview = (
     <>
-      <PlayerStats stats={stats} wide={wide} />
+      <PlayerStats stats={stats} avatar={avatar} wide={wide} />
       <ReviewButton dueCount={dueRows.length} loading={loading} onReview={() => onReview()} nextReview={nextReview} onOpenPlan={onOpenPlan} wide={wide} />
       {stats && <LevelChart counts={stats.levelCounts} />}
       {stats && <MasteredButton count={stats.levelCounts[MASTERED]} loading={loading} onOpen={onOpenMastered} />}
