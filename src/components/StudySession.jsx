@@ -12,6 +12,29 @@ const srOnly = { position: "absolute", width: 1, height: 1, overflow: "hidden", 
 
 const stampFill = (n) => Array.from({ length: CLEAR_TARGET }, (_, i) => i < n);
 
+// 答えを見る before the flip; after it, the まだ / わかった buttons with a reassuring note below them
+// (below, so the buttons themselves never move).
+export function AnswerArea({ revealed, onReveal, onAnswer, answerSize, wide = false }) {
+  if (!revealed) {
+    return (
+      <button style={{ ...btnPrimary, width: "100%", minHeight: 52, fontSize: 17, ...answerSize }} onClick={onReveal}>
+        答えを見る
+      </button>
+    );
+  }
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      <div style={{ display: "flex", gap: 10 }}>
+        <button style={{ ...btnDanger, flex: 1, ...answerSize }} onClick={() => onAnswer(false)}>Still learning<br />まだ</button>
+        <button style={{ ...btnPrimary, flex: 1, ...answerSize }} onClick={() => onAnswer(true)}>I knew it<br />わかった</button>
+      </div>
+      <p style={{ fontSize: wide ? 15 : 13, color: colors.muted, margin: 0, textAlign: "center" }}>
+        まだでも大丈夫！すぐにまた出てきます
+      </p>
+    </div>
+  );
+}
+
 // One study session: either the Card Sets drill or an SRS review (activeSet.mode === 'srs').
 // Give it a new `key` to start a fresh session. wide: bigger card text and taller answer buttons.
 export default function StudySession({ activeSet, userId, isAdded, saving, onAddDeck, onBack, wide = false }) {
@@ -151,16 +174,13 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
               {stampFill(counts[card.id] || 0).map((f, i) => <Stamp key={i} filled={f} />)}
             </div>
           )}
-          {revealed ? (
-            <div style={{ display: "flex", gap: 10 }}>
-              <button style={{ ...btnDanger, flex: 1, ...answerSize }} onClick={() => handleAnswer(false)}>Still learning<br />まだ</button>
-              <button style={{ ...btnPrimary, flex: 1, ...answerSize }} onClick={() => handleAnswer(true)}>I knew it<br />わかった</button>
-            </div>
-          ) : (
-            <button style={{ ...btnPrimary, width: "100%", minHeight: 52, fontSize: 17, ...answerSize }} onClick={() => setRevealed(true)}>
-              答えを見る
-            </button>
-          )}
+          <AnswerArea
+            revealed={revealed}
+            onReveal={() => setRevealed(true)}
+            onAnswer={handleAnswer}
+            answerSize={answerSize}
+            wide={wide}
+          />
         </>
       )}
 
