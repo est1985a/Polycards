@@ -205,6 +205,20 @@ async function sendAnswer(card, result, sessionId, typed) {
   return data;
 }
 
+// Typing mode: is what the student typed another library word that shares a Japanese meaning
+// with this card (e.g. "from" on the から card that wants "since")? Saves nothing. A failed check
+// counts as false (only a console warning, never a pop-up), so the answer is simply wrong.
+export async function checkOtherMeaning(wordId, typed) {
+  try {
+    const { data, error } = await supabase.rpc('other_meaning_check', { p_word_id: wordId, p_typed: typed });
+    if (error) throw error;
+    return data === true;
+  } catch (error) {
+    console.warn("other_meaning_check failed, treating the answer as wrong:", error?.message || error);
+    return false;
+  }
+}
+
 export async function waitForPendingSaves() {
   await Promise.allSettled([...pendingSaves]);
 }

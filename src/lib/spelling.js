@@ -59,6 +59,12 @@ export function checkSpelling(typed, english) {
   return "wrong";
 }
 
+// A wrong spelling may be another word with the same meaning: ask the database once per showing
+// of the card (retryUsed: this showing already had its retry). exact / close never ask.
+export function needsOtherMeaningCheck(spelling, retryUsed) {
+  return spelling === "wrong" && !retryUsed;
+}
+
 // The typing-mode switch on My Cards, saved on this device (off if nothing is saved or storage is blocked).
 const TYPING_KEY = "polycards.typingMode";
 

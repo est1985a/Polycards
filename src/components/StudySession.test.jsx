@@ -160,4 +160,26 @@ describe('typing mode (TypingArea)', () => {
     expect(html).toContain('正しい答え');
     expect(html).toContain('わかった');
   });
+
+  const RETRY_NOTE = 'それも正しい意味ですが、この単語ではありません。もう一度！';
+
+  it('while checking another meaning: 答える shows 確認中… and is disabled', () => {
+    const html = render({ typed: 'from', checking: true });
+    expect(html).toContain('確認中…');
+    expect(html).not.toContain('>答える<');
+    expect(html).toMatch(/<button type="submit" disabled=""/);
+  });
+
+  it('another word with the same meaning: the gold note, the box again, no answer shown', () => {
+    const html = render({ typed: '', retryNote: true });
+    expect(html).toContain(RETRY_NOTE);
+    expect(html).toContain('<input');
+    expect(html).toContain('答える');
+    expect(html).not.toContain('正しい答え');
+    expect(html).not.toContain('apple');
+  });
+
+  it('no note before a retry', () => {
+    expect(render()).not.toContain(RETRY_NOTE);
+  });
 });

@@ -29,7 +29,7 @@ vi.mock('./supabaseClient', () => ({
 }));
 
 const {
-  fetchDueRows, fetchReviewRows, restoreMasteredCard, recordAnswer, waitForPendingSaves, fetchBonusPoints, fetchNextReview, fetchReviewPlanRows,
+  fetchDueRows, fetchReviewRows, restoreMasteredCard, recordAnswer, waitForPendingSaves, checkOtherMeaning, fetchBonusPoints, fetchNextReview, fetchReviewPlanRows,
   fetchGachaStatus, pullGacha, fetchGachaCollection, equipAvatar, setGachaTheme, gachaErrorMessage,
 } = await import('./api');
 
@@ -244,5 +244,36 @@ describe('spelling bonus', () => {
   it('is 0 when the student has no row yet', async () => {
     result = { data: null, error: null };
     expect(await fetchBonusPoints()).toBe(0);
+  });
+});
+
+describe('other meaning check (typing mode)', () => {
+  const WORD = '0b9c6a52-1111-4222-8333-444455556666';
+
+  it('asks other_meaning_check with the word id and what was typed, and writes nothing', async () => {
+    await checkOtherMeaning(WORD, 'from');
+    expect(calls).toEqual([['rpc', 'other_meaning_check', { p_word_id: WORD, p_typed: 'from' }]]);
+  });
+
+  it('returns what the database says', async () => {
+    result = { data: true, error: null };
+    expect(await checkOtherMeaning(WORD, 'from')).toBe(true);
+    result = { data: false, error: null };
+    expect(await checkOtherMeaning(WORD, 'banana')).toBe(false);
+    result = { data: null, error: null };
+    expect(await checkOtherMeaning(WORD, 'banana')).toBe(false);
+  });
+
+  it('treats an error as false, with only a console warning (no throw, so no pop-up)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      result = { data: null, error: { message: 'network down' } };
+      expect(await checkOtherMeaning(WORD, 'from')).toBe(false);
+      rpcImpl = async () => { throw new Error('offline'); };
+      expect(await checkOtherMeaning(WORD, 'from')).toBe(false);
+      expect(warn).toHaveBeenCalledTimes(2);
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

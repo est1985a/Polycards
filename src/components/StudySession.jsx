@@ -2,8 +2,8 @@ import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { colors, fontDisplay, fontBody, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
 import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
 import { srsAnswer, newSessionId, saveErrorReporter } from '../lib/srs';
-import { checkSpelling, ignoreNextKey } from '../lib/spelling';
-import { recordAnswer } from '../lib/api';
+import { checkSpelling, ignoreNextKey, needsOtherMeaningCheck } from '../lib/spelling';
+import { recordAnswer, checkOtherMeaning } from '../lib/api';
 import Stamp from './Stamp';
 import AddDeckButton from './AddDeckButton';
 import FlipCard from './FlipCard';
@@ -40,18 +40,22 @@ export function AnswerArea({ revealed, onReveal, onAnswer, answerSize, wide = fa
 // phase 'typing': the text box, わからない and 答える (Enter also answers; disabled while empty).
 // phase 'next': answered (correct spelling, or わからない); ✓ 正解！ when correct, then 次へ.
 // phase 'choose': one letter off (close) or wrong: what they typed, the right answer, then まだ / わかった.
+// checking: waiting to hear if a wrong answer is another word with the same meaning (答える shows 確認中…).
+// retryNote: it was, so the student tries again (a calm gold line under the box).
 // Give it a new `key` per card so the box is focused when each card appears.
 export function TypingArea({
-  phase, typed, spelling = null, answer, onTypedChange, onSubmit, onDontKnow, onNext, onAnswer, answerSize, wide = false,
+  phase, typed, spelling = null, answer, onTypedChange, onSubmit, onDontKnow, onNext, onAnswer, answerSize,
+  checking = false, retryNote = false, wide = false,
 }) {
   const inputRef = useRef(null);
   const nextRef = useRef(null);
   const nextShownAt = useRef(0);
 
-  // Focus the box during the tap that showed the card (iOS only opens the keyboard then).
+  // Focus the box during the tap that showed the card (iOS only opens the keyboard then),
+  // and again when the retry note appears.
   useLayoutEffect(() => {
     if (phase === "typing") inputRef.current?.focus({ preventScroll: true });
-  }, [phase]);
+  }, [phase, retryNote]);
 
   // A plain effect, so it runs after FlipCard moves focus to the answer: 次へ gets focus (Enter works).
   useEffect(() => {
@@ -62,11 +66,12 @@ export function TypingArea({
 
   const fontSize = wide ? 18 : 16;
   const empty = typed.trim() === "";
+  const submitOff = empty || checking;
 
   if (phase === "typing") {
     return (
       <form
-        onSubmit={(e) => { e.preventDefault(); if (!empty) onSubmit(); }}
+        onSubmit={(e) => { e.preventDefault(); if (!submitOff) onSubmit(); }}
         style={{ display: "grid", gap: 10 }}
       >
         <input
@@ -87,12 +92,24 @@ export function TypingArea({
             border: `2px solid ${colors.line}`,
           }}
         />
+        {retryNote && (
+          <p role="status" style={{ margin: 0, textAlign: "center", fontSize: wide ? 17 : 15, color: colors.gold }}>
+            それも正しい意味ですが、この単語ではありません。もう一度！
+          </p>
+        )}
         <div style={{ display: "flex", gap: 10 }}>
-          <button type="button" style={{ ...btnGhost, flex: 1, fontSize, ...answerSize }} onClick={onDontKnow}>
+          <button
+            type="button" disabled={checking} onClick={onDontKnow}
+            style={{ ...btnGhost, flex: 1, fontSize, ...answerSize, opacity: checking ? 0.5 : 1 }}
+          >
             わからない
           </button>
-          <button type="submit" disabled={empty} style={{ ...btnPrimary, flex: 2, fontSize, ...answerSize, opacity: empty ? 0.5 : 1 }}>
-            答える
+          {/* Tapping 答える must not take focus from the box, so the keyboard stays open for a retry. */}
+          <button
+            type="submit" disabled={submitOff} onPointerDown={(e) => e.preventDefault()}
+            style={{ ...btnPrimary, flex: 2, fontSize, ...answerSize, opacity: submitOff ? 0.5 : 1 }}
+          >
+            {checking ? "確認中…" : "答える"}
           </button>
         </div>
       </form>
@@ -149,7 +166,11 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
   const [typed, setTyped] = useState("");          // typing mode: what the student typed
   const [typedResult, setTypedResult] = useState(null); // typing mode: { spelling, next, again } once answered
   const [spellBonus, setSpellBonus] = useState(null);   // typing mode: { id } of the "+1 スペル" float
+  const [checking, setChecking] = useState(false);      // typing mode: waiting for other_meaning_check
+  const [retryUsed, setRetryUsed] = useState(false);    // typing mode: this showing of the card had its retry
   const promptRef = useRef(null);
+  const turnRef = useRef(turn); // the current turn, for answers that arrive after a wait
+  useEffect(() => { turnRef.current = turn; }, [turn]);
 
   const done = pile.length === 0;
   const card = done ? null : activeSet.cards.find((c) => c.id === pile[0]) || null;
@@ -178,6 +199,8 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
     setRevealed(false);
     setTyped("");
     setTypedResult(null);
+    setChecking(false);
+    setRetryUsed(false); // a card that comes back later gets a fresh retry
     setTurn((t) => t + 1);
   }
 
@@ -217,9 +240,30 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
 
   // Typing mode: 答える. A correct spelling counts as わかった and is saved straight away;
   // otherwise the card flips and the student chooses まだ / わかった.
+  // A wrong answer that is another word with the same meaning (once per showing of the card):
+  // no flip and nothing saved; the box is cleared for one more try, which is still the first answer.
   function handleTypedAnswer() {
-    if (!card || typedResult || typed.trim() === "") return;
+    if (!card || typedResult || checking || typed.trim() === "") return;
     const spelling = checkSpelling(typed, card.en);
+    if (!needsOtherMeaningCheck(spelling, retryUsed)) {
+      showTypedResult(spelling);
+      return;
+    }
+    const askedTurn = turn;
+    setChecking(true);
+    checkOtherMeaning(card.wordId, typed).then((otherMeaning) => {
+      if (turnRef.current !== askedTurn) return; // the card has moved on
+      setChecking(false);
+      if (otherMeaning) {
+        setRetryUsed(true);
+        setTyped("");
+      } else {
+        showTypedResult(spelling);
+      }
+    });
+  }
+
+  function showTypedResult(spelling) {
     setRevealed(true);
     if (spelling === "exact") {
       const answer = srsAnswer(card.level, "got_it", wrongCounts[card.id] || 0, spelling);
@@ -233,7 +277,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
 
   // Typing mode: わからない. Saved straight away as a miss (the card comes back, like まだ).
   function handleDontKnow() {
-    if (!card || typedResult) return;
+    if (!card || typedResult || checking) return;
     const answer = srsAnswer(card.level, "dont_know", wrongCounts[card.id] || 0);
     send(answer.result);
     setWrongCounts({ ...wrongCounts, [card.id]: answer.wrongs });
@@ -369,12 +413,14 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
               typed={typed}
               spelling={typedResult?.spelling ?? null}
               answer={card.back}
-              onTypedChange={setTyped}
+              onTypedChange={(text) => { if (!checking) setTyped(text); }}
               onSubmit={handleTypedAnswer}
               onDontKnow={handleDontKnow}
               onNext={handleNext}
               onAnswer={handleAnswer}
               answerSize={answerSize}
+              checking={checking}
+              retryNote={retryUsed}
               wide={wide}
             />
           ) : (

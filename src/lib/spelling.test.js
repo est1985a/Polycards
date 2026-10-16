@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   normalizeSpelling, spellingDistance, checkSpelling, loadTypingMode, saveTypingMode,
-  ignoreNextKey, NEXT_KEY_GUARD_MS,
+  ignoreNextKey, NEXT_KEY_GUARD_MS, needsOtherMeaningCheck,
 } from './spelling';
 
 describe('checkSpelling: exact', () => {
@@ -110,5 +110,17 @@ describe('次へ ignores the Enter that answered', () => {
   it('always ignores a held-down key', () => {
     expect(ignoreNextKey({ key: 'Enter', repeat: true }, shownAt, shownAt + 5000)).toBe(true);
     expect(ignoreNextKey({ key: ' ', repeat: true }, shownAt, shownAt + 5000)).toBe(true);
+  });
+});
+
+describe('needsOtherMeaningCheck: one retry for another word with the same meaning', () => {
+  it('asks only for a wrong answer, and only once per showing of the card', () => {
+    expect(needsOtherMeaningCheck('wrong', false)).toBe(true);
+    expect(needsOtherMeaningCheck('wrong', true)).toBe(false); // the retry was already used
+  });
+
+  it('never asks for a correct or nearly correct spelling', () => {
+    expect(needsOtherMeaningCheck('exact', false)).toBe(false);
+    expect(needsOtherMeaningCheck('close', false)).toBe(false);
   });
 });
