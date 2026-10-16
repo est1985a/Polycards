@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { colors, fontDisplay, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
 import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
-import { levelAfterCorrect, levelAfterWrong, levelUpLabel, isMastered } from '../lib/srs';
-import { saveProgress } from '../lib/api';
+import { srsAnswer, newSessionId } from '../lib/srs';
+import { recordAnswer } from '../lib/api';
 import Stamp from './Stamp';
 import AddDeckButton from './AddDeckButton';
 import FlipCard from './FlipCard';
@@ -37,7 +37,7 @@ export function AnswerArea({ revealed, onReveal, onAnswer, answerSize, wide = fa
 
 // One study session: either the Card Sets drill or an SRS review (activeSet.mode === 'srs').
 // Give it a new `key` to start a fresh session. wide: bigger card text and taller answer buttons.
-export default function StudySession({ activeSet, userId, isAdded, saving, onAddDeck, onBack, wide = false }) {
+export default function StudySession({ activeSet, isAdded, saving, onAddDeck, onBack, wide = false }) {
   const isSrs = activeSet.mode === 'srs';
   const [pile, setPile] = useState(() => shuffle(activeSet.cards.map((c) => c.id)));
   const [counts, setCounts] = useState({});           // drill: correct answers per card
@@ -46,6 +46,7 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
   const [revealed, setRevealed] = useState(false);
   const [turn, setTurn] = useState(0); // goes up with every answer
   const [levelUp, setLevelUp] = useState(null); // SRS: { id, label, mastered } of the level-up float
+  const [sessionId] = useState(newSessionId); // SRS: made once, when the session starts
 
   const done = pile.length === 0;
   const card = done ? null : activeSet.cards.find((c) => c.id === pile[0]) || null;
@@ -57,31 +58,19 @@ export default function StudySession({ activeSet, userId, isAdded, saving, onAdd
     setTurn((t) => t + 1);
   }
 
-  function save(newLevel) {
-    saveProgress(userId, card, newLevel).catch((e) => alert(e.message));
-  }
-
   function handleSrsAnswer(knew) {
+    // card.level is the level the card had when the session started; the database works out
+    // and saves the new level itself (same rules as src/lib/srs.js).
+    const answer = srsAnswer(card.level, knew, wrongCounts[card.id] || 0);
+    recordAnswer(card, answer.result, sessionId).catch((e) => alert(e.message));
+
+    if (answer.label) setLevelUp({ id: turn, label: answer.label, mastered: answer.mastered });
     let nextPile = pile.slice(1);
-    let clearedDelta = 0;
-
-    const label = levelUpLabel(card.level, knew, wrongCounts[card.id] || 0);
-    if (label) setLevelUp({ id: turn, label, mastered: isMastered(levelAfterCorrect(card.level)) });
-
-    if (knew) {
-      // Only a clean answer (no misses on this card yet this session) moves it UP.
-      // If it was missed earlier, its lowered level was already saved at that miss.
-      if (!wrongCounts[card.id]) save(levelAfterCorrect(card.level));
-      clearedDelta = 1;
-    } else {
-      // Each miss lowers the saved level further (see levelAfterWrong).
-      // card.level is the level the card had when the session started.
-      const wrongs = (wrongCounts[card.id] || 0) + 1;
-      setWrongCounts({ ...wrongCounts, [card.id]: wrongs });
-      save(levelAfterWrong(card.level, wrongs));
+    if (answer.again) {
+      setWrongCounts({ ...wrongCounts, [card.id]: answer.wrongs });
       nextPile = reinsert(nextPile, card.id);
     }
-    finishAnswer(nextPile, clearedDelta);
+    finishAnswer(nextPile, knew ? 1 : 0);
   }
 
   function handleDrillAnswer(knew) {

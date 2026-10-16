@@ -6,6 +6,8 @@ import { MASTERED } from './srs';
 
 const calls = [];
 let result = { data: [], error: null, count: 0 };
+const defaultRpc = async (name, args) => { calls.push(['rpc', name, args]); return result; };
+let rpcImpl = defaultRpc;
 
 // A fake query: every method records its name and arguments and returns the same query;
 // awaiting it gives `result`.
@@ -22,18 +24,19 @@ function fakeQuery() {
 vi.mock('./supabaseClient', () => ({
   supabase: {
     from: (table) => { calls.push(['from', table]); return fakeQuery(); },
-    rpc: async (name, args) => { calls.push(['rpc', name, args]); return result; },
+    rpc: (...args) => rpcImpl(...args),
   },
 }));
 
 const {
-  fetchDueRows, fetchReviewRows, restoreMasteredCard, saveProgress, fetchNextReview, fetchReviewPlanRows,
+  fetchDueRows, fetchReviewRows, restoreMasteredCard, recordAnswer, waitForPendingSaves, fetchNextReview, fetchReviewPlanRows,
   fetchGachaStatus, pullGacha, fetchGachaCollection, equipAvatar, setGachaTheme, gachaErrorMessage,
 } = await import('./api');
 
 beforeEach(() => {
   calls.length = 0;
   result = { data: [], error: null, count: 0 };
+  rpcImpl = defaultRpc;
 });
 
 describe('Mastered cards are never due', () => {
@@ -58,13 +61,88 @@ describe('due cards', () => {
   });
 });
 
-describe('saving answers', () => {
-  it('saves a Mastered card with no next review and a mastered_at time', async () => {
-    await saveProgress('u1', { wordId: 3, direction: 'en2jp' }, MASTERED);
-    const [, fields] = calls.find((c) => c[0] === 'update');
-    expect(fields.level).toBe(MASTERED);
-    expect(fields.next_review_at).toBeNull();
-    expect(fields.mastered_at).not.toBeNull();
+describe('saving review answers (record_answer)', () => {
+  const card = { wordId: 3, direction: 'en2jp' };
+  const SESSION = '11111111-2222-4333-8444-555555555555';
+
+  it('sends わかった and まだ to record_answer with the right arguments', async () => {
+    await recordAnswer(card, 'got_it', SESSION);
+    await recordAnswer({ wordId: 4, direction: 'jp2en' }, 'not_yet', SESSION);
+    expect(calls).toEqual([
+      ['rpc', 'record_answer', { p_word_id: 3, p_direction: 'en2jp', p_result: 'got_it', p_session_id: SESSION }],
+      ['rpc', 'record_answer', { p_word_id: 4, p_direction: 'jp2en', p_result: 'not_yet', p_session_id: SESSION }],
+    ]);
+  });
+
+  it('never writes user_cards itself', async () => {
+    await recordAnswer(card, 'got_it', SESSION);
+    expect(calls.some((c) => c[0] === 'from' || c[0] === 'update')).toBe(false);
+  });
+
+  it('returns what the database sends', async () => {
+    result = { data: { result: 'got_it', level_before: 2, level_after: 3 }, error: null };
+    expect(await recordAnswer(card, 'got_it', SESSION)).toEqual({ result: 'got_it', level_before: 2, level_after: 3 });
+  });
+
+  it('sends answers one at a time, in the order they were given', async () => {
+    const log = [];
+    let finishFirst;
+    rpcImpl = (name, args) => {
+      log.push(`start ${args.p_result}`);
+      if (args.p_result === 'not_yet') {
+        return new Promise((resolve) => { finishFirst = () => { log.push('end not_yet'); resolve(result); }; });
+      }
+      log.push(`end ${args.p_result}`);
+      return Promise.resolve(result);
+    };
+    const first = recordAnswer(card, 'not_yet', SESSION);
+    const second = recordAnswer(card, 'got_it', SESSION);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(log).toEqual(['start not_yet']); // the second waits for the first
+    finishFirst();
+    await Promise.all([first, second]);
+    expect(log).toEqual(['start not_yet', 'end not_yet', 'start got_it', 'end got_it']);
+  });
+
+  it('lets points wait for answers that are still saving', async () => {
+    let finish;
+    rpcImpl = () => new Promise((resolve) => { finish = () => resolve(result); });
+    let saved = false;
+    recordAnswer(card, 'got_it', SESSION).then(() => { saved = true; });
+    await new Promise((r) => setTimeout(r, 0));
+    const waiting = waitForPendingSaves();
+    finish();
+    await waiting;
+    expect(saved).toBe(true);
+  });
+
+  it('keeps going after a failed answer', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    result = { data: null, error: { message: 'network down' } };
+    const failed = recordAnswer(card, 'not_yet', SESSION);
+    await expect(failed).rejects.toThrow('保存できませんでした');
+    result = { data: { result: 'got_it' }, error: null };
+    expect(await recordAnswer(card, 'got_it', SESSION)).toEqual({ result: 'got_it' });
+    console.error.mockRestore();
+  });
+
+  it('turns database error codes into friendly Japanese messages', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    result = { data: null, error: { message: 'card_not_found' } };
+    await expect(recordAnswer(card, 'got_it', SESSION)).rejects.toThrow('このカードは見つかりませんでした');
+    result = { data: null, error: { message: 'not_signed_in' } };
+    await expect(recordAnswer(card, 'got_it', SESSION)).rejects.toThrow('ログインしてください');
+    result = { data: null, error: { message: 'bad_answer' } };
+    await expect(recordAnswer(card, 'got_it', SESSION)).rejects.toThrow('保存できませんでした');
+    console.error.mockRestore();
+  });
+
+  it('only warns in the console for a card that is not due (no pop-up)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    result = { data: null, error: { message: 'not_due' } };
+    expect(await recordAnswer(card, 'got_it', SESSION)).toBeNull();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
 

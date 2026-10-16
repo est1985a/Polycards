@@ -522,7 +522,6 @@ function App() {
                   <StudySession
                     key={sessionKey}
                     activeSet={activeSet}
-                    userId={session?.user.id}
                     isAdded={myDeckIds.includes(activeSet.id)}
                     saving={savingDeck}
                     onAddDeck={addDeck}

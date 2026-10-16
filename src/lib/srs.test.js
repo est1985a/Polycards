@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   LEVEL_HOURS, MAX_LEVEL, MASTERED, SESSION_SIZE, RESTORED_LEVEL, isMastered,
-  levelAfterCorrect, levelAfterWrong, nextReviewDate, progressUpdate, restoreUpdate, levelUpLabel,
+  levelAfterCorrect, levelAfterWrong, nextReviewDate, restoreUpdate, levelUpLabel,
 } from './srs';
 
 describe('settings', () => {
@@ -100,29 +100,6 @@ describe('next review date', () => {
 
   it('never schedules a Mastered card', () => {
     expect(nextReviewDate(MASTERED, now)).toBeNull();
-  });
-});
-
-describe('saved fields (progressUpdate)', () => {
-  const now = Date.UTC(2026, 0, 1, 9, 0, 0);
-
-  it('schedules a normal level and clears mastered_at', () => {
-    expect(progressUpdate(3, now)).toEqual({
-      level: 3, next_review_at: new Date(now + 72 * 3600000).toISOString(), mastered_at: null,
-    });
-  });
-
-  it('gives a Mastered card no next review and records when it was mastered', () => {
-    expect(progressUpdate(MASTERED, now)).toEqual({
-      level: MASTERED, next_review_at: null, mastered_at: new Date(now).toISOString(),
-    });
-  });
-
-  it('saves a level 7 miss as a normal, scheduled level', () => {
-    const saved = progressUpdate(levelAfterWrong(7, 1), now);
-    expect(saved.level).toBe(5);
-    expect(saved.next_review_at).not.toBeNull();
-    expect(saved.mastered_at).toBeNull();
   });
 });
 

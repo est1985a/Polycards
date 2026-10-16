@@ -1,7 +1,7 @@
 // Every Supabase query the app makes lives here.
 // Each function throws an Error if something goes wrong, so screens can show the message.
 import { supabase } from './supabaseClient';
-import { SESSION_SIZE, MASTERED, progressUpdate, restoreUpdate } from './srs';
+import { SESSION_SIZE, MASTERED, restoreUpdate } from './srs';
 import { shapeLibrary } from './library';
 import { jstDayBounds, jstHourStart } from './schedule';
 
@@ -153,26 +153,53 @@ export async function fetchReviewRows(deckId = null) {
   return data || [];
 }
 
-// Progress saves that haven't finished yet. The study screen doesn't wait for saves,
+// Review answers that haven't finished saving yet. The study screen doesn't wait for saves,
 // so points are only counted after these are done (see waitForPendingSaves).
 const pendingSaves = new Set();
+// Answers are sent one at a time, in the order they were given, so a まだ and the same
+// card's next answer can never reach the database out of order.
+let answerQueue = Promise.resolve();
 
-export function saveProgress(userId, card, newLevel) {
-  const save = writeProgress(userId, card, newLevel);
+const ANSWER_ERRORS = {
+  card_not_found: "このカードは見つかりませんでした",
+  not_signed_in: "ログインしてください",
+};
+
+export function answerErrorMessage(error) {
+  const text = error?.message || "";
+  const code = Object.keys(ANSWER_ERRORS).find((c) => text.includes(c));
+  return code ? ANSWER_ERRORS[code] : "保存できませんでした";
+}
+
+// Saves one SRS review answer through the database function record_answer(), which works out
+// the new level, saves the card and logs the answer. result: 'got_it' (わかった) or 'not_yet' (まだ).
+// sessionId: one id per review session. Resolves with what the database returns
+// (null for a card that is no longer due, which is only a console warning).
+export function recordAnswer(card, result, sessionId) {
+  const save = answerQueue.then(() => sendAnswer(card, result, sessionId));
+  answerQueue = save.catch(() => {}); // a failed answer doesn't hold up the next one
   pendingSaves.add(save);
   const done = () => pendingSaves.delete(save);
   save.then(done, done);
   return save;
 }
 
-async function writeProgress(userId, card, newLevel) {
-  const { error } = await supabase
-    .from('user_cards')
-    .update({ ...progressUpdate(newLevel), updated_at: new Date().toISOString() })
-    .eq('user_id', userId)
-    .eq('word_id', card.wordId)
-    .eq('direction', card.direction);
-  if (error) throw new Error("Could not save progress: " + error.message);
+async function sendAnswer(card, result, sessionId) {
+  const { data, error } = await supabase.rpc('record_answer', {
+    p_word_id: card.wordId,
+    p_direction: card.direction,
+    p_result: result,
+    p_session_id: sessionId,
+  });
+  if (error) {
+    if ((error.message || "").includes('not_due')) {
+      console.warn("Answer not saved: card is not due", card.wordId, card.direction);
+      return null;
+    }
+    console.error("record_answer failed:", error.message);
+    throw new Error(answerErrorMessage(error));
+  }
+  return data;
 }
 
 export async function waitForPendingSaves() {
