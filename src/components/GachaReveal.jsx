@@ -90,8 +90,8 @@ export default function GachaReveal({ result, equipped, equipping, pulling, onEq
 
           <div>
             <div style={{ fontSize: 12, color: colors.muted }}>アバター</div>
-            <div style={{ fontWeight: 700, fontSize: 28, lineHeight: 1.3 }}>{avatar.name_ja}</div>
-            <div style={{ fontFamily: fontDisplay, fontSize: 15, color: colors.muted }}>{avatar.name_en}</div>
+            <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 28, lineHeight: 1.3 }}>{avatar.name_en}</div>
+            <div style={{ fontSize: 15, color: colors.muted }}>{avatar.name_ja}</div>
           </div>
 
           <button

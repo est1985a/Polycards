@@ -10,10 +10,12 @@ const secret = { id: 4, slug: null, rarity: 'secret', series: 'Series 1', owned:
 const tile = (avatar) => renderToStaticMarkup(<CollectionTile avatar={avatar} onEquip={() => {}} />);
 
 describe('CollectionTile', () => {
-  it('owned: picture and name, tappable to wear it', () => {
+  it('owned: picture and English name, tappable to wear it', () => {
     const html = tile(owned);
     expect(html).toContain('data-tile="owned"');
-    expect(html).toContain('柴犬');
+    expect(html).toContain('>Shiba Inu</div>');
+    expect(html).not.toContain('>柴犬<');
+    expect(html).toContain('aria-label="柴犬 (Shiba Inu) をつける"');
     expect(html).toMatch(/^<button/);
     expect(html).not.toContain('つけ中');
   });
@@ -28,6 +30,7 @@ describe('CollectionTile', () => {
     expect(html).toContain('filter:brightness(0)');
     expect(html).not.toMatch(/^<button/);
     expect(html).not.toContain('柴犬');
+    expect(html).not.toContain('Shiba Inu');
   });
 
   it('not owned Secret: a locked ??? tile', () => {
@@ -52,6 +55,7 @@ describe('GachaCollection', () => {
       expect(html).toContain('2 / 4');
       expect(html).toContain('0 / ?');
       expect(html).toContain('Series 1');
+      expect(html).toContain('>Cat</div>');
     }
   });
 });

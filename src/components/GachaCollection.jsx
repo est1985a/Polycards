@@ -55,7 +55,7 @@ export function CollectionTile({ avatar, equipping = false, onEquip }) {
         </span>
       )}
       <AvatarPicture avatar={avatar} size={64} />
-      <div style={{ fontSize: 13, lineHeight: 1.25 }}>{avatar.name_ja}</div>
+      <div style={{ fontSize: 13, lineHeight: 1.25 }}>{avatar.name_en}</div>
     </button>
   );
 }
@@ -77,7 +77,7 @@ function SummaryPanel({ rows, equipped }) {
       </div>
       {equipped && (
         <div>
-          <div style={{ fontWeight: 700, fontSize: 20 }}>{equipped.name_ja}</div>
+          <div style={{ fontWeight: 700, fontSize: 20 }}>{equipped.name_en}</div>
           <div style={{ fontSize: 13, color: colors.muted }}>
             {info.stars && <span style={{ color: info.color, marginRight: 4 }}>{info.stars}</span>}
             {info.label}
