@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { colors, fontDisplay, fontBody, gutter, panel, btnPrimary, wideLayout } from '../styles/theme';
 import AddDeckButton from './AddDeckButton';
 import Highlighted from './Highlighted';
+import ToggleSwitch from './ToggleSwitch';
 
 const blurred = { filter: "blur(6px)", userSelect: "none" };
 
@@ -86,20 +87,7 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
         }}
       >
         <span>日本語をかくす</span>
-        <span
-          aria-hidden="true"
-          style={{
-            position: "relative", width: 52, height: 30, flexShrink: 0, boxSizing: "border-box", borderRadius: 15,
-            background: hideJa ? colors.accent : colors.surface2, border: `2px solid ${hideJa ? colors.accent : colors.line}`,
-          }}
-        >
-          <span
-            style={{
-              position: "absolute", top: 2, left: hideJa ? 24 : 2, width: 22, height: 22, borderRadius: "50%",
-              background: hideJa ? colors.accentInk : colors.muted, transition: "left 150ms",
-            }}
-          />
-        </span>
+        <ToggleSwitch on={hideJa} />
       </button>
 
       <ol style={{ ...panel, padding: 0, margin: 0, listStyle: "none", overflow: "hidden" }}>

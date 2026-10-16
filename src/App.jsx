@@ -4,6 +4,7 @@ import * as api from './lib/api';
 import { buildCards, buildReviewCards } from './lib/drill';
 import { loadSchoolLevel, saveSchoolLevel } from './lib/library';
 import { totalPoints, levelCounts, playerRank, newPeak } from './lib/points';
+import { loadTypingMode, saveTypingMode } from './lib/spelling';
 import { nextReviewSummary } from './lib/schedule';
 import { singleFlight } from './lib/gacha';
 import { colors, wrap, gutter, headerBand, tabBarHeight, btnLink, wideLayout } from './styles/theme';
@@ -42,6 +43,7 @@ function App() {
   // Kept here so that coming back from a deck's word list or drill returns to the same deck list.
   // The level starts from the one saved on the last visit.
   const [cardSetsPath, setCardSetsPath] = useState(() => ({ screen: "hub", level: loadSchoolLevel(window.localStorage) }));
+  const [typingMode, setTypingMode] = useState(() => loadTypingMode(window.localStorage)); // スペル入力 switch
 
   // Study session
   const [activeSet, setActiveSet] = useState(null);
@@ -211,14 +213,28 @@ function App() {
 
   const closePlan = useCallback(() => setPlanOpen(false), []);
 
+  function changeTypingMode(on) {
+    setTypingMode(on);
+    saveTypingMode(window.localStorage, on);
+  }
+
   async function loadStats(userId) {
     try {
       await api.waitForPendingSaves(); // include the last answers of a review that just ended
-      const [levels, savedPeak] = await Promise.all([api.fetchAllCardLevels(), api.fetchPeakPoints()]);
+      const [levels, savedPeak, bonusPoints] = await Promise.all([
+        api.fetchAllCardLevels(),
+        api.fetchPeakPoints(),
+        // The spelling bonus only adds to rank; if it can't be read, show the rest anyway.
+        api.fetchBonusPoints().catch((e) => { console.error(e); return 0; }),
+      ]);
       const currentPoints = totalPoints(levels);
       const peakPoints = newPeak(currentPoints, savedPeak);
       if (peakPoints > savedPeak) await api.savePeakPoints(userId, peakPoints);
-      setStats({ currentPoints, peakPoints, playerRank: playerRank(peakPoints), levelCounts: levelCounts(levels) });
+      setStats({
+        currentPoints, peakPoints, bonusPoints,
+        playerRank: playerRank(peakPoints + bonusPoints), // same as gacha_player_level() in the database
+        levelCounts: levelCounts(levels),
+      });
     } catch (e) {
       console.error(e);
     }
@@ -440,6 +456,8 @@ function App() {
                     nextReview={dueRows.length === 0 ? nextReviewSummary(nextReview, now) : null}
                     stats={stats}
                     avatar={gacha?.equipped_avatar ?? null}
+                    typingMode={typingMode}
+                    onTypingModeChange={changeTypingMode}
                     onReview={startReview}
                     onOpenPlan={openPlan}
                     onRemove={removeDeck}
@@ -526,6 +544,7 @@ function App() {
                     saving={savingDeck}
                     onAddDeck={addDeck}
                     onBack={() => setView("dashboard")}
+                    typingMode={typingMode}
                     wide={wide}
                   />
                 )}

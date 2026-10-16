@@ -60,4 +60,12 @@ describe('FlipCard', () => {
     expect(render({ showLevel: true })).toContain('Lv 3');
     expect(render({ showLevel: false })).not.toContain('Lv ');
   });
+
+  it('compact (typing mode): a short card that cannot be tapped and hides the answer', () => {
+    const html = render({ compact: true, card: { ...CARD, direction: 'jp2en', front: 'もう、すでに', back: 'already' } });
+    expect(html).not.toContain('<button');
+    expect(html).not.toContain('タップしてめくる');
+    expect(html).not.toContain('>already<');
+    expect(html).toContain('min-height:150px');
+  });
 });

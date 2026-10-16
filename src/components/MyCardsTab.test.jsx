@@ -1,7 +1,7 @@
 // Tests for the review button on My Cards. Run with: npm test
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import MyCardsTab, { ReviewButton } from './MyCardsTab';
+import MyCardsTab, { ReviewButton, TypingModeSwitch } from './MyCardsTab';
 import { extraDueTotal } from '../lib/srs';
 
 const render = (dueCount) => renderToStaticMarkup(<ReviewButton dueCount={dueCount} loading={false} onReview={() => {}} />);
@@ -88,5 +88,20 @@ describe('next review line (nothing due)', () => {
 
   it('only shows the line when nothing is due', () => {
     expect(line(soon, 5)).not.toContain('次の復習');
+  });
+});
+
+describe('typing mode switch', () => {
+  const html = (on) => renderToStaticMarkup(<TypingModeSwitch on={on} onChange={() => {}} />);
+
+  it('shows the label and the note', () => {
+    expect(html(false)).toContain('スペル入力（日本語 → English）');
+    expect(html(false)).toContain('英語をタイプして答えます。正しいスペルで +1 pt');
+  });
+
+  it('is a switch that shows on / off', () => {
+    expect(html(false)).toContain('role="switch"');
+    expect(html(false)).toContain('aria-checked="false"');
+    expect(html(true)).toContain('aria-checked="true"');
   });
 });

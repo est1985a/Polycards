@@ -193,3 +193,12 @@ p {
   .gacha-capsule, .gacha-half-top, .gacha-half-bottom, .gacha-burst { animation: none; }
   .gacha-reveal-in { animation: polycards-gacha-fade-in 0.4s ease-out; }
 }
+
+/* Typing mode: "+1 スペル" for a correct spelling (StudySession.jsx), top-left of the card.
+   Rises and fades like the Lv tick, a little slower; only fades with reduce motion. */
+.spell-bonus-float {
+  animation: polycards-level-tick 1s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .spell-bonus-float { animation-name: polycards-level-up-fade; }
+}

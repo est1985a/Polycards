@@ -173,10 +173,11 @@ export function answerErrorMessage(error) {
 
 // Saves one SRS review answer through the database function record_answer(), which works out
 // the new level, saves the card and logs the answer. result: 'got_it' (わかった) or 'not_yet' (まだ).
-// sessionId: one id per review session. Resolves with what the database returns
+// sessionId: one id per review session. typed: what the student typed (typing mode), else null;
+// the database checks the spelling itself. Resolves with what the database returns
 // (null for a card that is no longer due, which is only a console warning).
-export function recordAnswer(card, result, sessionId) {
-  const save = answerQueue.then(() => sendAnswer(card, result, sessionId));
+export function recordAnswer(card, result, sessionId, typed = null) {
+  const save = answerQueue.then(() => sendAnswer(card, result, sessionId, typed));
   answerQueue = save.catch(() => {}); // a failed answer doesn't hold up the next one
   pendingSaves.add(save);
   const done = () => pendingSaves.delete(save);
@@ -184,13 +185,15 @@ export function recordAnswer(card, result, sessionId) {
   return save;
 }
 
-async function sendAnswer(card, result, sessionId) {
-  const { data, error } = await supabase.rpc('record_answer', {
+async function sendAnswer(card, result, sessionId, typed) {
+  const args = {
     p_word_id: card.wordId,
     p_direction: card.direction,
     p_result: result,
     p_session_id: sessionId,
-  });
+  };
+  if (typed !== null) args.p_typed = typed;
+  const { data, error } = await supabase.rpc('record_answer', args);
   if (error) {
     if ((error.message || "").includes('not_due')) {
       console.warn("Answer not saved: card is not due", card.wordId, card.direction);
@@ -322,6 +325,17 @@ export async function fetchPeakPoints() {
     .maybeSingle();
   if (error) throw new Error("Could not load points: " + error.message);
   return data?.peak_points ?? 0;
+}
+
+// Spelling bonus points the student has earned in typing mode (0 if they have no row yet).
+// They count toward rank on top of the peak (see playerRank in points.js).
+export async function fetchBonusPoints() {
+  const { data, error } = await supabase
+    .from('user_study_totals')
+    .select('bonus_points')
+    .maybeSingle();
+  if (error) throw new Error("Could not load bonus points: " + error.message);
+  return data?.bonus_points ?? 0;
 }
 
 // The database trigger also keeps the highest value, so this can never lower the peak.

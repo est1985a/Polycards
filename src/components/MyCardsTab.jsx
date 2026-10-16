@@ -3,6 +3,7 @@ import { SESSION_SIZE, MASTERED, extraDueTotal } from '../lib/srs';
 import PlayerStats from './PlayerStats';
 import LevelChart from './LevelChart';
 import StarIcon from './StarIcon';
+import ToggleSwitch from './ToggleSwitch';
 
 // Big "start review" button. The pill shows how many cards the session will have
 // (all due cards, up to SESSION_SIZE); a small line under the label shows the full total when there are more.
@@ -55,6 +56,27 @@ export function ReviewButton({ dueCount, loading, onReview, nextReview = null, o
           )}
         </span>
       )}
+    </button>
+  );
+}
+
+// Typing mode switch: Japanese → English cards in reviews are answered by typing (saved on the device).
+export function TypingModeSwitch({ on, onChange, wide = false }) {
+  return (
+    <button
+      role="switch"
+      aria-checked={on}
+      onClick={() => onChange(!on)}
+      style={{
+        width: "100%", minHeight: 44, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+        padding: "4px 4px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", color: colors.text,
+      }}
+    >
+      <span style={{ minWidth: 0, display: "grid", gap: 2 }}>
+        <span style={{ fontSize: wide ? 16 : 15, fontWeight: 700 }}>スペル入力（日本語 → English）</span>
+        <span style={{ fontSize: 12, color: colors.muted }}>英語をタイプして答えます。正しいスペルで +1 pt</span>
+      </span>
+      <ToggleSwitch on={on} />
     </button>
   );
 }
@@ -123,7 +145,7 @@ function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
 }
 
 // wide: two columns (player card, review button, chart, Mastered | マイデッキ in a 2-column grid).
-export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, onReview, onOpenPlan, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
+export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, typingMode = false, onTypingModeChange = () => {}, onReview, onOpenPlan, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
   // A word can be in several decks, so a due card counts toward each of them.
   const dueByDeck = {};
   dueRows.forEach((r) => {
@@ -136,6 +158,7 @@ export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar =
     <>
       <PlayerStats stats={stats} avatar={avatar} wide={wide} />
       <ReviewButton dueCount={dueRows.length} loading={loading} onReview={() => onReview()} nextReview={nextReview} onOpenPlan={onOpenPlan} wide={wide} />
+      <TypingModeSwitch on={typingMode} onChange={onTypingModeChange} wide={wide} />
       {stats && <LevelChart counts={stats.levelCounts} />}
       {stats && <MasteredButton count={stats.levelCounts[MASTERED]} loading={loading} onOpen={onOpenMastered} />}
     </>

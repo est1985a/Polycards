@@ -5,18 +5,21 @@ import AvatarPicture from './AvatarPicture';
 const fmt = (n) => n.toLocaleString('en-US');
 
 // Player card: avatar, rank, points, and progress to the next rank.
-// stats: { playerRank, currentPoints, peakPoints, levelCounts } (from src/lib/points.js)
+// stats: { playerRank, currentPoints, peakPoints, bonusPoints, levelCounts } (from src/lib/points.js).
+// Rank and the next-rank bar use peak + spelling bonus (bonusPoints, from typing mode).
 // avatar: the equipped avatar from gacha_status (null = the starter cat). wide: a bigger avatar.
 export default function PlayerStats({ stats, avatar = null, wide = false }) {
   // Keep the space while points are loading, so the page doesn't jump.
   if (!stats) return <div style={{ ...panel, minHeight: 190 }} aria-busy="true" />;
 
-  // Rank comes from the peak, so progress is measured with the peak too.
+  // Rank comes from the peak plus the spelling bonus, so progress is measured with them too.
+  const bonus = stats.bonusPoints ?? 0;
+  const rankPoints = stats.peakPoints + bonus;
   const rank = stats.playerRank;
   const start = pointsForRank(rank);
   const next = pointsForRank(rank + 1);
-  const toNext = next - stats.peakPoints;
-  const progress = Math.min(1, Math.max(0, (stats.peakPoints - start) / (next - start)));
+  const toNext = next - rankPoints;
+  const progress = Math.min(1, Math.max(0, (rankPoints - start) / (next - start)));
 
   return (
     <div style={{ ...panel, display: "grid", gap: 14 }}>
@@ -34,6 +37,7 @@ export default function PlayerStats({ stats, avatar = null, wide = false }) {
           <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 46, lineHeight: 1.05, color: colors.accentText }}>Rank {rank}</div>
           <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 22, lineHeight: 1.3, color: colors.gold }}>{fmt(stats.currentPoints)} pt</div>
           <div style={{ fontSize: 13, color: colors.muted }}>ベスト {fmt(stats.peakPoints)} pt</div>
+          {bonus > 0 && <div style={{ fontSize: 13, color: colors.muted }}>スペルボーナス {fmt(bonus)} pt</div>}
         </div>
       </div>
 

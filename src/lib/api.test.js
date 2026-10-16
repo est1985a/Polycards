@@ -29,7 +29,7 @@ vi.mock('./supabaseClient', () => ({
 }));
 
 const {
-  fetchDueRows, fetchReviewRows, restoreMasteredCard, recordAnswer, waitForPendingSaves, fetchNextReview, fetchReviewPlanRows,
+  fetchDueRows, fetchReviewRows, restoreMasteredCard, recordAnswer, waitForPendingSaves, fetchBonusPoints, fetchNextReview, fetchReviewPlanRows,
   fetchGachaStatus, pullGacha, fetchGachaCollection, equipAvatar, setGachaTheme, gachaErrorMessage,
 } = await import('./api');
 
@@ -71,6 +71,13 @@ describe('saving review answers (record_answer)', () => {
     expect(calls).toEqual([
       ['rpc', 'record_answer', { p_word_id: 3, p_direction: 'en2jp', p_result: 'got_it', p_session_id: SESSION }],
       ['rpc', 'record_answer', { p_word_id: 4, p_direction: 'jp2en', p_result: 'not_yet', p_session_id: SESSION }],
+    ]);
+  });
+
+  it('sends what the student typed as p_typed (typing mode)', async () => {
+    await recordAnswer({ wordId: 4, direction: 'jp2en' }, 'got_it', SESSION, 'apple');
+    expect(calls).toEqual([
+      ['rpc', 'record_answer', { p_word_id: 4, p_direction: 'jp2en', p_result: 'got_it', p_session_id: SESSION, p_typed: 'apple' }],
     ]);
   });
 
@@ -224,5 +231,18 @@ describe('gacha', () => {
 
   it('keeps the original text for unknown errors', () => {
     expect(gachaErrorMessage({ message: 'network down' })).toContain('network down');
+  });
+});
+
+describe('spelling bonus', () => {
+  it('reads the bonus from the student\'s own user_study_totals row', async () => {
+    result = { data: { bonus_points: 7 }, error: null };
+    expect(await fetchBonusPoints()).toBe(7);
+    expect(calls).toEqual([['from', 'user_study_totals'], ['select', 'bonus_points'], ['maybeSingle']]);
+  });
+
+  it('is 0 when the student has no row yet', async () => {
+    result = { data: null, error: null };
+    expect(await fetchBonusPoints()).toBe(0);
   });
 });

@@ -22,13 +22,15 @@ export function levelCounts(levels) {
   return counts;
 }
 
-// Rank from peak points. Change this formula to make ranks go up faster or slower.
+// Rank from rank points = peak points + spelling bonus points (typing mode, user_study_totals).
+// Change this formula to make ranks go up faster or slower, and change gacha_player_level() in
+// supabase/polycards-answers.sql to match.
 // Rank 2 at 20 points, 3 at 80, 4 at 180, 5 at 320 ... (points needed = 20 × (rank − 1)²).
-export function playerRank(peakPoints) {
-  return Math.floor(Math.sqrt(peakPoints / 20)) + 1;
+export function playerRank(rankPoints) {
+  return Math.floor(Math.sqrt(rankPoints / 20)) + 1;
 }
 
-// Peak points needed to reach a rank (the reverse of playerRank): 20 × (rank − 1)².
+// Rank points (peak + spelling bonus) needed to reach a rank (the reverse of playerRank): 20 × (rank − 1)².
 // Used for the "points to the next rank" bar. Keep in step with playerRank above.
 export function pointsForRank(rank) {
   return 20 * (rank - 1) ** 2;

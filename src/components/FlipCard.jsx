@@ -44,7 +44,10 @@ function wordStyle(text, isEnglish, size, jaSize = Math.round(size * 5 / 6)) {
 // Give it a new `key` for each new card so it starts on the front without flipping back on screen.
 // card: { front, back, direction, level, en, exampleEn, exampleJa }; showLevel: SRS review only.
 // wide: a taller card with bigger text on the back (question 30 px, answer 48 px).
-export default function FlipCard({ card, showLevel, revealed, onFlip, wide = false }) {
+// compact (typing mode, before answering): a short card so the text box and buttons fit above the
+// on-screen keyboard. The front can't be tapped (that would show the answer) and the back's
+// content isn't drawn until it flips, so it doesn't stretch the card.
+export default function FlipCard({ card, showLevel, revealed, onFlip, compact = false, wide = false }) {
   const backRef = useRef(null);
   const frontIsEnglish = card.direction === "en2jp";
 
@@ -52,6 +55,9 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, wide = fal
   useEffect(() => {
     if (revealed) backRef.current?.focus({ preventScroll: true });
   }, [revealed]);
+
+  const minHeight = compact ? (wide ? 180 : 150) : (wide ? 420 : 320);
+  const Front = compact ? "div" : "button";
 
   return (
     <div style={{ perspective: 1200 }}>
@@ -63,10 +69,10 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, wide = fal
         }}
       >
         {/* Front: the question */}
-        <button
-          onClick={onFlip}
+        <Front
+          onClick={compact ? undefined : onFlip}
           inert={revealed}
-          style={{ ...face, minHeight: wide ? 420 : 320, background: colors.surface, border: `2px solid ${colors.line}`, color: colors.text, cursor: "pointer" }}
+          style={{ ...face, minHeight, background: colors.surface, border: `2px solid ${colors.line}`, color: colors.text, cursor: compact ? "default" : "pointer" }}
         >
           <span style={topRow}>
             <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 14, color: colors.accentText }}>
@@ -77,13 +83,15 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, wide = fal
           <span style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={wordStyle(card.front, frontIsEnglish, 48)}>{card.front}</span>
           </span>
-          <span
-            className="tap-hint"
-            style={{ fontSize: 13, color: colors.muted, animation: revealed ? "none" : "polycards-pulse 0.9s ease-in-out infinite alternate" }}
-          >
-            タップしてめくる
-          </span>
-        </button>
+          {!compact && (
+            <span
+              className="tap-hint"
+              style={{ fontSize: 13, color: colors.muted, animation: revealed ? "none" : "polycards-pulse 0.9s ease-in-out infinite alternate" }}
+            >
+              タップしてめくる
+            </span>
+          )}
+        </Front>
 
         {/* Back: the answer */}
         <div
@@ -91,27 +99,31 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, wide = fal
           tabIndex={-1}
           inert={!revealed}
           style={{
-            ...face, minHeight: wide ? 420 : 320, transform: "rotateY(180deg)", outline: "none",
+            ...face, minHeight, transform: "rotateY(180deg)", outline: "none",
             background: colors.surface2, border: `2px solid ${colors.accent}`,
             boxShadow: `0 0 24px color-mix(in srgb, ${colors.accent} 28%, transparent)`,
           }}
         >
-          <div style={topRow}>
-            <span
-              style={{
-                fontSize: 13, fontWeight: 700, padding: "2px 12px", borderRadius: 999,
-                background: colors.accent, color: colors.accentInk,
-              }}
-            >
-              答え
-            </span>
-            {showLevel && <LevelChip level={card.level} />}
-          </div>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 12 }}>
-            <div style={{ ...wordStyle(card.front, frontIsEnglish, wide ? 30 : 22), fontWeight: 500, color: colors.muted }}>{card.front}</div>
-            <div style={{ ...(wide ? wordStyle(card.back, !frontIsEnglish, 48, 48) : wordStyle(card.back, !frontIsEnglish, 32)), color: colors.accentText }}>{card.back}</div>
-            <WordInfo english={card.en} exampleEn={card.exampleEn} exampleJa={card.exampleJa} wide={wide} />
-          </div>
+          {!compact && (
+            <>
+              <div style={topRow}>
+                <span
+                  style={{
+                    fontSize: 13, fontWeight: 700, padding: "2px 12px", borderRadius: 999,
+                    background: colors.accent, color: colors.accentInk,
+                  }}
+                >
+                  答え
+                </span>
+                {showLevel && <LevelChip level={card.level} />}
+              </div>
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 12 }}>
+                <div style={{ ...wordStyle(card.front, frontIsEnglish, wide ? 30 : 22), fontWeight: 500, color: colors.muted }}>{card.front}</div>
+                <div style={{ ...(wide ? wordStyle(card.back, !frontIsEnglish, 48, 48) : wordStyle(card.back, !frontIsEnglish, 32)), color: colors.accentText }}>{card.back}</div>
+                <WordInfo english={card.en} exampleEn={card.exampleEn} exampleJa={card.exampleJa} wide={wide} />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

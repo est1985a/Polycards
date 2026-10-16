@@ -79,17 +79,22 @@ export function newSessionId() {
 }
 
 // What one SRS answer does. level: the card's level at the start of the session.
-// wrongsSoFar: misses on it this session. Every answer is sent to record_answer (result),
-// even わかった on a card missed earlier: the database logs it without changing the level.
+// result: 'got_it' (わかった, or a correct spelling), 'not_yet' (まだ) or 'dont_know' (わからない,
+// typing mode; a miss like まだ). wrongsSoFar: misses on it this session. spelling: typing mode's
+// checkSpelling() result, or null. Every answer is sent to record_answer, even わかった on a card
+// missed earlier: the database logs it without changing the level.
 // label / mastered: the level-up float (null label = no float). again: the card comes back later.
-export function srsAnswer(level, knew, wrongsSoFar = 0) {
+// spellingBonus: show "+1 スペル" (a correct spelling on a card not missed this session).
+export function srsAnswer(level, result, wrongsSoFar = 0, spelling = null) {
+  const knew = result === "got_it";
   const label = levelUpLabel(level, knew, wrongsSoFar);
   return {
-    result: knew ? "got_it" : "not_yet",
+    result,
     wrongs: knew ? wrongsSoFar : wrongsSoFar + 1,
     label,
     mastered: Boolean(label) && isMastered(levelAfterCorrect(level)),
     again: !knew,
+    spellingBonus: knew && spelling === "exact" && wrongsSoFar === 0,
   };
 }
 

@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { colors, fontDisplay, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { colors, fontDisplay, fontBody, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
 import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
 import { srsAnswer, newSessionId, saveErrorReporter } from '../lib/srs';
+import { checkSpelling, ignoreNextKey } from '../lib/spelling';
 import { recordAnswer } from '../lib/api';
 import Stamp from './Stamp';
 import AddDeckButton from './AddDeckButton';
@@ -35,9 +36,106 @@ export function AnswerArea({ revealed, onReveal, onAnswer, answerSize, wide = fa
   );
 }
 
+// Typing mode (Japanese → English cards in SRS review), shown instead of AnswerArea.
+// phase 'typing': the text box, わからない and 答える (Enter also answers; disabled while empty).
+// phase 'next': answered (correct spelling, or わからない); ✓ 正解！ when correct, then 次へ.
+// phase 'choose': one letter off (close) or wrong: what they typed, the right answer, then まだ / わかった.
+// Give it a new `key` per card so the box is focused when each card appears.
+export function TypingArea({
+  phase, typed, spelling = null, answer, onTypedChange, onSubmit, onDontKnow, onNext, onAnswer, answerSize, wide = false,
+}) {
+  const inputRef = useRef(null);
+  const nextRef = useRef(null);
+  const nextShownAt = useRef(0);
+
+  // Focus the box during the tap that showed the card (iOS only opens the keyboard then).
+  useLayoutEffect(() => {
+    if (phase === "typing") inputRef.current?.focus({ preventScroll: true });
+  }, [phase]);
+
+  // A plain effect, so it runs after FlipCard moves focus to the answer: 次へ gets focus (Enter works).
+  useEffect(() => {
+    if (phase !== "next") return;
+    nextShownAt.current = Date.now();
+    nextRef.current?.focus({ preventScroll: true });
+  }, [phase]);
+
+  const fontSize = wide ? 18 : 16;
+  const empty = typed.trim() === "";
+
+  if (phase === "typing") {
+    return (
+      <form
+        onSubmit={(e) => { e.preventDefault(); if (!empty) onSubmit(); }}
+        style={{ display: "grid", gap: 10 }}
+      >
+        <input
+          ref={inputRef}
+          type="text"
+          value={typed}
+          onChange={(e) => onTypedChange(e.target.value)}
+          onKeyDown={(e) => {
+            // An Enter that only confirms Japanese-keyboard input must not answer yet.
+            if (e.key === "Enter" && (e.nativeEvent.isComposing || e.keyCode === 229)) e.preventDefault();
+          }}
+          autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false} lang="en"
+          aria-label="英語で答えを入力"
+          placeholder="English"
+          style={{
+            width: "100%", boxSizing: "border-box", minHeight: 52, padding: "0 16px", borderRadius: 14,
+            fontFamily: fontBody, fontSize: wide ? 24 : 20, color: colors.text, background: colors.surface,
+            border: `2px solid ${colors.line}`,
+          }}
+        />
+        <div style={{ display: "flex", gap: 10 }}>
+          <button type="button" style={{ ...btnGhost, flex: 1, fontSize, ...answerSize }} onClick={onDontKnow}>
+            わからない
+          </button>
+          <button type="submit" disabled={empty} style={{ ...btnPrimary, flex: 2, fontSize, ...answerSize, opacity: empty ? 0.5 : 1 }}>
+            答える
+          </button>
+        </div>
+      </form>
+    );
+  }
+
+  if (phase === "next") {
+    return (
+      <div style={{ display: "grid", gap: 10 }}>
+        {spelling === "exact" && (
+          <div style={{ textAlign: "center", fontSize: wide ? 22 : 19, fontWeight: 700, color: colors.accentText }}>
+            ✓ 正解！
+          </div>
+        )}
+        <button
+          ref={nextRef}
+          style={{ ...btnPrimary, width: "100%", fontSize: 17, ...answerSize }}
+          onKeyDown={(e) => { if (ignoreNextKey(e, nextShownAt.current)) e.preventDefault(); }}
+          onClick={onNext}
+        >
+          次へ
+        </button>
+      </div>
+    );
+  }
+
+  // phase 'choose'
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      <div style={{ display: "grid", gap: 4, textAlign: "center", fontSize: wide ? 17 : 15, color: colors.text }}>
+        {spelling === "close" && <div style={{ fontSize: wide ? 22 : 19, fontWeight: 700, color: colors.gold }}>おしい！</div>}
+        <div>あなたの答え: <span lang="en" style={{ fontWeight: 700 }}>{typed}</span></div>
+        <div>正しい答え: <span lang="en" style={{ fontWeight: 700, color: colors.accentText }}>{answer}</span></div>
+      </div>
+      <AnswerArea revealed onReveal={() => {}} onAnswer={onAnswer} answerSize={answerSize} wide={wide} />
+    </div>
+  );
+}
+
 // One study session: either the Card Sets drill or an SRS review (activeSet.mode === 'srs').
 // Give it a new `key` to start a fresh session. wide: bigger card text and taller answer buttons.
-export default function StudySession({ activeSet, isAdded, saving, onAddDeck, onBack, wide = false }) {
+// typingMode: Japanese → English cards in an SRS review are answered by typing (the drill never is).
+export default function StudySession({ activeSet, isAdded, saving, onAddDeck, onBack, typingMode = false, wide = false }) {
   const isSrs = activeSet.mode === 'srs';
   const [pile, setPile] = useState(() => shuffle(activeSet.cards.map((c) => c.id)));
   const [counts, setCounts] = useState({});           // drill: correct answers per card
@@ -48,30 +146,107 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
   const [levelUp, setLevelUp] = useState(null); // SRS: { id, label, mastered } of the level-up float
   const [sessionId] = useState(newSessionId); // SRS: made once, when the session starts
   const [reportSaveError] = useState(() => saveErrorReporter()); // SRS: one save-error pop-up per session
+  const [typed, setTyped] = useState("");          // typing mode: what the student typed
+  const [typedResult, setTypedResult] = useState(null); // typing mode: { spelling, next, again } once answered
+  const [spellBonus, setSpellBonus] = useState(null);   // typing mode: { id } of the "+1 スペル" float
+  const promptRef = useRef(null);
 
   const done = pile.length === 0;
   const card = done ? null : activeSet.cards.find((c) => c.id === pile[0]) || null;
+  const typingCard = Boolean(card) && isSrs && typingMode && card.direction === "jp2en";
+  const typingPhase = !typingCard ? null : !typedResult ? "typing" : typedResult.next ? "next" : "choose";
+
+  // While typing, keep the question, the card, the box and the buttons above the on-screen keyboard
+  // (on a landscape iPad it covers about half the screen): when the visible area changes size,
+  // scroll so the question line is at the top.
+  useEffect(() => {
+    if (typingPhase !== "typing") return;
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const keepVisible = () => {
+      const el = promptRef.current;
+      if (!el) return;
+      window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 8 });
+    };
+    viewport.addEventListener("resize", keepVisible);
+    return () => viewport.removeEventListener("resize", keepVisible);
+  }, [typingPhase]);
 
   function finishAnswer(nextPile, clearedDelta) {
     setPile(nextPile);
     setClearedCount((c) => c + clearedDelta);
     setRevealed(false);
+    setTyped("");
+    setTypedResult(null);
     setTurn((t) => t + 1);
+  }
+
+  // Sends one SRS answer. typedText / localSpelling: typing mode only. The database checks the
+  // spelling itself and decides the bonus; if it disagrees with the app, only warn.
+  function send(result, typedText = null, localSpelling = null) {
+    recordAnswer(card, result, sessionId, typedText)
+      .then((saved) => {
+        if (typedText !== null && saved && saved.spelling !== localSpelling) {
+          console.warn("Spelling check differs from the database:", { typed: typedText, app: localSpelling, database: saved.spelling });
+        }
+      })
+      .catch(reportSaveError);
+  }
+
+  function showFloats(answer) {
+    if (answer.label) setLevelUp({ id: turn, label: answer.label, mastered: answer.mastered });
+    if (answer.spellingBonus) setSpellBonus({ id: turn });
   }
 
   function handleSrsAnswer(knew) {
     // card.level is the level the card had when the session started; the database works out
     // and saves the new level itself (same rules as src/lib/srs.js).
-    const answer = srsAnswer(card.level, knew, wrongCounts[card.id] || 0);
-    recordAnswer(card, answer.result, sessionId).catch(reportSaveError);
+    const answer = srsAnswer(card.level, knew ? "got_it" : "not_yet", wrongCounts[card.id] || 0);
+    // Typing mode, one letter off or wrong: the student's choice goes with what they typed.
+    if (typedResult) send(answer.result, typed, typedResult.spelling);
+    else send(answer.result);
 
-    if (answer.label) setLevelUp({ id: turn, label: answer.label, mastered: answer.mastered });
+    showFloats(answer);
     let nextPile = pile.slice(1);
     if (answer.again) {
       setWrongCounts({ ...wrongCounts, [card.id]: answer.wrongs });
       nextPile = reinsert(nextPile, card.id);
     }
     finishAnswer(nextPile, knew ? 1 : 0);
+  }
+
+  // Typing mode: 答える. A correct spelling counts as わかった and is saved straight away;
+  // otherwise the card flips and the student chooses まだ / わかった.
+  function handleTypedAnswer() {
+    if (!card || typedResult || typed.trim() === "") return;
+    const spelling = checkSpelling(typed, card.en);
+    setRevealed(true);
+    if (spelling === "exact") {
+      const answer = srsAnswer(card.level, "got_it", wrongCounts[card.id] || 0, spelling);
+      send(answer.result, typed, spelling);
+      showFloats(answer);
+      setTypedResult({ spelling, next: true, again: false });
+    } else {
+      setTypedResult({ spelling, next: false, again: false });
+    }
+  }
+
+  // Typing mode: わからない. Saved straight away as a miss (the card comes back, like まだ).
+  function handleDontKnow() {
+    if (!card || typedResult) return;
+    const answer = srsAnswer(card.level, "dont_know", wrongCounts[card.id] || 0);
+    send(answer.result);
+    setWrongCounts({ ...wrongCounts, [card.id]: answer.wrongs });
+    setRevealed(true);
+    setTypedResult({ spelling: null, next: true, again: true });
+  }
+
+  // Typing mode: 次へ after a correct spelling or わからない (already saved).
+  function handleNext() {
+    if (!card || !typedResult?.next) return;
+    let nextPile = pile.slice(1);
+    if (typedResult.again) nextPile = reinsert(nextPile, card.id);
+    finishAnswer(nextPile, typedResult.again ? 0 : 1);
   }
 
   function handleDrillAnswer(knew) {
@@ -135,6 +310,24 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
     </div>
   ));
 
+  // "+1 スペル": a correct spelling on a card not missed this session (gold, top-left corner,
+  // mirroring the Lv tick on the right). Can't be tapped; only fades with reduce motion.
+  const spellBonusFloat = spellBonus && (
+    <div
+      key={`spell-${spellBonus.id}`}
+      className="spell-bonus-float"
+      aria-hidden="true"
+      onAnimationEnd={() => setSpellBonus(null)}
+      style={{
+        position: "absolute", left: 22, top: 2, whiteSpace: "nowrap", pointerEvents: "none", zIndex: 2,
+        fontFamily: fontDisplay, fontWeight: 700, fontSize: 15, lineHeight: 1.2, color: colors.gold,
+        textShadow: `0 2px 10px ${colors.bg}, 0 0 4px ${colors.bg}`,
+      }}
+    >
+      +1 スペル
+    </div>
+  );
+
   const addDeckControl = isSrs ? null : <AddDeckButton isAdded={isAdded} saving={saving} onAdd={onAddDeck} />;
   const answerSize = wide ? { minHeight: 76, fontSize: 18 } : { minHeight: 52 };
 
@@ -147,36 +340,59 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
 
       {addDeckControl}
 
-      {isSrs && <div role="status" style={srOnly}>{levelUp?.label || ""}</div>}
+      {isSrs && <div role="status" style={srOnly}>{[levelUp?.label, spellBonus && "+1 スペル"].filter(Boolean).join(" ")}</div>}
 
       {card && (
         <>
-          <p style={{ fontSize: wide ? 17 : 14, color: colors.text, margin: 0, textAlign: "center" }}>
+          <p ref={promptRef} style={{ fontSize: wide ? 17 : 14, color: colors.text, margin: 0, textAlign: "center" }}>
             {card.direction === "en2jp" ? "この単語は日本語で何と言いますか？" : "この単語は英語で何と言いますか？"}
           </p>
           <div style={{ position: "relative" }}>
             {/* A new key per turn: the next card starts on its front without flipping back on screen. */}
-            <FlipCard key={turn} card={card} showLevel={isSrs} revealed={revealed} onFlip={() => setRevealed(true)} wide={wide} />
+            {/* compact while typing: a short card, so the box and buttons fit above the keyboard. */}
+            <FlipCard
+              key={turn} card={card} showLevel={isSrs} revealed={revealed} onFlip={() => setRevealed(true)}
+              compact={typingPhase === "typing"} wide={wide}
+            />
             {levelUpFloat}
+            {spellBonusFloat}
           </div>
           {!isSrs && (
             <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
               {stampFill(counts[card.id] || 0).map((f, i) => <Stamp key={i} filled={f} />)}
             </div>
           )}
-          <AnswerArea
-            revealed={revealed}
-            onReveal={() => setRevealed(true)}
-            onAnswer={handleAnswer}
-            answerSize={answerSize}
-            wide={wide}
-          />
+          {typingPhase ? (
+            <TypingArea
+              key={turn}
+              phase={typingPhase}
+              typed={typed}
+              spelling={typedResult?.spelling ?? null}
+              answer={card.back}
+              onTypedChange={setTyped}
+              onSubmit={handleTypedAnswer}
+              onDontKnow={handleDontKnow}
+              onNext={handleNext}
+              onAnswer={handleAnswer}
+              answerSize={answerSize}
+              wide={wide}
+            />
+          ) : (
+            <AnswerArea
+              revealed={revealed}
+              onReveal={() => setRevealed(true)}
+              onAnswer={handleAnswer}
+              answerSize={answerSize}
+              wide={wide}
+            />
+          )}
         </>
       )}
 
       {done && (
         <div style={{ ...cardStyle, position: "relative", padding: 28, textAlign: "center", display: "grid", gap: 10 }}>
           {levelUpFloat}
+          {spellBonusFloat}
           <div style={{ fontFamily: fontDisplay, fontSize: 22, color: colors.text }}>全部クリアしました！</div>
           {addDeckControl}
           <button style={btnGhost} onClick={onBack}>ダッシュボードに戻る</button>

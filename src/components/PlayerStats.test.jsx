@@ -19,4 +19,16 @@ describe('PlayerStats', () => {
     // Rank 4 starts at 180 peak points: 180 − 100 = 80.
     expect(html).toMatch(/80 pt → Rank 4</);
   });
+
+  it('counts the spelling bonus toward the next rank and shows it', () => {
+    // 100 peak + 30 bonus = 130 → still Rank 2 in the bar; Rank 3 needs 80, Rank 4 needs 180: 180 − 130 = 50.
+    const html = renderToStaticMarkup(<PlayerStats stats={{ ...stats, bonusPoints: 30 }} />);
+    expect(html).toMatch(/50 pt → Rank 4</);
+    expect(html).toContain('スペルボーナス 30 pt');
+  });
+
+  it('shows no bonus line without a bonus', () => {
+    expect(renderToStaticMarkup(<PlayerStats stats={stats} />)).not.toContain('スペルボーナス');
+    expect(renderToStaticMarkup(<PlayerStats stats={{ ...stats, bonusPoints: 0 }} />)).not.toContain('スペルボーナス');
+  });
 });

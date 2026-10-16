@@ -1,7 +1,7 @@
 // Tests for the answer area under the study card and what each review answer sends. Run with: npm test
 import { describe, it, expect, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { AnswerArea } from './StudySession';
+import { AnswerArea, TypingArea } from './StudySession';
 import { srsAnswer, newSessionId, saveErrorReporter } from '../lib/srs';
 
 const NOTE = 'まだでも大丈夫！すぐにまた出てきます';
@@ -27,20 +27,39 @@ describe('AnswerArea', () => {
 
 describe('one SRS answer (srsAnswer)', () => {
   it('sends got_it for わかった and shows the level-up float', () => {
-    expect(srsAnswer(2, true, 0)).toEqual({ result: 'got_it', wrongs: 0, label: 'Lv 3!', mastered: false, again: false });
+    expect(srsAnswer(2, 'got_it', 0)).toEqual({
+      result: 'got_it', wrongs: 0, label: 'Lv 3!', mastered: false, again: false, spellingBonus: false,
+    });
   });
 
   it('sends not_yet for まだ, counts the miss and brings the card back', () => {
-    expect(srsAnswer(2, false, 0)).toEqual({ result: 'not_yet', wrongs: 1, label: null, mastered: false, again: true });
-    expect(srsAnswer(2, false, 1).wrongs).toBe(2);
+    expect(srsAnswer(2, 'not_yet', 0)).toEqual({
+      result: 'not_yet', wrongs: 1, label: null, mastered: false, again: true, spellingBonus: false,
+    });
+    expect(srsAnswer(2, 'not_yet', 1).wrongs).toBe(2);
+  });
+
+  it('sends dont_know for わからない and counts it as a miss, like まだ', () => {
+    expect(srsAnswer(2, 'dont_know', 0)).toEqual({
+      result: 'dont_know', wrongs: 1, label: null, mastered: false, again: true, spellingBonus: false,
+    });
   });
 
   it('still sends got_it for わかった on a card missed earlier, with no float', () => {
-    expect(srsAnswer(2, true, 1)).toEqual({ result: 'got_it', wrongs: 1, label: null, mastered: false, again: false });
+    expect(srsAnswer(2, 'got_it', 1)).toEqual({
+      result: 'got_it', wrongs: 1, label: null, mastered: false, again: false, spellingBonus: false,
+    });
   });
 
   it('shows Mastered! when a Lv 7 card is answered correctly', () => {
-    expect(srsAnswer(7, true, 0)).toMatchObject({ result: 'got_it', label: 'Mastered!', mastered: true });
+    expect(srsAnswer(7, 'got_it', 0)).toMatchObject({ result: 'got_it', label: 'Mastered!', mastered: true });
+  });
+
+  it('shows +1 スペル only for a correct spelling on a card not missed this session', () => {
+    expect(srsAnswer(2, 'got_it', 0, 'exact')).toMatchObject({ label: 'Lv 3!', spellingBonus: true });
+    expect(srsAnswer(2, 'got_it', 1, 'exact').spellingBonus).toBe(false);
+    expect(srsAnswer(2, 'got_it', 0, 'close').spellingBonus).toBe(false);
+    expect(srsAnswer(2, 'not_yet', 0, 'wrong').spellingBonus).toBe(false);
   });
 });
 
@@ -82,5 +101,63 @@ describe('save errors (saveErrorReporter)', () => {
     saveErrorReporter(show)(new Error('a'));
     saveErrorReporter(show)(new Error('b'));
     expect(show).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('typing mode (TypingArea)', () => {
+  const render = (props) => renderToStaticMarkup(
+    <TypingArea
+      phase="typing" typed="" answer="apple" onTypedChange={() => {}} onSubmit={() => {}} onDontKnow={() => {}}
+      onNext={() => {}} onAnswer={() => {}} answerSize={{ minHeight: 52 }} {...props}
+    />
+  );
+
+  it('shows a text box set up for English, 答える and わからない instead of 答えを見る', () => {
+    const html = render();
+    expect(html).toContain('<input');
+    for (const attr of ['autoComplete="off"', 'autoCorrect="off"', 'autoCapitalize="none"', 'spellCheck="false"', 'lang="en"']) {
+      expect(html).toContain(attr);
+    }
+    expect(html).toContain('答える');
+    expect(html).toContain('わからない');
+    expect(html).not.toContain('答えを見る');
+  });
+
+  it('disables 答える while the box is empty', () => {
+    expect(render({ typed: '' })).toMatch(/<button type="submit" disabled=""/);
+    expect(render({ typed: '  ' })).toMatch(/<button type="submit" disabled=""/);
+    expect(render({ typed: 'apple' })).not.toMatch(/<button type="submit" disabled=""/);
+  });
+
+  it('a correct spelling: ✓ 正解！ and 次へ, no まだ / わかった', () => {
+    const html = render({ phase: 'next', typed: 'apple', spelling: 'exact' });
+    expect(html).toContain('✓ 正解！');
+    expect(html).toContain('次へ');
+    expect(html).not.toContain('まだ');
+    expect(html).not.toContain('<input');
+  });
+
+  it('わからない: only 次へ', () => {
+    const html = render({ phase: 'next', spelling: null });
+    expect(html).toContain('次へ');
+    expect(html).not.toContain('正解');
+  });
+
+  it('one letter off: おしい！, what they typed, the right answer, then まだ / わかった', () => {
+    const html = render({ phase: 'choose', typed: 'aple', spelling: 'close' });
+    expect(html).toContain('おしい！');
+    expect(html).toContain('あなたの答え: <span lang="en" style="font-weight:700">aple</span>');
+    expect(html).toContain('apple');
+    expect(html).toContain('まだ');
+    expect(html).toContain('わかった');
+    expect(html).toContain('まだでも大丈夫！すぐにまた出てきます');
+  });
+
+  it('wrong: the same without おしい！', () => {
+    const html = render({ phase: 'choose', typed: 'banana', spelling: 'wrong' });
+    expect(html).not.toContain('おしい');
+    expect(html).toContain('banana');
+    expect(html).toContain('正しい答え');
+    expect(html).toContain('わかった');
   });
 });
