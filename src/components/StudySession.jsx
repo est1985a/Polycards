@@ -326,7 +326,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
   // Lv N!: small, rising from just above the level chip in the top-right corner (0.8 s).
   const levelUpFloat = levelUp && (levelUp.mastered ? (
     <div
-      key={levelUp.id}
+      key={`levelup-${levelUp.id}`}
       className="level-up-float"
       aria-hidden="true"
       onAnimationEnd={() => setLevelUp(null)}
@@ -340,7 +340,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
     </div>
   ) : (
     <div
-      key={levelUp.id}
+      key={`levelup-${levelUp.id}`}
       className="level-up-tick"
       aria-hidden="true"
       onAnimationEnd={() => setLevelUp(null)}
@@ -393,9 +393,11 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
           </p>
           <div style={{ position: "relative" }}>
             {/* A new key per turn: the next card starts on its front without flipping back on screen. */}
+            {/* Prefixed keys (card-, levelup-, spell-): the floats below share this div, and a float made on */}
+            {/* the same turn would otherwise have the same key as the card, leaving the old card on screen. */}
             {/* compact while typing: a short card, so the box and buttons fit above the keyboard. */}
             <FlipCard
-              key={turn} card={card} showLevel={isSrs} revealed={revealed} onFlip={() => setRevealed(true)}
+              key={`card-${turn}`} card={card} showLevel={isSrs} revealed={revealed} onFlip={() => setRevealed(true)}
               compact={typingPhase === "typing"} wide={wide}
             />
             {levelUpFloat}
