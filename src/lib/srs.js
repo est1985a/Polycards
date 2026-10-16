@@ -92,3 +92,14 @@ export function srsAnswer(level, knew, wrongsSoFar = 0) {
     again: !knew,
   };
 }
+
+// Shows a failed review save at most once per session (each failure is still logged in
+// api.js). Make a new one for each review session.
+export function saveErrorReporter(show = (message) => alert(message)) {
+  let shown = false;
+  return (error) => {
+    if (shown) return;
+    shown = true;
+    show(error.message);
+  };
+}

@@ -2,7 +2,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { AnswerArea } from './StudySession';
-import { srsAnswer, newSessionId } from '../lib/srs';
+import { srsAnswer, newSessionId, saveErrorReporter } from '../lib/srs';
 
 const NOTE = 'まだでも大丈夫！すぐにまた出てきます';
 const render = (props) => renderToStaticMarkup(
@@ -63,5 +63,24 @@ describe('review session id (newSessionId)', () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+});
+
+describe('save errors (saveErrorReporter)', () => {
+  it('shows the pop-up only once per review session', () => {
+    const show = vi.fn();
+    const report = saveErrorReporter(show);
+    report(new Error('保存できませんでした'));
+    report(new Error('保存できませんでした'));
+    report(new Error('ログインしてください'));
+    expect(show).toHaveBeenCalledTimes(1);
+    expect(show).toHaveBeenCalledWith('保存できませんでした');
+  });
+
+  it('shows it again in the next review session', () => {
+    const show = vi.fn();
+    saveErrorReporter(show)(new Error('a'));
+    saveErrorReporter(show)(new Error('b'));
+    expect(show).toHaveBeenCalledTimes(2);
   });
 });

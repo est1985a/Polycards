@@ -56,7 +56,7 @@ create policy "Read own gacha row" on public.user_gacha
 -- user_cards so removing and re-adding a deck can't count the same cards again.
 create table public.counted_cards (
   user_id         uuid not null references auth.users(id) on delete cascade,
-  word_id         bigint not null,
+  word_id         uuid not null,
   direction       text not null,
   last_counted_at timestamptz not null default now(),
   primary key (user_id, word_id, direction)

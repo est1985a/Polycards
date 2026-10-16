@@ -116,11 +116,12 @@ describe('saving review answers (record_answer)', () => {
     expect(saved).toBe(true);
   });
 
-  it('keeps going after a failed answer', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+  it('keeps going after a failed answer, logging every failure', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     result = { data: null, error: { message: 'network down' } };
-    const failed = recordAnswer(card, 'not_yet', SESSION);
-    await expect(failed).rejects.toThrow('保存できませんでした');
+    await expect(recordAnswer(card, 'not_yet', SESSION)).rejects.toThrow('保存できませんでした');
+    await expect(recordAnswer(card, 'not_yet', SESSION)).rejects.toThrow('保存できませんでした');
+    expect(error).toHaveBeenCalledTimes(2);
     result = { data: { result: 'got_it' }, error: null };
     expect(await recordAnswer(card, 'got_it', SESSION)).toEqual({ result: 'got_it' });
     console.error.mockRestore();

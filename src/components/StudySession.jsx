@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { colors, fontDisplay, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
 import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
-import { srsAnswer, newSessionId } from '../lib/srs';
+import { srsAnswer, newSessionId, saveErrorReporter } from '../lib/srs';
 import { recordAnswer } from '../lib/api';
 import Stamp from './Stamp';
 import AddDeckButton from './AddDeckButton';
@@ -47,6 +47,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
   const [turn, setTurn] = useState(0); // goes up with every answer
   const [levelUp, setLevelUp] = useState(null); // SRS: { id, label, mastered } of the level-up float
   const [sessionId] = useState(newSessionId); // SRS: made once, when the session starts
+  const [reportSaveError] = useState(() => saveErrorReporter()); // SRS: one save-error pop-up per session
 
   const done = pile.length === 0;
   const card = done ? null : activeSet.cards.find((c) => c.id === pile[0]) || null;
@@ -62,7 +63,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
     // card.level is the level the card had when the session started; the database works out
     // and saves the new level itself (same rules as src/lib/srs.js).
     const answer = srsAnswer(card.level, knew, wrongCounts[card.id] || 0);
-    recordAnswer(card, answer.result, sessionId).catch((e) => alert(e.message));
+    recordAnswer(card, answer.result, sessionId).catch(reportSaveError);
 
     if (answer.label) setLevelUp({ id: turn, label: answer.label, mastered: answer.mastered });
     let nextPile = pile.slice(1);

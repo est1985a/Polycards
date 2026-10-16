@@ -45,7 +45,7 @@ create table public.answer_log (
   id           bigint generated always as identity primary key,
   user_id      uuid not null references auth.users(id) on delete cascade,
   session_id   uuid not null,                 -- one review session (made by the app)
-  word_id      bigint not null,
+  word_id      uuid not null,
   direction    text not null check (direction in ('en2jp', 'jp2en')),
   result       text not null check (result in ('got_it', 'not_yet', 'dont_know')),
   is_repeat    boolean not null,              -- true = a まだ card coming back in the same session
@@ -205,7 +205,7 @@ $$;
 -- p_session_id: a new id the app makes at the start of each review session
 -- p_typed: what the student typed (Japanese → English typing mode), else NULL
 create or replace function public.record_answer(
-  p_word_id    bigint,
+  p_word_id    uuid,
   p_direction  text,
   p_result     text,
   p_session_id uuid,
@@ -431,7 +431,7 @@ revoke execute on function
   public.study_setting(text), public.study_level_hours(),
   public.spelling_normalize(text), public.spelling_distance(text, text),
   public.spelling_check(text, text),
-  public.record_answer(bigint, text, text, uuid, text),
+  public.record_answer(uuid, text, text, uuid, text),
   public.answer_log_cleanup()
   from public, anon, authenticated;
-grant execute on function public.record_answer(bigint, text, text, uuid, text) to authenticated;
+grant execute on function public.record_answer(uuid, text, text, uuid, text) to authenticated;
