@@ -2,8 +2,8 @@
 // All times are fixed UTC moments, so the results never depend on the clock or the device.
 /* global process */ // the device-timezone test sets process.env.TZ
 import { describe, it, expect, afterEach } from 'vitest';
-import { jstDayBounds, jstHourStart, nextReviewWhen, nextReviewSummary, groupReviewPlan } from './schedule';
-import { MASTERED } from './srs';
+import { jstDayBounds, jstHourStart, nextReviewWhen, nextReviewSummary, groupReviewPlan, waitLabel, levelLadder } from './schedule';
+import { MASTERED, LEVEL_HOURS } from './srs';
 
 const t = (iso) => Date.parse(iso);
 const MIN = 60 * 1000;
@@ -152,5 +152,26 @@ describe('device timezone', () => {
     expect(plan.today.hours).toEqual([{ label: '23:00', count: 1, runningTotal: 1 }]);
     expect(plan.tomorrow.hours).toEqual([{ label: '00:00', count: 1, runningTotal: 2 }]);
     expect(nextReviewWhen(t('2026-10-14T16:00:00Z'), NOW)).toBe('10月15日');
+  });
+});
+
+describe('waitLabel and levelLadder', () => {
+  it('words a wait in hours, days, weeks or months', () => {
+    expect(waitLabel(4)).toBe('4時間');
+    expect(waitLabel(23)).toBe('23時間');
+    expect(waitLabel(24)).toBe('1日');
+    expect(waitLabel(6 * 24)).toBe('6日');
+    expect(waitLabel(7 * 24)).toBe('1週間');
+    expect(waitLabel(13 * 24)).toBe('1週間');
+    expect(waitLabel(14 * 24)).toBe('2週間');
+    expect(waitLabel(29 * 24)).toBe('2週間');
+    expect(waitLabel(30 * 24)).toBe('1か月');
+    expect(waitLabel(120 * 24)).toBe('4か月');
+  });
+
+  it('has one step per level from Lv1 to the last level, from LEVEL_HOURS', () => {
+    const ladder = levelLadder();
+    expect(ladder.map((s) => s.level)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(ladder.map((s) => s.label)).toEqual(LEVEL_HOURS.slice(1).map(waitLabel));
   });
 });

@@ -81,6 +81,29 @@ export function TypingModeSwitch({ on, onChange, wide = false }) {
   );
 }
 
+// Small pill at the top right of My Cards: opens the "What is Polycards?" pop-up (AboutSheet).
+export function AboutButton({ onOpen }) {
+  return (
+    <button
+      onClick={onOpen}
+      aria-label="What is Polycards? / ポリカードのしくみ"
+      aria-haspopup="dialog"
+      style={{
+        minHeight: 44, display: "inline-flex", alignItems: "center", gap: 6, padding: "0 14px",
+        background: "transparent", border: `2px solid ${colors.accent}`, borderRadius: 999,
+        color: colors.accentText, fontFamily: fontDisplay, fontSize: 14, fontWeight: 700, cursor: "pointer",
+      }}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3" />
+        <circle cx="12" cy="17" r="0.6" fill="currentColor" />
+      </svg>
+      What is Polycards?
+    </button>
+  );
+}
+
 // Opens the Mastered list. Shows how many cards are Mastered.
 function MasteredButton({ count, loading, onOpen }) {
   return (
@@ -145,7 +168,7 @@ function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
 }
 
 // wide: two columns (player card, review button, chart, Mastered | マイデッキ in a 2-column grid).
-export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, typingMode = false, onTypingModeChange = () => {}, onReview, onOpenPlan, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
+export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, typingMode = false, onTypingModeChange = () => {}, onReview, onOpenPlan, onOpenAbout = () => {}, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
   // A word can be in several decks, so a due card counts toward each of them.
   const dueByDeck = {};
   dueRows.forEach((r) => {
@@ -190,9 +213,16 @@ export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar =
     </div>
   );
 
+  const about = (
+    <div style={{ display: "flex", justifyContent: "flex-end", gridColumn: "1 / -1" }}>
+      <AboutButton onOpen={onOpenAbout} />
+    </div>
+  );
+
   if (!wide) {
     return (
       <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
+        {about}
         {overview}
         {myDecks}
       </div>
@@ -200,7 +230,8 @@ export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar =
   }
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: `${wideLayout.leftColumn}px minmax(0, 1fr)`, gap: 32, alignItems: "start", textAlign: "left" }}>
+    <div style={{ display: "grid", gridTemplateColumns: `${wideLayout.leftColumn}px minmax(0, 1fr)`, gap: 32, rowGap: 16, alignItems: "start", textAlign: "left" }}>
+      {about}
       <div style={{ display: "grid", gap: 16 }}>{overview}</div>
       {myDecks}
     </div>

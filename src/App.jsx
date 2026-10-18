@@ -18,6 +18,7 @@ import StudySession from './components/StudySession';
 import WordList from './components/WordList';
 import MasteredList from './components/MasteredList';
 import ReviewPlanSheet from './components/ReviewPlanSheet';
+import AboutSheet from './components/AboutSheet';
 import GachaScreen from './components/GachaScreen';
 import GachaReveal from './components/GachaReveal';
 import GachaCollection from './components/GachaCollection';
@@ -58,6 +59,7 @@ function App() {
   const [now, setNow] = useState(() => Date.now()); // for the "2時間後" wording; updated every minute
   const [planRows, setPlanRows] = useState(null); // review plan pop-up rows (null while loading)
   const [planOpen, setPlanOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false); // "What is Polycards?" pop-up
   const [savingDeck, setSavingDeck] = useState(false);
   const [removingDeckId, setRemovingDeckId] = useState(null);
   const [stats, setStats] = useState(null); // points and rank
@@ -212,6 +214,7 @@ function App() {
   }
 
   const closePlan = useCallback(() => setPlanOpen(false), []);
+  const closeAbout = useCallback(() => setAboutOpen(false), []);
 
   function changeTypingMode(on) {
     setTypingMode(on);
@@ -256,6 +259,7 @@ function App() {
 
   function openGacha() {
     setPlanOpen(false);
+    setAboutOpen(false);
     setGachaError(null);
     setView("gacha");
     window.scrollTo(0, 0);
@@ -313,6 +317,7 @@ function App() {
   // Leaving a review loses nothing: each answer is saved as soon as it is given.
   function goHome() {
     setPlanOpen(false);
+    setAboutOpen(false);
     setReveal(null);
     setView("dashboard");
     setActiveTab("myCards");
@@ -460,6 +465,7 @@ function App() {
                     onTypingModeChange={changeTypingMode}
                     onReview={startReview}
                     onOpenPlan={openPlan}
+                    onOpenAbout={() => setAboutOpen(true)}
                     onRemove={removeDeck}
                     onOpenMastered={openMastered}
                     loading={loadingDeck}
@@ -480,6 +486,7 @@ function App() {
                 )}
                 <Tabs tabs={TABS} active={activeTab} onChange={changeTab} wide={wide} />
                 {planOpen && <ReviewPlanSheet rows={planRows} now={now} onClose={closePlan} />}
+                {aboutOpen && <AboutSheet onClose={closeAbout} />}
               </div>
             ) : gachaView ? (
               <div style={{ paddingBottom: tabBarHeight + 32 }}>

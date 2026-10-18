@@ -3,7 +3,7 @@
 //
 // "Today", "tomorrow" and clock hours are always Japan time, whatever the device is set to.
 // Japan has no daylight saving time, so Japan time is simply UTC + 9 hours.
-import { isMastered } from './srs';
+import { isMastered, LEVEL_HOURS } from './srs';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -76,4 +76,21 @@ export function groupReviewPlan(rows, now) {
   };
   const today = section(byHour.today);
   return { today, tomorrow: section(byHour.tomorrow) };
+}
+
+// How long a level waits, in short Japanese ("4時間", "3日", "1週間", "4か月").
+// Under a day → hours; under a week → days; 7–13 days → 1週間; 14–29 days → 2週間; 30+ days → months of 30 days.
+export function waitLabel(hours) {
+  if (hours < 24) return `${hours}時間`;
+  const days = hours / 24;
+  if (days < 7) return `${Math.round(days)}日`;
+  if (days < 14) return '1週間';
+  if (days < 30) return '2週間';
+  return `${Math.round(days / 30)}か月`;
+}
+
+// The level ladder in the "What is Polycards?" pop-up: Lv1 to Lv7 and their waits, from LEVEL_HOURS
+// (Lv0 is a new card, so it isn't a step). Mastered comes after the last step.
+export function levelLadder() {
+  return LEVEL_HOURS.slice(1).map((hours, i) => ({ level: i + 1, label: waitLabel(hours) }));
 }

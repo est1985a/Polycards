@@ -135,6 +135,8 @@ p {
     border-radius: 20px;
     border-bottom: 2px solid var(--line) !important;
   }
+  /* "What is Polycards?" (AboutSheet.jsx) is a longer read, so its box is wider. */
+  .about-sheet { max-width: 560px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .review-plan-sheet { animation: none; }
