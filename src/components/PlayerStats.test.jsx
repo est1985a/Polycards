@@ -27,6 +27,11 @@ describe('PlayerStats', () => {
     expect(html).toContain('スペルボーナス 30 pt');
   });
 
+  it('shows the best only when it is higher than the current points', () => {
+    expect(renderToStaticMarkup(<PlayerStats stats={stats} />)).toContain('ベスト 100 pt');
+    expect(renderToStaticMarkup(<PlayerStats stats={{ ...stats, currentPoints: 100 }} />)).not.toContain('ベスト');
+  });
+
   it('shows no bonus line without a bonus', () => {
     expect(renderToStaticMarkup(<PlayerStats stats={stats} />)).not.toContain('スペルボーナス');
     expect(renderToStaticMarkup(<PlayerStats stats={{ ...stats, bonusPoints: 0 }} />)).not.toContain('スペルボーナス');

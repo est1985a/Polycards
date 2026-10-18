@@ -36,7 +36,7 @@ export default function PlayerStats({ stats, avatar = null, wide = false }) {
           <div style={{ fontSize: 12, color: colors.muted }}>ランク</div>
           <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 46, lineHeight: 1.05, color: colors.accentText }}>Rank {rank}</div>
           <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 22, lineHeight: 1.3, color: colors.gold }}>{fmt(stats.currentPoints)} pt</div>
-          <div style={{ fontSize: 13, color: colors.muted }}>ベスト {fmt(stats.peakPoints)} pt</div>
+          {stats.peakPoints > stats.currentPoints && <div style={{ fontSize: 13, color: colors.muted }}>ベスト {fmt(stats.peakPoints)} pt</div>}
           {bonus > 0 && <div style={{ fontSize: 13, color: colors.muted }}>スペルボーナス {fmt(bonus)} pt</div>}
         </div>
       </div>
