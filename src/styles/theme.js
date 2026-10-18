@@ -22,6 +22,10 @@ export const colors = {
 
 // Fonts are loaded from Google Fonts in index.html.
 // Chakra Petch has no Japanese letters, so Japanese in headings falls back to Zen Maru Gothic.
+// Plain white and black, only for mixing lighter/darker facet shades (the logo). Not color roles.
+export const tintLight = "white";
+export const tintDark = "black";
+
 export const fontDisplay = "'Chakra Petch', 'Zen Maru Gothic', sans-serif"; // headings, numbers
 export const fontBody = "'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif"; // body, Japanese
 

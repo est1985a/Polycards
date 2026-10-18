@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { colors, fontDisplay, fontBody, gutter, headerBand, btnGhost, wideLayout } from '../styles/theme';
 import { CapsuleIcon } from './GachaIcons';
+import LogoMark from './LogoMark';
 
 // Mix of two theme colors, so the shades follow the theme without hard-coded colors.
 const mix = (a, b, pct) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
@@ -38,10 +39,7 @@ function Logo({ onHome }) {
           fontFamily: fontDisplay, fontWeight: 700, fontSize: 24, letterSpacing: 0, lineHeight: 1, color: colors.text,
         }}
       >
-        <svg width="24" height="22" viewBox="0 0 24 22" aria-hidden="true">
-          <polygon points="12,0 24,22 12,16" fill={colors.accent} />
-          <polygon points="12,0 12,16 0,22" fill={mix(colors.accent, colors.bg, 65)} />
-        </svg>
+        <LogoMark height={24} />
         Polycards
       </button>
     </h1>
