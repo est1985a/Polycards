@@ -194,6 +194,35 @@ p {
   .gacha-reveal-in { animation: polycards-gacha-fade-in 0.4s ease-out; }
 }
 
+/* Rarity sparkles and glow around owned avatar pictures (AvatarPicture.jsx).
+   Each star twinkles with its own delay; with reduce motion they stay still. */
+@keyframes polycards-sparkle-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  45% { opacity: 1; transform: scale(1) rotate(20deg); }
+  70% { opacity: 0.7; }
+}
+@keyframes polycards-glow-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.rarity-sparkle-star {
+  display: block;
+  opacity: 0;
+  animation: polycards-sparkle-twinkle 2.2s ease-in-out infinite;
+  filter: drop-shadow(0 0 3px currentColor);
+}
+.rarity-glow-super {
+  background: radial-gradient(circle, color-mix(in srgb, var(--gold) 30%, transparent) 0%, transparent 68%);
+}
+.rarity-glow-secret {
+  background: radial-gradient(circle, color-mix(in srgb, var(--danger) 34%, transparent) 0%, transparent 70%);
+  animation: polycards-glow-pulse 2.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rarity-sparkle-star { animation: none; opacity: 0.85; transform: scale(0.85); }
+  .rarity-glow-secret { animation: none; }
+}
+
 /* Typing mode: "+1 スペル" for a correct spelling (StudySession.jsx), top-left of the card.
    Rises and fades like the Lv tick, a little slower; only fades with reduce motion. */
 .spell-bonus-float {

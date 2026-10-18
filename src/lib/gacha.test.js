@@ -1,6 +1,6 @@
 // Tests for the gacha helpers. Run with: npm test
 import { describe, it, expect, vi } from 'vitest';
-import { ticketProgress, groupCollection, rarityCounts, tileState, singleFlight } from './gacha';
+import { ticketProgress, groupCollection, rarityCounts, tileState, singleFlight, sparkleLayout } from './gacha';
 
 describe('ticketProgress', () => {
   it('measures progress to the next ticket from the status', () => {
@@ -71,5 +71,21 @@ describe('singleFlight (double tap on ガチャを回す)', () => {
     await expect(tap()).rejects.toThrow('no_tickets');
     await tap();
     expect(pull).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('sparkleLayout', () => {
+  it('gives 0 / 3 / 5 / 6 sparkles by rarity', () => {
+    expect(sparkleLayout('normal')).toHaveLength(0);
+    expect(sparkleLayout('rare')).toHaveLength(3);
+    expect(sparkleLayout('super_rare')).toHaveLength(5);
+    expect(sparkleLayout('secret')).toHaveLength(6);
+  });
+
+  it('uses the approved positions and gives none for an unknown rarity', () => {
+    expect(sparkleLayout('rare')[0]).toEqual([8, 14, 0.16, 0]);
+    expect(sparkleLayout('secret')[5]).toEqual([70, 98, 0.14, 1.0]);
+    expect(sparkleLayout('mystery')).toEqual([]);
+    expect(sparkleLayout(undefined)).toEqual([]);
   });
 });
