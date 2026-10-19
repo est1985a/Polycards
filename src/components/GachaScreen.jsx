@@ -70,6 +70,8 @@ export default function GachaScreen({ status, pulling, error, onPull, onOpenColl
   }
 
   const { toNext, per, fraction } = ticketProgress(status);
+  // Today's review ticket is already earned (the database gives at most 1 per day).
+  const capped = status.next_ticket_tomorrow === true;
 
   const content = (
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
@@ -90,16 +92,20 @@ export default function GachaScreen({ status, pulling, error, onPull, onOpenColl
       {error && <div role="alert" style={{ fontSize: 14, color: colors.danger }}>{error}</div>}
 
       <div style={{ ...panel, display: "grid", gap: 8 }}>
-        <div style={{ fontSize: 14 }}>
-          次のガチャ券まで あと <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, color: colors.gold }}>{toNext}</span> レビュー
-        </div>
+        {capped ? (
+          <div style={{ fontSize: 14 }}>今日のガチャ券はゲット！ 次の券は明日もらえます</div>
+        ) : (
+          <div style={{ fontSize: 14 }}>
+            次のガチャ券まで あと <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, color: colors.gold }}>{toNext}</span> レビュー
+          </div>
+        )}
         <div
-          role="progressbar" aria-valuemin={0} aria-valuemax={per} aria-valuenow={per - toNext}
+          role="progressbar" aria-valuemin={0} aria-valuemax={per} aria-valuenow={capped ? per : per - toNext}
           style={{ height: 12, borderRadius: 6, background: colors.surface2, overflow: "hidden" }}
         >
-          <div style={{ width: `${fraction * 100}%`, height: "100%", borderRadius: 6, background: colors.gold }} />
+          <div style={{ width: `${(capped ? 1 : fraction) * 100}%`, height: "100%", borderRadius: 6, background: colors.gold }} />
         </div>
-        <div style={{ fontSize: 13, color: colors.muted }}>{per} レビューごとに 1枚もらえます</div>
+        <div style={{ fontSize: 13, color: colors.muted }}>{per} レビューごとに 1枚（1日1枚まで）</div>
       </div>
 
       <GachaOdds odds={status.odds} />

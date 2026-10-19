@@ -56,8 +56,21 @@ describe('GachaScreen', () => {
       expect(html).toContain('アバター図鑑 4 / 50 →');
       expect(html).toContain('× 2');
       expect(html).toMatch(/次のガチャ券まで あと .*30.* レビュー/);
-      expect(html).toContain('100 レビューごとに 1枚もらえます');
+      expect(html).toContain('100 レビューごとに 1枚（1日1枚まで）');
       expect(html).toContain('aria-valuenow="70"');
+      expect(html).not.toContain('今日のガチャ券はゲット！');
+    }
+  });
+
+  it("says the next ticket comes tomorrow once today's ticket is earned, with a full bar", () => {
+    for (const wide of [false, true]) {
+      const capped = { ...status, next_ticket_tomorrow: true };
+      const html = renderToStaticMarkup(<GachaScreen status={capped} pulling={false} wide={wide} />);
+      expect(html).toContain('今日のガチャ券はゲット！ 次の券は明日もらえます');
+      expect(html).not.toContain('次のガチャ券まで');
+      expect(html).toContain('aria-valuenow="100"');
+      expect(html).toContain('width:100%');
+      expect(html).toContain('100 レビューごとに 1枚（1日1枚まで）');
     }
   });
 });
