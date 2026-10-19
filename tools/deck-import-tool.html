@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Polycards Deck Import Tool</title>
+<style>
+  :root { --bg:#f4efe1; --card:#fffdf7; --line:#e4dcc4; --navy:#22406b; --red:#b23a2f; --ink:#2c2a24; --mute:#7a7462; --ok:#2f7d4f; --warn:#b7791f; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:'Hiragino Maru Gothic ProN','Yu Gothic','Segoe UI',system-ui,sans-serif; line-height:1.5; }
+  .wrap { max-width:1000px; margin:0 auto; padding:24px 20px 80px; }
+  h1 { font-family:Georgia,'Hiragino Mincho ProN',serif; color:var(--navy); margin:0 0 4px; font-size:26px; }
+  h2 { color:var(--navy); font-size:17px; margin:0 0 10px; }
+  .sub { color:var(--mute); margin:0 0 20px; font-size:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:18px; margin-bottom:16px; }
+  textarea { width:100%; border:1px solid var(--line); border-radius:8px; padding:10px; font:13px/1.5 ui-monospace,Menlo,Consolas,monospace; background:#fff; resize:vertical; }
+  textarea.sql { min-height:260px; background:#fbfaf5; }
+  button { background:var(--navy); color:#fbf7ec; border:none; border-radius:8px; padding:9px 16px; font-size:14px; font-weight:600; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--navy); border:1px solid var(--navy); }
+  button:disabled { opacity:.45; cursor:default; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+  .muted { color:var(--mute); font-size:13px; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; }
+  .stat { border:1px solid var(--line); border-radius:8px; padding:10px 12px; background:#fff; }
+  .stat b { display:block; font-size:22px; color:var(--navy); font-family:Georgia,serif; }
+  .stat.bad b { color:var(--red); } .stat.warn b { color:var(--warn); }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--mute); font-weight:600; font-size:12px; }
+  .scroll { max-height:380px; overflow:auto; border:1px solid var(--line); border-radius:8px; background:#fff; }
+  .badge { display:inline-block; padding:1px 8px; border-radius:99px; font-size:11px; font-weight:700; color:#fff; }
+  .badge.error { background:var(--red); } .badge.warn { background:var(--warn); } .badge.info { background:#6b7a99; }
+  .badge.new { background:var(--ok); } .badge.exists { background:#6b7a99; } .badge.unknown { background:#a9a38a; }
+  .note { padding:10px 12px; border-radius:8px; font-size:13px; margin-top:10px; border:1px solid var(--line); background:#fff; }
+  .note.ok { border-color:#b9dcc6; background:#f1faf4; } .note.bad { border-color:#e6b9b3; background:#fdf2f0; } .note.warn { border-color:#ecd3a3; background:#fdf7ea; }
+  code { background:#efe9d6; padding:1px 5px; border-radius:4px; font-size:12px; }
+  details summary { cursor:pointer; color:var(--navy); font-weight:600; font-size:14px; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Polycards Deck Import Tool</h1>
+  <p class="sub">Paste your word lists, check them, and get SQL to run in the Supabase SQL editor. Nothing is sent anywhere except read-only look-ups of your public library.</p>
+
+  <div class="card">
+    <h2>1. Your word list</h2>
+    <p class="muted" style="margin-top:0">Paste CSV text, or copy the cells straight from Google Sheets (including the header row). Columns:
+      <code>school_level, textbook, unit_order, unit, deck, collection, english, japanese, example_en, example_ja, source, note</code>.
+      Only <code>english</code>, <code>japanese</code> and <code>deck</code> are always required. <code>example_en</code> and <code>example_ja</code> are an optional example sentence and its Japanese translation (give both or neither). <code>source</code> and <code>note</code> are ignored.</p>
+    <textarea id="input" rows="10" placeholder="Paste here..."></textarea>
+    <div class="row">
+      <input type="file" id="file" accept=".csv,.tsv,.txt,text/csv,text/plain">
+      <button class="ghost" id="btnExample">Load example</button>
+      <button class="ghost" id="btnTemplate">Download template CSV</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2. Check it</h2>
+    <div class="row" style="margin-top:0">
+      <button id="btnCheck">Check my data</button>
+      <button class="ghost" id="btnRefreshDb">Refresh database info</button>
+      <span id="dbStatus" class="muted"></span>
+    </div>
+    <div id="message"></div>
+  </div>
+
+  <div id="results" class="hidden">
+    <div class="card"><h2>Summary</h2><div id="stats" class="stats"></div></div>
+    <div class="card"><h2>Things to look at</h2><div id="issues"></div></div>
+    <div class="card"><h2>Decks found</h2><div id="decks"></div></div>
+    <div class="card" id="sqlCard">
+      <h2>3. SQL to run</h2>
+      <div id="sqlGate"></div>
+      <div id="sqlBox" class="hidden">
+        <div id="overwriteBox"></div>
+        <textarea id="sql" class="sql" readonly></textarea>
+        <div class="row">
+          <button id="btnCopy">Copy SQL</button>
+          <button class="ghost" id="btnDownload">Download .sql file</button>
+          <span id="copyMsg" class="muted"></span>
+        </div>
+        <p class="muted">In Supabase, open the SQL editor, paste this, and press Run. It is safe to run twice: existing textbooks, units, decks and words are reused, and nothing is ever deleted.</p>
+        <details>
+          <summary>Optional: a check to run afterwards</summary>
+          <textarea id="checkSql" class="sql" style="min-height:130px" readonly></textarea>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ---- Settings -------------------------------------------------------------
+// The project address and the PUBLISHABLE key are public by design (they are
+// already inside the app's source code). Never paste a secret/service-role key here.
+const SUPABASE_URL = 'https://erhudovlvqynpkmtgsef.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_vR1WnHVHYOGklkoHAVPzvg_upyke-kS';
+
+const LEVELS = { jhs: 'JHS', hs: 'HS', other: 'Other' };
+const REQUIRED = ['english', 'japanese', 'deck'];
+const KNOWN = ['school_level', 'textbook', 'unit_order', 'unit', 'deck', 'collection', 'english', 'japanese', 'example_en', 'example_ja', 'source', 'note'];
+const MAX_EXAMPLE = 300;
+const SEP = '\u0001';
+const BATCH = 200;
+
+// ---- Small helpers --------------------------------------------------------
+function clean(s) {
+  return String(s == null ? '' : s)
+    .replace(/[\u0000-\u001F\u007F]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+function nn(s) { return clean(s).toLowerCase().replace(/[^\p{L}\p{N}]/gu, ''); } // name look-alike key
+function q(s) { return "'" + String(s).replace(/'/g, "''") + "'"; }
+function normHeader(h) { return clean(h).toLowerCase().replace(/[\s-]+/g, '_'); }
+
+// ---- CSV / TSV parsing ----------------------------------------------------
+function parseDelimited(text) {
+  text = String(text).replace(/^﻿/, '');
+  const firstLine = text.split(/\r?\n/, 1)[0] || '';
+  const delim = firstLine.indexOf('\t') !== -1 ? '\t' : ',';
+  const rows = [];
+  let cells = [], field = '', inQ = false, recNo = 1, quoteStartRec = 0;
+  const endRecord = () => {
+    cells.push(field); field = '';
+    if (cells.some(c => c.trim() !== '')) rows.push({ cells, n: recNo });
+    cells = []; recNo++;
+  };
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; } else inQ = false;
+      } else field += c;
+    } else if (c === '"' && field === '') { inQ = true; quoteStartRec = recNo; }
+    else if (c === delim) { cells.push(field); field = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; endRecord(); }
+    else field += c;
+  }
+  if (inQ) return { error: 'A quotation mark opened on row ' + quoteStartRec + ' was never closed, so I cannot tell where that row ends. Check that row for a stray " character.' };
+  if (field !== '' || cells.length) endRecord();
+  return { rows, delim };
+}
+
+// ---- Fuzzy matching -------------------------------------------------------
+function withinDist(a, b, max) {
+  const la = a.length, lb = b.length;
+  if (Math.abs(la - lb) > max) return false;
+  let prev = new Array(lb + 1);
+  for (let j = 0; j <= lb; j++) prev[j] = j;
+  for (let i = 1; i <= la; i++) {
+    const cur = [i]; let rowMin = i;
+    for (let j = 1; j <= lb; j++) {
+      const cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
+      const v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+      cur[j] = v; if (v < rowMin) rowMin = v;
+    }
+    if (rowMin > max) return false;
+    prev = cur;
+  }
+  return prev[lb] <= max;
+}
+function allowedDist(a, b) {
+  const m = Math.min(a.length, b.length);
+  return m >= 9 ? 2 : (m >= 4 ? 1 : 0);
+}
+// Fast look-alike search: index every word under itself and under its "one letter
+// removed" versions (and "two letters removed" for long words). Two words that are
+// one or two edits apart always share at least one such key, so we only compare those.
+function variantKeys(e) {
+  const keys = new Set();
+  const L = e.length;
+  if (L < 4) return keys;            // words this short are never treated as look-alikes
+  keys.add(e);
+  const del1 = [];
+  for (let i = 0; i < L; i++) { const v = e.slice(0, i) + e.slice(i + 1); keys.add(v); del1.push(v); }
+  if (L >= 9) for (const v of del1) for (let j = 0; j < v.length; j++) keys.add(v.slice(0, j) + v.slice(j + 1));
+  return keys;
+}
+function addToIndex(idx, e) {
+  for (const k of variantKeys(e)) { const a = idx.get(k); if (a) a.push(e); else idx.set(k, [e]); }
+}
+function lookAlikes(idx, e) {
+  const cand = new Set();
+  for (const k of variantKeys(e)) { const a = idx.get(k); if (a) for (const o of a) cand.add(o); }
+  const hits = [];
+  for (const o of cand) {
+    if (o === e) continue;
+    const m = allowedDist(e, o);
+    if (m && withinDist(e, o, m)) hits.push(o);
+  }
+  return hits;
+}
+
+// ---- Database look-ups (read-only, public) -------------------------------
+async function fetchAll(path) {
+  const out = [], size = 1000;
+  for (let offset = 0; ; offset += size) {
+    const url = SUPABASE_URL + '/rest/v1/' + path + '&limit=' + size + '&offset=' + offset;
+    const res = await fetch(url, { headers: { apikey: SUPABASE_KEY } });
+    if (!res.ok) throw new Error(res.status + ' ' + (await res.text()).slice(0, 160));
+    const rows = await res.json();
+    out.push(...rows);
+    if (rows.length < size) break;
+  }
+  return out;
+}
+async function loadDb() {
+  // Ask for the example sentence columns too. If the database does not have them yet,
+  // the request is refused, so fall back to the plain list and remember that.
+  let words, exampleCols = true;
+  try { words = await fetchAll('words?select=english,japanese,example_en,example_ja&order=id'); }
+  catch (e) { words = await fetchAll('words?select=english,japanese&order=id'); exampleCols = false; }
+  const [textbooks, units, decks, collections] = await Promise.all([
+    fetchAll('textbooks?select=id,name,school_level&order=id'),
+    fetchAll('units?select=id,name,unit_order,textbook_id&order=id'),
+    fetchAll('decks?select=id,name,unit_id,deck_words(count),collection_decks(collection_id)&order=id'),
+    fetchAll('collections?select=id,name,parent_id&order=id'),
+  ]);
+  return { words, textbooks, units, decks, collections, exampleCols };
+}
+
+// ---- The main analysis ----------------------------------------------------
+function analyze(text, db) {
+  const res = { fatal: null, issues: [], decks: [], stats: {}, sql: '', checkSql: '' };
+  const issues = res.issues;
+  const add = (sev, row, msg, rec) => issues.push({
+    sev, row, msg,
+    deck: (rec && rec.deck) || '', english: (rec && rec.english) || '', japanese: (rec && rec.japanese) || '',
+  });
+
+  if (!clean(text)) { res.fatal = 'There is nothing to check yet. Paste your word list above.'; return res; }
+  const parsed = parseDelimited(text);
+  if (parsed.error) { res.fatal = parsed.error; return res; }
+  const table = parsed.rows;
+  if (table.length < 2) { res.fatal = 'I need a header row and at least one word row.'; return res; }
+
+  const header = table[0].cells.map(normHeader);
+  const missing = REQUIRED.filter(h => header.indexOf(h) === -1);
+  if (missing.length) { res.fatal = 'The header row is missing required column(s): ' + missing.join(', ') + '. Found: ' + header.join(', ') + '.'; return res; }
+  const dupHeaders = header.filter((h, i) => h && header.indexOf(h) !== i);
+  if (dupHeaders.length) { res.fatal = 'These column names appear twice in the header: ' + [...new Set(dupHeaders)].join(', ') + '.'; return res; }
+  const unknown = header.filter(h => h && KNOWN.indexOf(h) === -1);
+  if (unknown.length) add('info', 1, 'Ignoring unknown column(s): ' + unknown.join(', ') + '.');
+
+  // -- read rows
+  const recs = [];
+  for (const r of table.slice(1)) {
+    const o = {};
+    header.forEach((h, i) => { if (h) o[h] = clean(r.cells[i]); });
+    const rec = {
+      row: r.n,
+      english: o.english || '', japanese: o.japanese || '', deck: o.deck || '',
+      textbook: o.textbook || '', unit: o.unit || '',
+      unitOrderRaw: o.unit_order || '', levelRaw: o.school_level || '',
+      collectionRaw: o.collection || '',
+      exEn: o.example_en || '', exJa: o.example_ja || '',
+    };
+    let bad = false;
+    const err = m => { add('error', rec.row, m, rec); bad = true; };
+
+    if (!rec.english) err('The English word is blank.');
+    if (!rec.japanese) err('The Japanese meaning is blank.');
+    if (!rec.deck) err('The deck name is blank.');
+    if (!!rec.exEn !== !!rec.exJa) err('Give both example_en and example_ja, or leave both blank.');
+    if (rec.exEn.length > MAX_EXAMPLE || rec.exJa.length > MAX_EXAMPLE) err('An example sentence is longer than ' + MAX_EXAMPLE + ' characters.');
+
+    rec.path = rec.collectionRaw ? rec.collectionRaw.split('>').map(clean) : [];
+    if (rec.path.some(p => !p)) err('The collection path has an empty part: "' + rec.collectionRaw + '". Use the form Parent > Child.');
+    if (rec.path.length > 4) err('The collection path is more than 4 levels deep.');
+
+    const hasTb = !!(rec.textbook || rec.unit || rec.unitOrderRaw || rec.levelRaw);
+    rec.isUnit = hasTb;
+    if (hasTb) {
+      if (!rec.textbook) err('A unit or level is given but the textbook name is blank.');
+      if (!rec.unit) err('The unit name is blank.');
+      const lv = LEVELS[rec.levelRaw.toLowerCase()];
+      if (!lv) err('school_level must be JHS, HS or Other (found "' + rec.levelRaw + '").'); else rec.level = lv;
+      if (!/^\d+$/.test(rec.unitOrderRaw)) err('unit_order must be a whole number (found "' + rec.unitOrderRaw + '").'); else rec.unitOrder = parseInt(rec.unitOrderRaw, 10);
+    } else if (!rec.path.length) {
+      err('This row has no textbook/unit and no collection, so I do not know where the deck belongs.');
+    }
+    if (!bad && rec.exEn) {
+      // the example should actually use the word (blanks "...", "?" and (brackets) are ignored)
+      const core = rec.english.toLowerCase().replace(/\([^)]*\)|\.{2,}|…|\?/g, ' ').replace(/\s+/g, ' ').trim();
+      if (core && rec.exEn.toLowerCase().indexOf(core) === -1) add('warn', rec.row, 'The example sentence does not seem to contain "' + core + '". Check it.', rec);
+    }
+    if (!bad) recs.push(rec);
+  }
+
+  // -- consistency inside the file
+  const tbLevel = new Map(), unitOrder = new Map();
+  const tbNames = new Map(), unitNames = new Map(), collNames = new Map();
+  const first = (map, key, row) => { if (!map.has(key)) map.set(key, row); };
+  for (const r of recs) {
+    if (!r.isUnit) continue;
+    if (!tbLevel.has(r.textbook)) tbLevel.set(r.textbook, new Map());
+    first(tbLevel.get(r.textbook), r.level, r.row);
+    const uk = r.textbook + SEP + r.unit;
+    if (!unitOrder.has(uk)) unitOrder.set(uk, new Map());
+    first(unitOrder.get(uk), r.unitOrder, r.row);
+    first(tbNames, r.textbook, r.row);
+    first(unitNames, uk, r.row);
+  }
+  for (const [tb, m] of tbLevel) if (m.size > 1) add('error', [...m.values()][1], 'Textbook "' + tb + '" is given with different school levels: ' + [...m.keys()].join(' and ') + '.');
+  for (const [uk, m] of unitOrder) if (m.size > 1) add('error', [...m.values()][1], 'Unit "' + uk.split(SEP)[1] + '" in "' + uk.split(SEP)[0] + '" has different unit_order numbers: ' + [...m.keys()].join(' and ') + '.');
+  // same order, different units
+  const orderUse = new Map();
+  for (const [uk, m] of unitOrder) {
+    const [tb, un] = uk.split(SEP); const o = [...m.keys()][0];
+    const k = tb + SEP + o; if (!orderUse.has(k)) orderUse.set(k, []); orderUse.get(k).push(un);
+  }
+  for (const [k, list] of orderUse) if (list.length > 1) add('warn', unitNames.get(k.split(SEP)[0] + SEP + list[1]), 'Units ' + list.map(u => '"' + u + '"').join(' and ') + ' in "' + k.split(SEP)[0] + '" share unit_order ' + k.split(SEP)[1] + '. Their order on screen will be arbitrary.');
+
+  // look-alike names inside the file
+  const variantCheck = (names, label, nameOf) => {
+    const byKey = new Map();
+    for (const [key, row] of names) { const n = nameOf(key); const k = nn(n); if (!byKey.has(k)) byKey.set(k, []); byKey.get(k).push({ n, row }); }
+    for (const [, list] of byKey) if (list.length > 1) add('warn', list[1].row, label + ' names look like the same thing: ' + list.map(x => '"' + x.n + '"').join(' vs ') + '. They would become separate entries.');
+  };
+  variantCheck(tbNames, 'Textbook', k => k);
+  // unit look-alikes only within one textbook
+  const unitsByTb = new Map();
+  for (const [uk, row] of unitNames) { const [tb, un] = uk.split(SEP); if (!unitsByTb.has(tb)) unitsByTb.set(tb, new Map()); unitsByTb.get(tb).set(un, row); }
+  for (const [, m] of unitsByTb) variantCheck(m, 'Unit', k => k);
+  for (const r of recs) for (let i = 0; i < r.path.length; i++) first(collNames, r.path.slice(0, i + 1).join(SEP), r.row);
+  const siblingGroups = new Map();
+  for (const [pk, row] of collNames) { const parts = pk.split(SEP); const parent = parts.slice(0, -1).join(SEP); if (!siblingGroups.has(parent)) siblingGroups.set(parent, new Map()); siblingGroups.get(parent).set(parts[parts.length - 1], row); }
+  for (const [, m] of siblingGroups) variantCheck(m, 'Collection', k => k);
+
+  // -- group into decks
+  const deckMap = new Map();
+  const exByWord = new Map();    // word key -> { en, ja, row }  (first example given wins)
+  for (const r of recs) {
+    if (r.exEn) {
+      const k = r.english.toLowerCase() + SEP + r.japanese;
+      const prev = exByWord.get(k);
+      if (!prev) exByWord.set(k, { en: r.exEn, ja: r.exJa, row: r.row });
+      else if (prev.en !== r.exEn || prev.ja !== r.exJa) add('warn', r.row, 'This word already has a different example sentence earlier in the file (row ' + prev.row + '). The first one is used.', r);
+    }
+  }
+  for (const r of recs) {
+    const key = r.isUnit ? 'U' + SEP + r.textbook + SEP + r.unit + SEP + r.deck : 'C' + SEP + r.path.join(SEP) + SEP + r.deck;
+    let d = deckMap.get(key);
+    if (!d) {
+      d = {
+        kind: r.isUnit ? 'unit' : 'collection', name: r.deck,
+        textbook: r.textbook, level: r.level, unit: r.unit, unitOrder: r.unitOrder,
+        collections: [], words: [], wordKeys: new Set(), firstRow: r.row, status: 'unknown', existingWordCount: null,
+      };
+      deckMap.set(key, d);
+    }
+    if (r.path.length && !d.collections.some(p => p.join(SEP) === r.path.join(SEP))) d.collections.push(r.path);
+    const wk = r.english.toLowerCase() + SEP + r.japanese;
+    if (d.wordKeys.has(wk)) { add('info', r.row, 'Repeated in the same deck, so it will only be added once.', r); continue; }
+    d.wordKeys.add(wk);
+    const ex = exByWord.get(wk);
+    d.words.push({ english: r.english, japanese: r.japanese, row: r.row, deck: r.deck, exEn: ex ? ex.en : '', exJa: ex ? ex.ja : '' });
+  }
+  res.decks = [...deckMap.values()];
+  // look-alike deck names, only compared inside the same unit (or the same collection)
+  const decksByPlace = new Map();
+  for (const d of res.decks) {
+    const place = d.kind === 'unit' ? 'U' + SEP + d.textbook + SEP + d.unit : 'C' + SEP + d.collections[0].join(SEP);
+    if (!decksByPlace.has(place)) decksByPlace.set(place, new Map());
+    if (!decksByPlace.get(place).has(d.name)) decksByPlace.get(place).set(d.name, d.firstRow);
+  }
+  for (const [, m] of decksByPlace) variantCheck(m, 'Deck', k => k);
+
+  // -- compare with the database
+  const dbWordKeys = new Set(), dbByEng = new Map(), dbIdx = new Map(), fileIdx = new Map(), dbExample = new Map();
+  const firstExRec = recs.find(r => r.exEn);
+  if (firstExRec && db && !db.exampleCols) add('error', firstExRec.row, 'Your file has example sentences, but the database does not have the example_en and example_ja columns yet. Run the "add example columns" SQL first, then press "Refresh database info" and check again.');
+  if (firstExRec && !db) add('info', firstExRec.row, 'I could not read the database, so I cannot tell whether the example sentence columns exist yet. If they do not, the SQL will stop with an error and change nothing.');
+  if (db) {
+    for (const w of db.words) {
+      const e = clean(w.english).toLowerCase(), j = clean(w.japanese);
+      dbWordKeys.add(e + SEP + j);
+      if (w.example_en) dbExample.set(e + SEP + j, w.example_en);
+      if (!dbByEng.has(e)) dbByEng.set(e, new Set()); dbByEng.get(e).add(j);
+    }
+    for (const e of dbByEng.keys()) addToIndex(dbIdx, e);
+
+    const tbById = new Map(db.textbooks.map(t => [t.id, t]));
+    const unitsOfTb = new Map();
+    for (const u of db.units) { if (!unitsOfTb.has(u.textbook_id)) unitsOfTb.set(u.textbook_id, []); unitsOfTb.get(u.textbook_id).push(u); }
+    const collById = new Map(db.collections.map(c => [c.id, c]));
+    const collPath = id => { const out = []; let c = collById.get(id), guard = 0; while (c && guard++ < 10) { out.unshift(c.name); c = c.parent_id ? collById.get(c.parent_id) : null; } return out; };
+    const decksByUnit = new Map(), decksByColl = new Map();
+    for (const d of db.decks) {
+      const wc = (d.deck_words && d.deck_words[0] && d.deck_words[0].count) || 0;
+      if (d.unit_id) { if (!decksByUnit.has(d.unit_id)) decksByUnit.set(d.unit_id, []); decksByUnit.get(d.unit_id).push({ d, wc }); }
+      for (const cd of (d.collection_decks || [])) { const k = collPath(cd.collection_id).join(SEP); if (!decksByColl.has(k)) decksByColl.set(k, []); decksByColl.get(k).push({ d, wc }); }
+    }
+
+    // textbooks and units
+    const seenTb = new Set(), seenUnit = new Set();
+    for (const d of res.decks) {
+      if (d.kind === 'unit') {
+        const tbs = db.textbooks.filter(t => t.name === d.textbook);
+        const tb = tbs[0];
+        if (!seenTb.has(d.textbook)) {
+          seenTb.add(d.textbook);
+          if (tbs.length > 1) add('error', d.firstRow, 'The database already has ' + tbs.length + ' textbooks named "' + d.textbook + '". Fix that first, or the import cannot tell which one to use.');
+          else if (tb) { if (tb.school_level !== d.level) add('warn', d.firstRow, 'Textbook "' + d.textbook + '" already exists as ' + tb.school_level + ' but the file says ' + d.level + '. The existing level will be kept.'); }
+          else {
+            const alike = db.textbooks.find(t => nn(t.name) === nn(d.textbook));
+            if (alike) add('warn', d.firstRow, 'Textbook "' + d.textbook + '" looks like the existing textbook "' + alike.name + '". If it is the same book, rename it in the file; otherwise a second copy will be created.');
+          }
+        }
+        const uk = d.textbook + SEP + d.unit;
+        if (tb && !seenUnit.has(uk)) {
+          seenUnit.add(uk);
+          const us = unitsOfTb.get(tb.id) || [];
+          const exact = us.find(u => u.name === d.unit);
+          if (exact) { if (exact.unit_order !== d.unitOrder) add('warn', d.firstRow, 'Unit "' + d.unit + '" already exists with unit_order ' + exact.unit_order + ' but the file says ' + d.unitOrder + '. The existing number will be kept.'); }
+          else {
+            const alike = us.find(u => nn(u.name) === nn(d.unit));
+            if (alike) add('warn', d.firstRow, 'Unit "' + d.unit + '" looks like the existing unit "' + alike.name + '" in "' + d.textbook + '". A second copy will be created unless you rename it.');
+          }
+        }
+        // deck status
+        if (tb) {
+          const exactUnit = (unitsOfTb.get(tb.id) || []).find(u => u.name === d.unit);
+          if (exactUnit) {
+            const ds = decksByUnit.get(exactUnit.id) || [];
+            const hit = ds.find(x => x.d.name === d.name);
+            if (hit) { d.status = 'exists'; d.existingWordCount = hit.wc; }
+            else {
+              d.status = 'new';
+              const alike = ds.find(x => nn(x.d.name) === nn(d.name));
+              if (alike) add('warn', d.firstRow, 'Deck "' + d.name + '" looks like the existing deck "' + alike.d.name + '" in this unit. A second deck will be created unless you rename it.');
+            }
+          } else d.status = 'new';
+        } else d.status = 'new';
+      } else {
+        const primary = d.collections[0];
+        const ds = decksByColl.get(primary.join(SEP)) || [];
+        const hit = ds.find(x => x.d.name === d.name && !x.d.unit_id);
+        if (hit) { d.status = 'exists'; d.existingWordCount = hit.wc; } else d.status = 'new';
+      }
+    }
+    // collections
+    const existingColl = new Map(db.collections.map(c => [collPath(c.id).join(SEP), c]));
+    const seenColl = new Set();
+    for (const d of res.decks) for (const path of d.collections) for (let i = 0; i < path.length; i++) {
+      const pk = path.slice(0, i + 1).join(SEP);
+      if (seenColl.has(pk) || existingColl.has(pk)) continue;
+      seenColl.add(pk);
+      const parentKey = path.slice(0, i).join(SEP);
+      const sibs = db.collections.filter(c => collPath(c.id).slice(0, -1).join(SEP) === parentKey);
+      const alike = sibs.find(c => nn(c.name) === nn(path[i]));
+      if (alike) add('warn', d.firstRow, 'Collection "' + path[i] + '" looks like the existing collection "' + alike.name + '". A second one will be created unless you rename it.');
+    }
+  } else {
+    res.decks.forEach(d => { d.status = 'unknown'; });
+  }
+
+  // -- word checks (same English / different Japanese, and look-alike spellings)
+  const fileByEng = new Map();   // english -> Map(japanese -> deck name)
+  for (const d of res.decks) for (const w of d.words) {
+    const e = w.english.toLowerCase();
+    if (!fileByEng.has(e)) fileByEng.set(e, new Map());
+    if (!fileByEng.get(e).has(w.japanese)) fileByEng.get(e).set(w.japanese, d.name);
+  }
+  const reported = new Set();
+  const seenFileSet = new Set();
+  const uniquePairs = new Set(); let newPairs = 0, reusedPairs = 0;
+  const exampleWords = new Set();
+  for (const d of res.decks) {
+    d.newWords = 0;
+    for (const w of d.words) {
+      const e = w.english.toLowerCase();
+      const pk = e + SEP + w.japanese;
+      const inDb = db ? dbWordKeys.has(pk) : false;
+      if (!uniquePairs.has(pk)) { uniquePairs.add(pk); if (inDb) reusedPairs++; else newPairs++; }
+      if (!inDb) d.newWords++;
+      const rec = { deck: d.name, english: w.english, japanese: w.japanese };
+
+      // example sentence already stored for this word?
+      if (w.exEn) {
+        if (!exampleWords.has(pk)) { exampleWords.add(pk); }
+        const stored = dbExample.get(pk);
+        if (stored && stored !== w.exEn && !reported.has('X' + pk)) {
+          reported.add('X' + pk);
+          add('info', w.row, 'This word already has an example sentence in the database. It is kept, unless you tick "Replace existing example sentences" before copying the SQL.', rec);
+        }
+      }
+
+      // same English, other Japanese
+      const others = [];
+      for (const [j, deckName] of fileByEng.get(e)) if (j !== w.japanese) others.push(j + ' (in your file, deck ' + deckName + ')');
+      if (db && dbByEng.has(e)) for (const j of dbByEng.get(e)) if (j !== w.japanese) others.push(j + ' (already in the database)');
+      if (others.length && !reported.has('S' + pk)) {
+        reported.add('S' + pk);
+        add('warn', w.row, 'Same English word already has a different Japanese meaning: ' + others.slice(0, 3).join('; ') + (others.length > 3 ? '; ...' : '') + '. If they are the same word, use one meaning in both places.', rec);
+      }
+
+      // look-alike spellings
+      const key = 'N' + e;
+      if (!reported.has(key)) {
+        reported.add(key);
+        const hits = lookAlikes(dbIdx, e).map(o => o + ' (database)')
+          .concat(lookAlikes(fileIdx, e).map(o => o + ' (your file)'));
+        if (hits.length) add('warn', w.row, 'Spelled almost like: ' + hits.slice(0, 4).join(', ') + (hits.length > 4 ? ', ...' : '') + '. Check for a typo or a variant spelling (colour/color, plural, etc.).', rec);
+      }
+      if (!seenFileSet.has(e)) { seenFileSet.add(e); addToIndex(fileIdx, e); }
+    }
+  }
+
+  const errors = issues.filter(i => i.sev === 'error').length;
+  const warns = issues.filter(i => i.sev === 'warn').length;
+  res.stats = {
+    rows: recs.length, decks: res.decks.length,
+    newDecks: res.decks.filter(d => d.status === 'new').length,
+    existingDecks: res.decks.filter(d => d.status === 'exists').length,
+    uniqueWords: uniquePairs.size,
+    newWords: db ? newPairs : null, reusedWords: db ? reusedPairs : null,
+    withExamples: exampleWords.size,
+    errors, warns, dbChecked: !!db,
+  };
+  if (!errors && res.decks.length) { res.sql = generateSql(res.decks); res.checkSql = generateCheckSql(res.decks); }
+  return res;
+}
+
+// ---- SQL generation -------------------------------------------------------
+function collExpr(path) {
+  let expr = null;
+  for (const name of path) {
+    const cond = expr === null ? 'parent_id is null' : 'parent_id = ' + expr;
+    expr = '(select id from public.collections where name = ' + q(name) + ' and ' + cond + ')';
+  }
+  return expr;
+}
+function deckExpr(d) {
+  if (d.kind === 'unit') {
+    return '(select d.id from public.decks d join public.units u on u.id = d.unit_id join public.textbooks t on t.id = u.textbook_id where t.name = ' + q(d.textbook) + ' and u.name = ' + q(d.unit) + ' and d.name = ' + q(d.name) + ')';
+  }
+  return '(select d.id from public.decks d join public.collection_decks cd on cd.deck_id = d.id where cd.collection_id = ' + collExpr(d.collections[0]) + ' and d.name = ' + q(d.name) + ' and d.unit_id is null)';
+}
+function generateSql(decks, overwriteExamples) {
+  const out = [];
+  out.push('-- Generated by the Polycards Deck Import Tool');
+  out.push('-- Safe to run more than once: existing items are reused and nothing is deleted.');
+  if (overwriteExamples) out.push('-- NOTE: this version REPLACES example sentences that already exist for the words below.');
+  out.push('begin;', '');
+
+  const tbs = new Map(), units = new Map(), colls = new Map();
+  for (const d of decks) {
+    if (d.kind === 'unit') {
+      if (!tbs.has(d.textbook)) tbs.set(d.textbook, d.level);
+      const uk = d.textbook + SEP + d.unit; if (!units.has(uk)) units.set(uk, { textbook: d.textbook, name: d.unit, order: d.unitOrder });
+    }
+    for (const p of d.collections) for (let i = 0; i < p.length; i++) { const k = p.slice(0, i + 1).join(SEP); if (!colls.has(k)) colls.set(k, p.slice(0, i + 1)); }
+  }
+
+  if (tbs.size) {
+    out.push('-- Textbooks');
+    for (const [name, level] of tbs) out.push('insert into public.textbooks (name, school_level)\nselect ' + q(name) + ', ' + q(level) + '\nwhere not exists (select 1 from public.textbooks where name = ' + q(name) + ');');
+    out.push('');
+    out.push('-- Units');
+    for (const u of units.values()) out.push('insert into public.units (textbook_id, name, unit_order)\nselect t.id, ' + q(u.name) + ', ' + u.order + '\nfrom public.textbooks t\nwhere t.name = ' + q(u.textbook) + '\n  and not exists (select 1 from public.units x where x.textbook_id = t.id and x.name = ' + q(u.name) + ');');
+    out.push('');
+  }
+  if (colls.size) {
+    out.push('-- Collections (categories)');
+    let n = 0;
+    for (const path of colls.values()) {
+      n += 10;
+      const name = path[path.length - 1];
+      const parent = path.length > 1 ? collExpr(path.slice(0, -1)) : null;
+      out.push('insert into public.collections (name, parent_id, sort_order)\nselect ' + q(name) + ', ' + (parent || 'null::uuid') + ', ' + n + '\nwhere not exists (select 1 from public.collections where name = ' + q(name) + ' and ' + (parent ? 'parent_id = ' + parent : 'parent_id is null') + ');');
+    }
+    out.push('');
+  }
+
+  out.push('-- Decks');
+  for (const d of decks) {
+    if (d.kind === 'unit') {
+      out.push('insert into public.decks (unit_id, name)\nselect u.id, ' + q(d.name) + '\nfrom public.units u join public.textbooks t on t.id = u.textbook_id\nwhere t.name = ' + q(d.textbook) + ' and u.name = ' + q(d.unit) + '\n  and not exists (select 1 from public.decks x where x.unit_id = u.id and x.name = ' + q(d.name) + ');');
+    } else {
+      const c0 = collExpr(d.collections[0]);
+      out.push('insert into public.decks (unit_id, name)\nselect null::uuid, ' + q(d.name) + '\nwhere not exists (select 1 from public.decks x join public.collection_decks cd on cd.deck_id = x.id where cd.collection_id = ' + c0 + ' and x.name = ' + q(d.name) + ' and x.unit_id is null);');
+    }
+    for (const p of d.collections) out.push('insert into public.collection_decks (collection_id, deck_id)\nselect ' + collExpr(p) + ', ' + deckExpr(d) + '\non conflict do nothing;');
+  }
+  out.push('');
+
+  out.push('-- Words (an existing identical word is reused, never duplicated)');
+  const allWords = new Map();
+  for (const d of decks) for (const w of d.words) { const k = w.english.toLowerCase() + SEP + w.japanese; if (!allWords.has(k)) allWords.set(k, w); }
+  const list = [...allWords.values()];
+  for (let i = 0; i < list.length; i += BATCH) {
+    out.push('insert into public.words (english, japanese) values\n' + list.slice(i, i + BATCH).map(w => '  (' + q(w.english) + ', ' + q(w.japanese) + ')').join(',\n') + '\non conflict (lower(btrim(english)), btrim(japanese)) do nothing;');
+  }
+  out.push('');
+
+  const exList = list.filter(w => w.exEn);
+  if (exList.length) {
+    out.push(overwriteExamples
+      ? '-- Example sentences (replaces any that already exist for these words)'
+      : '-- Example sentences (only fills in words that have none yet; never overwrites)');
+    for (let i = 0; i < exList.length; i += BATCH) {
+      out.push('update public.words w\nset example_en = v.example_en, example_ja = v.example_ja\nfrom (values\n'
+        + exList.slice(i, i + BATCH).map(w => '  (' + q(w.english) + ', ' + q(w.japanese) + ', ' + q(w.exEn) + ', ' + q(w.exJa) + ')').join(',\n')
+        + '\n) as v(english, japanese, example_en, example_ja)\nwhere lower(btrim(w.english)) = lower(btrim(v.english))\n  and btrim(w.japanese) = btrim(v.japanese)'
+        + (overwriteExamples ? ';' : "\n  and coalesce(btrim(w.example_en), '') = '' and coalesce(btrim(w.example_ja), '') = '';"));
+    }
+    out.push('');
+  }
+
+  out.push('-- Put the words into their decks');
+  for (const d of decks) {
+    for (let i = 0; i < d.words.length; i += BATCH) {
+      const chunk = d.words.slice(i, i + BATCH);
+      out.push('insert into public.deck_words (deck_id, word_id, position)\nselect ' + deckExpr(d) + ', w.id, v.pos\nfrom (values\n' + chunk.map((w, k) => '  (' + q(w.english) + ', ' + q(w.japanese) + ', ' + (i + k + 1) + ')').join(',\n') + '\n) as v(english, japanese, pos)\njoin public.words w\n  on lower(btrim(w.english)) = lower(btrim(v.english))\n and btrim(w.japanese) = btrim(v.japanese)\non conflict (deck_id, word_id) do nothing;');
+    }
+  }
+  out.push('', 'commit;');
+  return out.join('\n');
+}
+function generateCheckSql(decks) {
+  const names = [...new Set(decks.map(d => d.name))];
+  if (decks.some(d => d.words.some(w => w.exEn))) {
+    return 'select d.name as deck, count(dw.word_id) as words, count(w.example_en) as with_example\nfrom public.decks d\nleft join public.deck_words dw on dw.deck_id = d.id\nleft join public.words w on w.id = dw.word_id\nwhere d.name in (' + names.map(q).join(', ') + ')\ngroup by d.id, d.name\norder by d.name;';
+  }
+  return 'select d.name as deck, count(dw.word_id) as words\nfrom public.decks d\nleft join public.deck_words dw on dw.deck_id = d.id\nwhere d.name in (' + names.map(q).join(', ') + ')\ngroup by d.id, d.name\norder by d.name;';
+}
+
+// ---- Example / template ---------------------------------------------------
+const TEMPLATE = [
+  'school_level,textbook,unit_order,unit,deck,collection,english,japanese,example_en,example_ja,source,note',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,apple,りんご,I eat an apple every day.,私は毎日りんごを食べます。,,',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,one of ...,...の1つ,,,,',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-2,,familiar,見慣れた,,,,',
+  ',,,,Grade 3 Set 1,EIKEN > Grade 3,borrow,借りる,"Can I borrow your pen, please?",ペンを借りてもいいですか。,,check meaning',
+  ',,,,Grade 3 Set 1,EIKEN > Grade 3,familiar,見慣れた,,,,',
+].join('\n');
+
+// ---- Page wiring (only runs in a browser) ----------------------------------
+function el(tag, props) {
+  const e = document.createElement(tag);
+  for (const k in (props || {})) {
+    const v = props[k];
+    if (k === 'class') e.className = v; else if (k === 'text') e.textContent = v;
+    else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), v); else e.setAttribute(k, v);
+  }
+  for (let i = 2; i < arguments.length; i++) {
+    const kids = [].concat(arguments[i]);
+    for (const kid of kids) if (kid != null) e.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return e;
+}
+
+if (typeof document !== 'undefined' && document.getElementById('btnCheck')) {
+  const $ = id => document.getElementById(id);
+  let dbCache = null, dbError = null, last = null;
+
+  function setDbStatus() {
+    $('dbStatus').textContent = dbCache
+      ? 'Database connected: ' + dbCache.words.length + ' words, ' + dbCache.decks.length + ' decks found.'
+      : (dbError ? 'Database check unavailable (' + dbError + '). Only your file will be checked.' : '');
+  }
+  async function getDb(force) {
+    if (dbCache && !force) return dbCache;
+    try { dbCache = await loadDb(); dbError = null; }
+    catch (e) { dbCache = null; dbError = String(e && e.message || e).slice(0, 120); }
+    setDbStatus();
+    return dbCache;
+  }
+  function showMessage(kind, text) { const m = $('message'); m.replaceChildren(); if (text) m.append(el('div', { class: 'note ' + kind, text })); }
+
+  async function run() {
+    $('btnCheck').disabled = true;
+    showMessage('', 'Checking...');
+    const db = await getDb(false);
+    last = analyze($('input').value, db);
+    $('btnCheck').disabled = false;
+    if (last.fatal) { $('results').classList.add('hidden'); showMessage('bad', last.fatal); return; }
+    showMessage('', '');
+    render(last);
+  }
+
+  function stat(label, value, cls) { return el('div', { class: 'stat ' + (cls || '') }, el('b', { text: value == null ? '?' : String(value) }), label); }
+
+  function render(r) {
+    $('results').classList.remove('hidden');
+    const s = r.stats;
+    $('stats').replaceChildren(...[
+      stat('rows read', s.rows), stat('decks', s.decks),
+      stat('new decks', s.dbChecked ? s.newDecks : null), stat('decks that exist', s.dbChecked ? s.existingDecks : null),
+      stat('unique words', s.uniqueWords),
+      stat('new words', s.newWords), stat('already in database', s.reusedWords),
+      s.withExamples ? stat('words with example sentences', s.withExamples) : null,
+      stat('errors', s.errors, s.errors ? 'bad' : ''), stat('warnings', s.warns, s.warns ? 'warn' : '')
+    ].filter(Boolean));
+
+    const shown = r.issues.slice().sort((a, b) => ({ error: 0, warn: 1, info: 2 }[a.sev] - { error: 0, warn: 1, info: 2 }[b.sev]) || (a.row || 0) - (b.row || 0));
+    const issuesBox = $('issues'); issuesBox.replaceChildren();
+    if (!s.dbChecked) issuesBox.append(el('div', { class: 'note warn', text: 'I could not read your database, so checks against existing words, decks and textbooks were skipped. Only duplicates and look-alikes inside your file were checked.' }));
+    if (!shown.length) issuesBox.append(el('div', { class: 'note ok', text: 'Nothing to report.' }));
+    else {
+      const rows = shown.slice(0, 500).map(i => el('tr', {},
+        el('td', {}, el('span', { class: 'badge ' + i.sev, text: i.sev })),
+        el('td', { text: i.row || '' }),
+        el('td', { text: [i.deck, i.english, i.japanese].filter(Boolean).join(' / ') }),
+        el('td', { text: i.msg })));
+      issuesBox.append(el('div', { class: 'scroll' }, el('table', {}, el('tr', {}, el('th', { text: '' }), el('th', { text: 'Row' }), el('th', { text: 'Deck / word' }), el('th', { text: 'What I found' })), rows)));
+      if (shown.length > 500) issuesBox.append(el('p', { class: 'muted', text: 'Showing the first 500 of ' + shown.length + '.' }));
+    }
+
+    const deckRows = r.decks.map(d => el('tr', {},
+      el('td', { text: d.name }),
+      el('td', { text: d.kind === 'unit' ? d.level + ' › ' + d.textbook + ' › ' + d.unit : d.collections.map(p => p.join(' › ')).join(' ; ') }),
+      el('td', { text: d.words.length }),
+      el('td', { text: s.dbChecked ? d.newWords : '?' }),
+      el('td', {}, el('span', { class: 'badge ' + d.status, text: d.status === 'unknown' ? 'not checked' : d.status }), d.status === 'exists' ? ' (' + d.existingWordCount + ' words there now)' : '')));
+    $('decks').replaceChildren(el('div', { class: 'scroll' }, el('table', {}, el('tr', {}, el('th', { text: 'Deck' }), el('th', { text: 'Where it goes' }), el('th', { text: 'Words' }), el('th', { text: 'New words' }), el('th', { text: 'Status' })), deckRows)));
+
+    const gate = $('sqlGate'); gate.replaceChildren(); $('sqlBox').classList.add('hidden');
+    const ow = $('overwriteBox'); ow.replaceChildren();
+    if (s.withExamples && !s.errors) {
+      const ocb = el('input', { type: 'checkbox', id: 'overwrite' });
+      ocb.addEventListener('change', () => { r.sql = generateSql(r.decks, ocb.checked); $('sql').value = r.sql; });
+      ow.append(el('div', { class: 'note' }, el('label', {}, ocb, ' Replace example sentences that already exist for these words (normally they are kept and only empty ones are filled in).')));
+    }
+    if (s.errors) { gate.append(el('div', { class: 'note bad', text: 'Fix the errors above first. I do not produce SQL while there are errors.' })); return; }
+    const reveal = () => { $('sql').value = r.sql; $('checkSql').value = r.checkSql; $('sqlBox').classList.remove('hidden'); };
+    if (s.warns) {
+      const cb = el('input', { type: 'checkbox', id: 'ack' });
+      cb.addEventListener('change', () => { if (cb.checked) reveal(); else $('sqlBox').classList.add('hidden'); });
+      gate.append(el('div', { class: 'note warn' }, el('label', {}, cb, ' I have looked at the ' + s.warns + ' warning(s) above and want the SQL anyway.')));
+    } else reveal();
+  }
+
+  function copyText(text, msg) {
+    const done = () => { $('copyMsg').textContent = msg; setTimeout(() => { $('copyMsg').textContent = ''; }, 2500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => { $('sql').select(); document.execCommand('copy'); done(); });
+    else { $('sql').select(); document.execCommand('copy'); done(); }
+  }
+  function download(name, text, type) {
+    const a = el('a', { href: URL.createObjectURL(new Blob([text], { type })), download: name });
+    document.body.append(a); a.click(); a.remove();
+  }
+
+  $('btnCheck').addEventListener('click', run);
+  $('btnRefreshDb').addEventListener('click', async () => { $('dbStatus').textContent = 'Reading database...'; await getDb(true); });
+  $('btnExample').addEventListener('click', () => { $('input').value = TEMPLATE; showMessage('warn', 'This is example data only. Do not run the SQL it produces on your real database.'); });
+  $('btnTemplate').addEventListener('click', () => download('deck-import-template.csv', '﻿' + TEMPLATE + '\n', 'text/csv;charset=utf-8'));
+  $('file').addEventListener('change', e => { const f = e.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { $('input').value = rd.result; }; rd.readAsText(f, 'utf-8'); });
+  $('btnCopy').addEventListener('click', () => copyText($('sql').value, 'Copied.'));
+  $('btnDownload').addEventListener('click', () => { const t = new Date(), p = n => String(n).padStart(2, '0'); download('polycards-import-' + t.getFullYear() + p(t.getMonth() + 1) + p(t.getDate()) + '-' + p(t.getHours()) + p(t.getMinutes()) + '.sql', $('sql').value, 'text/plain;charset=utf-8'); });
+  getDb(false);
+}
+</script>
+</body>
+</html>
