@@ -12,7 +12,7 @@ export async function fetchLibrary() {
     .from('textbooks')
     .select(`
       id, name, school_level,
-      units ( id, name, unit_order, decks ( id, name, deck_words ( count ) ) )
+      units ( id, name, unit_order, decks ( id, name, sort_order, deck_words ( count ) ) )
     `)
     .order('created_at', { ascending: true });
   if (error) throw new Error("Supabase Error: " + error.message);

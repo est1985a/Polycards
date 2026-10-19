@@ -30,6 +30,17 @@ describe('shapeLibrary', () => {
     expect(nh3.units[0].decks.map((d) => d.name)).toEqual(['Part 2', 'Part 10']);
   });
 
+  it('orders decks by sort_order first, then by name', () => {
+    const rows = [{ id: 9, name: 'T', school_level: 'JHS', units: [{ id: 90, name: 'U', unit_order: 1, decks: [
+      { id: 1, name: "Let's Read 1 Page 44", sort_order: 100 },
+      { id: 2, name: 'Part 2', sort_order: 0 },
+      { id: 3, name: 'Part 1', sort_order: 0 },
+      { id: 4, name: 'Stage Activity 1', sort_order: 0 },
+    ] }] }];
+    expect(shapeLibrary(rows)[0].units[0].decks.map((d) => d.name))
+      .toEqual(['Part 1', 'Part 2', 'Stage Activity 1', "Let's Read 1 Page 44"]);
+  });
+
   it('gives every deck a word count (0 when none) and drops the raw deck_words', () => {
     const [part2, part10] = findTextbook(LIB, 2).units[0].decks;
     expect(part10).toEqual({ id: 202, name: 'Part 10', wordCount: 3 });

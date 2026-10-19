@@ -6,8 +6,12 @@ const SCHOOL_ORDER = { JHS: 0, HS: 1 }; // anything else (Other) comes last
 // Compares names so "Part 2" comes before "Part 10" and "New Horizon 1" before "New Horizon 3".
 const byName = (a, b) => String(a.name).localeCompare(String(b.name), undefined, { numeric: true });
 
+// Lower sort_order first; a deck without one counts as 0.
+const bySortOrder = (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0);
+
 // Rows from fetchLibrary → a flat textbook list: JHS first, then HS, then Other (by name inside each).
-// Units are sorted by unit_order, decks by name, and each deck gets wordCount (from deck_words(count)).
+// Units are sorted by unit_order, decks by sort_order then by name, and each deck gets wordCount
+// (from deck_words(count)).
 export function shapeLibrary(rows) {
   const level = (tb) => SCHOOL_ORDER[tb.school_level] ?? 2;
   return (rows || [])
@@ -18,7 +22,7 @@ export function shapeLibrary(rows) {
           ...unit,
           decks: (unit.decks || [])
             .map(({ deck_words, ...deck }) => ({ ...deck, wordCount: deck_words?.[0]?.count ?? 0 }))
-            .sort(byName),
+            .sort((a, b) => bySortOrder(a, b) || byName(a, b)),
         }))
         .sort((a, b) => a.unit_order - b.unit_order),
     }))
