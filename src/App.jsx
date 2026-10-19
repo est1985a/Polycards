@@ -535,6 +535,7 @@ function App() {
                 )}
                 {activeSet && view === "wordList" && (
                   <WordList
+                    key={activeSet.id}
                     activeSet={activeSet}
                     isAdded={myDeckIds.includes(activeSet.id)}
                     saving={savingDeck}

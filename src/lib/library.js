@@ -111,3 +111,12 @@ export function saveSchoolLevel(storage, level) {
 export function isDeckAdded(myDeckIds, deckId) {
   return Array.isArray(myDeckIds) && myDeckIds.includes(deckId);
 }
+
+// Word list reveals: a new Set with id added, or removed if it was already there
+// (the original is not changed).
+export function toggleId(set, id) {
+  const next = new Set(set);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  return next;
+}

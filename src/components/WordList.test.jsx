@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildCards } from '../lib/drill';
+import { toggleId } from '../lib/library';
 import WordList, { WordRow } from './WordList';
 
 const WORDS = [
@@ -14,7 +15,7 @@ const [ALREADY, HERB] = SET.cards.filter((c) => c.direction === 'en2jp');
 const renderList = () => renderToStaticMarkup(
   <WordList activeSet={SET} isAdded={false} saving={false} onAddDeck={() => {}} onStart={() => {}} />
 );
-const renderRow = (props) => renderToStaticMarkup(<WordRow word={ALREADY} hidden={false} first onReveal={() => {}} {...props} />);
+const renderRow = (props) => renderToStaticMarkup(<WordRow word={ALREADY} hideJa={false} revealed={false} first onToggle={() => {}} {...props} />);
 
 describe('WordList', () => {
   it('shows every word once, in deck order, with the count', () => {
@@ -44,18 +45,45 @@ describe('WordRow', () => {
   });
 
   it('shows just the pair for a word without an example', () => {
-    const html = renderToStaticMarkup(<WordRow word={HERB} hidden={false} first onReveal={() => {}} />);
+    const html = renderToStaticMarkup(<WordRow word={HERB} hideJa={false} revealed={false} first onToggle={() => {}} />);
     expect(html).toContain('herb');
     expect(html).toContain('ハーブ');
     expect(html).not.toContain('<strong');
   });
 
-  it('blurs the Japanese word and translation when hidden, as a button that reveals them', () => {
-    const html = renderRow({ hidden: true });
-    expect(html).toMatch(/<button[^>]*aria-label="日本語を見る: already"/);
-    expect(html).toMatch(/<span aria-hidden="true" style="[^"]*blur\(6px\)[^"]*">もう、すでに<\/span>/);
+  it('covers the hidden Japanese word with a タップで表示 button and blurs the translation', () => {
+    const html = renderRow({ hideJa: true, revealed: false });
+    // only the Japanese part is a button, not the whole row
+    expect(html.match(/<button/g)).toHaveLength(1);
+    expect(html).toMatch(/<button[^>]*aria-label="日本語を見る: already"[^>]*min-height:44px/);
+    expect(html).toContain('タップで表示');
+    // the word keeps its space under the placeholder, so the row doesn't jump
+    expect(html).toMatch(/<span aria-hidden="true" style="[^"]*visibility:hidden[^"]*">もう、すでに<\/span>/);
     expect(html).toMatch(/<span aria-hidden="true" style="[^"]*blur\(6px\)[^"]*">彼女はもう昼ご飯を食べました。<\/span>/);
     // English stays readable
     expect(html).toMatch(/<strong[^>]*>already<\/strong>/);
+  });
+
+  it('shows a revealed word as a button that hides it again', () => {
+    const html = renderRow({ hideJa: true, revealed: true });
+    expect(html).toMatch(/<button[^>]*aria-label="日本語をかくす: already"/);
+    expect(html).toMatch(/<span style="[^"]*visibility:visible[^"]*">もう、すでに<\/span>/);
+    expect(html).not.toContain('タップで表示');
+    expect(html).not.toContain('blur(');
+  });
+});
+
+describe('WordList sticky switch', () => {
+  it('keeps the hide switch in a sticky bar with a solid background', () => {
+    expect(renderList()).toMatch(/<div style="position:sticky;top:0;[^"]*background:var\(--bg\)[^"]*"><button role="switch"/);
+  });
+});
+
+describe('toggleId', () => {
+  it('adds a missing id and removes a present one, without changing the original', () => {
+    const start = new Set(['a']);
+    expect([...toggleId(start, 'b')]).toEqual(['a', 'b']);
+    expect([...toggleId(start, 'a')]).toEqual([]);
+    expect([...start]).toEqual(['a']);
   });
 });
