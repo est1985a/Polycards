@@ -7,6 +7,7 @@ A vocabulary spaced-repetition (SRS) web app for Japanese junior high and high s
   - `src/App.jsx`: shared state (session, screen, My Cards data) and which screen to show
   - `src/components/`: one file per screen part (`StudySession`, `MyCardsTab`, `MasteredList`, `StarIcon`, `CardSetsTab`, `CardSetsHub`, `NavRow`, `LevelSwitch`, `LoginScreen`, `Header`, `LogoMark`, `Tabs`, `Stamp`, `PlayerStats`, `LevelChart`, `ReviewPlanSheet`, `Avatar`, `AvatarPicture`, `FlipCard`, `WordInfo`, `WordList`, `Highlighted`, `AddDeckButton`, `GachaScreen`, `GachaReveal`, `GachaCollection`, `GachaMachine`, `GachaIcons`, `ToggleSwitch`)
   - `src/lib/srs.js`: SRS rules, plus `srsAnswer()` (what one review answer sends and shows) `newSessionId()` and `saveErrorReporter()`; `src/lib/spelling.js`: typing-mode spelling check (a copy of `spelling_check()` in the SQL), the other-meaning retry rule and the typing-mode setting (pure functions); `src/lib/points.js`: points and rank (pure functions); `src/lib/drill.js`: building/shuffling card piles; `src/lib/dictionary.js`: builds the dictionary link for a word; `src/lib/library.js`: shapes the Card Sets library and its back-button rules (pure functions); `src/lib/schedule.js`: next-review wording and the review plan, in Japan time (pure functions); `src/lib/sheet.js`: when a pop-up closes; `src/lib/gacha.js`: rarity labels/colors, ticket progress, collection grouping, and `singleFlight()` for the pull button (pure functions); `src/lib/api.js`: every Supabase query (and `recordAnswer`, the only way review answers are saved); `src/lib/supabaseClient.js`: creates the Supabase client
+  - `src/handwriting/`: the experimental Apple Pencil handwriting mode, kept separate (see Handwriting below)
   - `src/styles/theme.js`: shared colors (as CSS variables), fonts, and button styles
   - `src/themes.js`: color themes (values for each color role) and `applyTheme()`
 - Supabase: PostgreSQL, Auth, Row Level Security
@@ -138,6 +139,19 @@ Rules:
 - `src/themes.test.js` checks that every theme has every role and that text passes WCAG 4.5:1 contrast. A new theme must pass it.
 - Trying a theme: only under `npm run dev`, add `?theme=pizza` or `?theme=lagoon` to the URL. Ignored on the live site (temporary until the unlock feature).
 - Fonts (Google Fonts, loaded in `index.html`): Chakra Petch for headings and numbers (`fontDisplay`), Zen Maru Gothic for body and Japanese (`fontBody`).
+
+## Handwriting (experimental, branch `handwriting-input`)
+Apple Pencil answer mode: students write the English answer one letter per box and a letter model (TensorFlow.js, EMNIST letters a–z, case-insensitive) reads it in the browser. Task spec: `polycards_hw_model/HANDWRITING_TASK.md` (that folder is gitignored; its files were copied into the app). Phase 1 = hidden test page `/hw-test`; Phase 2 = the answer mode in reviews (only after the teacher approves Phase 1 on the school iPads).
+
+Isolation rules (so it is easy to revert):
+- All handwriting code lives in `src/handwriting/`. The only changes outside it: the review screen choosing `<HandwritingInput>` instead of the typing box, the answer-mode setting, and the `/hw-test` hook (`src/main.jsx` checks `isHwTestPath()` and renders `HwTestRoot`; `vercel.json` rewrites `/hw-test` to `index.html`).
+- Model files live in `public/models/emnist/` (`model.json` + `group1-shard1of1.bin`; reference data for the self-checks in `test/`).
+- **No Supabase or database changes.** A handwriting answer reports its result through the same path typing mode uses (`recordAnswer`).
+- `HANDWRITING_ENABLED` in `src/handwriting/config.js` hides the whole feature (and `/hw-test`) when false. `LENIENT_PAIRS`, `LENIENT_GIVES_BONUS`, `STROKE_RATIO` and the handwriting-only colors (paper white, ink black, lenient orange) are there too.
+- TensorFlow.js (`@tensorflow/tfjs` 4.x) and the model load **only** through dynamic `import()` (`loadModel()` in `model.js`), so students who don't use handwriting download nothing extra. WebGL backend, `cpu` fallback; all boxes of a word go through one `predict` call.
+- `preprocess.js` (`preprocessLetter`) is the given, tested port of the training preprocessing: use it as is, never replace it with canvas resizing or `ctx.filter`. Boxes are drawn at devicePixelRatio and `getGray()` passes the canvas's real pixel size.
+- Files: `config.js`, `model.js`, `preprocess.js`, `answerLayout.js` (`answerSlots`: letters → boxes, spaces → gaps, everything else printed; `boxLayout`: box size, one or two rows), `checkAnswer.js` (`scoreBox` / `scoreWord` / `lenientMessage`), `selfCheck.js`, `LetterBox.jsx` (one canvas; only `pointerType === "pen"` draws unless `allowAnyPointer`), `LetterBoxes.jsx` (the boxes + 消す / 戻す, shared by the test page and Phase 2), `HwTestPage.jsx`, `HwTestRoot.jsx`. Tests: `answerLayout.test.js`, `checkAnswer.test.js`, `model.test.js` (runs the real model and `preprocessLetter` in Node against the Python reference data).
+- Phase 2 rule: for a correct or lenient handwriting answer, send the **target word** as the typed answer (`p_typed`), not the letters the model read (e.g. "flsh" for "fish"); otherwise `record_answer` marks it misspelled and withholds the spelling bonus. `answer_log` has no answer-mode column; recording `handwriting` would need SQL, so propose it rather than adding it.
 
 ## How to work with me
 - Make small, focused changes. Before large refactors (like reorganizing folders or moving logic between many files), propose a plan and wait for approval.
