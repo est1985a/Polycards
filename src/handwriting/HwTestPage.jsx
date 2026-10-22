@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import LetterBoxes from "./LetterBoxes.jsx";
-import { loadModel, predictBatch, topK } from "./model.js";
+import { loadModel, predictBatch, topK, warmUp } from "./model.js";
 import { preprocessLetter } from "./preprocess.js";
 import { flatten28, modelCheck, preprocessCheck } from "./selfCheck.js";
 import { answerSlots } from "./answerLayout.js";
 import { lenientMessage, scoreWord } from "./checkAnswer.js";
-import { HW_COLORS, LABELS, MIN_TARGET_PROB, TEST_DATA_URL } from "./config.js";
+import { BATCH_SIZE, HW_COLORS, LABELS, MIN_TARGET_PROB, TEST_DATA_URL } from "./config.js";
 import { btnPrimary, colors, fontBody, fontDisplay, panel } from "../styles/theme.js";
 
 // Hidden test page at /hw-test (not linked from the app): self-checks against the Python
@@ -113,6 +113,11 @@ export default function HwTestPage() {
       .then(async ({ backend, loadMs }) => {
         if (!alive) return;
         setModel({ status: "ready", backend, loadMs });
+        // The warm-up started by itself when the model loaded; wait for it so the self-check
+        // timing shows a normal prediction, not the one-off shader compile.
+        const warm = await warmUp();
+        if (!alive) return;
+        setModel((m) => ({ ...m, warmMs: warm?.warmMs ?? null, warmFailed: !warm }));
         try {
           const c = await runSelfChecks();
           if (alive) setChecks(c);
@@ -168,7 +173,10 @@ export default function HwTestPage() {
               <>
                 Backend: <b style={{ color: colors.text }}>{model.backend}</b>{"\u3000"}
                 Load: <b style={{ color: colors.text }}>{Math.round(model.loadMs)} ms</b>
-                {checks && <>{"\u3000"}Predict (5 letters, first run incl. WebGL warm-up): <b style={{ color: colors.text }}>{checks.predictMs.toFixed(1)} ms</b></>}
+                {"\u3000"}Warm-up (batch of {BATCH_SIZE}): <b style={{ color: model.warmFailed ? colors.danger : colors.text }}>
+                  {model.warmMs != null ? `${Math.round(model.warmMs)} ms` : model.warmFailed ? "失敗" : "…"}
+                </b>
+                {checks && <>{"\u3000"}Predict (5 letters): <b style={{ color: colors.text }}>{checks.predictMs.toFixed(1)} ms</b></>}
               </>
             )}
           </div>
@@ -232,7 +240,7 @@ export default function HwTestPage() {
             <div style={{ display: "grid", gap: 12 }}>
               <div style={{ fontWeight: 700 }}>
                 {result.summary.allCorrect ? "○ 正解" : "× まちがいあり"}
-                <span style={{ fontWeight: 400, color: colors.muted, fontSize: 13 }}>{"\u3000"}Predict: {result.predictMs.toFixed(1)} ms（{result.boxes.filter((b) => b.input).length} 文字を1回で）</span>
+                <span style={{ fontWeight: 400, color: colors.muted, fontSize: 13 }}>{"\u3000"}Predict: {result.predictMs.toFixed(1)} ms（{result.boxes.filter((b) => b.input).length} 文字、{BATCH_SIZE}枚ずつ）</span>
               </div>
               {result.summary.lenientPairs.map((p) => (
                 <div key={p.target + p.read} style={{ color: HW_COLORS.lenient, fontWeight: 700 }}>{lenientMessage(p)}</div>

@@ -13,6 +13,11 @@ export const MODEL_URL = "/models/emnist/model.json";
 export const TEST_DATA_URL = "/models/emnist/test/";
 export const LABELS = "abcdefghijklmnopqrstuvwxyz".split("");
 
+// The model always runs on exactly this many boxes at once (unused slots are blank images).
+// WebGL compiles its shaders for each new input shape, which took ~5 s on an iPad, so a
+// fixed shape means it compiles only once (during the warm-up).
+export const BATCH_SIZE = 16;
+
 // Letters the model often mixes up. Target letter → what it may be read as.
 // A box read this way still counts as correct, but gets an orange warning.
 export const LENIENT_PAIRS = { i: "l", l: "i", g: "q", q: "g" };
