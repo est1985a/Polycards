@@ -17,6 +17,10 @@ export const LABELS = "abcdefghijklmnopqrstuvwxyz".split("");
 // A box read this way still counts as correct, but gets an orange warning.
 export const LENIENT_PAIRS = { i: "l", l: "i", g: "q", q: "g" };
 
+// A box the model read as another letter is still lenient (correct, with an orange warning)
+// when the model gave the target letter at least this probability.
+export const MIN_TARGET_PROB = 0.25;
+
 // false: a word with a lenient box still counts as わかった, but without the spelling bonus.
 export const LENIENT_GIVES_BONUS = true;
 

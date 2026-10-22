@@ -5,7 +5,7 @@ import { preprocessLetter } from "./preprocess.js";
 import { flatten28, modelCheck, preprocessCheck } from "./selfCheck.js";
 import { answerSlots } from "./answerLayout.js";
 import { lenientMessage, scoreWord } from "./checkAnswer.js";
-import { HW_COLORS, TEST_DATA_URL } from "./config.js";
+import { HW_COLORS, LABELS, MIN_TARGET_PROB, TEST_DATA_URL } from "./config.js";
 import { btnPrimary, colors, fontBody, fontDisplay, panel } from "../styles/theme.js";
 
 // Hidden test page at /hw-test (not linked from the app): self-checks against the Python
@@ -103,7 +103,7 @@ export default function HwTestPage() {
   const [checkError, setCheckError] = useState(null);
   const [word, setWord] = useState("fish");
   const [anyPointer, setAnyPointer] = useState(false);
-  const [result, setResult] = useState(null); // { boxes: [{ target, input, top3, score }], summary, predictMs }
+  const [result, setResult] = useState(null); // { boxes: [{ target, input, top3, targetProb, score }], summary, predictMs }
   const [busy, setBusy] = useState(false);
   const boxesRef = useRef(null);
 
@@ -135,10 +135,12 @@ export default function HwTestPage() {
       const { probs, predictMs } = await predictBatch(filled);
       let k = 0;
       const boxes = inputs.map((input, i) => {
-        const top3 = input ? topK(probs[k++], 3) : [];
-        return { target: targets[i], input, top3, read: top3[0]?.letter ?? null };
+        const p = input ? probs[k++] : null;
+        const top3 = p ? topK(p, 3) : [];
+        const targetProb = p ? p[LABELS.indexOf(targets[i].toLowerCase())] : 0;
+        return { target: targets[i], input, top3, targetProb, read: top3[0]?.letter ?? null };
       });
-      const summary = scoreWord(boxes.map((b) => ({ target: b.target, read: b.read })));
+      const summary = scoreWord(boxes.map((b) => ({ target: b.target, read: b.read, targetProb: b.targetProb })));
       setResult({ boxes: boxes.map((b, i) => ({ ...b, score: summary.scores[i] })), summary, predictMs, sizes: raw.map((b) => b && `${b.width}×${b.height}`) });
     } finally {
       setBusy(false);
@@ -242,9 +244,16 @@ export default function HwTestPage() {
                     <div style={{ fontSize: 13, color: colors.muted }}>{i + 1}: 「{b.target}」</div>
                     <InputPreview input={b.input} />
                     {b.input ? (
-                      <div style={{ fontFamily: "monospace", fontSize: 13, lineHeight: 1.5 }}>
-                        {b.top3.map((t) => <div key={t.letter}>{t.letter}{"\u3000"}{(t.prob * 100).toFixed(1)}%</div>)}
-                      </div>
+                      <>
+                        <div style={{ fontFamily: "monospace", fontSize: 13, lineHeight: 1.5 }}>
+                          {b.top3.map((t) => <div key={t.letter}>{t.letter}{"\u3000"}{(t.prob * 100).toFixed(1)}%</div>)}
+                        </div>
+                        {/* the target letter's probability, shown even when it isn't in the top 3 */}
+                        <div style={{ fontSize: 12, textAlign: "center", color: b.targetProb >= MIN_TARGET_PROB ? colors.text : colors.muted }}>
+                          「{b.target.toLowerCase()}」の確率 <b>{(b.targetProb * 100).toFixed(1)}%</b>
+                          <div style={{ color: colors.muted }}>（基準 {Math.round(MIN_TARGET_PROB * 100)}%）</div>
+                        </div>
+                      </>
                     ) : (
                       <div style={{ fontSize: 13, color: colors.muted }}>（空）</div>
                     )}
