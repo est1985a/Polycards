@@ -1,6 +1,6 @@
 // Tests for splitting an answer into letter boxes and printed characters. Run with: npm test
 import { describe, it, expect } from 'vitest';
-import { answerSlots, boxCount, boxLayout, readText, writtenAnswer } from './answerLayout.js';
+import { answerSlots, boxCount, boxLayout, printPosition, readText, slotFactor, writtenAnswer } from './answerLayout.js';
 import { checkSpelling } from '../lib/spelling.js';
 
 const show = (answer) => answerSlots(answer).map((s) => (s.type === 'box' ? s.letter : s.type === 'gap' ? '_' : `[${s.text}]`)).join('');
@@ -26,6 +26,10 @@ describe('answerSlots', () => {
     expect(show("don't")).toBe("don[']t");
     expect(show('T-shirt')).toBe('T[-]shirt');
     expect(show('7th')).toBe('[7]th');
+  });
+  it('splits printed characters that sit at different heights', () => {
+    expect(show('“Hi!”')).toBe('[“]Hi[!][”]');
+    expect(show('Wait...!')).toBe('Wait[...!]');
   });
   it('ignores spaces at the ends', () => {
     expect(show('  hi ')).toBe('hi');
@@ -93,5 +97,28 @@ describe('readText', () => {
   });
   it('shows ? for an empty box', () => {
     expect(readText(answerSlots('fish'), ['f', null, 's', 'h'])).toBe('f?sh');
+  });
+});
+
+describe('printPosition', () => {
+  it('apostrophes and quotation marks go at the top', () => {
+    for (const t of ["'", '’', '‘', '“', '”', '"']) expect(printPosition(t), t).toBe('top');
+  });
+  it('hyphens and dashes go in the middle', () => {
+    for (const t of ['-', '–', '—']) expect(printPosition(t), t).toBe('middle');
+  });
+  it('everything else sits on the baseline', () => {
+    for (const t of ['.', ',', '...', '…', '?', '!', '7']) expect(printPosition(t), t).toBe('baseline');
+  });
+  it('a mixed run sits on the baseline', () => {
+    expect(printPosition('?”')).toBe('baseline');
+  });
+});
+
+describe('slotFactor', () => {
+  it("keeps an apostrophe narrow, so don't reads as one word", () => {
+    const [apostrophe] = answerSlots("don't").filter((s) => s.type === 'print');
+    expect(slotFactor(apostrophe)).toBeLessThan(0.2);
+    expect(slotFactor({ type: 'print', text: '-' })).toBeGreaterThanOrEqual(0.3);
   });
 });

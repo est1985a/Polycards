@@ -1,6 +1,6 @@
 import { useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import LetterBox from "./LetterBox.jsx";
-import { answerSlots, boxLayout } from "./answerLayout.js";
+import { answerSlots, boxLayout, printPosition, slotFactor } from "./answerLayout.js";
 import { btnGhost, colors, fontDisplay } from "../styles/theme.js";
 
 const SPACING = 6;
@@ -103,10 +103,18 @@ export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer 
                 );
               }
               if (slot.type === "gap") return <div key={`g${r}-${i}`} style={{ width: size * 0.45 - SPACING, flex: "none" }} />;
+              // A column as tall as a box, with the character at the top, middle or baseline.
+              const position = printPosition(slot.text);
+              const narrow = position === "top";
               return (
                 <span key={`p${r}-${i}`} aria-hidden="true" style={{
-                  flex: "none", fontFamily: fontDisplay, fontSize: Math.round(size * 0.55), fontWeight: 700,
-                  color: colors.text, alignSelf: "flex-end", lineHeight: 1, paddingBottom: size * 0.1,
+                  flex: "none", height: size, display: "flex", flexDirection: "column", alignItems: "center",
+                  justifyContent: position === "top" ? "flex-start" : position === "middle" ? "center" : "flex-end",
+                  paddingTop: position === "top" ? size * 0.08 : 0, paddingBottom: position === "baseline" ? size * 0.1 : 0,
+                  boxSizing: "border-box", width: narrow ? Math.max(8, size * slotFactor(slot)) : "auto",
+                  // pull the boxes on either side closer, so the apostrophe in "don't" keeps the word together
+                  marginInline: narrow ? -SPACING / 2 : 0,
+                  fontFamily: fontDisplay, fontSize: Math.round(size * 0.55), fontWeight: 700, lineHeight: 1, color: colors.text,
                 }}>
                   {slot.text}
                 </span>

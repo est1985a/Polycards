@@ -9,7 +9,8 @@ export function writtenAnswer(english) {
 //   { type: "box", letter, index }  one letter to write (a–z / A–Z)
 //   { type: "gap" }          a space between words
 //   { type: "print", text }  anything else, printed between the boxes ("...", "?", "'", "-", digits)
-// Characters that aren't letters or spaces next to each other stay one print slot ("...").
+// Characters that aren't letters or spaces next to each other stay one print slot ("..."), unless
+// they sit at different heights ("!”" is "!" on the baseline, then "”" at the top).
 export function answerSlots(answer) {
   const slots = [];
   let index = 0; // boxes are numbered 0, 1, 2 … in reading order
@@ -20,7 +21,7 @@ export function answerSlots(answer) {
       if (slots.length && slots[slots.length - 1].type !== "gap") slots.push({ type: "gap" });
     } else {
       const last = slots[slots.length - 1];
-      if (last && last.type === "print") last.text += ch;
+      if (last && last.type === "print" && printPosition(last.text) === printPosition(ch)) last.text += ch;
       else slots.push({ type: "print", text: ch });
     }
   }
@@ -32,10 +33,22 @@ export function boxCount(answer) {
   return answerSlots(answer).filter((s) => s.type === "box").length;
 }
 
-// Width of a slot, as a multiple of the box size.
-function slotFactor(slot) {
+// Where a printed character sits, relative to the boxes:
+//   "top":      apostrophes and quotation marks (don't, “Hi”), level with the top third
+//   "middle":   hyphens and dashes (T-shirt)
+//   "baseline": everything else (. , ... ? ! digits), near the bottom of the boxes
+export function printPosition(text) {
+  if (/^['’‘"“”`´]+$/.test(text)) return "top";
+  if (/^[-‐–—]+$/.test(text)) return "middle";
+  return "baseline";
+}
+
+// Width of a slot, as a multiple of the box size. Apostrophes and quotes are narrow, so "don't"
+// still reads as one word.
+export function slotFactor(slot) {
   if (slot.type === "box") return 1;
   if (slot.type === "gap") return 0.45;
+  if (printPosition(slot.text) === "top") return 0.16 * slot.text.length;
   return Math.max(0.3, 0.34 * slot.text.length);
 }
 
