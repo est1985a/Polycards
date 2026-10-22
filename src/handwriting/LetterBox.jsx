@@ -1,4 +1,4 @@
-import { useEffect, useImperativeHandle, useRef } from "react";
+import { useEffect, useImperativeHandle, useLayoutEffect, useRef } from "react";
 import { HW_COLORS, STROKE_RATIO } from "./config.js";
 import { colors } from "../styles/theme.js";
 
@@ -9,9 +9,29 @@ const STATE_STYLE = {
   wrong: { border: colors.danger, background: HW_COLORS.paper },
 };
 
+// Draws one stroke (or a single segment, or a dot for one point): black, round caps and joins.
+function drawStroke(ctx, stroke, lineWidth) {
+  ctx.strokeStyle = HW_COLORS.ink;
+  ctx.fillStyle = HW_COLORS.ink;
+  ctx.lineWidth = lineWidth;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  if (stroke.length === 1) {
+    ctx.beginPath();
+    ctx.arc(stroke[0].x, stroke[0].y, lineWidth / 2, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+  ctx.beginPath();
+  ctx.moveTo(stroke[0].x, stroke[0].y);
+  for (let i = 1; i < stroke.length; i++) ctx.lineTo(stroke[i].x, stroke[i].y);
+  ctx.stroke();
+}
+
 // One square letter box: a canvas the student writes one letter in.
 // Only the Apple Pencil draws (pointerType "pen") unless allowAnyPointer is set (test page).
 // A finger or mouse tap that doesn't draw selects the box instead (for 消す).
+// The very first pen contact draws: no tap, focus or selection is needed first.
 // ref → { undo(), clear(), isEmpty(), getGray() }
 export default function LetterBox({ ref, size, state = null, selected = false, allowAnyPointer = false, label, onStroke, onSelect }) {
   const canvasRef = useRef(null);
@@ -29,25 +49,7 @@ export default function LetterBox({ ref, size, state = null, selected = false, a
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.fillStyle = HW_COLORS.paper;
     ctx.fillRect(0, 0, size, size);
-    for (const stroke of strokes.current) drawStroke(ctx, stroke);
-  }
-
-  function drawStroke(ctx, stroke) {
-    ctx.strokeStyle = HW_COLORS.ink;
-    ctx.fillStyle = HW_COLORS.ink;
-    ctx.lineWidth = lineWidth;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    if (stroke.length === 1) {
-      ctx.beginPath();
-      ctx.arc(stroke[0].x, stroke[0].y, lineWidth / 2, 0, Math.PI * 2);
-      ctx.fill();
-      return;
-    }
-    ctx.beginPath();
-    ctx.moveTo(stroke[0].x, stroke[0].y);
-    for (let i = 1; i < stroke.length; i++) ctx.lineTo(stroke[i].x, stroke[i].y);
-    ctx.stroke();
+    for (const stroke of strokes.current) drawStroke(ctx, stroke, lineWidth);
   }
 
   // Size the canvas at the device pixel ratio so strokes are sharp.
@@ -84,52 +86,100 @@ export default function LetterBox({ ref, size, state = null, selected = false, a
     },
   }));
 
-  function point(e) {
-    const rect = canvasRef.current.getBoundingClientRect();
-    return { x: ((e.clientX - rect.left) / rect.width) * size, y: ((e.clientY - rect.top) / rect.height) * size };
-  }
+  // Latest props for the native listeners below (attached once, so they read them from here).
+  const latest = useRef({ size, allowAnyPointer, onStroke, onSelect, lineWidth });
+  useLayoutEffect(() => {
+    latest.current = { size, allowAnyPointer, onStroke, onSelect, lineWidth };
+  });
 
-  function canDraw(e) {
-    return e.pointerType === "pen" || allowAnyPointer;
-  }
+  // Pen input. The listeners are attached directly to the canvas with { passive: false } rather
+  // than through React props: React's touch listeners are passive, so preventDefault() there
+  // can't stop Safari's own gesture handling, which swallowed the start of a Pencil stroke.
+  // Stroke data lives in refs and each new segment is drawn straight onto the canvas, so
+  // nothing re-renders while the pen is moving. The parent hears about the stroke (onStroke,
+  // which selects this box for 消す) only when the pen lifts.
+  useEffect(() => {
+    const canvas = canvasRef.current;
 
-  function handleDown(e) {
-    if (!canDraw(e)) {
-      onSelect?.();
-      return;
+    const point = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const { size: s } = latest.current;
+      return { x: ((e.clientX - rect.left) / rect.width) * s, y: ((e.clientY - rect.top) / rect.height) * s };
+    };
+    const canDraw = (e) => e.pointerType === "pen" || latest.current.allowAnyPointer;
+    const ctx = () => canvas.getContext("2d");
+
+    function startStroke(e) {
+      try {
+        canvas.setPointerCapture(e.pointerId); // keep the stroke if the pen slips past the edge
+      } catch {
+        // not available for this pointer: the stroke still works inside the box
+      }
+      const p = point(e);
+      const stroke = [p];
+      strokes.current.push(stroke);
+      drawing.current = { pointerId: e.pointerId, stroke };
+      drawStroke(ctx(), [p], latest.current.lineWidth); // a dot at the very first contact
     }
-    e.preventDefault();
-    try {
-      canvasRef.current.setPointerCapture(e.pointerId); // keep the stroke if the pen slips past the edge
-    } catch {
-      // not available for this pointer: the stroke still works inside the box
-    }
-    const stroke = [point(e)];
-    strokes.current.push(stroke);
-    drawing.current = { pointerId: e.pointerId, stroke };
-    redraw();
-    onStroke?.();
-  }
 
-  function handleMove(e) {
-    const d = drawing.current;
-    if (!d || d.pointerId !== e.pointerId) return;
-    e.preventDefault();
-    const events = e.nativeEvent.getCoalescedEvents?.() ?? [];
-    const points = events.length ? events.map(point) : [point(e)];
-    const ctx = canvasRef.current.getContext("2d");
-    for (const p of points) {
-      const last = d.stroke[d.stroke.length - 1];
-      d.stroke.push(p);
-      drawStroke(ctx, [last, p]);
+    function onPointerDown(e) {
+      if (!canDraw(e)) {
+        latest.current.onSelect?.();
+        return;
+      }
+      e.preventDefault();
+      startStroke(e);
     }
-  }
 
-  function handleUp(e) {
-    if (drawing.current?.pointerId !== e.pointerId) return;
-    e.preventDefault();
-    drawing.current = null;
-  }
+    function onPointerMove(e) {
+      if (!canDraw(e)) return;
+      let d = drawing.current;
+      if (!d) {
+        // The pen is touching but pointerdown never arrived: start the stroke here.
+        if (!(e.buttons & 1) && !(e.pressure > 0)) return;
+        e.preventDefault();
+        startStroke(e);
+        return;
+      }
+      if (d.pointerId !== e.pointerId) return;
+      e.preventDefault();
+      const events = e.getCoalescedEvents?.() ?? [];
+      const points = events.length ? events.map(point) : [point(e)];
+      const c = ctx();
+      for (const p of points) {
+        const last = d.stroke[d.stroke.length - 1];
+        d.stroke.push(p);
+        drawStroke(c, [last, p], latest.current.lineWidth);
+      }
+    }
+
+    function onPointerUp(e) {
+      if (drawing.current?.pointerId !== e.pointerId) return;
+      e.preventDefault();
+      drawing.current = null;
+      latest.current.onStroke?.();
+    }
+
+    const stopGesture = (e) => e.preventDefault();
+
+    const opts = { passive: false };
+    canvas.addEventListener("pointerdown", onPointerDown, opts);
+    canvas.addEventListener("pointermove", onPointerMove, opts);
+    canvas.addEventListener("pointerup", onPointerUp, opts);
+    canvas.addEventListener("pointercancel", onPointerUp, opts);
+    canvas.addEventListener("touchstart", stopGesture, opts);
+    canvas.addEventListener("touchmove", stopGesture, opts);
+    canvas.addEventListener("contextmenu", stopGesture);
+    return () => {
+      canvas.removeEventListener("pointerdown", onPointerDown, opts);
+      canvas.removeEventListener("pointermove", onPointerMove, opts);
+      canvas.removeEventListener("pointerup", onPointerUp, opts);
+      canvas.removeEventListener("pointercancel", onPointerUp, opts);
+      canvas.removeEventListener("touchstart", stopGesture, opts);
+      canvas.removeEventListener("touchmove", stopGesture, opts);
+      canvas.removeEventListener("contextmenu", stopGesture);
+    };
+  }, []);
 
   const look = STATE_STYLE[state] ?? { border: selected ? colors.gold : colors.line, background: HW_COLORS.paper };
 
@@ -145,11 +195,6 @@ export default function LetterBox({ ref, size, state = null, selected = false, a
         ref={canvasRef}
         role="img"
         aria-label={label}
-        onPointerDown={handleDown}
-        onPointerMove={handleMove}
-        onPointerUp={handleUp}
-        onPointerCancel={handleUp}
-        onContextMenu={(e) => e.preventDefault()}
         style={{
           width: size, height: size, display: "block",
           touchAction: "none", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none",

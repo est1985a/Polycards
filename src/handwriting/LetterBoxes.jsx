@@ -75,7 +75,10 @@ export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer 
 
   return (
     <div style={{ display: "grid", gap: 12 }}>
-      <div ref={containerRef} style={{ display: "grid", gap: 10, justifyItems: "center", minWidth: 0 }}>
+      <div ref={containerRef} style={{
+        display: "grid", gap: 10, justifyItems: "center", minWidth: 0,
+        userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none",
+      }}>
         {width > 0 && rows.map((row, r) => (
           <div key={r} style={{ display: "flex", alignItems: "center", gap: SPACING }}>
             {row.map((slot, i) => {
