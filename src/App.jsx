@@ -4,7 +4,8 @@ import * as api from './lib/api';
 import { buildCards, buildReviewCards } from './lib/drill';
 import { loadSchoolLevel, saveSchoolLevel } from './lib/library';
 import { totalPoints, levelCounts, playerRank, newPeak } from './lib/points';
-import { loadTypingMode, saveTypingMode } from './lib/spelling';
+import { loadAnswerMode, saveAnswerMode } from './lib/spelling';
+import { HANDWRITING_ENABLED } from './handwriting/config';
 import { nextReviewSummary } from './lib/schedule';
 import { singleFlight } from './lib/gacha';
 import { colors, wrap, gutter, headerBand, tabBarHeight, btnLink, wideLayout } from './styles/theme';
@@ -44,7 +45,7 @@ function App() {
   // Kept here so that coming back from a deck's word list or drill returns to the same deck list.
   // The level starts from the one saved on the last visit.
   const [cardSetsPath, setCardSetsPath] = useState(() => ({ screen: "hub", level: loadSchoolLevel(window.localStorage) }));
-  const [typingMode, setTypingMode] = useState(() => loadTypingMode(window.localStorage)); // スペル入力 switch
+  const [answerMode, setAnswerMode] = useState(() => loadAnswerMode(window.localStorage, HANDWRITING_ENABLED)); // 答え方: off / typing / handwriting
 
   // Study session
   const [activeSet, setActiveSet] = useState(null);
@@ -216,9 +217,9 @@ function App() {
   const closePlan = useCallback(() => setPlanOpen(false), []);
   const closeAbout = useCallback(() => setAboutOpen(false), []);
 
-  function changeTypingMode(on) {
-    setTypingMode(on);
-    saveTypingMode(window.localStorage, on);
+  function changeAnswerMode(mode) {
+    setAnswerMode(mode);
+    saveAnswerMode(window.localStorage, mode);
   }
 
   async function loadStats(userId) {
@@ -461,8 +462,9 @@ function App() {
                     nextReview={dueRows.length === 0 ? nextReviewSummary(nextReview, now) : null}
                     stats={stats}
                     avatar={gacha?.equipped_avatar ?? null}
-                    typingMode={typingMode}
-                    onTypingModeChange={changeTypingMode}
+                    answerMode={answerMode}
+                    onAnswerModeChange={changeAnswerMode}
+                    handwritingEnabled={HANDWRITING_ENABLED}
                     onReview={startReview}
                     onOpenPlan={openPlan}
                     onOpenAbout={() => setAboutOpen(true)}
@@ -552,7 +554,7 @@ function App() {
                     saving={savingDeck}
                     onAddDeck={addDeck}
                     onBack={() => setView("dashboard")}
-                    typingMode={typingMode}
+                    answerMode={answerMode}
                     wide={wide}
                   />
                 )}

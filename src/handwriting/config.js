@@ -29,6 +29,9 @@ export const MIN_TARGET_PROB = 0.25;
 // false: a word with a lenient box still counts as わかった, but without the spelling bonus.
 export const LENIENT_GIVES_BONUS = true;
 
+// Shown in a review when the letter model can't be loaded; that session falls back to typing.
+export const HW_UNAVAILABLE_MESSAGE = "手書きの準備ができませんでした。今回はタイピングで答えてください。";
+
 // Ink thickness relative to the box height (training used 18 px in a 280 px box).
 export const STROKE_RATIO = 18 / 280;
 

@@ -10,8 +10,9 @@ const BOX_BORDER = 3; // LetterBox's border; the layout size includes it
 // plus 消す (clear the tapped / last-written box) and 戻す (undo the last stroke).
 // Shared by the /hw-test page and (Phase 2) HandwritingInput.
 // scores: per box index, "correct" | "lenient" | "wrong" | null (colors the boxes after checking)
-// ref → { getBoxes(): [{ gray, width, height } | null] (null = empty box), clearAll() }
-export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer = false, onChange }) {
+// locked: answered: the ink stays, nothing draws, and 消す / 戻す are hidden.
+// ref → { getBoxes(): [{ gray, width, height } | null] (null = empty box), hasInk(), clearAll() }
+export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer = false, locked = false, onChange }) {
   const slots = useMemo(() => answerSlots(answer), [answer]);
   const boxCount = slots.filter((s) => s.type === "box").length;
   const containerRef = useRef(null);
@@ -38,6 +39,9 @@ export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer 
         const box = boxRefs.current[i];
         return box && !box.isEmpty() ? box.getGray() : null;
       });
+    },
+    hasInk() {
+      return history.current.length > 0;
     },
     clearAll() {
       boxRefs.current.forEach((b) => b?.clear());
@@ -89,8 +93,9 @@ export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer 
                     ref={(el) => { boxRefs.current[slot.index] = el; }}
                     size={size - 2 * BOX_BORDER}
                     state={scores[slot.index] ?? null}
-                    selected={selected === slot.index}
+                    selected={!locked && selected === slot.index}
                     allowAnyPointer={allowAnyPointer}
+                    locked={locked}
                     label={`${slot.index + 1}文字目`}
                     onStroke={() => handleStroke(slot.index)}
                     onSelect={() => setSelected(slot.index)}
@@ -110,14 +115,14 @@ export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer 
           </div>
         ))}
       </div>
-      <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
+      {!locked && <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
         <button type="button" onClick={handleClear} disabled={selected === null || !hasInk} style={{ ...btnGhost, minHeight: 44, minWidth: 88 }}>
           消す
         </button>
         <button type="button" onClick={handleUndo} disabled={!hasInk} style={{ ...btnGhost, minHeight: 44, minWidth: 88 }}>
           戻す
         </button>
-      </div>
+      </div>}
     </div>
   );
 }

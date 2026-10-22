@@ -1,3 +1,10 @@
+// What the student writes for a card's English: words in ( ) or [ ] are optional in typing mode,
+// so they are left out here ("look (at)" → "look"). Typing mode's spelling check accepts this
+// as exact, so it is also what a correct handwritten answer sends as the typed answer.
+export function writtenAnswer(english) {
+  return String(english ?? "").replace(/[([][^)\]]*[)\]]/g, " ").replace(/\s+/g, " ").trim();
+}
+
 // Splits an English answer into what the student writes and what is printed for them.
 //   { type: "box", letter, index }  one letter to write (a–z / A–Z)
 //   { type: "gap" }          a space between words
@@ -65,4 +72,10 @@ export function boxLayout(slots, width, { max = 96, min = 56, spacing = 6 } = {}
   if (rows.length < 2) return { rows, size: Math.floor(one) };
   const two = Math.min(max, ...rows.map((r) => fitSize(r, width, spacing)));
   return { rows, size: Math.floor(Math.max(one, two)) };
+}
+
+// The answer as the model read it: each box's letter (? for an empty box), with the spaces and
+// printed characters in between. reads: one letter (or null) per box, in order.
+export function readText(slots, reads) {
+  return slots.map((s) => (s.type === "box" ? reads[s.index] ?? "?" : s.type === "gap" ? " " : s.text)).join("");
 }

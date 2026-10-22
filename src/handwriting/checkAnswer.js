@@ -1,4 +1,17 @@
-import { LENIENT_PAIRS, MIN_TARGET_PROB } from "./config.js";
+import { LABELS, LENIENT_PAIRS, MIN_TARGET_PROB } from "./config.js";
+
+// The model's output per box → what scoreWord needs. targets: the letter to write in each box;
+// probs: 26 probabilities per box, or null for an empty box.
+// → [{ target, read (top letter, null if empty), targetProb }]
+export function readBoxes(targets, probs) {
+  return targets.map((target, i) => {
+    const p = probs[i];
+    if (!p) return { target, read: null, targetProb: 0 };
+    let best = 0;
+    for (let j = 1; j < p.length; j++) if (p[j] > p[best]) best = j;
+    return { target, read: LABELS[best], targetProb: p[LABELS.indexOf(String(target).toLowerCase())] ?? 0 };
+  });
+}
 
 // One box: the target letter vs the model's top letter (read; null = empty box) and the
 // probability the model gave the target letter (targetProb, 0 to 1).

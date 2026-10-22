@@ -32,8 +32,9 @@ function drawStroke(ctx, stroke, lineWidth) {
 // Only the Apple Pencil draws (pointerType "pen") unless allowAnyPointer is set (test page).
 // A finger or mouse tap that doesn't draw selects the box instead (for 消す).
 // The very first pen contact draws: no tap, focus or selection is needed first.
+// locked: answered, so nothing draws (the ink stays for the result).
 // ref → { undo(), clear(), isEmpty(), getGray() }
-export default function LetterBox({ ref, size, state = null, selected = false, allowAnyPointer = false, label, onStroke, onSelect }) {
+export default function LetterBox({ ref, size, state = null, selected = false, allowAnyPointer = false, locked = false, label, onStroke, onSelect }) {
   const canvasRef = useRef(null);
   const strokes = useRef([]); // each stroke: [{ x, y }] in CSS pixels
   const drawing = useRef(null); // { pointerId, stroke }
@@ -87,9 +88,9 @@ export default function LetterBox({ ref, size, state = null, selected = false, a
   }));
 
   // Latest props for the native listeners below (attached once, so they read them from here).
-  const latest = useRef({ size, allowAnyPointer, onStroke, onSelect, lineWidth });
+  const latest = useRef({ size, allowAnyPointer, locked, onStroke, onSelect, lineWidth });
   useLayoutEffect(() => {
-    latest.current = { size, allowAnyPointer, onStroke, onSelect, lineWidth };
+    latest.current = { size, allowAnyPointer, locked, onStroke, onSelect, lineWidth };
   });
 
   // Pen input. The listeners are attached directly to the canvas with { passive: false } rather
@@ -123,6 +124,7 @@ export default function LetterBox({ ref, size, state = null, selected = false, a
     }
 
     function onPointerDown(e) {
+      if (latest.current.locked) return;
       if (!canDraw(e)) {
         latest.current.onSelect?.();
         return;
@@ -132,7 +134,7 @@ export default function LetterBox({ ref, size, state = null, selected = false, a
     }
 
     function onPointerMove(e) {
-      if (!canDraw(e)) return;
+      if (!canDraw(e) || (latest.current.locked && !drawing.current)) return;
       let d = drawing.current;
       if (!d) {
         // The pen is touching but pointerdown never arrived: start the stroke here.

@@ -7,6 +7,10 @@ import { recordAnswer, checkOtherMeaning } from '../lib/api';
 import Stamp from './Stamp';
 import AddDeckButton from './AddDeckButton';
 import FlipCard from './FlipCard';
+import HandwritingInput from '../handwriting/HandwritingInput.jsx';
+import { loadModel } from '../handwriting/model.js';
+import { writtenAnswer } from '../handwriting/answerLayout.js';
+import { HANDWRITING_ENABLED, HW_UNAVAILABLE_MESSAGE, LENIENT_GIVES_BONUS } from '../handwriting/config.js';
 
 // Visually hidden but read by screen readers.
 const srOnly = { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)", whiteSpace: "nowrap" };
@@ -151,8 +155,9 @@ export function TypingArea({
 
 // One study session: either the Card Sets drill or an SRS review (activeSet.mode === 'srs').
 // Give it a new `key` to start a fresh session. wide: bigger card text and taller answer buttons.
-// typingMode: Japanese → English cards in an SRS review are answered by typing (the drill never is).
-export default function StudySession({ activeSet, isAdded, saving, onAddDeck, onBack, typingMode = false, wide = false }) {
+// answerMode: how Japanese → English cards in an SRS review are answered: "off" (buttons), "typing"
+// or "handwriting" (Apple Pencil, src/handwriting/). The drill always uses the buttons.
+export default function StudySession({ activeSet, isAdded, saving, onAddDeck, onBack, answerMode = "off", wide = false }) {
   const isSrs = activeSet.mode === 'srs';
   const [pile, setPile] = useState(() => shuffle(activeSet.cards.map((c) => c.id)));
   const [counts, setCounts] = useState({});           // drill: correct answers per card
@@ -168,13 +173,28 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
   const [spellBonus, setSpellBonus] = useState(null);   // typing mode: { id } of the "+1 スペル" float
   const [checking, setChecking] = useState(false);      // typing mode: waiting for other_meaning_check
   const [retryUsed, setRetryUsed] = useState(false);    // typing mode: this showing of the card had its retry
+  const [handwritingFailed, setHandwritingFailed] = useState(false); // the letter model couldn't run: typing instead
   const promptRef = useRef(null);
   const turnRef = useRef(turn); // the current turn, for answers that arrive after a wait
   useEffect(() => { turnRef.current = turn; }, [turn]);
 
   const done = pile.length === 0;
   const card = done ? null : activeSet.cards.find((c) => c.id === pile[0]) || null;
-  const typingCard = Boolean(card) && isSrs && typingMode && card.direction === "jp2en";
+  const typingCard = Boolean(card) && isSrs && answerMode !== "off" && card.direction === "jp2en";
+  // Handwriting goes through the same typing-mode answers, only the input differs.
+  const handwritingSession = HANDWRITING_ENABLED && isSrs && answerMode === "handwriting"
+    && activeSet.cards.some((c) => c.direction === "jp2en");
+  const handwritingCard = typingCard && handwritingSession && !handwritingFailed;
+
+  // 手書き: start loading (and warming up) the letter model as soon as the review starts, so the
+  // first card doesn't wait. If it can't load, this session uses typing instead.
+  useEffect(() => {
+    if (!handwritingSession) return;
+    loadModel().catch((error) => {
+      console.warn("Handwriting model could not be loaded:", error);
+      setHandwritingFailed(true);
+    });
+  }, [handwritingSession]);
   const typingPhase = !typingCard ? null : !typedResult ? "typing" : typedResult.next ? "next" : "choose";
 
   // While typing, keep the question, the card, the box and the buttons above the on-screen keyboard
@@ -272,6 +292,25 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
       setTypedResult({ spelling, next: true, again: false });
     } else {
       setTypedResult({ spelling, next: false, again: false });
+    }
+  }
+
+  // 手書き: こたえる, once the model has read the boxes. All boxes right (look-alikes included) is a
+  // correct spelling: the target word goes as the typed answer, so the database gives the bonus
+  // (unless LENIENT_GIVES_BONUS is off and a box was only lenient: then nothing typed is sent).
+  // Otherwise the card flips and the student chooses まだ / わかった, sent with what was read.
+  function handleHandwritingResult(read) {
+    if (!card || typedResult) return;
+    setRevealed(true);
+    if (read.allCorrect) {
+      const bonus = !read.hasLenient || LENIENT_GIVES_BONUS;
+      const answer = srsAnswer(card.level, "got_it", wrongCounts[card.id] || 0, bonus ? "exact" : null);
+      send(answer.result, bonus ? writtenAnswer(card.en) : null, bonus ? "exact" : null);
+      showFloats(answer);
+      setTypedResult({ spelling: "exact", next: true, again: false, handwriting: read });
+    } else {
+      setTyped(read.text);
+      setTypedResult({ spelling: checkSpelling(read.text, card.en), next: false, again: false, handwriting: read });
     }
   }
 
@@ -408,23 +447,53 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
               {stampFill(counts[card.id] || 0).map((f, i) => <Stamp key={i} filled={f} />)}
             </div>
           )}
-          {typingPhase ? (
-            <TypingArea
-              key={turn}
-              phase={typingPhase}
-              typed={typed}
-              spelling={typedResult?.spelling ?? null}
-              answer={card.back}
-              onTypedChange={(text) => { if (!checking) setTyped(text); }}
-              onSubmit={handleTypedAnswer}
-              onDontKnow={handleDontKnow}
-              onNext={handleNext}
-              onAnswer={handleAnswer}
-              answerSize={answerSize}
-              checking={checking}
-              retryNote={retryUsed}
-              wide={wide}
-            />
+          {handwritingCard ? (
+            <>
+              <HandwritingInput
+                key={`hw-${turn}`}
+                answer={writtenAnswer(card.en)}
+                result={typedResult?.handwriting ?? null}
+                answered={Boolean(typedResult)}
+                onResult={handleHandwritingResult}
+                onDontKnow={handleDontKnow}
+                onError={() => setHandwritingFailed(true)}
+                answerSize={answerSize}
+                wide={wide}
+              />
+              {typingPhase === "next" && (
+                <TypingArea
+                  key={turn} phase="next" typed="" spelling={typedResult.spelling} answer={card.back}
+                  onNext={handleNext} answerSize={answerSize} wide={wide}
+                />
+              )}
+              {typingPhase === "choose" && (
+                <AnswerArea revealed onReveal={() => {}} onAnswer={handleAnswer} answerSize={answerSize} wide={wide} />
+              )}
+            </>
+          ) : typingPhase ? (
+            <>
+              {handwritingSession && handwritingFailed && (
+                <p role="status" style={{ margin: 0, textAlign: "center", fontSize: wide ? 15 : 13, color: colors.gold }}>
+                  {HW_UNAVAILABLE_MESSAGE}
+                </p>
+              )}
+              <TypingArea
+                key={turn}
+                phase={typingPhase}
+                typed={typed}
+                spelling={typedResult?.spelling ?? null}
+                answer={card.back}
+                onTypedChange={(text) => { if (!checking) setTyped(text); }}
+                onSubmit={handleTypedAnswer}
+                onDontKnow={handleDontKnow}
+                onNext={handleNext}
+                onAnswer={handleAnswer}
+                answerSize={answerSize}
+                checking={checking}
+                retryNote={retryUsed}
+                wide={wide}
+              />
+            </>
           ) : (
             <AnswerArea
               revealed={revealed}

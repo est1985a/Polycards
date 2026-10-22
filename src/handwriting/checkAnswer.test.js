@@ -1,6 +1,6 @@
 // Tests for checking handwritten boxes against the target letters. Run with: npm test
 import { describe, it, expect } from 'vitest';
-import { scoreBox, scoreWord, lenientMessage } from './checkAnswer.js';
+import { scoreBox, scoreWord, lenientMessage, readBoxes } from './checkAnswer.js';
 import { MIN_TARGET_PROB } from './config.js';
 
 describe('scoreBox', () => {
@@ -74,5 +74,20 @@ describe('lenientMessage', () => {
   it('names the letter the model read', () => {
     expect(lenientMessage({ target: 'i', read: 'l' })).toBe('「i」が「l」に見えるかも。気をつけて書こう！');
     expect(lenientMessage({ target: 'i', read: 'j' })).toBe('「i」が「j」に見えるかも。気をつけて書こう！');
+  });
+});
+
+describe('readBoxes', () => {
+  // 26 probabilities with the given letters set
+  const probs = (letters) => { const p = new Array(26).fill(0); for (const [l, v] of Object.entries(letters)) p[l.charCodeAt(0) - 97] = v; return p; };
+
+  it('gives the top letter and the target letter\'s probability for each box', () => {
+    const boxes = readBoxes(['F', 'i'], [probs({ f: 0.9, t: 0.1 }), probs({ j: 0.529, i: 0.451 })]);
+    expect(boxes[0]).toEqual({ target: 'F', read: 'f', targetProb: 0.9 });
+    expect(boxes[1]).toEqual({ target: 'i', read: 'j', targetProb: 0.451 });
+    expect(scoreWord(boxes).scores).toEqual(['correct', 'lenient']);
+  });
+  it('an empty box reads as nothing', () => {
+    expect(readBoxes(['a'], [null])).toEqual([{ target: 'a', read: null, targetProb: 0 }]);
   });
 });

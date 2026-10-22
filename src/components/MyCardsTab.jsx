@@ -1,9 +1,8 @@
-import { colors, fontDisplay, panel, wideLayout } from '../styles/theme';
+import { colors, fontBody, fontDisplay, panel, wideLayout } from '../styles/theme';
 import { SESSION_SIZE, MASTERED, extraDueTotal } from '../lib/srs';
 import PlayerStats from './PlayerStats';
 import LevelChart from './LevelChart';
 import StarIcon from './StarIcon';
-import ToggleSwitch from './ToggleSwitch';
 
 // Big "start review" button. The pill shows how many cards the session will have
 // (all due cards, up to SESSION_SIZE); a small line under the label shows the full total when there are more.
@@ -60,24 +59,48 @@ export function ReviewButton({ dueCount, loading, onReview, nextReview = null, o
   );
 }
 
-// Typing mode switch: Japanese → English cards in reviews are answered by typing (saved on the device).
-export function TypingModeSwitch({ on, onChange, wide = false }) {
+// 答え方 switch: how Japanese → English cards are answered in reviews (saved on the device).
+// なし (buttons) / タイピング / 手書き (Apple Pencil, only when handwritingEnabled).
+const ANSWER_MODE_OPTIONS = [
+  { mode: "off", label: "なし", note: "答えを見て、わかった / まだ で答えます" },
+  { mode: "typing", label: "タイピング", note: "英語をタイプして答えます。正しいスペルで +1 pt" },
+  { mode: "handwriting", label: "手書き", note: "Apple Pencil で英語を書いて答えます。正しく書けたら +1 pt" },
+];
+
+export function AnswerModeSwitch({ mode = "off", onChange, handwritingEnabled = false, wide = false }) {
+  const options = ANSWER_MODE_OPTIONS.filter((o) => o.mode !== "handwriting" || handwritingEnabled);
+  const current = options.find((o) => o.mode === mode) ?? options[0];
   return (
-    <button
-      role="switch"
-      aria-checked={on}
-      onClick={() => onChange(!on)}
-      style={{
-        width: "100%", minHeight: 44, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
-        padding: "4px 4px", background: "transparent", border: "none", cursor: "pointer", textAlign: "left", color: colors.text,
-      }}
-    >
-      <span style={{ minWidth: 0, display: "grid", gap: 2 }}>
-        <span style={{ fontSize: wide ? 16 : 15, fontWeight: 700 }}>スペル入力（日本語 → English）</span>
-        <span style={{ fontSize: 12, color: colors.muted }}>英語をタイプして答えます。正しいスペルで +1 pt</span>
-      </span>
-      <ToggleSwitch on={on} />
-    </button>
+    <div style={{ display: "grid", gap: 8, padding: "4px 4px" }}>
+      <span style={{ fontSize: wide ? 16 : 15, fontWeight: 700, color: colors.text }}>答え方（日本語 → English）</span>
+      <div
+        role="group"
+        aria-label="答え方"
+        style={{
+          display: "flex", gap: 4, padding: 4, borderRadius: 999,
+          background: colors.surface, border: `2px solid ${colors.line}`,
+        }}
+      >
+        {options.map((o) => {
+          const selected = o.mode === current.mode;
+          return (
+            <button
+              key={o.mode}
+              onClick={() => onChange(o.mode)}
+              aria-pressed={selected}
+              style={{
+                flex: 1, minWidth: 0, minHeight: 44, padding: "0 8px", borderRadius: 999, border: "none",
+                background: selected ? colors.accent : "transparent", color: selected ? colors.accentInk : colors.muted,
+                fontFamily: fontBody, fontWeight: 700, fontSize: 15, whiteSpace: "nowrap", cursor: "pointer",
+              }}
+            >
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+      <span style={{ fontSize: 12, color: colors.muted }}>{current.note}</span>
+    </div>
   );
 }
 
@@ -168,7 +191,7 @@ function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
 }
 
 // wide: two columns (player card, review button, chart, Mastered | マイデッキ in a 2-column grid).
-export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, typingMode = false, onTypingModeChange = () => {}, onReview, onOpenPlan, onOpenAbout = () => {}, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
+export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, answerMode = "off", onAnswerModeChange = () => {}, handwritingEnabled = false, onReview, onOpenPlan, onOpenAbout = () => {}, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
   // A word can be in several decks, so a due card counts toward each of them.
   const dueByDeck = {};
   dueRows.forEach((r) => {
@@ -181,7 +204,7 @@ export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar =
     <>
       <PlayerStats stats={stats} avatar={avatar} wide={wide} />
       <ReviewButton dueCount={dueRows.length} loading={loading} onReview={() => onReview()} nextReview={nextReview} onOpenPlan={onOpenPlan} wide={wide} />
-      <TypingModeSwitch on={typingMode} onChange={onTypingModeChange} wide={wide} />
+      <AnswerModeSwitch mode={answerMode} onChange={onAnswerModeChange} handwritingEnabled={handwritingEnabled} wide={wide} />
       {stats && <LevelChart counts={stats.levelCounts} />}
       {stats && <MasteredButton count={stats.levelCounts[MASTERED]} loading={loading} onOpen={onOpenMastered} />}
     </>

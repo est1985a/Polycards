@@ -1,6 +1,7 @@
 // Tests for splitting an answer into letter boxes and printed characters. Run with: npm test
 import { describe, it, expect } from 'vitest';
-import { answerSlots, boxCount, boxLayout } from './answerLayout.js';
+import { answerSlots, boxCount, boxLayout, readText, writtenAnswer } from './answerLayout.js';
+import { checkSpelling } from '../lib/spelling.js';
 
 const show = (answer) => answerSlots(answer).map((s) => (s.type === 'box' ? s.letter : s.type === 'gap' ? '_' : `[${s.text}]`)).join('');
 
@@ -64,5 +65,33 @@ describe('boxLayout', () => {
     const l = boxLayout(answerSlots('What do you think about ...'), 700);
     expect(l.rows).toHaveLength(2);
     expect(rowText(l)[1].endsWith('_...')).toBe(true);
+  });
+});
+
+describe('writtenAnswer', () => {
+  it('leaves out the optional words in ( ) or [ ]', () => {
+    expect(writtenAnswer('look (at)')).toBe('look');
+    expect(writtenAnswer('(be) good at ~')).toBe('good at ~');
+    expect(writtenAnswer('take [a] picture')).toBe('take picture');
+  });
+  it('keeps everything else, including "..." and "?"', () => {
+    expect(writtenAnswer('Call me ...')).toBe('Call me ...');
+    expect(writtenAnswer('How about you?')).toBe('How about you?');
+    expect(writtenAnswer(" don't ")).toBe("don't");
+  });
+  it('is accepted as an exact spelling by typing mode (so the database gives the bonus)', () => {
+    for (const en of ['look (at)', '(be) good at ~', 'Call me ...', 'How about you?', "don't", 'T-shirt', 'fish', 'Japan']) {
+      expect(checkSpelling(writtenAnswer(en), en), en).toBe('exact');
+    }
+  });
+});
+
+describe('readText', () => {
+  it('puts the read letters back between the printed characters', () => {
+    const slots = answerSlots("don't stop!");
+    expect(readText(slots, ['d', 'o', 'n', 'l', 's', 't', 'o', 'p'])).toBe("don'l stop!");
+  });
+  it('shows ? for an empty box', () => {
+    expect(readText(answerSlots('fish'), ['f', null, 's', 'h'])).toBe('f?sh');
   });
 });
