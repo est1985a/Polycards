@@ -8,6 +8,7 @@ import { loadAnswerMode, saveAnswerMode } from './lib/spelling';
 import { HANDWRITING_ENABLED } from './handwriting/config';
 import { nextReviewSummary } from './lib/schedule';
 import { singleFlight } from './lib/gacha';
+import { testLoginEmail, LOGIN_FAILED_MESSAGE } from './lib/login';
 import { colors, wrap, gutter, headerBand, tabBarHeight, btnLink, wideLayout } from './styles/theme';
 import { useWide } from './lib/useWide';
 import Header from './components/Header';
@@ -309,6 +310,13 @@ function App() {
     if (error) setAuthError(error.message);
   };
 
+  // Test accounts: a username like "aiden" signs in as aiden@polycards.test.
+  const handlePasswordLogin = async (username, password) => {
+    setAuthError(null);
+    const { error } = await supabase.auth.signInWithPassword({ email: testLoginEmail(username), password });
+    if (error) setAuthError(LOGIN_FAILED_MESSAGE);
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     goHome(); // the next sign-in starts on My Cards too
@@ -452,7 +460,7 @@ function App() {
         <div style={{ position: "relative", padding: `0 ${wide ? wideLayout.gutter : gutter}px 60px`, marginTop: bandHeader ? -headerBand.overlap : 0 }}>
           <div style={{ maxWidth: contentWidth, margin: "0 auto" }}>
             {!session ? (
-              <LoginScreen error={authError} onGoogleLogin={handleGoogleLogin} />
+              <LoginScreen error={authError} onGoogleLogin={handleGoogleLogin} onPasswordLogin={handlePasswordLogin} />
             ) : view === "dashboard" ? (
               <div style={{ paddingBottom: tabBarHeight + 32 }}>
                 {activeTab === "myCards" && (
