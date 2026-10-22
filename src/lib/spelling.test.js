@@ -2,7 +2,7 @@
 // in supabase/polycards-answers.sql. Run with: npm test
 import { describe, it, expect } from 'vitest';
 import {
-  normalizeSpelling, spellingDistance, checkSpelling, loadTypingMode, saveTypingMode,
+  normalizeSpelling, spellingDistance, checkSpelling, loadAnswerMode, saveAnswerMode,
   ignoreNextKey, NEXT_KEY_GUARD_MS, needsOtherMeaningCheck,
 } from './spelling';
 
@@ -71,7 +71,7 @@ describe('clean-up and distance', () => {
   });
 });
 
-describe('typing mode switch (saved on the device)', () => {
+describe('answer mode なし / タイピング / 手書き (saved on the device)', () => {
   const memory = () => {
     const data = {};
     return { getItem: (k) => data[k] ?? null, setItem: (k, v) => { data[k] = v; } };
@@ -79,19 +79,49 @@ describe('typing mode switch (saved on the device)', () => {
 
   it('is off by default and remembers the choice', () => {
     const storage = memory();
-    expect(loadTypingMode(storage)).toBe(false);
-    saveTypingMode(storage, true);
-    expect(storage.getItem('polycards.typingMode')).toBe('1');
-    expect(loadTypingMode(storage)).toBe(true);
-    saveTypingMode(storage, false);
-    expect(loadTypingMode(storage)).toBe(false);
+    expect(loadAnswerMode(storage)).toBe('off');
+    saveAnswerMode(storage, 'typing');
+    expect(storage.getItem('polycards.answerMode')).toBe('typing');
+    expect(loadAnswerMode(storage)).toBe('typing');
+    saveAnswerMode(storage, 'handwriting');
+    expect(loadAnswerMode(storage)).toBe('handwriting');
+    saveAnswerMode(storage, 'off');
+    expect(loadAnswerMode(storage)).toBe('off');
+  });
+
+  it('keeps typing for a student who had the old スペル入力 switch on', () => {
+    const storage = memory();
+    storage.setItem('polycards.typingMode', '1');
+    expect(loadAnswerMode(storage)).toBe('typing');
+    storage.setItem('polycards.typingMode', '0');
+    expect(loadAnswerMode(storage)).toBe('off');
+  });
+
+  it('a new choice wins over the old switch', () => {
+    const storage = memory();
+    storage.setItem('polycards.typingMode', '1');
+    saveAnswerMode(storage, 'off');
+    expect(loadAnswerMode(storage)).toBe('off');
+  });
+
+  it('ignores an unknown saved value', () => {
+    const storage = memory();
+    storage.setItem('polycards.answerMode', 'voice');
+    expect(loadAnswerMode(storage)).toBe('off');
+  });
+
+  it('turns 手書き into typing when handwriting is switched off', () => {
+    const storage = memory();
+    saveAnswerMode(storage, 'handwriting');
+    expect(loadAnswerMode(storage, false)).toBe('typing');
+    expect(loadAnswerMode(storage, true)).toBe('handwriting');
   });
 
   it('stays off when storage is blocked', () => {
     const blocked = { getItem: () => { throw new Error('blocked'); }, setItem: () => { throw new Error('blocked'); } };
-    expect(loadTypingMode(blocked)).toBe(false);
-    expect(() => saveTypingMode(blocked, true)).not.toThrow();
-    expect(loadTypingMode(undefined)).toBe(false);
+    expect(loadAnswerMode(blocked)).toBe('off');
+    expect(() => saveAnswerMode(blocked, 'typing')).not.toThrow();
+    expect(loadAnswerMode(undefined)).toBe('off');
   });
 });
 

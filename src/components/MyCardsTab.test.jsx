@@ -1,7 +1,7 @@
 // Tests for the review button on My Cards. Run with: npm test
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import MyCardsTab, { ReviewButton, TypingModeSwitch, AboutButton } from './MyCardsTab';
+import MyCardsTab, { ReviewButton, AnswerModeSwitch, AboutButton } from './MyCardsTab';
 import { extraDueTotal } from '../lib/srs';
 
 const render = (dueCount) => renderToStaticMarkup(<ReviewButton dueCount={dueCount} loading={false} onReview={() => {}} />);
@@ -91,18 +91,34 @@ describe('next review line (nothing due)', () => {
   });
 });
 
-describe('typing mode switch', () => {
-  const html = (on) => renderToStaticMarkup(<TypingModeSwitch on={on} onChange={() => {}} />);
+describe('answer mode switch なし / タイピング / 手書き', () => {
+  const html = (mode, handwritingEnabled = true) =>
+    renderToStaticMarkup(<AnswerModeSwitch mode={mode} onChange={() => {}} handwritingEnabled={handwritingEnabled} />);
 
-  it('shows the label and the note', () => {
-    expect(html(false)).toContain('スペル入力（日本語 → English）');
-    expect(html(false)).toContain('英語をタイプして答えます。正しいスペルで +1 pt');
+  it('shows the label and the three choices', () => {
+    const h = html('off');
+    expect(h).toContain('答え方（日本語 → English）');
+    expect(h).toContain('>なし</button>');
+    expect(h).toContain('>タイピング</button>');
+    expect(h).toContain('>手書き</button>');
   });
 
-  it('is a switch that shows on / off', () => {
-    expect(html(false)).toContain('role="switch"');
-    expect(html(false)).toContain('aria-checked="false"');
-    expect(html(true)).toContain('aria-checked="true"');
+  it('marks the chosen one and shows its note', () => {
+    expect(html('off')).toMatch(/aria-pressed="true"[^>]*>なし</);
+    expect(html('typing')).toMatch(/aria-pressed="true"[^>]*>タイピング</);
+    expect(html('typing')).toContain('英語をタイプして答えます。正しいスペルで +1 pt');
+    expect(html('handwriting')).toMatch(/aria-pressed="true"[^>]*>手書き</);
+    expect(html('handwriting')).toContain('Apple Pencil');
+  });
+
+  it('hides 手書き when handwriting is switched off', () => {
+    expect(html('off', false)).not.toContain('手書き');
+    expect(html('handwriting', false)).toMatch(/aria-pressed="true"[^>]*>なし</);
+  });
+
+  it('is on My Cards', () => {
+    const h = renderToStaticMarkup(<MyCardsTab decks={[]} dueRows={[]} stats={null} onReview={() => {}} answerMode="typing" />);
+    expect(h).toContain('答え方（日本語 → English）');
   });
 });
 

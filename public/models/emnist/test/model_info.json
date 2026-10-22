@@ -1,0 +1,71 @@
+{
+  "name": "polycards-handwriting-emnist-letters",
+  "created": "2026-10-21",
+  "tensorflow_version": "2.21.0",
+  "format": "tfjs_graph_model (load with tf.loadGraphModel)",
+  "input": {
+    "name": "image",
+    "shape": [
+      null,
+      28,
+      28,
+      1
+    ],
+    "dtype": "float32",
+    "range": [
+      0,
+      1
+    ],
+    "polarity": "white ink = 1.0 on black background = 0.0",
+    "orientation": "upright (as a person reads it)"
+  },
+  "output": {
+    "name": "probs",
+    "shape": [
+      null,
+      26
+    ],
+    "labels": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i",
+      "j",
+      "k",
+      "l",
+      "m",
+      "n",
+      "o",
+      "p",
+      "q",
+      "r",
+      "s",
+      "t",
+      "u",
+      "v",
+      "w",
+      "x",
+      "y",
+      "z"
+    ],
+    "note": "case-insensitive: upper and lower case of a letter share one label"
+  },
+  "preprocessing": [
+    "Start from the letter box drawn as dark ink on a white background",
+    "Invert so ink is bright (255 - value)",
+    "Find ink pixels (value > 30) and crop to their bounding box; if none, the box is empty",
+    "Center the crop in a square of side max(height, width), padded with black",
+    "Pad every side by round(side * 2 / 24) pixels of black",
+    "Gaussian blur, radius max(1, padded_side / 128)",
+    "Resize to 28x28 with smooth (high-quality) resampling",
+    "Divide by 255, then divide by the maximum pixel so the brightest pixel is 1.0"
+  ],
+  "test_set_reference": "Section 6 preprocess_drawing() in the training notebook",
+  "transpose_applied_in_training": true,
+  "test_accuracy": 0.9232
+}

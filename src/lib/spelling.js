@@ -65,20 +65,27 @@ export function needsOtherMeaningCheck(spelling, retryUsed) {
   return spelling === "wrong" && !retryUsed;
 }
 
-// The typing-mode switch on My Cards, saved on this device (off if nothing is saved or storage is blocked).
-const TYPING_KEY = "polycards.typingMode";
+// How Japanese → English cards are answered in reviews (the 答え方 switch on My Cards), saved on
+// this device: "off" (buttons), "typing" or "handwriting" (Apple Pencil). Off if nothing is saved
+// or storage is blocked. A student who had the old スペル入力 switch on keeps typing.
+// handwritingEnabled false (HANDWRITING_ENABLED in src/handwriting/config.js): 手書き becomes typing.
+export const ANSWER_MODES = ["off", "typing", "handwriting"];
+const ANSWER_MODE_KEY = "polycards.answerMode";
+const OLD_TYPING_KEY = "polycards.typingMode";
 
-export function loadTypingMode(storage) {
+export function loadAnswerMode(storage, handwritingEnabled = true) {
   try {
-    return storage?.getItem(TYPING_KEY) === "1";
+    let mode = storage?.getItem(ANSWER_MODE_KEY);
+    if (!ANSWER_MODES.includes(mode)) mode = storage?.getItem(OLD_TYPING_KEY) === "1" ? "typing" : "off";
+    return mode === "handwriting" && !handwritingEnabled ? "typing" : mode;
   } catch {
-    return false;
+    return "off";
   }
 }
 
-export function saveTypingMode(storage, on) {
+export function saveAnswerMode(storage, mode) {
   try {
-    storage?.setItem(TYPING_KEY, on ? "1" : "0");
+    storage?.setItem(ANSWER_MODE_KEY, mode);
   } catch {
     // ignore: private browsing or blocked site data
   }

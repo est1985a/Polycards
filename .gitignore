@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Handwriting model hand-off folder (files copied into public/models/emnist and src/handwriting)
+polycards_hw_model/

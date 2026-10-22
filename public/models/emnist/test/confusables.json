@@ -1,0 +1,182 @@
+[
+  {
+    "written": "i",
+    "read_as": "l",
+    "rate": 0.3063,
+    "count": 245
+  },
+  {
+    "written": "l",
+    "read_as": "i",
+    "rate": 0.1725,
+    "count": 138
+  },
+  {
+    "written": "g",
+    "read_as": "q",
+    "rate": 0.1437,
+    "count": 115
+  },
+  {
+    "written": "q",
+    "read_as": "g",
+    "rate": 0.1,
+    "count": 80
+  },
+  {
+    "written": "o",
+    "read_as": "d",
+    "rate": 0.0288,
+    "count": 23
+  },
+  {
+    "written": "n",
+    "read_as": "m",
+    "rate": 0.0288,
+    "count": 23
+  },
+  {
+    "written": "c",
+    "read_as": "e",
+    "rate": 0.0262,
+    "count": 21
+  },
+  {
+    "written": "n",
+    "read_as": "h",
+    "rate": 0.025,
+    "count": 20
+  },
+  {
+    "written": "a",
+    "read_as": "q",
+    "rate": 0.0225,
+    "count": 18
+  },
+  {
+    "written": "j",
+    "read_as": "i",
+    "rate": 0.0213,
+    "count": 17
+  },
+  {
+    "written": "i",
+    "read_as": "j",
+    "rate": 0.0187,
+    "count": 15
+  },
+  {
+    "written": "d",
+    "read_as": "o",
+    "rate": 0.0187,
+    "count": 15
+  },
+  {
+    "written": "r",
+    "read_as": "y",
+    "rate": 0.0163,
+    "count": 13
+  },
+  {
+    "written": "l",
+    "read_as": "h",
+    "rate": 0.0163,
+    "count": 13
+  },
+  {
+    "written": "f",
+    "read_as": "t",
+    "rate": 0.0163,
+    "count": 13
+  },
+  {
+    "written": "q",
+    "read_as": "a",
+    "rate": 0.015,
+    "count": 12
+  },
+  {
+    "written": "r",
+    "read_as": "t",
+    "rate": 0.0112,
+    "count": 9
+  },
+  {
+    "written": "g",
+    "read_as": "a",
+    "rate": 0.0112,
+    "count": 9
+  },
+  {
+    "written": "n",
+    "read_as": "w",
+    "rate": 0.01,
+    "count": 8
+  },
+  {
+    "written": "j",
+    "read_as": "t",
+    "rate": 0.01,
+    "count": 8
+  },
+  {
+    "written": "k",
+    "read_as": "h",
+    "rate": 0.0088,
+    "count": 7
+  },
+  {
+    "written": "h",
+    "read_as": "n",
+    "rate": 0.0088,
+    "count": 7
+  },
+  {
+    "written": "d",
+    "read_as": "p",
+    "rate": 0.0088,
+    "count": 7
+  },
+  {
+    "written": "b",
+    "read_as": "h",
+    "rate": 0.0088,
+    "count": 7
+  },
+  {
+    "written": "s",
+    "read_as": "g",
+    "rate": 0.0075,
+    "count": 3
+  },
+  {
+    "written": "o",
+    "read_as": "a",
+    "rate": 0.0075,
+    "count": 6
+  },
+  {
+    "written": "g",
+    "read_as": "b",
+    "rate": 0.0075,
+    "count": 6
+  },
+  {
+    "written": "a",
+    "read_as": "g",
+    "rate": 0.0075,
+    "count": 6
+  },
+  {
+    "written": "r",
+    "read_as": "v",
+    "rate": 0.0063,
+    "count": 5
+  },
+  {
+    "written": "p",
+    "read_as": "d",
+    "rate": 0.0063,
+    "count": 5
+  }
+]

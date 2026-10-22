@@ -1,0 +1,106 @@
+import { useMemo, useRef, useState } from "react";
+import LetterBoxes from "./LetterBoxes.jsx";
+import { answerSlots, readText } from "./answerLayout.js";
+import { lenientMessage, readBoxes, scoreWord } from "./checkAnswer.js";
+import { predictBatch } from "./model.js";
+import { preprocessLetter } from "./preprocess.js";
+import { HW_COLORS } from "./config.js";
+import { btnGhost, btnPrimary, colors } from "../styles/theme.js";
+
+// Reads the boxes: one batch through the model, then each box scored against its target letter.
+// → scoreWord's result plus reads (the letter read in each box, null if empty) and text (the
+// whole answer as read, e.g. "f?sh").
+async function readAnswer(boxes, slots) {
+  const targets = slots.filter((s) => s.type === "box").map((s) => s.letter);
+  const inputs = boxes.getBoxes().map((b) => (b ? preprocessLetter(b.gray, b.width, b.height) : null));
+  const { probs } = await predictBatch(inputs.filter(Boolean));
+  let k = 0;
+  const read = readBoxes(targets, inputs.map((x) => (x ? probs[k++] : null)));
+  const reads = read.map((b) => b.read);
+  return { ...scoreWord(read), reads, text: readText(slots, reads) };
+}
+
+// Handwriting answer for one card (Japanese → English, SRS review): one box per letter, written
+// with the Apple Pencil only. Shown by StudySession instead of the typing box; after answering it
+// stays on screen (locked) with the result, above the usual 次へ or まだ / わかった.
+// answer: what to write (writtenAnswer(card.en)). result: what onResult reported, once read.
+// answered: after こたえる or わからない. onError: the model couldn't run (fall back to typing).
+// Give it a new `key` per card.
+export default function HandwritingInput({ answer, result = null, answered = false, onResult, onDontKnow, onError, answerSize, wide = false }) {
+  const slots = useMemo(() => answerSlots(answer), [answer]);
+  const boxesRef = useRef(null);
+  const [hasInk, setHasInk] = useState(false);
+  const [reading, setReading] = useState(false);
+  const fontSize = wide ? 18 : 16;
+
+  async function handleAnswer() {
+    if (reading || answered || !hasInk) return;
+    setReading(true);
+    try {
+      onResult(await readAnswer(boxesRef.current, slots));
+    } catch (error) {
+      console.warn("Handwriting could not be read:", error);
+      onError(error);
+    } finally {
+      setReading(false);
+    }
+  }
+
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      {!answered && (
+        <p style={{ margin: 0, textAlign: "center", fontSize: wide ? 15 : 13, color: colors.muted }}>
+          Apple Pencil で、1マスに1文字ずつ書いてください
+        </p>
+      )}
+      <LetterBoxes
+        ref={boxesRef}
+        answer={answer}
+        scores={result?.scores ?? []}
+        locked={answered || reading}
+        onChange={() => setHasInk(boxesRef.current?.hasInk() ?? false)}
+      />
+
+      {result && !result.allCorrect && (
+        <div style={{ display: "grid", gap: 4, textAlign: "center", fontSize: wide ? 17 : 15, color: colors.text }}>
+          <div>
+            読み取り:{" "}
+            <span lang="en" style={{ fontWeight: 700 }}>
+              {slots.map((s, i) => {
+                if (s.type === "gap") return <span key={i}> </span>;
+                if (s.type === "print") return <span key={i}>{s.text}</span>;
+                const score = result.scores[s.index];
+                const color = score === "wrong" ? colors.danger : score === "lenient" ? HW_COLORS.lenient : colors.text;
+                return <span key={i} style={{ color }}>{result.reads[s.index] ?? "?"}</span>;
+              })}
+            </span>
+          </div>
+          <div>正しい答え: <span lang="en" style={{ fontWeight: 700, color: colors.accentText }}>{answer}</span></div>
+        </div>
+      )}
+
+      {result?.hasLenient && (
+        <div role="status" style={{ display: "grid", gap: 2, textAlign: "center", fontSize: wide ? 16 : 14, fontWeight: 700, color: HW_COLORS.lenient }}>
+          {result.lenientPairs.map((p) => <div key={p.target + p.read}>{lenientMessage(p)}</div>)}
+        </div>
+      )}
+
+      {!answered && (
+        <div style={{ display: "flex", gap: 10 }}>
+          <button
+            type="button" disabled={reading} onClick={onDontKnow}
+            style={{ ...btnGhost, flex: 1, fontSize, ...answerSize, opacity: reading ? 0.5 : 1 }}
+          >
+            わからない
+          </button>
+          <button
+            type="button" disabled={reading || !hasInk} onClick={handleAnswer}
+            style={{ ...btnPrimary, flex: 2, fontSize, ...answerSize, opacity: reading || !hasInk ? 0.5 : 1 }}
+          >
+            {reading ? "読み取り中…" : "こたえる"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
