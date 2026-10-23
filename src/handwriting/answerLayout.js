@@ -92,3 +92,24 @@ export function boxLayout(slots, width, { max = 96, min = 56, spacing = 6 } = {}
 export function readText(slots, reads) {
   return slots.map((s) => (s.type === "box" ? reads[s.index] ?? "?" : s.type === "gap" ? " " : s.text)).join("");
 }
+
+// An alternate answer can be written in the main answer's boxes only when it has the same shape:
+// box ↔ box, space ↔ space and the same printed characters in the same places (curly and straight
+// apostrophes / quotes count as the same), so each word has the same number of letters. Both are
+// what is written (writtenAnswer). An alternate that is just the main answer again doesn't count.
+const straightQuotes = (text) => text.replace(/[’‘`´]/g, "'").replace(/[“”]/g, '"');
+
+export function fitsBoxes(answer, alt) {
+  const a = answerSlots(answer);
+  const b = answerSlots(alt);
+  if (a.length !== b.length || !b.some((s) => s.type === "box")) return false;
+  if (String(answer).trim().toLowerCase() === String(alt).trim().toLowerCase()) return false;
+  return a.every((s, i) => s.type === b[i].type && (s.type !== "print" || straightQuotes(s.text) === straightQuotes(b[i].text)));
+}
+
+// The alternates (words.alt_answers) a student can write instead of the card's English, as written
+// (writtenAnswer). Alternates that don't fit the boxes are left out.
+export function fittingAlternates(english, alts = []) {
+  const answer = writtenAnswer(english);
+  return [...new Set((alts ?? []).map(writtenAnswer))].filter((alt) => fitsBoxes(answer, alt));
+}

@@ -137,6 +137,15 @@ describe('typing mode (TypingArea)', () => {
     expect(html).not.toContain('<input');
   });
 
+  it('an alternate answer: the gold 教科書の答え line under ✓ 正解！, only when given', () => {
+    const html = render({ phase: 'next', typed: 'cute', spelling: 'exact', textbookAnswer: 'pretty' });
+    expect(html).toContain('✓ 正解！');
+    expect(html).toContain('教科書の答え: <span lang="en"');
+    expect(html).toContain('pretty');
+    expect(render({ phase: 'next', typed: 'pretty', spelling: 'exact' })).not.toContain('教科書の答え');
+    expect(render({ phase: 'next', spelling: null, textbookAnswer: 'pretty' })).not.toContain('教科書の答え');
+  });
+
   it('わからない: only 次へ', () => {
     const html = render({ phase: 'next', spelling: null });
     expect(html).toContain('次へ');

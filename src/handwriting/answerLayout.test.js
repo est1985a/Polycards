@@ -1,6 +1,8 @@
 // Tests for splitting an answer into letter boxes and printed characters. Run with: npm test
 import { describe, it, expect } from 'vitest';
-import { answerSlots, boxCount, boxLayout, printPosition, readText, slotFactor, writtenAnswer } from './answerLayout.js';
+import {
+  answerSlots, boxCount, boxLayout, fitsBoxes, fittingAlternates, printPosition, readText, slotFactor, writtenAnswer,
+} from './answerLayout.js';
 import { checkSpelling } from '../lib/spelling.js';
 
 const show = (answer) => answerSlots(answer).map((s) => (s.type === 'box' ? s.letter : s.type === 'gap' ? '_' : `[${s.text}]`)).join('');
@@ -120,5 +122,27 @@ describe('slotFactor', () => {
     const [apostrophe] = answerSlots("don't").filter((s) => s.type === 'print');
     expect(slotFactor(apostrophe)).toBeLessThan(0.2);
     expect(slotFactor({ type: 'print', text: '-' })).toBeGreaterThanOrEqual(0.3);
+  });
+});
+
+describe('fitsBoxes / fittingAlternates', () => {
+  it('fits only with the same letters per word, spaces and printed characters', () => {
+    expect(fitsBoxes('big', 'top')).toBe(true);
+    expect(fitsBoxes('look at', 'gaze up')).toBe(true);
+    expect(fitsBoxes("don't", "can’t")).toBe(true);   // curly and straight apostrophes count as the same
+    expect(fitsBoxes('pretty', 'cute')).toBe(false);     // fewer letters
+    expect(fitsBoxes('look at', 'lookat')).toBe(false);  // no space
+    expect(fitsBoxes('look at', 'loo kat')).toBe(false); // the space is elsewhere
+    expect(fitsBoxes("don't", 'do-nt')).toBe(false);     // different punctuation
+    expect(fitsBoxes('Hi!', 'Yo.')).toBe(false);
+  });
+  it('the main answer itself is not an alternate', () => {
+    expect(fitsBoxes('big', 'Big')).toBe(false);
+  });
+  it('lists the alternates that fit, as written (optional words left out), once each', () => {
+    expect(fittingAlternates('big', ['top', 'large', 'top', 'hot (stuff)'])).toEqual(['top', 'hot']);
+    expect(fittingAlternates('look (at)', ['see', 'seek'])).toEqual(['seek']);
+    expect(fittingAlternates('big', [])).toEqual([]);
+    expect(fittingAlternates('big', null)).toEqual([]);
   });
 });

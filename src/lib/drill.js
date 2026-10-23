@@ -5,9 +5,15 @@ export const CLEAR_TARGET = 2; // only used for the Card Sets practice drill
 // Optional example sentences: missing or blank ones become null.
 const example = (s) => (s && s.trim()) || null;
 
+// Alternate English answers (words.alt_answers): non-blank strings only, [] if none.
+const alternates = (list) => (Array.isArray(list) ? list.filter((a) => typeof a === "string" && a.trim()) : []);
+
 // Word details every card carries, whichever direction it is.
 function wordFields(w) {
-  return { jp: w.japanese, en: w.english, exampleEn: example(w.example_en), exampleJa: example(w.example_ja) };
+  return {
+    jp: w.japanese, en: w.english, exampleEn: example(w.example_en), exampleJa: example(w.example_ja),
+    altAnswers: alternates(w.alt_answers),
+  };
 }
 
 // Direction label, always in English (FlipCard, Mastered list).

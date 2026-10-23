@@ -1,6 +1,7 @@
 // Spelling check for typing mode (Japanese → English cards in SRS review). Pure functions only.
 // This is a copy of spelling_normalize() / spelling_distance() / spelling_check() in
-// supabase/polycards-answers.sql, so the app can show ✓ straight away. It MUST give the same
+// supabase/polycards-answers.sql and spelling_answers() / the three-argument spelling_check() in
+// supabase/polycards-alt-answers.sql, so the app can show ✓ straight away. It MUST give the same
 // results as the SQL; if the two ever disagree, the database decides the bonus.
 
 const MAX_TYPED = 200; // the database only looks at the first 200 characters
@@ -44,19 +45,34 @@ export function spellingDistance(a, b) {
   return prev[y.length];
 }
 
+// Every accepted spelling of a word, cleaned up: for the main English and each alternate
+// (words.alt_answers), the form without the ( ) / [ ] words and the form with them. Blanks dropped.
+// Same as spelling_answers() in the SQL.
+export function spellingAnswers(english, alts = []) {
+  const forms = [english, ...(alts ?? [])].flatMap((a) => [
+    normalizeSpelling((a ?? "").replace(/[([][^)\]]*[)\]]/g, " ")), // without the ( ) words
+    normalizeSpelling((a ?? "").replace(/[()[\]]/g, "")),            // with them
+  ]);
+  return [...new Set(forms)].filter((f) => f !== "");
+}
+
 // 'exact' = right (bonus), 'close' = one change away (おしい), 'wrong' = anything else (also empty).
 // Words in ( ) or [ ] are optional: "look (at)" accepts "look" and "look at".
-export function checkSpelling(typed, english) {
+// alts: the word's alternate answers, accepted exactly like the main one ("cute" for "pretty").
+export function checkSpelling(typed, english, alts = []) {
   const answer = normalizeSpelling((typed ?? "").slice(0, MAX_TYPED));
   if (answer === "") return "wrong";
-  const accepted = [
-    normalizeSpelling((english ?? "").replace(/[([][^)\]]*[)\]]/g, " ")), // without the ( ) words
-    normalizeSpelling((english ?? "").replace(/[()[\]]/g, "")),            // with them
-  ];
+  const accepted = spellingAnswers(english, alts);
   if (accepted.includes(answer)) return "exact";
-  const distances = accepted.filter((a) => a !== "").map((a) => spellingDistance(answer, a));
+  const distances = accepted.map((a) => spellingDistance(answer, a));
   if (distances.length > 0 && Math.min(...distances) <= 1) return "close";
   return "wrong";
+}
+
+// true = the typed answer is right only because of an alternate (not the main English), so the
+// app shows 教科書の答え with the textbook word.
+export function isAlternateAnswer(typed, english, alts = []) {
+  return checkSpelling(typed, english, alts) === "exact" && checkSpelling(typed, english) !== "exact";
 }
 
 // A wrong spelling may be another word with the same meaning: ask the database once per showing

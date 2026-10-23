@@ -2,14 +2,14 @@ import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { colors, fontDisplay, fontBody, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
 import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
 import { srsAnswer, newSessionId, saveErrorReporter } from '../lib/srs';
-import { checkSpelling, ignoreNextKey, needsOtherMeaningCheck } from '../lib/spelling';
+import { checkSpelling, ignoreNextKey, isAlternateAnswer, needsOtherMeaningCheck } from '../lib/spelling';
 import { recordAnswer, checkOtherMeaning } from '../lib/api';
 import Stamp from './Stamp';
 import AddDeckButton from './AddDeckButton';
 import FlipCard from './FlipCard';
 import HandwritingInput from '../handwriting/HandwritingInput.jsx';
 import { loadModel } from '../handwriting/model.js';
-import { writtenAnswer } from '../handwriting/answerLayout.js';
+import { fittingAlternates, writtenAnswer } from '../handwriting/answerLayout.js';
 import { HANDWRITING_ENABLED, LENIENT_GIVES_BONUS } from '../handwriting/config.js';
 import { t, tx } from '../i18n';
 
@@ -54,10 +54,11 @@ export function AnswerArea({ revealed, onReveal, onAnswer, answerSize, wide = fa
 // phase 'choose': one letter off (close) or wrong: what they typed, the right answer, then まだ / わかった.
 // checking: waiting to hear if a wrong answer is another word with the same meaning (答える shows 確認中…).
 // retryNote: it was, so the student tries again (a calm gold line under the box).
+// textbookAnswer: an alternate answer was accepted; the textbook's word, shown under ✓ 正解！.
 // Give it a new `key` per card so the box is focused when each card appears.
 export function TypingArea({
   phase, typed, spelling = null, answer, onTypedChange, onSubmit, onDontKnow, onNext, onAnswer, answerSize,
-  checking = false, retryNote = false, wide = false,
+  checking = false, retryNote = false, textbookAnswer = null, wide = false,
 }) {
   const inputRef = useRef(null);
   const nextRef = useRef(null);
@@ -134,6 +135,11 @@ export function TypingArea({
         {spelling === "exact" && (
           <div style={{ textAlign: "center", fontSize: wide ? 22 : 19, fontWeight: 700, color: colors.accentText }}>
             {t("review.correct")}
+          </div>
+        )}
+        {spelling === "exact" && textbookAnswer && (
+          <div style={{ textAlign: "center", fontSize: wide ? 16 : 14, color: colors.gold }}>
+            {tx("review.textbookAnswer", { answer: <span lang="en" style={{ fontWeight: 700 }}>{textbookAnswer}</span> })}
           </div>
         )}
         <button
@@ -272,7 +278,8 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
   // no flip and nothing saved; the box is cleared for one more try, which is still the first answer.
   function handleTypedAnswer() {
     if (!card || typedResult || checking || typed.trim() === "") return;
-    const spelling = checkSpelling(typed, card.en);
+    // An alternate answer (card.altAnswers) spelled right is exact, so it never gets the retry.
+    const spelling = checkSpelling(typed, card.en, card.altAnswers);
     if (!needsOtherMeaningCheck(spelling, retryUsed)) {
       showTypedResult(spelling);
       return;
@@ -297,7 +304,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
       const answer = srsAnswer(card.level, "got_it", wrongCounts[card.id] || 0, spelling);
       send(answer.result, typed, spelling);
       showFloats(answer);
-      setTypedResult({ spelling, next: true, again: false });
+      setTypedResult({ spelling, next: true, again: false, alternate: isAlternateAnswer(typed, card.en, card.altAnswers) });
     } else {
       setTypedResult({ spelling, next: false, again: false });
     }
@@ -307,18 +314,20 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
   // correct spelling: the target word goes as the typed answer, so the database gives the bonus
   // (unless LENIENT_GIVES_BONUS is off and a box was only lenient: then nothing typed is sent).
   // Otherwise the card flips and the student chooses まだ / わかった, sent with what was read.
+  // An alternate that fits the boxes may be accepted instead (read.accepted): it is sent instead of
+  // the textbook word, and 教科書の答え shows the textbook word.
   function handleHandwritingResult(read) {
     if (!card || typedResult) return;
     setRevealed(true);
     if (read.allCorrect) {
       const bonus = !read.hasLenient || LENIENT_GIVES_BONUS;
       const answer = srsAnswer(card.level, "got_it", wrongCounts[card.id] || 0, bonus ? "exact" : null);
-      send(answer.result, bonus ? writtenAnswer(card.en) : null, bonus ? "exact" : null);
+      send(answer.result, bonus ? read.accepted ?? writtenAnswer(card.en) : null, bonus ? "exact" : null);
       showFloats(answer);
-      setTypedResult({ spelling: "exact", next: true, again: false, handwriting: read });
+      setTypedResult({ spelling: "exact", next: true, again: false, alternate: Boolean(read.accepted), handwriting: read });
     } else {
       setTyped(read.text);
-      setTypedResult({ spelling: checkSpelling(read.text, card.en), next: false, again: false, handwriting: read });
+      setTypedResult({ spelling: checkSpelling(read.text, card.en, card.altAnswers), next: false, again: false, handwriting: read });
     }
   }
 
@@ -460,6 +469,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
               <HandwritingInput
                 key={`hw-${turn}`}
                 answer={writtenAnswer(card.en)}
+                alternates={fittingAlternates(card.en, card.altAnswers)}
                 result={typedResult?.handwriting ?? null}
                 answered={Boolean(typedResult)}
                 onResult={handleHandwritingResult}
@@ -471,6 +481,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
               {typingPhase === "next" && (
                 <TypingArea
                   key={turn} phase="next" typed="" spelling={typedResult.spelling} answer={card.back}
+                  textbookAnswer={typedResult.alternate ? card.en : null}
                   onNext={handleNext} answerSize={answerSize} wide={wide}
                 />
               )}
@@ -499,6 +510,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
                 answerSize={answerSize}
                 checking={checking}
                 retryNote={retryUsed}
+                textbookAnswer={typedResult?.alternate ? card.en : null}
                 wide={wide}
               />
             </>

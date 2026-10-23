@@ -1,33 +1,36 @@
 import { useMemo, useRef, useState } from "react";
 import LetterBoxes from "./LetterBoxes.jsx";
 import { answerSlots, readText } from "./answerLayout.js";
-import { lenientMessage, readBoxes, scoreWord } from "./checkAnswer.js";
+import { bestMatch, lenientMessage } from "./checkAnswer.js";
 import { predictBatch } from "./model.js";
 import { preprocessLetter } from "./preprocess.js";
 import { HW_COLORS } from "./config.js";
 import { btnGhost, btnPrimary, colors } from "../styles/theme.js";
 import { t, tx } from "../i18n";
 
-// Reads the boxes: one batch through the model, then each box scored against its target letter.
-// → scoreWord's result plus reads (the letter read in each box, null if empty) and text (the
-// whole answer as read, e.g. "f?sh").
-async function readAnswer(boxes, slots) {
+// Reads the boxes: one batch through the model, then each box scored against its target letter,
+// for the main answer and each alternate that fits the boxes (bestMatch).
+// → scoreWord's result plus reads (the letter read in each box, null if empty), text (the whole
+// answer as read, e.g. "f?sh") and accepted (the alternate that was accepted, or null).
+async function readAnswer(boxes, slots, alternates) {
   const targets = slots.filter((s) => s.type === "box").map((s) => s.letter);
+  const altTargets = alternates.map((alt) => answerSlots(alt).filter((s) => s.type === "box").map((s) => s.letter));
   const inputs = boxes.getBoxes().map((b) => (b ? preprocessLetter(b.gray, b.width, b.height) : null));
   const { probs } = await predictBatch(inputs.filter(Boolean));
   let k = 0;
-  const read = readBoxes(targets, inputs.map((x) => (x ? probs[k++] : null)));
-  const reads = read.map((b) => b.read);
-  return { ...scoreWord(read), reads, text: readText(slots, reads) };
+  const boxProbs = inputs.map((x) => (x ? probs[k++] : null));
+  const { accepted, ...result } = bestMatch(boxProbs, [targets, ...altTargets]);
+  return { ...result, text: readText(slots, result.reads), accepted: accepted > 0 ? alternates[accepted - 1] : null };
 }
 
 // Handwriting answer for one card (Japanese → English, SRS review): one box per letter, written
 // with the Apple Pencil only. Shown by StudySession instead of the typing box; after answering it
 // stays on screen (locked) with the result, above the usual 次へ or まだ / わかった.
 // answer: what to write (writtenAnswer(card.en)). result: what onResult reported, once read.
+// alternates: other answers that fit the same boxes (fittingAlternates); a correct one is accepted too.
 // answered: after こたえる or わからない. onError: the model couldn't run (fall back to typing).
 // Give it a new `key` per card.
-export default function HandwritingInput({ answer, result = null, answered = false, onResult, onDontKnow, onError, answerSize, wide = false }) {
+export default function HandwritingInput({ answer, alternates = [], result = null, answered = false, onResult, onDontKnow, onError, answerSize, wide = false }) {
   const slots = useMemo(() => answerSlots(answer), [answer]);
   const boxesRef = useRef(null);
   const [hasInk, setHasInk] = useState(false);
@@ -38,7 +41,7 @@ export default function HandwritingInput({ answer, result = null, answered = fal
     if (reading || answered || !hasInk) return;
     setReading(true);
     try {
-      onResult(await readAnswer(boxesRef.current, slots));
+      onResult(await readAnswer(boxesRef.current, slots, alternates));
     } catch (error) {
       console.warn("Handwriting could not be read:", error);
       onError(error);

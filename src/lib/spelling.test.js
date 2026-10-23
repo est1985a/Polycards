@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   normalizeSpelling, spellingDistance, checkSpelling, loadAnswerMode, saveAnswerMode,
-  ignoreNextKey, NEXT_KEY_GUARD_MS, needsOtherMeaningCheck,
+  ignoreNextKey, NEXT_KEY_GUARD_MS, needsOtherMeaningCheck, spellingAnswers, isAlternateAnswer,
 } from './spelling';
 
 describe('checkSpelling: exact', () => {
@@ -152,5 +152,49 @@ describe('needsOtherMeaningCheck: one retry for another word with the same meani
   it('never asks for a correct or nearly correct spelling', () => {
     expect(needsOtherMeaningCheck('exact', false)).toBe(false);
     expect(needsOtherMeaningCheck('close', false)).toBe(false);
+  });
+});
+
+// Must match spelling_answers() / spelling_check(typed, english, alts) in supabase/polycards-alt-answers.sql.
+describe('alternate answers (alt_answers)', () => {
+  it('lists every accepted spelling, with and without the ( ) words, once each', () => {
+    expect(spellingAnswers('look (at)', ['See', 'watch [TV]'])).toEqual(['look', 'look at', 'see', 'watch', 'watch tv']);
+    expect(spellingAnswers('pretty', ['pretty', ' ', null])).toEqual(['pretty']);
+    expect(spellingAnswers('pretty')).toEqual(['pretty']);
+    expect(spellingAnswers('pretty', null)).toEqual(['pretty']);
+  });
+
+  it('an alternate spelled right is exact, with the same clean-up as the main answer', () => {
+    expect(checkSpelling('cute', 'pretty', ['cute'])).toBe('exact');
+    expect(checkSpelling('ＣＵＴＥ.', 'pretty', ['cute'])).toBe('exact');
+    expect(checkSpelling("don’t", 'do not', ["don't"])).toBe('exact');
+    expect(checkSpelling('watch', 'look (at)', ['watch [TV]'])).toBe('exact');
+    expect(checkSpelling('watch tv', 'look (at)', ['watch [TV]'])).toBe('exact');
+    expect(checkSpelling('pretty', 'pretty', ['cute'])).toBe('exact');
+  });
+
+  it('one change away from an alternate is close; anything else is wrong', () => {
+    expect(checkSpelling('cuet', 'pretty', ['cute'])).toBe('close');
+    expect(checkSpelling('cut', 'pretty', ['cute'])).toBe('close');
+    expect(checkSpelling('dont', 'do not', ["don't"])).toBe('close');
+    expect(checkSpelling('lovely', 'pretty', ['cute'])).toBe('wrong');
+    expect(checkSpelling('', 'pretty', ['cute'])).toBe('wrong');
+  });
+
+  it('without alternates nothing changes', () => {
+    expect(checkSpelling('cute', 'pretty')).toBe('wrong');
+    expect(checkSpelling('cute', 'pretty', [])).toBe('wrong');
+    expect(checkSpelling('cute', 'pretty', null)).toBe('wrong');
+  });
+
+  it('isAlternateAnswer: right only because of an alternate', () => {
+    expect(isAlternateAnswer('cute', 'pretty', ['cute'])).toBe(true);
+    expect(isAlternateAnswer('pretty', 'pretty', ['cute'])).toBe(false);
+    expect(isAlternateAnswer('cuet', 'pretty', ['cute'])).toBe(false);
+    expect(isAlternateAnswer('cute', 'pretty', [])).toBe(false);
+  });
+
+  it('an exact alternate never asks for the other-meaning retry', () => {
+    expect(needsOtherMeaningCheck(checkSpelling('cute', 'pretty', ['cute']), false)).toBe(false);
   });
 });
