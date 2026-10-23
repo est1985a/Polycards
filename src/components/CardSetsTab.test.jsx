@@ -44,7 +44,7 @@ describe('CardSetsTab', () => {
     expect(html.match(/aria-pressed/g)).toHaveLength(2);
     expect(html).toMatch(/aria-pressed="false"[^>]*>中学 · JHS</);
     expect(html).toMatch(/aria-pressed="true"[^>]*>高校 · HS</);
-    expect(html).not.toContain('>Other<');
+    expect(html).not.toContain('>その他<');
   });
 
   it('textbooks: only the selected level is listed', () => {
@@ -58,7 +58,7 @@ describe('CardSetsTab', () => {
     const withOther = [...TEXTBOOKS, ...shapeLibrary([{ id: 3, name: 'Extra Words', school_level: 'Other', units: [] }])];
     const html = render({ screen: 'textbooks', level: 'Other' }, { textbooks: withOther });
     expect(html.match(/aria-pressed/g)).toHaveLength(3);
-    expect(html).toMatch(/aria-pressed="true"[^>]*>Other</);
+    expect(html).toMatch(/aria-pressed="true"[^>]*>その他</);
     expect(text(html)).toContain('Extra Words');
     expect(text(html)).not.toContain('New Horizon 3');
   });
@@ -121,7 +121,7 @@ describe('CardSetsTab', () => {
   });
 
   it('shows loading only before the library first arrives', () => {
-    expect(render({ screen: 'textbooks' }, { textbooks: [], loading: true })).toContain('Loading library');
-    expect(render({ screen: 'textbooks' }, { loading: true })).not.toContain('Loading library');
+    expect(render({ screen: 'textbooks' }, { textbooks: [], loading: true })).toContain('ライブラリを読み込み中…');
+    expect(render({ screen: 'textbooks' }, { loading: true })).not.toContain('ライブラリを読み込み中…');
   });
 });

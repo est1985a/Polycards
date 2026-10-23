@@ -108,7 +108,7 @@ export default function CardSetsTab({ textbooks, loading, path, onNavigate, onOp
         <NavRow
           key={tb.id}
           title={tb.name}
-          pill={tx("cardSets.unitCount", { n: count(tb.units.length) })}
+          pill={tx("cardSets.unitCount", { n: count(tb.units.length), count: tb.units.length })}
           onClick={() => onNavigate({ screen: "units", textbookId: tb.id, level: shown })}
         />
       )),
@@ -122,7 +122,7 @@ export default function CardSetsTab({ textbooks, loading, path, onNavigate, onOp
         <NavRow
           key={u.id}
           title={u.name}
-          pill={tx("cardSets.deckCount", { n: count(u.decks.length) })}
+          pill={tx("cardSets.deckCount", { n: count(u.decks.length), count: u.decks.length })}
           onClick={() => onNavigate({ screen: "decks", textbookId: textbook.id, unitId: u.id, level })}
         />
       )));
@@ -135,7 +135,7 @@ export default function CardSetsTab({ textbooks, loading, path, onNavigate, onOp
       <NavRow
         key={deck.id}
         title={deck.name}
-        pill={tx("cardSets.wordCount", { n: count(deck.wordCount) })}
+        pill={tx("cardSets.wordCount", { n: count(deck.wordCount), count: deck.wordCount })}
         badge={isDeckAdded(myDeckIds, deck.id) && <AddedBadge />}
         onClick={() => onOpenDeck(deck)}
         disabled={disabled}

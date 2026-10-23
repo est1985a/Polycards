@@ -71,7 +71,7 @@ export function AccountMenu({ user, rank = null, confirming = false, onSettings,
         <div style={{ fontFamily: fontBody, fontSize: 16, fontWeight: 700, color: colors.text, overflowWrap: "anywhere" }}>{accountName(user)}</div>
         {rank != null && (
           <div style={{ fontSize: 13, color: colors.muted }}>
-            {tx("menu.rank", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700, color: colors.accentText }}>{rank}</span> })}
+            {tx("menu.rank", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700, color: colors.accentText }}>{rank}</span>, count: rank })}
           </div>
         )}
       </div>

@@ -31,7 +31,7 @@ export function ReviewButton({ dueCount, loading, onReview, nextReview = null, o
             <span style={{ fontSize: 20, fontWeight: 700 }}>{t("myCards.startReview")}</span>
             {total !== null && (
               <span style={{ fontSize: 13, fontWeight: 700, color: `color-mix(in srgb, ${colors.accentInk} 75%, transparent)` }}>
-                {tx("myCards.dueTotal", { n: <span style={{ fontFamily: fontDisplay }}>{total.toLocaleString('en-US')}</span> })}
+                {tx("myCards.dueTotal", { n: <span style={{ fontFamily: fontDisplay }}>{total.toLocaleString('en-US')}</span>, count: total })}
               </span>
             )}
           </span>
@@ -142,7 +142,7 @@ function MasteredButton({ count, loading, onOpen }) {
     >
       <StarIcon size={22} />
       <span style={{ flex: 1, fontFamily: fontDisplay, fontSize: 17, fontWeight: 700 }}>
-        {tx("myCards.mastered", { n: <span style={{ color: colors.gold }}>{count.toLocaleString('en-US')}</span> })}
+        {tx("myCards.mastered", { n: <span style={{ color: colors.gold }}>{count.toLocaleString('en-US')}</span>, count })}
       </span>
       <span aria-hidden="true" style={{ fontSize: 22, lineHeight: 1, color: colors.muted }}>›</span>
     </button>
@@ -169,7 +169,7 @@ function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
         </span>
         {due > 0 ? (
           <span style={{ flexShrink: 0, fontSize: 13, fontWeight: 700, padding: "4px 12px", borderRadius: 999, background: colors.surface2, whiteSpace: "nowrap" }}>
-            {tx("myCards.deckDue", { n: <span style={{ fontFamily: fontDisplay }}>{due}</span> })}
+            {tx("myCards.deckDue", { n: <span style={{ fontFamily: fontDisplay }}>{due}</span>, count: due })}
           </span>
         ) : (
           <span style={{ flexShrink: 0, fontSize: 12, color: colors.muted, whiteSpace: "nowrap" }}>{t("myCards.deckNothingDue")}</span>

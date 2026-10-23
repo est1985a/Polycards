@@ -25,7 +25,7 @@ export default function LevelChart({ counts }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
         <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: colors.text }}>{t("stats.chartTitle")}</h2>
         <span style={{ fontSize: 13, color: colors.muted }}>
-          {tx("stats.chartTotal", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700, color: colors.text }}>{fmt(total)}</span> })}
+          {tx("stats.chartTotal", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700, color: colors.text }}>{fmt(total)}</span>, count: total })}
         </span>
       </div>
 

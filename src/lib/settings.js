@@ -4,10 +4,12 @@
 // The theme is saved on the account (gacha_set_theme); the copy here is only a cache so the
 // right theme shows before the first screen draws.
 import { SESSION_SIZES, DEFAULT_SESSION_SIZE } from './srs';
+import { LANGS, DEFAULT_LANG, setLang } from '../i18n';
 
 const SESSION_SIZE_KEY = "polycards.sessionSize";
 const REDUCE_MOTION_KEY = "polycards.reduceMotion";
 const THEME_KEY = "polycards.theme";
+const LANG_KEY = "polycards.lang";
 const SEEN_THEMES_PREFIX = "polycards.seenThemes.";
 
 function read(storage, key) {
@@ -75,6 +77,23 @@ export function loadSeenThemes(storage, userId) {
 export function saveSeenThemes(storage, userId, keys) {
   if (!userId) return;
   write(storage, SEEN_THEMES_PREFIX + userId, JSON.stringify(keys));
+}
+
+// 言語 / Language: "ja" or "en". Anything else (or nothing saved) gives Japanese.
+export function loadLang(storage) {
+  const lang = read(storage, LANG_KEY);
+  return LANGS.includes(lang) ? lang : DEFAULT_LANG;
+}
+
+export function saveLang(storage, lang) {
+  write(storage, LANG_KEY, lang);
+}
+
+// Switches the app's text to this language and sets <html lang> to match. Returns the language used.
+export function applyLang(lang, root = typeof document !== "undefined" ? document.documentElement : null) {
+  const used = setLang(lang);
+  if (root) root.lang = used;
+  return used;
 }
 
 // The reduce-motion switch: data-reduce-motion="true" on <html>. Every rule in a

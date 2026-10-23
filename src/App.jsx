@@ -10,14 +10,14 @@ import { nextReviewSummary } from './lib/schedule';
 import { singleFlight } from './lib/gacha';
 import { testLoginEmail, LOGIN_FAILED_MESSAGE } from './lib/login';
 import {
-  loadSessionSize, saveSessionSize, loadReduceMotion, saveReduceMotion, applyReduceMotion,
+  loadSessionSize, saveSessionSize, loadReduceMotion, saveReduceMotion, applyReduceMotion, saveLang, applyLang,
   loadThemeCache, saveThemeCache, clearThemeCache, loadSeenThemes, saveSeenThemes, devThemeOverride,
 } from './lib/settings';
 import { themeList, newThemes, featuredUnlock, markSeen } from './lib/themeUnlocks';
 import { themes, applyTheme, getTheme, DEFAULT_THEME } from './themes';
 import { wrap, gutter, headerBand, tabBarHeight, btnLink, wideLayout } from './styles/theme';
 import { useWide } from './lib/useWide';
-import { t } from './i18n';
+import { t, getLang } from './i18n';
 import Header from './components/Header';
 import LoginScreen from './components/LoginScreen';
 import Tabs from './components/Tabs';
@@ -62,6 +62,7 @@ function App() {
   // Settings saved on this device (src/lib/settings.js)
   const [sessionSize, setSessionSize] = useState(() => loadSessionSize(window.localStorage)); // 1回の枚数
   const [reduceMotion, setReduceMotion] = useState(() => loadReduceMotion(window.localStorage)); // カードの動きを減らす
+  const [lang, setLangState] = useState(getLang); // 言語 / Language, applied in main.jsx before the first render
 
   // Theme: saved on the account (gacha_set_theme), cached on the device. main.jsx already applied the cache.
   const [themeKey, setThemeKey] = useState(() => knownTheme(loadThemeCache(window.localStorage)));
@@ -174,6 +175,11 @@ function App() {
   useEffect(() => {
     applyReduceMotion(reduceMotion);
   }, [reduceMotion]);
+
+  // <html lang>: the login screen is always Japanese; signed in, the chosen language.
+  useEffect(() => {
+    document.documentElement.lang = session ? lang : "ja";
+  }, [session, lang]);
 
   // Fetch the Global Library when the dashboard loads
   useEffect(() => {
@@ -293,6 +299,13 @@ function App() {
   function changeReduceMotion(on) {
     setReduceMotion(on);
     saveReduceMotion(window.localStorage, on);
+  }
+
+  // 言語 / Language: switches every text at once (the state change re-renders the whole app).
+  function changeLang(next) {
+    const used = applyLang(next);
+    saveLang(window.localStorage, used);
+    setLangState(used);
   }
 
   // Themes: unlocked by rank (the one the player card shows); "new" = unlocked but not yet shown.
@@ -655,6 +668,8 @@ function App() {
                     handwritingEnabled={HANDWRITING_ENABLED}
                     reduceMotion={reduceMotion}
                     onReduceMotionChange={changeReduceMotion}
+                    lang={lang}
+                    onLangChange={changeLang}
                     onBack={() => { setView("dashboard"); window.scrollTo(0, 0); }}
                     wide={wide}
                   />

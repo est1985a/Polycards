@@ -18,6 +18,13 @@ const srOnly = { position: "absolute", width: 1, height: 1, overflow: "hidden", 
 
 const stampFill = (n) => Array.from({ length: CLEAR_TARGET }, (_, i) => i < n);
 
+// An answer button's text: the English line, then the Japanese line under it. English mode has
+// no Japanese line ("" in en.js), so the button shows English only.
+function answerLabel(prefix) {
+  const ja = t(`${prefix}.ja`);
+  return <>{t(`${prefix}.en`)}{ja && <><br />{ja}</>}</>;
+}
+
 // 答えを見る before the flip; after it, the まだ / わかった buttons with a reassuring note below them
 // (below, so the buttons themselves never move).
 export function AnswerArea({ revealed, onReveal, onAnswer, answerSize, wide = false }) {
@@ -31,8 +38,8 @@ export function AnswerArea({ revealed, onReveal, onAnswer, answerSize, wide = fa
   return (
     <div style={{ display: "grid", gap: 8 }}>
       <div style={{ display: "flex", gap: 10 }}>
-        <button style={{ ...btnDanger, flex: 1, ...answerSize }} onClick={() => onAnswer(false)}>{t("review.notYet.en")}<br />{t("review.notYet.ja")}</button>
-        <button style={{ ...btnPrimary, flex: 1, ...answerSize }} onClick={() => onAnswer(true)}>{t("review.gotIt.en")}<br />{t("review.gotIt.ja")}</button>
+        <button style={{ ...btnDanger, flex: 1, ...answerSize }} onClick={() => onAnswer(false)}>{answerLabel("review.notYet")}</button>
+        <button style={{ ...btnPrimary, flex: 1, ...answerSize }} onClick={() => onAnswer(true)}>{answerLabel("review.gotIt")}</button>
       </div>
       <p style={{ fontSize: wide ? 15 : 13, color: colors.muted, margin: 0, textAlign: "center" }}>
         {t("review.notYetNote")}

@@ -97,7 +97,7 @@ export default function GachaScreen({ status, pulling, error, onPull, onOpenColl
           <div style={{ fontSize: 14 }}>{t("gacha.ticketTomorrow")}</div>
         ) : (
           <div style={{ fontSize: 14 }}>
-            {tx("gacha.toNextTicket", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, color: colors.gold }}>{toNext}</span> })}
+            {tx("gacha.toNextTicket", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, color: colors.gold }}>{toNext}</span>, count: toNext })}
           </div>
         )}
         <div

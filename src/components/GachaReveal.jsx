@@ -3,7 +3,7 @@ import { colors, fontDisplay, fontBody, btnGhost } from '../styles/theme';
 import { rarityInfo, rarityGlow } from '../lib/gacha';
 import AvatarPicture from './AvatarPicture';
 import { reduceMotionOn } from '../lib/settings';
-import { t, tx } from '../i18n';
+import { t, tx, getLang } from '../i18n';
 
 const ANIMATION_MS = 2000;
 
@@ -94,7 +94,7 @@ export default function GachaReveal({ result, equipped, equipping, pulling, onEq
           <div>
             <div style={{ fontSize: 12, color: colors.muted }}>{t("gacha.avatar")}</div>
             <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 28, lineHeight: 1.3 }}>{avatar.name_en}</div>
-            <div style={{ fontSize: 15, color: colors.muted }}>{avatar.name_ja}</div>
+            {getLang() !== "en" && <div style={{ fontSize: 15, color: colors.muted }}>{avatar.name_ja}</div>}
           </div>
 
           <button

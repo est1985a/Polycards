@@ -2,7 +2,7 @@
 // Each entry is a key and its text. {name} in a text is a placeholder: the app fills it in
 // (a number, a word, a date…). Keep every placeholder when writing another language.
 // An entry may also be a function of the placeholders, e.g. ({ n }) => (n === 1 ? "1 card" : `${n} cards`),
-// for text that changes with a number (English plurals).
+// for text that changes with a number (English plurals). "" means "show nothing here".
 // Not in here: the login screen (always Japanese), word and card content from the database,
 // avatar names, theme names and the direction labels ("English to Japanese" / "Japanese to English").
 export default {
@@ -37,14 +37,14 @@ export default {
   "myCards.sessionCount": "{n}枚", // pill on the review button: cards in this review
   "myCards.nothingDue": "復習するカードはありません",
   "myCards.nextReview": "次の復習：{when}に {n}枚", // {when} is a time.* text, e.g. 2時間後 / 10月15日
-  "myCards.nothingDueAlert": "今は復習するカードがありません。(Nothing is due right now.)", // browser alert
+  "myCards.nothingDueAlert": "今は復習するカードがありません。", // browser alert
   "myCards.mastered": "Mastered {n}", // button that opens the Mastered list; {n} = number of Mastered cards
   "myCards.myDecks": "マイデッキ", // heading of the student's decks
   "myCards.deckDue": "復習 {n}枚", // pill on a deck row: due cards in that deck
   "myCards.deckNothingDue": "今は復習なし",
   "myCards.remove": "削除 (Remove)", // the × on a deck row
   "myCards.removing": "削除中...",
-  "myCards.removeConfirm": "「{name}」をマイカードから削除しますか？\nRemove \"{name}\" from My Cards? Your review progress for this deck will be lost.", // browser confirm; {name} = deck name
+  "myCards.removeConfirm": "「{name}」をマイカードから削除しますか？このデッキの復習の記録は消えます。", // browser confirm; {name} = deck name
   "myCards.empty.heading": "まだデッキがありません", // shown when no decks are added yet
   "myCards.empty.body": "「Card Sets」タブで教科書のユニットを選んで、「＋ マイカードに追加」を押しましょう。追加したカードはここで復習できます。",
   "myCards.empty.button": "Card Setsを見る", // button that opens the Card Sets tab
@@ -148,11 +148,11 @@ export default {
   "cardSets.comingSoon": "準備中 — Coming soon",
   "cardSets.comingSoonNote": "英検などのセットは、もうすぐ追加されます。",
   "cardSets.back": "← {label}", // back button; {label} = the screen it goes back to (Card Sets, Textbooks, or a textbook name)
-  "cardSets.loading": "Loading library from database...",
+  "cardSets.loading": "ライブラリを読み込み中…",
   "cardSets.levelSwitchLabel": "School level", // read aloud for the 中学 / 高校 switch
   "cardSets.levelJHS": "中学 · JHS",
   "cardSets.levelHS": "高校 · HS",
-  "cardSets.levelOther": "Other",
+  "cardSets.levelOther": "その他",
   "cardSets.noTextbooks": "まだ教科書がありません。",
   "cardSets.noUnits": "まだユニットがありません。",
   "cardSets.noDecks": "まだデッキがありません。",
@@ -163,8 +163,8 @@ export default {
   "cardSets.add": "＋ マイカードに追加 (Add to My Cards)",
   "cardSets.adding": "追加中...",
   "cardSets.added": "✓ マイカードに追加済み (Added to My Cards)",
-  "cardSets.deckEmpty": "No cards found in this deck yet!", // browser alert
-  "cardSets.signInToAdd": "Sign in with Google to save decks to My Cards.", // browser alert
+  "cardSets.deckEmpty": "このデッキにはまだカードがありません。", // browser alert
+  "cardSets.signInToAdd": "マイカードに追加するには、ログインしてください。", // browser alert
 
   // Word list of a Card Sets deck (before the drill)
   "wordList.wordCount": "{n}語",
@@ -229,6 +229,9 @@ export default {
   "settings.display": "表示", // section with reduce motion
   "settings.reduceMotion": "カードの動きを減らす",
   "settings.reduceMotionNote": "カードをめくる動きやキラキラを止めます",
+  "settings.language": "言語 / Language", // same text in every language, so a student can always find the way back
+  "settings.languageJa": "日本語", // same text in every language
+  "settings.languageEn": "English", // same text in every language
 
   // Themes: status lines on the tiles, the small preview, and the unlock pop-up
   "themes.fromStart": "はじめから", // available from the start

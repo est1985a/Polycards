@@ -57,7 +57,7 @@ export default function CardSetsHub({ onOpenTextbooks, onOpenTests }) {
       <div>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
           <h2 style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 28, margin: 0, color: colors.text }}>{t("cardSets.title")}</h2>
-          <span style={{ fontSize: 14, fontWeight: 700, color: colors.muted }}>{t("cardSets.titleJa")}</span>
+          {t("cardSets.titleJa") && <span style={{ fontSize: 14, fontWeight: 700, color: colors.muted }}>{t("cardSets.titleJa")}</span>}
         </div>
         <p style={{ margin: "6px 0 0", fontSize: 14, color: colors.muted }}>{t("cardSets.hubIntro")}</p>
       </div>

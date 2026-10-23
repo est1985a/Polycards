@@ -1,11 +1,12 @@
 // Tests for the settings saved on the device. Run with: npm test
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
   loadSessionSize, saveSessionSize, loadReduceMotion, saveReduceMotion,
   loadThemeCache, saveThemeCache, clearThemeCache, loadSeenThemes, saveSeenThemes,
-  applyReduceMotion, reduceMotionOn, devThemeOverride,
+  applyReduceMotion, reduceMotionOn, devThemeOverride, loadLang, saveLang, applyLang,
 } from './settings';
+import { getLang, setLang } from '../i18n';
 
 const memory = () => {
   const data = {};
@@ -44,6 +45,40 @@ describe('1回の枚数 (polycards.sessionSize)', () => {
     expect(loadSessionSize(blocked)).toBe(20);
     expect(() => saveSessionSize(blocked, 10)).not.toThrow();
     expect(loadSessionSize(undefined)).toBe(20);
+  });
+});
+
+describe('言語 / Language (polycards.lang)', () => {
+  afterEach(() => setLang('ja'));
+
+  it('is Japanese by default and remembers the choice', () => {
+    const storage = memory();
+    expect(loadLang(storage)).toBe('ja');
+    saveLang(storage, 'en');
+    expect(storage.getItem('polycards.lang')).toBe('en');
+    expect(loadLang(storage)).toBe('en');
+    saveLang(storage, 'ja');
+    expect(loadLang(storage)).toBe('ja');
+  });
+
+  it('falls back to Japanese for unknown values or blocked storage', () => {
+    const storage = memory();
+    for (const bad of ['fr', 'EN', 'english', '']) {
+      storage.setItem('polycards.lang', bad);
+      expect(loadLang(storage), bad).toBe('ja');
+    }
+    expect(loadLang(blocked)).toBe('ja');
+    expect(() => saveLang(blocked, 'en')).not.toThrow();
+  });
+
+  it('switches the app text and sets <html lang>', () => {
+    const root = { lang: 'ja' };
+    expect(applyLang('en', root)).toBe('en');
+    expect(getLang()).toBe('en');
+    expect(root.lang).toBe('en');
+    expect(applyLang('xx', root)).toBe('ja');
+    expect(getLang()).toBe('ja');
+    expect(root.lang).toBe('ja');
   });
 });
 

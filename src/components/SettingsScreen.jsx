@@ -88,12 +88,47 @@ export function SessionSizeSwitch({ size, onChange }) {
                 fontFamily: fontBody, fontWeight: 700, fontSize: 15, whiteSpace: "nowrap", cursor: "pointer",
               }}
             >
-              {tx("settings.sessionSizeOption", { n: <span style={{ fontFamily: fontDisplay }}>{n}</span> })}
+              {tx("settings.sessionSizeOption", { n: <span style={{ fontFamily: fontDisplay }}>{n}</span>, count: n })}
             </button>
           );
         })}
       </div>
       <span style={{ fontSize: 12, color: colors.muted }}>{t("settings.sessionSizeNote")}</span>
+    </div>
+  );
+}
+
+// 言語 / Language: 日本語 / English. The label and both choices are the same in every language,
+// so a student can always find the way back.
+export function LanguageSwitch({ lang, onChange }) {
+  const choices = [["ja", t("settings.languageJa")], ["en", t("settings.languageEn")]];
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      <span style={{ fontSize: 15, fontWeight: 700, color: colors.text }}>{t("settings.language")}</span>
+      <div
+        role="group"
+        aria-label={t("settings.language")}
+        style={{ display: "flex", gap: 4, padding: 4, borderRadius: 999, background: colors.surface, border: `2px solid ${colors.line}` }}
+      >
+        {choices.map(([code, label]) => {
+          const selected = code === lang;
+          return (
+            <button
+              key={code}
+              lang={code}
+              onClick={() => onChange(code)}
+              aria-pressed={selected}
+              style={{
+                flex: 1, minWidth: 0, minHeight: 44, padding: "0 8px", borderRadius: 999, border: "none",
+                background: selected ? colors.accent : "transparent", color: selected ? colors.accentInk : colors.muted,
+                fontFamily: fontBody, fontWeight: 700, fontSize: 15, whiteSpace: "nowrap", cursor: "pointer",
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -112,11 +147,13 @@ function Section({ title, children }) {
 // themes holds only Midnight). currentTheme: the key in use; rank: the student's rank (null while
 // loading: tiles show without locks or status lines and can't be tapped). onChooseTheme(key) applies and saves.
 // themeError: the save error to show. The 答え方 switch shares App's state with the one on My Cards.
+// lang / onLangChange: the 言語 / Language switch (saved on the device by App).
 export default function SettingsScreen({
   themes, themesFailed = false, currentTheme, rank, onChooseTheme, themeError = null,
   sessionSize, onSessionSizeChange,
   answerMode, onAnswerModeChange, handwritingEnabled = false,
   reduceMotion, onReduceMotionChange,
+  lang = "ja", onLangChange = () => {},
   onBack, wide = false,
 }) {
   const [lockedNote, setLockedNote] = useState(null);
@@ -179,6 +216,7 @@ export default function SettingsScreen({
           </button>
           <span style={{ fontSize: 12, color: colors.muted }}>{t("settings.reduceMotionNote")}</span>
         </div>
+        <LanguageSwitch lang={lang} onChange={onLangChange} />
       </Section>
     </div>
   );

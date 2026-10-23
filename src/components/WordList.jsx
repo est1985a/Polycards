@@ -90,7 +90,7 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
         <h2 style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, margin: 0, color: colors.text }}>{activeSet.name}</h2>
         <span style={{ fontSize: 14, color: colors.muted, whiteSpace: "nowrap" }}>
-          {tx("wordList.wordCount", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700 }}>{words.length}</span> })}
+          {tx("wordList.wordCount", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700 }}>{words.length}</span>, count: words.length })}
         </span>
       </div>
 

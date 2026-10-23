@@ -12,7 +12,7 @@ function PlanSection({ title, section, emptyText }) {
         <span>{title}</span>
         {section.total > 0 && (
           <span style={{ fontSize: 14, fontWeight: 700, color: colors.muted }}>
-            {tx("reviewPlan.total", { n: <span style={{ fontFamily: fontDisplay, color: colors.gold }}>{section.total.toLocaleString('en-US')}</span> })}
+            {tx("reviewPlan.total", { n: <span style={{ fontFamily: fontDisplay, color: colors.gold }}>{section.total.toLocaleString('en-US')}</span>, count: section.total })}
           </span>
         )}
       </h3>
@@ -24,10 +24,10 @@ function PlanSection({ title, section, emptyText }) {
             <li key={h.label} style={{ display: "flex", alignItems: "baseline", gap: 12, padding: "8px 0", borderTop: `1px solid ${colors.line}` }}>
               <span style={{ flex: 1, fontFamily: fontDisplay, fontSize: 16 }}>{h.label}</span>
               <span style={{ fontSize: 15 }}>
-                {tx("reviewPlan.hourCount", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700, color: colors.gold }}>{h.count.toLocaleString('en-US')}</span> })}
+                {tx("reviewPlan.hourCount", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700, color: colors.gold }}>{h.count.toLocaleString('en-US')}</span>, count: h.count })}
               </span>
               <span style={{ minWidth: 64, textAlign: "right", fontSize: 13, color: colors.muted }}>
-                {tx("reviewPlan.runningTotal", { n: <span style={{ fontFamily: fontDisplay }}>{h.runningTotal.toLocaleString('en-US')}</span> })}
+                {tx("reviewPlan.runningTotal", { n: <span style={{ fontFamily: fontDisplay }}>{h.runningTotal.toLocaleString('en-US')}</span>, count: h.runningTotal })}
               </span>
             </li>
           ))}
