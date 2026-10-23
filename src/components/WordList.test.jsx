@@ -74,8 +74,13 @@ describe('WordRow', () => {
 });
 
 describe('WordList sticky switch', () => {
-  it('keeps the hide switch in a sticky bar with a solid background', () => {
-    expect(renderList()).toMatch(/<div style="position:sticky;top:0;[^"]*background:var\(--bg\)[^"]*"><button role="switch"/);
+  it('keeps the hide switch in a sticky frosted bar (surface at 85% plus a blur)', () => {
+    const html = renderList();
+    expect(html).toMatch(/<div style="position:sticky;top:0;[^"]*"><button role="switch"/);
+    const bar = html.match(/<div style="(position:sticky;top:0;[^"]*)"><button role="switch"/)[1];
+    expect(bar).toContain('background:color-mix(in srgb, var(--surface) 85%, transparent)');
+    expect(bar).toContain('backdrop-filter:blur(10px)');
+    expect(bar).toContain('-webkit-backdrop-filter:blur(10px)');
   });
 });
 

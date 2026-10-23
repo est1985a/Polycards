@@ -95,8 +95,15 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
 
       <AddDeckButton isAdded={isAdded} saving={saving} onAdd={onAddDeck} />
 
-      {/* The switch stays at the top while the list scrolls under it (solid background). */}
-      <div style={{ position: "sticky", top: 0, zIndex: 5, background: colors.bg, padding: "4px 0", margin: "-4px 0" }}>
+      {/* The switch stays at the top while the list scrolls under it: frosted glass (surface at 85% plus
+          a blur), so a theme's backdrop shows through softly and the text stays readable. */}
+      <div
+        style={{
+          position: "sticky", top: 0, zIndex: 5, padding: "4px 12px", margin: "-4px -12px", borderRadius: 14,
+          background: `color-mix(in srgb, ${colors.surface} 85%, transparent)`,
+          backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+        }}
+      >
         <button
           role="switch"
           aria-checked={hideJa}

@@ -35,26 +35,29 @@ function TileBadge({ kind }) {
 }
 
 // One theme: the live preview, the name and when it unlocks. Locked tiles do nothing but ask
-// the screen to show ランク N になると使えます.
+// the screen to show ランク N になると使えます. rank null (still loading): no status line, no lock,
+// and the tile can't be tapped yet, so nothing flashes as locked.
 export function ThemeTile({ item, rank, selected, onChoose, onLocked }) {
-  const locked = !isUnlocked(item, rank);
+  const pending = rank == null;
+  const locked = !pending && !isUnlocked(item, rank);
   return (
     <button
       onClick={() => (locked ? onLocked(item) : onChoose(item.key))}
+      disabled={pending}
       aria-pressed={selected}
       aria-disabled={locked || undefined}
-      aria-label={`${item.name}（${unlockLabel(item, rank)}）`}
+      aria-label={pending ? item.name : `${item.name}（${unlockLabel(item, rank)}）`}
       data-theme-key={item.key}
       style={{
         position: "relative", display: "grid", gap: 6, alignContent: "start", padding: 8, minWidth: 0,
         background: colors.surface, border: `2px solid ${selected ? colors.accent : colors.line}`, borderRadius: 18,
         boxShadow: selected ? `0 0 0 2px ${colors.accent}` : "none",
-        textAlign: "left", fontFamily: fontBody, color: colors.text, cursor: locked ? "default" : "pointer",
+        textAlign: "left", fontFamily: fontBody, color: colors.text, cursor: locked || pending ? "default" : "pointer",
       }}
     >
-      <ThemePreview theme={item.theme} locked={locked} radius={12} />
+      <ThemePreview theme={item.theme} rank={rank} locked={locked} radius={12} />
       <span style={{ padding: "2px 34px 0 4px", fontFamily: fontDisplay, fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}>{item.name}</span>
-      <span style={{ padding: "0 34px 2px 4px", fontSize: 12, color: colors.muted }}>{unlockLabel(item, rank)}</span>
+      {!pending && <span style={{ padding: "0 34px 2px 4px", fontSize: 12, color: colors.muted }}>{unlockLabel(item, rank)}</span>}
       {selected && <TileBadge kind="check" />}
       {locked && <TileBadge kind="lock" />}
     </button>
@@ -106,7 +109,7 @@ function Section({ title, children }) {
 // 設定 screen (view "settings" in App.jsx).
 // themes: themeList() rows (null while loading); themesFailed: theme_unlocks couldn't be read (then
 // themes holds only Midnight). currentTheme: the key in use; rank: the student's rank (null while
-// loading). onChooseTheme(key) applies and saves.
+// loading: tiles show without locks or status lines and can't be tapped). onChooseTheme(key) applies and saves.
 // themeError: the save error to show. The 答え方 switch shares App's state with the one on My Cards.
 export default function SettingsScreen({
   themes, themesFailed = false, currentTheme, rank, onChooseTheme, themeError = null,
@@ -116,7 +119,6 @@ export default function SettingsScreen({
   onBack, wide = false,
 }) {
   const [lockedNote, setLockedNote] = useState(null);
-  const shownRank = rank ?? 1;
 
   return (
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
@@ -141,7 +143,7 @@ export default function SettingsScreen({
                 <ThemeTile
                   key={item.key}
                   item={item}
-                  rank={shownRank}
+                  rank={rank}
                   selected={item.key === currentTheme}
                   onChoose={(key) => { setLockedNote(null); onChooseTheme(key); }}
                   onLocked={(t) => setLockedNote(`ランク ${t.unlockLevel} になると使えます`)}

@@ -633,7 +633,7 @@ function App() {
                 {planOpen && <ReviewPlanSheet rows={planRows} now={now} onClose={closePlan} />}
                 {/* New theme unlocked: only on My Cards, never during a review. */}
                 {unlock && activeTab === "myCards" && !planOpen && !aboutOpen && (
-                  <ThemeUnlockSheet item={unlock.theme} others={unlock.others} onUse={applyUnlockedTheme} onLater={markThemesSeen} />
+                  <ThemeUnlockSheet item={unlock.theme} others={unlock.others} rank={rank} onUse={applyUnlockedTheme} onLater={markThemesSeen} />
                 )}
               </div>
             ) : tabbedView ? (

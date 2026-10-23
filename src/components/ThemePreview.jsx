@@ -6,7 +6,8 @@ import LogoMark from './LogoMark';
 // The theme's CSS variables are set on this box itself, so everything inside shows that theme,
 // whatever theme the app is using. Only theme roles are used (colors.*), never fixed colors.
 // Sizes are in cqw (1% of the preview's width), so the same drawing fits a small tile or a big pop-up.
-// theme: an entry of src/themes.js. rank: the number in the mini player card.
+// theme: an entry of src/themes.js. rank: the student's rank for the mini player card (an example
+// number when there is none, e.g. in tests or while it loads).
 // locked: dimmed (a theme the student can't use yet).
 
 const u = (n) => `${n}cqw`;
@@ -101,7 +102,9 @@ function MiniCardBack() {
   );
 }
 
-export default function ThemePreview({ theme, rank = 12, locked = false, radius = 14 }) {
+const EXAMPLE_RANK = 12;
+
+export default function ThemePreview({ theme, rank = null, locked = false, radius = 14 }) {
   return (
     <div
       role="img"
@@ -120,7 +123,7 @@ export default function ThemePreview({ theme, rank = 12, locked = false, radius 
         <MiniHeader />
         <div style={{ display: "grid", gridTemplateColumns: "42% minmax(0, 1fr)", gap: u(3.4), padding: `${u(3.4)} ${u(4)} 0`, textAlign: "left" }}>
           <div style={{ display: "grid", gap: u(2.4), alignContent: "start" }}>
-            <MiniPlayer rank={rank} />
+            <MiniPlayer rank={rank ?? EXAMPLE_RANK} />
             <MiniChart />
           </div>
           <MiniCardBack />

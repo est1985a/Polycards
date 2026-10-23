@@ -83,6 +83,22 @@ describe('SettingsScreen', () => {
     expect(render({ themes: null })).toContain('読み込み中…');
   });
 
+  it('shows no tile as locked while the rank is loading, and none can be tapped yet', () => {
+    const html = render({ rank: null });
+    expect(html).not.toContain('data-badge="lock"');
+    expect(html).not.toContain('saturate(0.55)');
+    expect(html).not.toContain('で解放');
+    expect(html).not.toContain('はじめから');
+    for (const key of ['midnight', 'galaxy']) expect(tile(html, key)).toMatch(/<button[^>]*disabled=""/);
+    expect(tile(render(), 'snow')).not.toMatch(/<button[^>]*disabled=""/);
+  });
+
+  it("puts the student's rank in every preview", () => {
+    const ranks = [...render({ rank: 37 }).matchAll(/ランク<\/span><span[^>]*>(\d+)</g)].map((m) => m[1]);
+    expect(ranks).toHaveLength(10);
+    expect(new Set(ranks)).toEqual(new Set(['37']));
+  });
+
   it('has 1回の枚数, the 答え方 switch and the reduce-motion switch', () => {
     const html = render({ answerMode: 'typing', reduceMotion: true });
     expect(html).toContain('1回の復習で出てくるカードの数');
@@ -139,19 +155,25 @@ describe('ThemePreview', () => {
     expect(html).toContain('color-mix(in srgb, var(--text) 18%, transparent)');
     expect(html).toContain('aria-label="Neon Tokyo のプレビュー"');
   });
+
+  it('shows an example rank only when there is none', () => {
+    expect(renderToStaticMarkup(<ThemePreview theme={themes.snow} />)).toMatch(/ランク<\/span><span[^>]*>12</);
+    expect(renderToStaticMarkup(<ThemePreview theme={themes.snow} rank={null} />)).toMatch(/ランク<\/span><span[^>]*>12</);
+  });
 });
 
 describe('ThemeUnlockSheet', () => {
   const lagoon = list.find((t) => t.key === 'lagoon');
 
   it('shows the rank, the theme, a big preview and both buttons', () => {
-    const html = renderToStaticMarkup(<ThemeUnlockSheet item={lagoon} others={3} onUse={noop} onLater={noop} />);
+    const html = renderToStaticMarkup(<ThemeUnlockSheet item={lagoon} others={3} rank={23} onUse={noop} onLater={noop} />);
     expect(html).toContain('role="dialog"');
     expect(html).toMatch(/color:var\(--gold\)[^>]*>ランク (<!-- -->)?20(<!-- -->)? 達成！/);
     expect(html).toContain('新しいテーマ「<span style="font-weight:700">Lagoon</span>」が解放されました');
     expect(html).toContain('data-theme-preview');
     expect(html).not.toContain('saturate(0.55)');
     expect(html).toContain('ほかにも 3 つのテーマが解放されています');
+    expect(html).toMatch(/ランク<\/span><span[^>]*>23</); // the preview shows the student's own rank
     expect(html).toContain('今すぐ使う');
     expect(html).toContain('あとで');
   });

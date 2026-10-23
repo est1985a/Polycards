@@ -4,11 +4,12 @@ import { shouldCloseSheet } from '../lib/sheet';
 import ThemePreview from './ThemePreview';
 
 // Pop-up on My Cards when a new theme has been unlocked (featuredUnlock in src/lib/themeUnlocks.js).
-// item: the new theme with the highest unlock rank; others: how many more are new.
+// item: the new theme with the highest unlock rank; others: how many more are new; rank: the student's
+// rank (shown in the preview).
 // onUse: applies and saves the theme (App closes the sheet when it worked; if it throws, the sheet
 // stays open with the error). onLater: closes (also for ×-less exits: Escape, a tap on the backdrop).
 // Same pop-up classes and focus handling as AboutSheet.
-export default function ThemeUnlockSheet({ item, others = 0, onUse, onLater }) {
+export default function ThemeUnlockSheet({ item, others = 0, rank = null, onUse, onLater }) {
   const firstRef = useRef(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -54,7 +55,7 @@ export default function ThemeUnlockSheet({ item, others = 0, onUse, onLater }) {
         <p style={{ margin: 0, fontSize: 16, lineHeight: 1.6 }}>
           新しいテーマ「<span style={{ fontWeight: 700 }}>{item.name}</span>」が解放されました
         </p>
-        <ThemePreview theme={item.theme} rank={item.unlockLevel} radius={16} />
+        <ThemePreview theme={item.theme} rank={rank} radius={16} />
         {others > 0 && (
           <p style={{ margin: 0, fontSize: 14, color: colors.muted }}>ほかにも {others} つのテーマが解放されています</p>
         )}
