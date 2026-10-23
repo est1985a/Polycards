@@ -45,9 +45,9 @@ export default {
   "myCards.remove": "削除 (Remove)", // the × on a deck row
   "myCards.removing": "削除中...",
   "myCards.removeConfirm": "「{name}」をマイカードから削除しますか？\nRemove \"{name}\" from My Cards? Your review progress for this deck will be lost.", // browser confirm; {name} = deck name
-  "myCards.empty.title": "Your Personal Rotation", // shown when no decks are added yet
-  "myCards.empty.text": "You haven't saved any sets yet! Go to the {cardSets} tab to find vocabulary lists and add them to your SRS schedule.",
-  "myCards.empty.cardSets": "Card Sets", // the bold tab name inside myCards.empty.text
+  "myCards.empty.heading": "まだデッキがありません", // shown when no decks are added yet
+  "myCards.empty.body": "「Card Sets」タブで教科書のユニットを選んで、「＋ マイカードに追加」を押しましょう。追加したカードはここで復習できます。",
+  "myCards.empty.button": "Card Setsを見る", // button that opens the Card Sets tab
 
   // Player card and level chart on My Cards
   "stats.rankLabel": "ランク", // small label above the big "Rank N"

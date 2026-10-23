@@ -606,6 +606,7 @@ function App() {
                     stats={stats}
                     avatar={gacha?.equipped_avatar ?? null}
                     answerMode={answerMode}
+                    onOpenCardSets={() => changeTab("cardSets")}
                     onAnswerModeChange={changeAnswerMode}
                     handwritingEnabled={HANDWRITING_ENABLED}
                     sessionSize={sessionSize}

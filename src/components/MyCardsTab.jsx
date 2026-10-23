@@ -1,4 +1,4 @@
-import { colors, fontBody, fontDisplay, panel, wideLayout } from '../styles/theme';
+import { colors, fontBody, fontDisplay, panel, wideLayout, btnPrimary } from '../styles/theme';
 import { DEFAULT_SESSION_SIZE, MASTERED, extraDueTotal } from '../lib/srs';
 import PlayerStats from './PlayerStats';
 import LevelChart from './LevelChart';
@@ -192,7 +192,7 @@ function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
 }
 
 // wide: two columns (player card, review button, chart, Mastered | マイデッキ in a 2-column grid).
-export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, answerMode = "off", onAnswerModeChange = () => {}, handwritingEnabled = false, sessionSize = DEFAULT_SESSION_SIZE, onReview, onOpenPlan, onOpenAbout = () => {}, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
+export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, answerMode = "off", onAnswerModeChange = () => {}, handwritingEnabled = false, sessionSize = DEFAULT_SESSION_SIZE, onReview, onOpenPlan, onOpenAbout = () => {}, onOpenCardSets = () => {}, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
   // A word can be in several decks, so a due card counts toward each of them.
   const dueByDeck = {};
   dueRows.forEach((r) => {
@@ -216,10 +216,11 @@ export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar =
       <h2 style={{ fontSize: 16, fontWeight: 700, margin: wide ? 0 : "8px 0 0", color: colors.text, gridColumn: "1 / -1" }}>{t("myCards.myDecks")}</h2>
       {decks.length === 0 ? (
         <div style={{ ...panel, padding: 24, textAlign: "center", gridColumn: "1 / -1" }}>
-          <h3 style={{ margin: "0 0 10px", color: colors.text }}>{t("myCards.empty.title")}</h3>
-          <p style={{ fontSize: 14, color: colors.text }}>
-            {tx("myCards.empty.text", { cardSets: <strong>{t("myCards.empty.cardSets")}</strong> })}
-          </p>
+          <h3 style={{ margin: "0 0 10px", color: colors.text }}>{t("myCards.empty.heading")}</h3>
+          <p style={{ fontSize: 14, color: colors.text }}>{t("myCards.empty.body")}</p>
+          <button onClick={onOpenCardSets} style={{ ...btnPrimary, minHeight: 48, padding: "0 20px", fontSize: 16 }}>
+            {t("myCards.empty.button")}
+          </button>
         </div>
       ) : (
         decks.map((deck) => (
