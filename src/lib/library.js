@@ -1,5 +1,6 @@
 // Card Sets library: shaping the textbooks query and the drill-down navigation rules.
 // Pure functions (no database), tested in library.test.js.
+import { t } from '../i18n';
 
 const SCHOOL_ORDER = { JHS: 0, HS: 1 }; // anything else (Other) comes last
 
@@ -59,9 +60,9 @@ export function resolvePath(textbooks, path) {
 }
 
 export function schoolLabel(level) {
-  if (level === "JHS") return "中学 · JHS";
-  if (level === "HS") return "高校 · HS";
-  return "Other";
+  if (level === "JHS") return t("cardSets.levelJHS");
+  if (level === "HS") return t("cardSets.levelHS");
+  return t("cardSets.levelOther");
 }
 
 // School-level switch on the Textbooks screen ------------------------------------------

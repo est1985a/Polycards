@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { colors, fontDisplay, fontBody } from '../styles/theme';
 import WordInfo from './WordInfo';
 import { directionLabel } from '../lib/drill';
+import { t } from '../i18n';
 
 // Flip: 650 ms with a small overshoot. Turned off for "reduce motion" in src/index.css.
 const FLIP = "transform 650ms cubic-bezier(0.34, 1.45, 0.55, 1)";
@@ -22,7 +23,7 @@ function LevelChip({ level }) {
         borderRadius: 999, border: `2px solid color-mix(in srgb, ${colors.gold} 45%, transparent)`,
       }}
     >
-      Lv {level}
+      {t("review.levelChip", { n: level })}
     </span>
   );
 }
@@ -88,7 +89,7 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
               className="tap-hint"
               style={{ fontSize: 13, color: colors.muted, animation: revealed ? "none" : "polycards-pulse 0.9s ease-in-out infinite alternate" }}
             >
-              タップしてめくる
+              {t("review.tapToFlip")}
             </span>
           )}
         </Front>
@@ -113,7 +114,7 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
                     background: colors.accent, color: colors.accentInk,
                   }}
                 >
-                  答え
+                  {t("review.answerPill")}
                 </span>
                 {showLevel && <LevelChip level={card.level} />}
               </div>

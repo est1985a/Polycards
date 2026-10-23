@@ -4,6 +4,7 @@ import { colors, fontDisplay, fontBody, gutter, panel, btnPrimary, wideLayout } 
 import AddDeckButton from './AddDeckButton';
 import Highlighted from './Highlighted';
 import ToggleSwitch from './ToggleSwitch';
+import { t, tx } from '../i18n';
 
 const blurred = { filter: "blur(6px)", userSelect: "none" };
 
@@ -22,7 +23,7 @@ export function WordRow({ word, hideJa, revealed, first, onToggle }) {
   const jp = hideJa ? (
     <button
       onClick={onToggle}
-      aria-label={`${hidden ? "日本語を見る" : "日本語をかくす"}: ${word.en}`}
+      aria-label={hidden ? t("wordList.showWord", { word: word.en }) : t("wordList.hideWord", { word: word.en })}
       style={{
         position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "flex-end",
         minHeight: 44, minWidth: 96, boxSizing: "border-box", padding: "0 10px", margin: "-4px -10px -4px 0",
@@ -39,7 +40,7 @@ export function WordRow({ word, hideJa, revealed, first, onToggle }) {
             fontFamily: fontBody, fontSize: 12, color: colors.muted, whiteSpace: "nowrap",
           }}
         >
-          タップで表示
+          {t("wordList.tapToShow")}
         </span>
       )}
     </button>
@@ -89,7 +90,7 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
         <h2 style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, margin: 0, color: colors.text }}>{activeSet.name}</h2>
         <span style={{ fontSize: 14, color: colors.muted, whiteSpace: "nowrap" }}>
-          <span style={{ fontFamily: fontDisplay, fontWeight: 700 }}>{words.length}</span>語
+          {tx("wordList.wordCount", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700 }}>{words.length}</span> })}
         </span>
       </div>
 
@@ -113,7 +114,7 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
             padding: 0, background: "transparent", border: "none", cursor: "pointer", fontSize: 15, color: colors.text,
           }}
         >
-          <span>日本語をかくす</span>
+          <span>{t("wordList.hideSwitch")}</span>
           <ToggleSwitch on={hideJa} />
         </button>
       </div>
@@ -141,7 +142,7 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
         }}
       >
         <button onClick={onStart} style={{ ...btnPrimary, width: "100%", minHeight: 56, fontSize: 17 }}>
-          ドリルを始める (Start drill)
+          {t("wordList.startDrill")}
         </button>
       </div>
     </div>

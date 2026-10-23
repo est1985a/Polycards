@@ -3,6 +3,7 @@ import { parentPath, resolvePath, schoolLabel, levelOptions, pickLevel, textbook
 import CardSetsHub from './CardSetsHub';
 import NavRow from './NavRow';
 import LevelSwitch from './LevelSwitch';
+import { t, tx } from '../i18n';
 
 // "← back" button above every Card Sets list. label: the name of the screen it goes back to.
 function BackButton({ label, onClick }) {
@@ -16,7 +17,7 @@ function BackButton({ label, onClick }) {
         overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
       }}
     >
-      ← {label}
+      {t("cardSets.back", { label })}
     </button>
   );
 }
@@ -50,7 +51,7 @@ function AddedBadge() {
       <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
         <polyline points="2,6.5 5,9.5 10,3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      追加済み
+      {t("cardSets.addedBadge")}
     </span>
   );
 }
@@ -83,10 +84,10 @@ export default function CardSetsTab({ textbooks, loading, path, onNavigate, onOp
   );
 
   if (current.screen === "tests") {
-    return screen("Card Sets", "Tests & Themes", "テスト・テーマ別", (
+    return screen(t("cardSets.title"), t("cardSets.tests"), t("cardSets.testsLabel"), (
       <EmptyPanel>
-        <div style={{ fontSize: 18, fontWeight: 700, color: colors.text, marginBottom: 6 }}>準備中 — Coming soon</div>
-        英検などのセットは、もうすぐ追加されます。
+        <div style={{ fontSize: 18, fontWeight: 700, color: colors.text, marginBottom: 6 }}>{t("cardSets.comingSoon")}</div>
+        {t("cardSets.comingSoonNote")}
       </EmptyPanel>
     ));
   }
@@ -94,20 +95,20 @@ export default function CardSetsTab({ textbooks, loading, path, onNavigate, onOp
   // The list screens need the library; show "loading" only before it first arrives,
   // so coming back to the dashboard doesn't flash the list away.
   if (loading && textbooks.length === 0) {
-    return <p style={{ textAlign: "center", color: colors.muted }}>Loading library from database...</p>;
+    return <p style={{ textAlign: "center", color: colors.muted }}>{t("cardSets.loading")}</p>;
   }
 
   if (current.screen === "textbooks") {
     const options = levelOptions(textbooks);
     const shown = pickLevel(level, options);
     const list = textbooksForLevel(textbooks, shown);
-    return screen("Card Sets", "Textbooks", "教科書から探す", list.length === 0
-      ? <EmptyPanel>まだ教科書がありません。</EmptyPanel>
+    return screen(t("cardSets.title"), t("cardSets.textbooks"), t("cardSets.textbooksLabel"), list.length === 0
+      ? <EmptyPanel>{t("cardSets.noTextbooks")}</EmptyPanel>
       : list.map((tb) => (
         <NavRow
           key={tb.id}
           title={tb.name}
-          pill={<>{count(tb.units.length)} ユニット</>}
+          pill={tx("cardSets.unitCount", { n: count(tb.units.length) })}
           onClick={() => onNavigate({ screen: "units", textbookId: tb.id, level: shown })}
         />
       )),
@@ -115,13 +116,13 @@ export default function CardSetsTab({ textbooks, loading, path, onNavigate, onOp
   }
 
   if (current.screen === "units") {
-    return screen("Textbooks", textbook.name, schoolLabel(textbook.school_level), textbook.units.length === 0
-      ? <EmptyPanel>まだユニットがありません。</EmptyPanel>
+    return screen(t("cardSets.textbooks"), textbook.name, schoolLabel(textbook.school_level), textbook.units.length === 0
+      ? <EmptyPanel>{t("cardSets.noUnits")}</EmptyPanel>
       : textbook.units.map((u) => (
         <NavRow
           key={u.id}
           title={u.name}
-          pill={<>{count(u.decks.length)} デッキ</>}
+          pill={tx("cardSets.deckCount", { n: count(u.decks.length) })}
           onClick={() => onNavigate({ screen: "decks", textbookId: textbook.id, unitId: u.id, level })}
         />
       )));
@@ -129,12 +130,12 @@ export default function CardSetsTab({ textbooks, loading, path, onNavigate, onOp
 
   // decks
   return screen(textbook.name, unit.name, textbook.name, unit.decks.length === 0
-    ? <EmptyPanel>まだデッキがありません。</EmptyPanel>
+    ? <EmptyPanel>{t("cardSets.noDecks")}</EmptyPanel>
     : unit.decks.map((deck) => (
       <NavRow
         key={deck.id}
         title={deck.name}
-        pill={<>{count(deck.wordCount)}語</>}
+        pill={tx("cardSets.wordCount", { n: count(deck.wordCount) })}
         badge={isDeckAdded(myDeckIds, deck.id) && <AddedBadge />}
         onClick={() => onOpenDeck(deck)}
         disabled={disabled}

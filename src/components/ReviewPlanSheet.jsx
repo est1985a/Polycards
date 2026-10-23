@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { colors, fontDisplay } from '../styles/theme';
 import { groupReviewPlan } from '../lib/schedule';
 import { shouldCloseSheet } from '../lib/sheet';
+import { t, tx } from '../i18n';
 
 // One section (今日 or 明日): its total, then one row per hour that has cards.
 function PlanSection({ title, section, emptyText }) {
@@ -11,7 +12,7 @@ function PlanSection({ title, section, emptyText }) {
         <span>{title}</span>
         {section.total > 0 && (
           <span style={{ fontSize: 14, fontWeight: 700, color: colors.muted }}>
-            合計 <span style={{ fontFamily: fontDisplay, color: colors.gold }}>{section.total.toLocaleString('en-US')}</span>枚
+            {tx("reviewPlan.total", { n: <span style={{ fontFamily: fontDisplay, color: colors.gold }}>{section.total.toLocaleString('en-US')}</span> })}
           </span>
         )}
       </h3>
@@ -23,10 +24,10 @@ function PlanSection({ title, section, emptyText }) {
             <li key={h.label} style={{ display: "flex", alignItems: "baseline", gap: 12, padding: "8px 0", borderTop: `1px solid ${colors.line}` }}>
               <span style={{ flex: 1, fontFamily: fontDisplay, fontSize: 16 }}>{h.label}</span>
               <span style={{ fontSize: 15 }}>
-                +<span style={{ fontFamily: fontDisplay, fontWeight: 700, color: colors.gold }}>{h.count.toLocaleString('en-US')}</span>枚
+                {tx("reviewPlan.hourCount", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700, color: colors.gold }}>{h.count.toLocaleString('en-US')}</span> })}
               </span>
               <span style={{ minWidth: 64, textAlign: "right", fontSize: 13, color: colors.muted }}>
-                計<span style={{ fontFamily: fontDisplay }}>{h.runningTotal.toLocaleString('en-US')}</span>枚
+                {tx("reviewPlan.runningTotal", { n: <span style={{ fontFamily: fontDisplay }}>{h.runningTotal.toLocaleString('en-US')}</span> })}
               </span>
             </li>
           ))}
@@ -65,11 +66,11 @@ export default function ReviewPlanSheet({ rows, now, onClose }) {
         style={{ background: colors.surface, border: `2px solid ${colors.line}`, color: colors.text, textAlign: "left" }}
       >
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <h2 id="review-plan-title" style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>復習の予定</h2>
+          <h2 id="review-plan-title" style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>{t("reviewPlan.title")}</h2>
           <button
             ref={closeRef}
             onClick={onClose}
-            aria-label="閉じる (Close)"
+            aria-label={t("common.close")}
             style={{ width: 44, height: 44, marginRight: -10, background: "transparent", border: "none", color: colors.muted, fontSize: 26, lineHeight: 1, cursor: "pointer" }}
           >
             ×
@@ -77,11 +78,11 @@ export default function ReviewPlanSheet({ rows, now, onClose }) {
         </div>
         {plan ? (
           <div style={{ display: "grid", gap: 20 }}>
-            <PlanSection title="今日" section={plan.today} emptyText="今日はもう復習はありません" />
-            <PlanSection title="明日" section={plan.tomorrow} emptyText="明日の復習はありません" />
+            <PlanSection title={t("reviewPlan.today")} section={plan.today} emptyText={t("reviewPlan.todayEmpty")} />
+            <PlanSection title={t("reviewPlan.tomorrow")} section={plan.tomorrow} emptyText={t("reviewPlan.tomorrowEmpty")} />
           </div>
         ) : (
-          <p style={{ fontSize: 14, color: colors.muted, padding: "12px 0" }}>読み込み中…</p>
+          <p style={{ fontSize: 14, color: colors.muted, padding: "12px 0" }}>{t("common.loading")}</p>
         )}
       </div>
     </div>

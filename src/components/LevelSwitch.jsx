@@ -1,5 +1,6 @@
 import { colors, fontBody } from '../styles/theme';
 import { schoolLabel } from '../lib/library';
+import { t } from '../i18n';
 
 // Segmented switch for the school level on the Textbooks screen: 中学 · JHS | 高校 · HS (| Other).
 // options: ['JHS', 'HS', ...]; value: the selected one; onChange(level).
@@ -7,7 +8,7 @@ export default function LevelSwitch({ options, value, onChange }) {
   return (
     <div
       role="group"
-      aria-label="School level"
+      aria-label={t("cardSets.levelSwitchLabel")}
       style={{
         display: "flex", gap: 4, padding: 4, borderRadius: 999,
         background: colors.surface, border: `2px solid ${colors.line}`,

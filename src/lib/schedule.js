@@ -4,6 +4,7 @@
 // "Today", "tomorrow" and clock hours are always Japan time, whatever the device is set to.
 // Japan has no daylight saving time, so Japan time is simply UTC + 9 hours.
 import { isMastered, LEVEL_HOURS } from './srs';
+import { t } from '../i18n';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -34,10 +35,10 @@ function hourLabel(time) {
 export function nextReviewWhen(time, now) {
   const wait = time - now;
   const minutes = Math.max(1, Math.ceil(wait / MINUTE));
-  if (minutes < 60) return `${minutes}分後`;
-  if (wait < DAY) return `${Math.ceil(wait / HOUR)}時間後`;
+  if (minutes < 60) return t("time.minutesLater", { n: minutes });
+  if (wait < DAY) return t("time.hoursLater", { n: Math.ceil(wait / HOUR) });
   const d = jstClock(time);
-  return `${d.getUTCMonth() + 1}月${d.getUTCDate()}日`;
+  return t("time.monthDay", { month: d.getUTCMonth() + 1, day: d.getUTCDate() });
 }
 
 // The 次の復習 line, from fetchNextReview()'s { at, count }, or null when there is nothing to show.
@@ -45,7 +46,7 @@ export function nextReviewWhen(time, now) {
 export function nextReviewSummary(next, now) {
   if (!next || next.count <= 0 || next.at <= now) return null;
   return {
-    text: `次の復習：${nextReviewWhen(next.at, now)}に ${next.count}枚`,
+    text: t("myCards.nextReview", { when: nextReviewWhen(next.at, now), n: next.count }),
     tappable: next.at < jstDayBounds(now).endOfTomorrow,
   };
 }
@@ -81,12 +82,12 @@ export function groupReviewPlan(rows, now) {
 // How long a level waits, in short Japanese ("4時間", "3日", "1週間", "4か月").
 // Under a day → hours; under a week → days; 7–13 days → 1週間; 14–29 days → 2週間; 30+ days → months of 30 days.
 export function waitLabel(hours) {
-  if (hours < 24) return `${hours}時間`;
+  if (hours < 24) return t("time.waitHours", { n: hours });
   const days = hours / 24;
-  if (days < 7) return `${Math.round(days)}日`;
-  if (days < 14) return '1週間';
-  if (days < 30) return '2週間';
-  return `${Math.round(days / 30)}か月`;
+  if (days < 7) return t("time.waitDays", { n: Math.round(days) });
+  if (days < 14) return t("time.waitOneWeek");
+  if (days < 30) return t("time.waitTwoWeeks");
+  return t("time.waitMonths", { n: Math.round(days / 30) });
 }
 
 // The level ladder in the "What is Polycards?" pop-up: Lv1 to Lv7 and their waits, from LEVEL_HOURS

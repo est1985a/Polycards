@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { colors, fontDisplay, btnPrimary, btnGhost } from '../styles/theme';
 import { shouldCloseSheet } from '../lib/sheet';
 import ThemePreview from './ThemePreview';
+import { t, tx } from '../i18n';
 
 // Pop-up on My Cards when a new theme has been unlocked (featuredUnlock in src/lib/themeUnlocks.js).
 // item: the new theme with the highest unlock rank; others: how many more are new; rank: the student's
@@ -50,14 +51,14 @@ export default function ThemeUnlockSheet({ item, others = 0, rank = null, onUse,
         style={{ background: colors.surface, border: `2px solid ${colors.line}`, color: colors.text, textAlign: "center", display: "grid", gap: 14 }}
       >
         <h2 id="theme-unlock-title" style={{ margin: "6px 0 0", fontFamily: fontDisplay, fontSize: 26, fontWeight: 700, color: colors.gold }}>
-          ランク {item.unlockLevel} 達成！
+          {t("themes.rankReached", { n: item.unlockLevel })}
         </h2>
         <p style={{ margin: 0, fontSize: 16, lineHeight: 1.6 }}>
-          新しいテーマ「<span style={{ fontWeight: 700 }}>{item.name}</span>」が解放されました
+          {tx("themes.newTheme", { name: <span style={{ fontWeight: 700 }}>{item.name}</span> })}
         </p>
         <ThemePreview theme={item.theme} rank={rank} radius={16} />
         {others > 0 && (
-          <p style={{ margin: 0, fontSize: 14, color: colors.muted }}>ほかにも {others} つのテーマが解放されています</p>
+          <p style={{ margin: 0, fontSize: 14, color: colors.muted }}>{t("themes.others", { n: others })}</p>
         )}
         {error && <div role="alert" style={{ fontSize: 14, color: colors.danger }}>{error}</div>}
         <div style={{ display: "flex", gap: 10 }}>
@@ -67,14 +68,14 @@ export default function ThemeUnlockSheet({ item, others = 0, rank = null, onUse,
             disabled={saving}
             style={{ ...btnPrimary, flex: 1, minHeight: 48, borderRadius: 14, fontSize: 16, fontWeight: 700, opacity: saving ? 0.7 : 1 }}
           >
-            {saving ? "保存中…" : "今すぐ使う"}
+            {saving ? t("themes.saving") : t("themes.useNow")}
           </button>
           <button
             onClick={onLater}
             disabled={saving}
             style={{ ...btnGhost, flex: 1, minHeight: 48, borderRadius: 14, fontSize: 16, fontWeight: 700 }}
           >
-            あとで
+            {t("themes.later")}
           </button>
         </div>
       </div>

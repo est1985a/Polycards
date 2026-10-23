@@ -1,4 +1,5 @@
 import { LABELS, LENIENT_PAIRS, MIN_TARGET_PROB } from "./config.js";
+import { t } from "../i18n";
 
 // The model's output per box → what scoreWord needs. targets: the letter to write in each box;
 // probs: 26 probabilities per box, or null for an empty box.
@@ -49,5 +50,5 @@ export function scoreWord(boxes, options) {
 
 // The warning line for one lenient pair: 「i」が「l」に見えるかも。気をつけて書こう！
 export function lenientMessage({ target, read }) {
-  return `「${target}」が「${read}」に見えるかも。気をつけて書こう！`;
+  return t("handwriting.lenient", { target, read });
 }

@@ -1,4 +1,5 @@
 import { colors, fontDisplay, tabBarHeight } from '../styles/theme';
+import { t } from '../i18n';
 
 // Small icons drawn with the current text color (currentColor).
 const ICONS = {
@@ -21,7 +22,7 @@ const ICONS = {
 };
 
 // Bottom tab bar, fixed to the bottom of the screen.
-// tabs: [{ id: 'myCards', label: 'My Cards' }, ...]
+// tabs: [{ id: 'myCards', label: 'tabs.myCards' }, ...] (label: an i18n key)
 // The active tab's icon and top line use accent (a fill); its label stays in text color,
 // because accent is not readable as text in every theme.
 // wide: the bar spans the whole screen and the tabs stay centered (240 px each).
@@ -36,12 +37,12 @@ export default function Tabs({ tabs, active, onChange, wide = false }) {
         display: "flex", justifyContent: "center", zIndex: 10,
       }}
     >
-      {tabs.map((t) => {
-        const isActive = active === t.id;
+      {tabs.map((tab) => {
+        const isActive = active === tab.id;
         return (
           <button
-            key={t.id}
-            onClick={() => onChange(t.id)}
+            key={tab.id}
+            onClick={() => onChange(tab.id)}
             aria-current={isActive ? "page" : undefined}
             style={{
               flex: wide ? "0 1 240px" : 1, height: tabBarHeight, background: "transparent",
@@ -50,9 +51,9 @@ export default function Tabs({ tabs, active, onChange, wide = false }) {
               cursor: "pointer", padding: 0,
             }}
           >
-            <span style={{ color: isActive ? colors.accent : colors.muted, display: "flex" }}>{ICONS[t.id]}</span>
+            <span style={{ color: isActive ? colors.accent : colors.muted, display: "flex" }}>{ICONS[tab.id]}</span>
             <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 14, color: isActive ? colors.text : colors.muted }}>
-              {t.label}
+              {t(tab.label)}
             </span>
           </button>
         );

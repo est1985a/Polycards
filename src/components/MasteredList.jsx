@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { colors, fontDisplay, fontBody, panel, btnGhost, btnPrimary } from '../styles/theme';
 import { directionLabel } from '../lib/drill';
 import StarIcon from './StarIcon';
+import { t } from '../i18n';
 
 const smallBtn = { minHeight: 44, padding: "8px 14px", fontSize: 14, whiteSpace: "nowrap" };
 
@@ -23,7 +24,7 @@ export function MasteredRow({ card, confirming, restoring, onAsk, onCancel, onRe
         </div>
         {!confirming && (
           <button onClick={() => onAsk(card)} style={{ ...btnGhost, ...smallBtn, flexShrink: 0 }}>
-            復習に戻す
+            {t("mastered.restore")}
           </button>
         )}
       </div>
@@ -31,20 +32,20 @@ export function MasteredRow({ card, confirming, restoring, onAsk, onCancel, onRe
       {confirming && (
         <div
           role="group"
-          aria-label="復習に戻しますか？"
+          aria-label={t("mastered.restoreConfirm")}
           style={{
             display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end", gap: 8,
             paddingTop: 10, borderTop: `1px solid ${colors.line}`,
           }}
         >
-          <span style={{ flex: 1, minWidth: 120, fontSize: 15, fontWeight: 700, color: colors.text }}>復習に戻しますか？</span>
-          <button onClick={onCancel} disabled={restoring} style={{ ...btnGhost, ...smallBtn }}>キャンセル</button>
+          <span style={{ flex: 1, minWidth: 120, fontSize: 15, fontWeight: 700, color: colors.text }}>{t("mastered.restoreConfirm")}</span>
+          <button onClick={onCancel} disabled={restoring} style={{ ...btnGhost, ...smallBtn }}>{t("common.cancel")}</button>
           <button
             onClick={() => onRestore(card)}
             disabled={restoring}
             style={{ ...btnPrimary, ...smallBtn, opacity: restoring ? 0.6 : 1 }}
           >
-            {restoring ? "…" : "戻す"}
+            {restoring ? "…" : t("mastered.restoreYes")}
           </button>
         </div>
       )}
@@ -61,12 +62,12 @@ export default function MasteredList({ cards, restoringId, onRestore }) {
     <div style={{ display: "grid", gap: 12, textAlign: "left" }}>
       <h2 style={{ display: "flex", alignItems: "center", gap: 8, margin: 0, fontFamily: fontDisplay, fontSize: 22, color: colors.text }}>
         <StarIcon size={24} />
-        Mastered
+        {t("common.mastered")}
         <span style={{ fontSize: 16, color: colors.gold }}>{cards.length.toLocaleString('en-US')}</span>
       </h2>
       {cards.length === 0 ? (
         <div style={{ ...panel, padding: 24, textAlign: "center", fontSize: 15, color: colors.text }}>
-          まだマスターしたカードはありません
+          {t("mastered.empty")}
         </div>
       ) : (
         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>

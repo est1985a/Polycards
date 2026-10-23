@@ -17,6 +17,7 @@ import { themeList, newThemes, featuredUnlock, markSeen } from './lib/themeUnloc
 import { themes, applyTheme, getTheme, DEFAULT_THEME } from './themes';
 import { wrap, gutter, headerBand, tabBarHeight, btnLink, wideLayout } from './styles/theme';
 import { useWide } from './lib/useWide';
+import { t } from './i18n';
 import Header from './components/Header';
 import LoginScreen from './components/LoginScreen';
 import Tabs from './components/Tabs';
@@ -37,8 +38,8 @@ import ThemeUnlockSheet from './components/ThemeUnlockSheet';
 const knownTheme = (key) => (themes[key] ? key : DEFAULT_THEME);
 
 const TABS = [
-  { id: 'myCards', label: 'My Cards' },
-  { id: 'cardSets', label: 'Card Sets' },
+  { id: 'myCards', label: 'tabs.myCards' },
+  { id: 'cardSets', label: 'tabs.cardSets' },
 ];
 
 function App() {
@@ -221,9 +222,9 @@ function App() {
   useEffect(() => {
     if (!waitingForNext) return;
     const timer = setInterval(() => {
-      const t = Date.now();
-      setNow(t);
-      if (t >= nextReview.at) loadDueRows();
+      const time = Date.now();
+      setNow(time);
+      if (time >= nextReview.at) loadDueRows();
     }, 60 * 1000);
     return () => clearInterval(timer);
   }, [waitingForNext, nextReview]);
@@ -479,7 +480,7 @@ function App() {
       setActiveSet({ id: deck.id, name: deck.name, cards: buildCards(words) });
       setView("wordList");
     } catch {
-      alert("No cards found in this deck yet!");
+      alert(t("cardSets.deckEmpty"));
     }
     setLoadingDeck(false);
   }
@@ -491,9 +492,9 @@ function App() {
     try {
       const rows = await api.fetchReviewRows(deck?.id, sessionSize);
       if (rows.length === 0) {
-        alert("今は復習するカードがありません。(Nothing is due right now.)");
+        alert(t("myCards.nothingDueAlert"));
       } else {
-        beginSession({ id: deck?.id || 'review', name: deck?.name || '復習 (Review)', cards: buildReviewCards(rows), mode: 'srs' });
+        beginSession({ id: deck?.id || 'review', name: deck?.name || t("review.defaultName"), cards: buildReviewCards(rows), mode: 'srs' });
       }
     } catch (e) {
       alert(e.message);
@@ -531,7 +532,7 @@ function App() {
 
   async function addDeck() {
     if (!session) {
-      alert("Sign in with Google to save decks to My Cards.");
+      alert(t("cardSets.signInToAdd"));
       return;
     }
     if (!activeSet) return;
@@ -547,7 +548,7 @@ function App() {
 
   async function removeDeck(deck) {
     if (!session) return;
-    if (!window.confirm(`「${deck.name}」をマイカードから削除しますか？\nRemove "${deck.name}" from My Cards? Your review progress for this deck will be lost.`)) return;
+    if (!window.confirm(t("myCards.removeConfirm", { name: deck.name }))) return;
     setRemovingDeckId(deck.id);
     try {
       await api.removeDeckFromMyCards(session.user.id, deck.id);
@@ -693,7 +694,7 @@ function App() {
               <>
                 <div style={{ marginBottom: 14 }}>
                   <button onClick={() => setView("dashboard")} style={btnLink}>
-                    ← ダッシュボードに戻る (Back to Dashboard)
+                    {t("common.backToDashboard")}
                   </button>
                 </div>
                 {view === "mastered" && (

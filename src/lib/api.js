@@ -4,6 +4,7 @@ import { supabase } from './supabaseClient';
 import { DEFAULT_SESSION_SIZE, MASTERED, restoreUpdate } from './srs';
 import { shapeLibrary } from './library';
 import { jstDayBounds, jstHourStart } from './schedule';
+import { t } from '../i18n';
 
 // Global library: textbooks → units → decks (with each deck's word count), as a flat list
 // shaped by shapeLibrary. deck_words ( count ) returns only a number per deck, not the rows.
@@ -161,15 +162,16 @@ const pendingSaves = new Set();
 // card's next answer can never reach the database out of order.
 let answerQueue = Promise.resolve();
 
+// Database error code → i18n key of the message.
 const ANSWER_ERRORS = {
-  card_not_found: "このカードは見つかりませんでした",
-  not_signed_in: "ログインしてください",
+  card_not_found: "errors.cardNotFound",
+  not_signed_in: "errors.notSignedIn",
 };
 
 export function answerErrorMessage(error) {
   const text = error?.message || "";
   const code = Object.keys(ANSWER_ERRORS).find((c) => text.includes(c));
-  return code ? ANSWER_ERRORS[code] : "保存できませんでした";
+  return t(code ? ANSWER_ERRORS[code] : "errors.saveFailed");
 }
 
 // Saves one SRS review answer through the database function record_answer(), which works out
@@ -366,19 +368,20 @@ export async function savePeakPoints(userId, peakPoints) {
 // never the gacha tables. Reviews and tickets are counted by the database.
 // ---------------------------------------------------------------------
 
+// Database error code → i18n key of the message.
 const GACHA_ERRORS = {
-  no_tickets: "ガチャ券がありません",
-  collection_complete: "全部そろいました！新しいアバターをお楽しみに",
-  not_owned: "このアバターはまだ持っていません",
-  theme_locked: "このテーマはまだ使えません",
-  not_signed_in: "ログインしてください",
+  no_tickets: "errors.noTickets",
+  collection_complete: "errors.collectionComplete",
+  not_owned: "errors.notOwned",
+  theme_locked: "errors.themeLocked",
+  not_signed_in: "errors.notSignedIn",
 };
 
-// Turns a database error code (e.g. "no_tickets") into a friendly Japanese message.
+// Turns a database error code (e.g. "no_tickets") into a friendly message.
 export function gachaErrorMessage(error) {
   const text = error?.message || "";
   const code = Object.keys(GACHA_ERRORS).find((c) => text.includes(c));
-  return code ? GACHA_ERRORS[code] : `ガチャを読み込めませんでした (${text || "unknown error"})`;
+  return code ? t(GACHA_ERRORS[code]) : t("errors.gachaFailed", { detail: text || "unknown error" });
 }
 
 async function callGacha(name, args) {

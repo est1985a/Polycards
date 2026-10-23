@@ -3,6 +3,7 @@ import { colors, fontDisplay, fontBody, gutter, headerBand, btnGhost, btnDanger,
 import { CapsuleIcon } from './GachaIcons';
 import LogoMark from './LogoMark';
 import { accountName } from '../lib/login';
+import { t, tx } from '../i18n';
 
 // Mix of two theme colors, so the shades follow the theme without hard-coded colors.
 const mix = (a, b, pct) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
@@ -33,7 +34,7 @@ function Logo({ onHome }) {
     <h1 style={{ margin: 0, lineHeight: 1 }}>
       <button
         onClick={onHome}
-        aria-label="My Cards"
+        aria-label={t("header.home")}
         style={{
           display: "flex", alignItems: "center", gap: 8, minHeight: 44, padding: "0 4px", margin: "0 -4px",
           background: "transparent", border: "none", borderRadius: 12, cursor: "pointer",
@@ -58,7 +59,7 @@ export function AccountMenu({ user, rank = null, confirming = false, onSettings,
   return (
     <div
       role="menu"
-      aria-label="アカウント (Account)"
+      aria-label={t("menu.account")}
       style={{
         position: "absolute", right: 0, top: 52, zIndex: 21, minWidth: 230, maxWidth: "calc(100vw - 32px)", boxSizing: "border-box",
         background: colors.surface, border: `2px solid ${colors.line}`, borderRadius: 16,
@@ -70,24 +71,24 @@ export function AccountMenu({ user, rank = null, confirming = false, onSettings,
         <div style={{ fontFamily: fontBody, fontSize: 16, fontWeight: 700, color: colors.text, overflowWrap: "anywhere" }}>{accountName(user)}</div>
         {rank != null && (
           <div style={{ fontSize: 13, color: colors.muted }}>
-            ランク <span style={{ fontFamily: fontDisplay, fontWeight: 700, color: colors.accentText }}>{rank}</span>
+            {tx("menu.rank", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700, color: colors.accentText }}>{rank}</span> })}
           </div>
         )}
       </div>
       {confirming ? (
-        <div role="alertdialog" aria-label="ログアウトしますか？" style={{ display: "grid", gap: 8, padding: "4px 4px 4px" }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: colors.text, padding: "0 8px" }}>ログアウトしますか？</div>
+        <div role="alertdialog" aria-label={t("menu.signOutConfirm")} style={{ display: "grid", gap: 8, padding: "4px 4px 4px" }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: colors.text, padding: "0 8px" }}>{t("menu.signOutConfirm")}</div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={onSignOut} style={{ ...btnDanger, flex: 1, minHeight: 44, padding: "0 12px" }}>ログアウト</button>
-            <button onClick={onCancelSignOut} style={{ ...btnGhost, flex: 1, minHeight: 44, padding: "0 12px" }}>キャンセル</button>
+            <button onClick={onSignOut} style={{ ...btnDanger, flex: 1, minHeight: 44, padding: "0 12px" }}>{t("menu.signOut")}</button>
+            <button onClick={onCancelSignOut} style={{ ...btnGhost, flex: 1, minHeight: 44, padding: "0 12px" }}>{t("common.cancel")}</button>
           </div>
         </div>
       ) : (
         <>
-          <button role="menuitem" onClick={onSettings} style={menuItem}>設定</button>
-          <button role="menuitem" onClick={onHelp} style={menuItem}>使い方</button>
+          <button role="menuitem" onClick={onSettings} style={menuItem}>{t("menu.settings")}</button>
+          <button role="menuitem" onClick={onHelp} style={menuItem}>{t("menu.help")}</button>
           <div aria-hidden="true" style={{ height: 2, background: colors.line, margin: "4px 4px" }} />
-          <button role="menuitem" onClick={onAskSignOut} style={{ ...menuItem, color: colors.danger }}>ログアウト</button>
+          <button role="menuitem" onClick={onAskSignOut} style={{ ...menuItem, color: colors.danger }}>{t("menu.signOut")}</button>
         </>
       )}
     </div>
@@ -107,7 +108,7 @@ export function AccountButton({ user, rank = null, dot = false, onSignOut, onOpe
     <div style={{ position: "relative" }}>
       <button
         onClick={() => (open ? close() : setOpen(true))}
-        aria-label={dot ? "アカウント (Account) 新しいテーマがあります" : "アカウント (Account)"}
+        aria-label={dot ? t("menu.accountNewTheme") : t("menu.account")}
         aria-haspopup="menu"
         aria-expanded={open}
         style={{
@@ -157,7 +158,7 @@ export function GachaButton({ tickets = 0, pulse = false, onOpen }) {
     <button
       onClick={onOpen}
       className={pulse && has ? "gacha-pulse" : undefined}
-      aria-label={has ? `ガチャ (券 ${tickets}枚)` : "ガチャ"}
+      aria-label={has ? t("header.gachaTickets", { n: tickets }) : t("header.gacha")}
       style={{
         position: "relative", width: 44, height: 44, borderRadius: "50%", padding: 0, cursor: "pointer",
         background: colors.surface2, border: `2px solid ${tone}`, color: tone,

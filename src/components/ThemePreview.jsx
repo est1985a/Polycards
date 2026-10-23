@@ -1,6 +1,7 @@
 import { colors, fontDisplay, fontBody } from '../styles/theme';
 import { themeVars } from '../themes';
 import LogoMark from './LogoMark';
+import { t } from '../i18n';
 
 // A tiny live copy of the app in one theme (settings tiles and the unlock pop-up).
 // The theme's CSS variables are set on this box itself, so everything inside shows that theme,
@@ -45,7 +46,7 @@ const miniPanel = {
 function MiniPlayer({ rank }) {
   return (
     <div style={{ ...miniPanel, display: "grid", gap: u(1.2) }}>
-      <span style={{ fontSize: u(3.2), color: colors.muted }}>ランク</span>
+      <span style={{ fontSize: u(3.2), color: colors.muted }}>{t("themes.previewRank")}</span>
       <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: u(9), color: colors.accentText }}>{rank}</span>
       <span style={{ display: "block", height: u(1.6), borderRadius: u(1), background: colors.surface2, overflow: "hidden" }}>
         <span style={{ display: "block", width: "62%", height: "100%", background: colors.accent }} />
@@ -86,7 +87,7 @@ function MiniCardBack() {
         <span style={{ fontSize: u(6), fontWeight: 700, color: colors.accentText }}>よく知られた</span>
       </div>
       <div style={{ display: "flex", gap: u(1.6) }}>
-        {[["まだ", colors.danger, colors.dangerInk], ["わかった", colors.accent, colors.accentInk]].map(([label, bg, ink]) => (
+        {[[t("themes.previewNotYet"), colors.danger, colors.dangerInk], [t("themes.previewGotIt"), colors.accent, colors.accentInk]].map(([label, bg, ink]) => (
           <span
             key={label}
             style={{
@@ -108,7 +109,7 @@ export default function ThemePreview({ theme, rank = null, locked = false, radiu
   return (
     <div
       role="img"
-      aria-label={`${theme.name} のプレビュー`}
+      aria-label={t("themes.previewLabel", { name: theme.name })}
       data-theme-preview=""
       style={{ ...themeVars(theme), colorScheme: theme.scheme, containerType: "inline-size", width: "100%" }}
     >

@@ -1,6 +1,7 @@
 import { colors, fontDisplay, panel, btnLink } from '../styles/theme';
 import { rarityInfo, rarityGlow, groupCollection, rarityCounts, tileState } from '../lib/gacha';
 import AvatarPicture from './AvatarPicture';
+import { t } from '../i18n';
 
 const tileBase = {
   position: "relative", boxSizing: "border-box", minHeight: 124, padding: "10px 6px", borderRadius: 16,
@@ -24,7 +25,7 @@ export function CollectionTile({ avatar, equipping = false, onEquip }) {
 
   if (state === "silhouette") {
     return (
-      <div data-tile="silhouette" aria-label="まだ持っていないアバター" style={{ ...tileBase, border: `2px solid ${colors.line}` }}>
+      <div data-tile="silhouette" aria-label={t("collection.notOwned")} style={{ ...tileBase, border: `2px solid ${colors.line}` }}>
         <AvatarPicture avatar={avatar} size={64} silhouette />
       </div>
     );
@@ -37,7 +38,7 @@ export function CollectionTile({ avatar, equipping = false, onEquip }) {
       onClick={() => !worn && onEquip(avatar.id)}
       disabled={equipping}
       aria-pressed={worn}
-      aria-label={`${avatar.name_ja} (${avatar.name_en})${worn ? " つけ中" : " をつける"}`}
+      aria-label={t(worn ? "collection.wornLabel" : "collection.equipLabel", { nameJa: avatar.name_ja, nameEn: avatar.name_en })}
       style={{
         ...tileBase, cursor: worn ? "default" : "pointer", fontFamily: "inherit", color: colors.text,
         border: `2px solid ${worn ? colors.accent : info.color}`,
@@ -51,7 +52,7 @@ export function CollectionTile({ avatar, equipping = false, onEquip }) {
             padding: "1px 8px", borderRadius: 10, background: colors.accent, color: colors.accentInk, fontSize: 11, fontWeight: 700,
           }}
         >
-          つけ中
+          {t("gacha.wearing")}
         </span>
       )}
       <AvatarPicture avatar={avatar} size={64} />
@@ -65,7 +66,7 @@ function SummaryPanel({ rows, equipped }) {
   const info = equipped ? rarityInfo(equipped.rarity) : null;
   return (
     <div style={{ ...panel, display: "grid", gap: 14, textAlign: "center" }}>
-      <div style={{ fontSize: 12, color: colors.muted }}>つけ中のアバター</div>
+      <div style={{ fontSize: 12, color: colors.muted }}>{t("collection.wornAvatar")}</div>
       <div
         style={{
           justifySelf: "center", width: 150, height: 150, borderRadius: 24, background: colors.surface2,
@@ -137,10 +138,10 @@ export default function GachaCollection({ rows, equippingId, onEquip, onBack, wi
   return (
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
       <div>
-        <button onClick={onBack} style={{ ...btnLink, minHeight: 44 }}>← ガチャ</button>
+        <button onClick={onBack} style={{ ...btnLink, minHeight: 44 }}>{t("collection.back")}</button>
       </div>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
-        <h2 style={{ margin: 0, fontWeight: 700, fontSize: 28 }}>アバター図鑑</h2>
+        <h2 style={{ margin: 0, fontWeight: 700, fontSize: 28 }}>{t("collection.title")}</h2>
         {rows && (
           <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, color: colors.gold }}>
             {owned} / {rows.length}
@@ -148,7 +149,7 @@ export default function GachaCollection({ rows, equippingId, onEquip, onBack, wi
         )}
       </div>
       {!rows ? (
-        <div style={{ ...panel, color: colors.muted }}>読み込み中…</div>
+        <div style={{ ...panel, color: colors.muted }}>{t("common.loading")}</div>
       ) : wide ? (
         <div style={{ display: "grid", gridTemplateColumns: "300px minmax(0, 1fr)", gap: 32, alignItems: "start" }}>
           <div style={{ position: "sticky", top: 16 }}><SummaryPanel rows={rows} equipped={equipped} /></div>

@@ -1,3 +1,5 @@
+import { t } from '../i18n';
+
 // SRS settings (My Cards)
 // Wait time (in hours) before a card is due again, by level it has just reached.
 // Level 0 = new, level 7 = about 4 months. A correct answer at level 7 makes the card Mastered.
@@ -62,8 +64,8 @@ export function restoreUpdate(now = Date.now()) {
 export function levelUpLabel(level, knew, wrongsSoFar = 0) {
   if (!knew || wrongsSoFar > 0) return null;
   const next = levelAfterCorrect(level);
-  if (isMastered(next)) return "Mastered!";
-  return `Lv ${next}!`;
+  if (isMastered(next)) return t("review.levelUpMastered");
+  return t("review.levelUp", { n: next });
 }
 
 // A new id for one review session (record_answer uses it to spot a まだ card coming back).

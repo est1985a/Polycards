@@ -1,5 +1,6 @@
 // Which themes a student can use. The rank needed for each theme comes from the theme_unlocks
 // table (fetchThemeUnlocks in api.js), never from the app. Pure functions only.
+import { t } from '../i18n';
 
 // The themes the app can show, in unlock order: [{ key, name, unlockLevel, theme }].
 // A table row with no theme in src/themes.js, or a theme with no row, is left out.
@@ -41,6 +42,6 @@ export function markSeen(list, rank, seen = []) {
 
 // Status line under a tile in settings.
 export function unlockLabel(item, rank) {
-  if (item.unlockLevel <= 1) return "はじめから";
-  return isUnlocked(item, rank) ? `ランク ${item.unlockLevel} で解放ずみ` : `ランク ${item.unlockLevel} で解放`;
+  if (item.unlockLevel <= 1) return t("themes.fromStart");
+  return isUnlocked(item, rank) ? t("themes.unlockedAt", { n: item.unlockLevel }) : t("themes.unlocksAt", { n: item.unlockLevel });
 }
