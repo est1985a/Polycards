@@ -99,6 +99,7 @@ export default {
   "review.close": "おしい！", // typed one letter off
   "review.yourAnswer": "あなたの答え: {answer}",
   "review.rightAnswer": "正しい答え: {answer}",
+  "review.textbookAnswer": "教科書の答え: {answer}", // an alternate answer was accepted
   "review.spellBonus": "+1 スペル", // floats up: one bonus point for the right spelling
   "review.next": "次へ",
   "review.allCleared": "全部クリアしました！", // end of a review or drill

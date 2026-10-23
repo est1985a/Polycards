@@ -1,6 +1,6 @@
 // Tests for checking handwritten boxes against the target letters. Run with: npm test
 import { describe, it, expect } from 'vitest';
-import { scoreBox, scoreWord, lenientMessage, readBoxes } from './checkAnswer.js';
+import { scoreBox, scoreWord, lenientMessage, readBoxes, bestMatch } from './checkAnswer.js';
 import { MIN_TARGET_PROB } from './config.js';
 
 describe('scoreBox', () => {
@@ -89,5 +89,33 @@ describe('readBoxes', () => {
   });
   it('an empty box reads as nothing', () => {
     expect(readBoxes(['a'], [null])).toEqual([{ target: 'a', read: null, targetProb: 0 }]);
+  });
+});
+
+describe('bestMatch', () => {
+  const probs = (letters) => { const p = new Array(26).fill(0); for (const [l, v] of Object.entries(letters)) p[l.charCodeAt(0) - 97] = v; return p; };
+  const word = (text) => [...text].map((l) => probs({ [l]: 0.9 }));
+
+  it('the main answer wins when every box counts', () => {
+    const r = bestMatch(word('big'), [['b', 'i', 'g'], ['t', 'o', 'p']]);
+    expect(r).toMatchObject({ accepted: 0, allCorrect: true, reads: ['b', 'i', 'g'] });
+  });
+  it('an alternate that fits is accepted when the main answer is wrong', () => {
+    const r = bestMatch(word('top'), [['b', 'i', 'g'], ['t', 'o', 'p']]);
+    expect(r).toMatchObject({ accepted: 1, allCorrect: true, scores: ['correct', 'correct', 'correct'] });
+  });
+  it("uses the same look-alike rules, warning with the alternate's letters", () => {
+    // "tlp" for the alternate "tip": l read for i is lenient
+    const r = bestMatch(word('tlp'), [['b', 'i', 'g'], ['t', 'o', 'p'], ['t', 'i', 'p']]);
+    expect(r).toMatchObject({ accepted: 2, allCorrect: true, hasLenient: true, lenientPairs: [{ target: 'i', read: 'l' }] });
+  });
+  it('prefers the alternate with fewer lenient boxes', () => {
+    const r = bestMatch(word('tlp'), [['b', 'i', 'g'], ['t', 'i', 'p'], ['t', 'l', 'p']]);
+    expect(r.accepted).toBe(2);
+    expect(r.hasLenient).toBe(false);
+  });
+  it("nothing fits: the main answer's wrong result", () => {
+    const r = bestMatch(word('xyz'), [['b', 'i', 'g'], ['t', 'o', 'p']]);
+    expect(r).toMatchObject({ accepted: 0, allCorrect: false, scores: ['wrong', 'wrong', 'wrong'] });
   });
 });

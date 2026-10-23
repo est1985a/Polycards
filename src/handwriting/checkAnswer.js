@@ -48,6 +48,25 @@ export function scoreWord(boxes, options) {
   };
 }
 
+// The best reading of the boxes among the main answer and the alternates that fit them.
+// probs: 26 probabilities per box (null = empty); targetLists: the letters to write, first the main
+// answer's, then each alternate's (same number of boxes). The main answer wins when every box counts;
+// otherwise the first alternate that does, with the fewest lenient boxes; otherwise the main
+// answer's (wrong) result. → scoreWord's result plus reads and accepted (index into targetLists).
+export function bestMatch(probs, targetLists, options) {
+  const results = targetLists.map((targets) => {
+    const read = readBoxes(targets, probs);
+    return { ...scoreWord(read, options), reads: read.map((b) => b.read) };
+  });
+  let best = 0;
+  results.forEach((r, i) => {
+    if (i === 0 || !r.allCorrect) return;
+    const lenient = (x) => x.scores.filter((s) => s === "lenient").length;
+    if (!results[best].allCorrect || (best !== 0 && lenient(r) < lenient(results[best]))) best = i;
+  });
+  return { ...results[best], accepted: best };
+}
+
 // The warning line for one lenient pair: 「i」が「l」に見えるかも。気をつけて書こう！
 export function lenientMessage({ target, read }) {
   return t("handwriting.lenient", { target, read });

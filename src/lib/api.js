@@ -61,7 +61,7 @@ async function fetchDeckWordIds(deckId) {
 export async function fetchDeckWords(deckId) {
   const { data, error } = await supabase
     .from('deck_words')
-    .select('position, words ( id, english, japanese, example_en, example_ja )')
+    .select('position, words ( id, english, japanese, example_en, example_ja, alt_answers )')
     .eq('deck_id', deckId)
     .order('position', { ascending: true });
   if (error) throw new Error(error.message);
@@ -139,8 +139,8 @@ export async function removeDeckFromMyCards(userId, deckId) {
 // limit: the student's 1回の枚数 (10, 20 or 30).
 export async function fetchReviewRows(deckId = null, limit = DEFAULT_SESSION_SIZE) {
   const select = deckId
-    ? 'word_id, direction, level, words!inner ( id, english, japanese, example_en, example_ja, deck_words!inner ( deck_id ) )'
-    : 'word_id, direction, level, words!inner ( id, english, japanese, example_en, example_ja )';
+    ? 'word_id, direction, level, words!inner ( id, english, japanese, example_en, example_ja, alt_answers, deck_words!inner ( deck_id ) )'
+    : 'word_id, direction, level, words!inner ( id, english, japanese, example_en, example_ja, alt_answers )';
   let query = supabase
     .from('user_cards')
     .select(select)

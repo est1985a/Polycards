@@ -80,3 +80,13 @@ describe('shuffle', () => {
     expect(original).toEqual(['a', 'b', 'c', 'd']);
   });
 });
+
+describe('alternate answers', () => {
+  it("cards carry the word's alt_answers, blanks dropped, [] when missing", () => {
+    const [card] = buildCards([{ id: 'a', english: 'pretty', japanese: 'かわいい', alt_answers: ['cute', ' ', null] }]);
+    expect(card.altAnswers).toEqual(['cute']);
+    expect(buildCards([{ id: 'b', english: 'herb', japanese: 'ハーブ' }])[0].altAnswers).toEqual([]);
+    const [review] = buildReviewCards([{ word_id: 'a', direction: 'jp2en', level: 1, words: { id: 'a', english: 'pretty', japanese: 'かわいい', alt_answers: ['cute'] } }]);
+    expect(review.altAnswers).toEqual(['cute']);
+  });
+});

@@ -104,6 +104,7 @@ export default {
   "review.close": "So close!",
   "review.yourAnswer": "Your answer: {answer}",
   "review.rightAnswer": "Correct answer: {answer}",
+  "review.textbookAnswer": "Textbook answer: {answer}",
   "review.spellBonus": "+1 spelling",
   "review.next": "Next",
   "review.allCleared": "All done!",
