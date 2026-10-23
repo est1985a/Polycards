@@ -24,9 +24,10 @@ const FACETS = [
   ["25.5,38.3 4.8,25.0 10.3,20.6", mix(colors.accent, tintLight, 62)],
 ];
 
-export default function LogoMark({ height = 24 }) {
+// style: extra CSS, e.g. a width/height in other units (CSS sizes win over the height attribute).
+export default function LogoMark({ height = 24, style }) {
   return (
-    <svg height={height} width={Math.round(height * 84.3 / 73.4)} viewBox="0 0 84.3 73.4" aria-hidden="true" style={{ flexShrink: 0 }}>
+    <svg height={height} width={Math.round(height * 84.3 / 73.4)} viewBox="0 0 84.3 73.4" aria-hidden="true" style={{ flexShrink: 0, ...style }}>
       {FACETS.map(([points, fill], i) => (
         <polygon key={i} points={points} fill={fill} stroke={fill} strokeWidth="0.5" strokeLinejoin="round" />
       ))}

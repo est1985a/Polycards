@@ -30,7 +30,7 @@ vi.mock('./supabaseClient', () => ({
 
 const {
   fetchDueRows, fetchReviewRows, restoreMasteredCard, recordAnswer, waitForPendingSaves, checkOtherMeaning, fetchBonusPoints, fetchNextReview, fetchReviewPlanRows,
-  fetchGachaStatus, pullGacha, fetchGachaCollection, equipAvatar, setGachaTheme, gachaErrorMessage,
+  fetchGachaStatus, pullGacha, fetchGachaCollection, equipAvatar, setGachaTheme, gachaErrorMessage, fetchThemeUnlocks,
 } = await import('./api');
 
 beforeEach(() => {
@@ -51,6 +51,36 @@ describe('Mastered cards are never due', () => {
     calls.length = 0;
     await fetchReviewRows(7);
     expect(calls).toContainEqual(['lt', 'level', MASTERED]);
+  });
+});
+
+describe('review size', () => {
+  it('loads 20 cards unless the student chose another number', async () => {
+    await fetchReviewRows();
+    expect(calls).toContainEqual(['limit', 20]);
+    calls.length = 0;
+    await fetchReviewRows(null, 10);
+    expect(calls).toContainEqual(['limit', 10]);
+    calls.length = 0;
+    await fetchReviewRows(7, 30);
+    expect(calls).toContainEqual(['limit', 30]);
+  });
+});
+
+describe('theme unlocks', () => {
+  it('reads theme_key and unlock_level from theme_unlocks, lowest rank first', async () => {
+    result = { data: [{ theme_key: 'midnight', unlock_level: 1 }], error: null };
+    expect(await fetchThemeUnlocks()).toEqual([{ theme_key: 'midnight', unlock_level: 1 }]);
+    expect(calls).toEqual([
+      ['from', 'theme_unlocks'],
+      ['select', 'theme_key, unlock_level'],
+      ['order', 'unlock_level', { ascending: true }],
+    ]);
+  });
+
+  it('throws when the table cannot be read', async () => {
+    result = { data: null, error: { message: 'denied' } };
+    await expect(fetchThemeUnlocks()).rejects.toThrow('Could not load themes: denied');
   });
 });
 

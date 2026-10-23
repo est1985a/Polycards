@@ -1,17 +1,17 @@
 import { colors, fontBody, fontDisplay, panel, wideLayout } from '../styles/theme';
-import { SESSION_SIZE, MASTERED, extraDueTotal } from '../lib/srs';
+import { DEFAULT_SESSION_SIZE, MASTERED, extraDueTotal } from '../lib/srs';
 import PlayerStats from './PlayerStats';
 import LevelChart from './LevelChart';
 import StarIcon from './StarIcon';
 
 // Big "start review" button. The pill shows how many cards the session will have
-// (all due cards, up to SESSION_SIZE); a small line under the label shows the full total when there are more.
+// (all due cards, up to sessionSize, the student's 1回の枚数); a small line under the label shows the full total when there are more.
 // When nothing is due, nextReview (from nextReviewSummary) adds the 次の復習 line; if that review is
 // today or tomorrow, the button opens the review plan pop-up instead. wide: a taller button.
-export function ReviewButton({ dueCount, loading, onReview, nextReview = null, onOpenPlan, wide = false }) {
+export function ReviewButton({ dueCount, loading, onReview, nextReview = null, onOpenPlan, sessionSize = DEFAULT_SESSION_SIZE, wide = false }) {
   const ready = dueCount > 0;
   const showsPlan = !ready && !!nextReview?.tappable;
-  const total = extraDueTotal(dueCount);
+  const total = extraDueTotal(dueCount, sessionSize);
   return (
     <button
       onClick={ready ? onReview : onOpenPlan}
@@ -41,7 +41,7 @@ export function ReviewButton({ dueCount, loading, onReview, nextReview = null, o
               background: `color-mix(in srgb, ${colors.accentInk} 15%, transparent)`,
             }}
           >
-            {Math.min(dueCount, SESSION_SIZE)}枚
+            {Math.min(dueCount, sessionSize)}枚
           </span>
         </>
       ) : (
@@ -191,7 +191,7 @@ function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
 }
 
 // wide: two columns (player card, review button, chart, Mastered | マイデッキ in a 2-column grid).
-export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, answerMode = "off", onAnswerModeChange = () => {}, handwritingEnabled = false, onReview, onOpenPlan, onOpenAbout = () => {}, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
+export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, answerMode = "off", onAnswerModeChange = () => {}, handwritingEnabled = false, sessionSize = DEFAULT_SESSION_SIZE, onReview, onOpenPlan, onOpenAbout = () => {}, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
   // A word can be in several decks, so a due card counts toward each of them.
   const dueByDeck = {};
   dueRows.forEach((r) => {
@@ -203,7 +203,7 @@ export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar =
   const overview = (
     <>
       <PlayerStats stats={stats} avatar={avatar} wide={wide} />
-      <ReviewButton dueCount={dueRows.length} loading={loading} onReview={() => onReview()} nextReview={nextReview} onOpenPlan={onOpenPlan} wide={wide} />
+      <ReviewButton dueCount={dueRows.length} loading={loading} onReview={() => onReview()} nextReview={nextReview} onOpenPlan={onOpenPlan} sessionSize={sessionSize} wide={wide} />
       <AnswerModeSwitch mode={answerMode} onChange={onAnswerModeChange} handwritingEnabled={handwritingEnabled} wide={wide} />
       {stats && <LevelChart counts={stats.levelCounts} />}
       {stats && <MasteredButton count={stats.levelCounts[MASTERED]} loading={loading} onOpen={onOpenMastered} />}

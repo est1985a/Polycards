@@ -51,6 +51,12 @@ describe('AboutSheet', () => {
     expect(chips).toBeLessThan(after);
   });
 
+  it("shows the student's own cards per review", () => {
+    expect(render()).toContain('1回は20枚まで');
+    expect(renderToStaticMarkup(<AboutSheet onClose={() => {}} sessionSize={10} />)).toContain('1回は10枚まで');
+    expect(renderToStaticMarkup(<AboutSheet onClose={() => {}} sessionSize={30} />)).not.toContain('{sessionSize}');
+  });
+
   it('shows list items as a list, without the ・ mark', () => {
     const html = render();
     expect(html).toMatch(/<li[^>]*>毎日少しずつやろう/);

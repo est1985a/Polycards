@@ -1,7 +1,8 @@
 // Tests for the header. Run with: npm test
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import Header, { GachaButton } from './Header';
+import Header, { GachaButton, AccountMenu, AccountButton } from './Header';
+import { accountName } from '../lib/login';
 
 describe('Header', () => {
   it('the logo is a "My Cards" button at least 44 px tall', () => {
@@ -40,5 +41,50 @@ describe('GachaButton', () => {
     const user = { email: 'a@b.c', user_metadata: {} };
     expect(renderToStaticMarkup(<Header user={user} gacha={{ tickets: 1 }} onHome={() => {}} />)).toContain('ガチャ (券 1枚)');
     expect(renderToStaticMarkup(<Header user={null} onHome={() => {}} />)).not.toContain('ガチャ');
+  });
+});
+
+describe('account menu', () => {
+  const user = { email: 'aiden@polycards.test', user_metadata: { username: 'aiden' } };
+  const menu = (props = {}) => renderToStaticMarkup(<AccountMenu user={user} rank={7} {...props} />);
+
+  it('shows the name and rank, then 設定, 使い方, a divider and ログアウト in the danger color', () => {
+    const html = menu();
+    expect(html).toContain('aiden');
+    expect(html).toMatch(/ランク <span[^>]*>7<\/span>/);
+    const order = ['aiden', '設定', '使い方', 'aria-hidden="true"', 'ログアウト'].map((t) => html.indexOf(t));
+    expect(order.every((i) => i > -1)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(html).toMatch(/color:var\(--danger\)[^>]*>ログアウト</);
+  });
+
+  it('asks before logging out', () => {
+    const html = menu({ confirming: true });
+    expect(html).toContain('ログアウトしますか？');
+    expect(html).toMatch(/>ログアウト<\/button><button[^>]*>キャンセル</);
+    expect(html).not.toContain('設定');
+  });
+
+  it('picks the username, then the Google name, then the email', () => {
+    expect(accountName(user)).toBe('aiden');
+    expect(accountName({ email: 'x@y.z', user_metadata: { full_name: 'Andre K' } })).toBe('Andre K');
+    expect(accountName({ email: 'x@y.z', user_metadata: { name: 'Andre' } })).toBe('Andre');
+    expect(accountName({ email: 'x@y.z', user_metadata: {} })).toBe('x@y.z');
+  });
+
+  it('the circle keeps the initial and shows an accent dot only for new themes', () => {
+    const plain = renderToStaticMarkup(<AccountButton user={user} onSignOut={() => {}} />);
+    expect(plain).toMatch(/>A<\/button>/);
+    expect(plain).not.toContain('data-dot');
+    const dotted = renderToStaticMarkup(<AccountButton user={user} dot onSignOut={() => {}} />);
+    expect(dotted).toMatch(/data-dot=""[^>]*background:var\(--accent\)/);
+  });
+});
+
+describe('header band', () => {
+  it('fades the triangles with a mask instead of painting the page color over the backdrop', () => {
+    const html = renderToStaticMarkup(<Header variant="band" user={null} onHome={() => {}} />);
+    expect(html).toContain('class="header-band-art"');
+    expect(html).not.toContain('linear-gradient(to bottom, transparent, var(--bg))');
   });
 });

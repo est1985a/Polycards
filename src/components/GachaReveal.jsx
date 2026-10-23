@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { colors, fontDisplay, fontBody, btnGhost } from '../styles/theme';
 import { rarityInfo, rarityGlow } from '../lib/gacha';
 import AvatarPicture from './AvatarPicture';
+import { reduceMotionOn } from '../lib/settings';
 
 const ANIMATION_MS = 2000;
 
-const reducedMotion = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+// The device's Reduce Motion setting or the app's カードの動きを減らす switch: skip the capsule.
+const reducedMotion = () => reduceMotionOn();
 
 // The capsule drops, wobbles and pops open in the rarity color (classes in src/index.css).
 function CapsuleDrop({ color }) {

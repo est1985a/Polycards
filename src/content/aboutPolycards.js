@@ -6,6 +6,7 @@
 //   paragraphs: ordinary paragraphs
 //   list: list items (shown as a bulleted list)
 // The section number (1., 2., …) is added by the layout.
+// {sessionSize} is replaced with the student's own 1回の枚数 (10, 20 or 30, chosen in settings).
 export const ABOUT = {
   title: 'What is Polycards?',
   subtitle: 'ポリカードのしくみ',
@@ -39,7 +40,7 @@ export const ABOUT = {
       heading: 'Why it helps you',
       list: [
         '覚えている単語には時間を使わず、忘れそうな単語だけ復習できる',
-        '1回は20枚まで。毎日少しずつでOK',
+        '1回は{sessionSize}枚まで。毎日少しずつでOK',
         'テストのあとも、ずっと覚えていられる',
       ],
     },
@@ -54,3 +55,8 @@ export const ABOUT = {
     },
   ],
 };
+
+// Fills in {sessionSize} in the wording.
+export function fillAboutText(text, sessionSize) {
+  return text.replaceAll('{sessionSize}', String(sessionSize));
+}

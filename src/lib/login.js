@@ -9,3 +9,10 @@ export function testLoginEmail(username) {
   const name = String(username ?? '').trim().toLowerCase();
   return name.includes('@') ? name : `${name}@${TEST_EMAIL_DOMAIN}`;
 }
+
+// Name shown in the account menu: the username of a test account, otherwise the Google name,
+// otherwise the email.
+export function accountName(user) {
+  const m = user?.user_metadata || {};
+  return m.username || m.full_name || m.name || user?.email || "?";
+}
