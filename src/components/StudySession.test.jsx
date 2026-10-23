@@ -146,6 +146,15 @@ describe('typing mode (TypingArea)', () => {
     expect(render({ phase: 'next', spelling: null, textbookAnswer: 'pretty' })).not.toContain('教科書の答え');
   });
 
+  it("an alternate answer: the student's answer (lighter, lang en) before ✓ 正解！, only when given", () => {
+    const html = render({ phase: 'next', typed: 'huge', spelling: 'exact', textbookAnswer: 'big', alternateAnswer: 'huge' });
+    expect(html).toContain('<span lang="en" style="font-weight:400">huge</span> ✓ 正解！');
+    expect(html.indexOf('正解')).toBeLessThan(html.indexOf('教科書の答え'));
+    const main = render({ phase: 'next', typed: 'big', spelling: 'exact' });
+    expect(main).not.toContain('font-weight:400');
+    expect(main).toContain('✓ 正解！');
+  });
+
   it('わからない: only 次へ', () => {
     const html = render({ phase: 'next', spelling: null });
     expect(html).toContain('次へ');

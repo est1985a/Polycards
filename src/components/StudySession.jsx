@@ -55,10 +55,11 @@ export function AnswerArea({ revealed, onReveal, onAnswer, answerSize, wide = fa
 // checking: waiting to hear if a wrong answer is another word with the same meaning (答える shows 確認中…).
 // retryNote: it was, so the student tries again (a calm gold line under the box).
 // textbookAnswer: an alternate answer was accepted; the textbook's word, shown under ✓ 正解！.
+// alternateAnswer: that alternate as the student gave it, shown (lighter) before ✓ 正解！.
 // Give it a new `key` per card so the box is focused when each card appears.
 export function TypingArea({
   phase, typed, spelling = null, answer, onTypedChange, onSubmit, onDontKnow, onNext, onAnswer, answerSize,
-  checking = false, retryNote = false, textbookAnswer = null, wide = false,
+  checking = false, retryNote = false, textbookAnswer = null, alternateAnswer = null, wide = false,
 }) {
   const inputRef = useRef(null);
   const nextRef = useRef(null);
@@ -134,6 +135,7 @@ export function TypingArea({
       <div style={{ display: "grid", gap: 10 }}>
         {spelling === "exact" && (
           <div style={{ textAlign: "center", fontSize: wide ? 22 : 19, fontWeight: 700, color: colors.accentText }}>
+            {alternateAnswer && <><span lang="en" style={{ fontWeight: 400 }}>{alternateAnswer}</span>{" "}</>}
             {t("review.correct")}
           </div>
         )}
@@ -304,7 +306,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
       const answer = srsAnswer(card.level, "got_it", wrongCounts[card.id] || 0, spelling);
       send(answer.result, typed, spelling);
       showFloats(answer);
-      setTypedResult({ spelling, next: true, again: false, alternate: isAlternateAnswer(typed, card.en, card.altAnswers) });
+      setTypedResult({ spelling, next: true, again: false, alternate: isAlternateAnswer(typed, card.en, card.altAnswers) ? typed.trim() : null });
     } else {
       setTypedResult({ spelling, next: false, again: false });
     }
@@ -324,7 +326,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
       const answer = srsAnswer(card.level, "got_it", wrongCounts[card.id] || 0, bonus ? "exact" : null);
       send(answer.result, bonus ? read.accepted ?? writtenAnswer(card.en) : null, bonus ? "exact" : null);
       showFloats(answer);
-      setTypedResult({ spelling: "exact", next: true, again: false, alternate: Boolean(read.accepted), handwriting: read });
+      setTypedResult({ spelling: "exact", next: true, again: false, alternate: read.accepted ?? null, handwriting: read });
     } else {
       setTyped(read.text);
       setTypedResult({ spelling: checkSpelling(read.text, card.en, card.altAnswers), next: false, again: false, handwriting: read });
@@ -482,6 +484,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
                 <TypingArea
                   key={turn} phase="next" typed="" spelling={typedResult.spelling} answer={card.back}
                   textbookAnswer={typedResult.alternate ? card.en : null}
+                  alternateAnswer={typedResult.alternate}
                   onNext={handleNext} answerSize={answerSize} wide={wide}
                 />
               )}
@@ -511,6 +514,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
                 checking={checking}
                 retryNote={retryUsed}
                 textbookAnswer={typedResult?.alternate ? card.en : null}
+                alternateAnswer={typedResult?.alternate ?? null}
                 wide={wide}
               />
             </>
