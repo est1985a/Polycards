@@ -1,17 +1,19 @@
 // Gacha helpers for the screens (pure functions, no database calls).
 import { colors } from '../styles/theme';
+import { t } from '../i18n';
 
-// Rarities in display order. color: the theme color used for that rarity.
+// Rarities in display order. color: the theme color used for that rarity; labelKey: its name (i18n).
 export const RARITY_ORDER = ['normal', 'rare', 'super_rare', 'secret'];
 export const RARITIES = {
-  normal: { stars: '★', label: 'ノーマル', color: colors.muted },
-  rare: { stars: '★★', label: 'レア', color: colors.accent },
-  super_rare: { stars: '★★★', label: 'スーパーレア', color: colors.gold },
-  secret: { stars: '', label: 'シークレット', color: colors.danger },
+  normal: { stars: '★', labelKey: 'rarity.normal', color: colors.muted },
+  rare: { stars: '★★', labelKey: 'rarity.rare', color: colors.accent },
+  super_rare: { stars: '★★★', labelKey: 'rarity.superRare', color: colors.gold },
+  secret: { stars: '', labelKey: 'rarity.secret', color: colors.danger },
 };
 
 export function rarityInfo(rarity) {
-  return RARITIES[rarity] || RARITIES.normal;
+  const info = RARITIES[rarity] || RARITIES.normal;
+  return { ...info, label: t(info.labelKey) };
 }
 
 // Glow around a picture or panel of this rarity (Secret glows stronger).

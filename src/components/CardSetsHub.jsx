@@ -1,4 +1,5 @@
 import { colors, fontDisplay } from '../styles/theme';
+import { t } from '../i18n';
 
 // Mix of two theme colors, so the shades follow the theme without hard-coded colors.
 const mix = (a, b, pct) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
@@ -55,23 +56,23 @@ export default function CardSetsHub({ onOpenTextbooks, onOpenTests }) {
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
       <div>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
-          <h2 style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 28, margin: 0, color: colors.text }}>Card Sets</h2>
-          <span style={{ fontSize: 14, fontWeight: 700, color: colors.muted }}>カードセット</span>
+          <h2 style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 28, margin: 0, color: colors.text }}>{t("cardSets.title")}</h2>
+          {t("cardSets.titleJa") && <span style={{ fontSize: 14, fontWeight: 700, color: colors.muted }}>{t("cardSets.titleJa")}</span>}
         </div>
-        <p style={{ margin: "6px 0 0", fontSize: 14, color: colors.muted }}>学びたいセットをえらんで、マイカードに追加しよう。</p>
+        <p style={{ margin: "6px 0 0", fontSize: 14, color: colors.muted }}>{t("cardSets.hubIntro")}</p>
       </div>
       <HubCard
-        title="Textbooks"
-        label="教科書から探す"
-        note="New Horizon や Power On の ユニット・パートごとのセット"
+        title={t("cardSets.textbooks")}
+        label={t("cardSets.textbooksLabel")}
+        note={t("cardSets.textbooksNote")}
         tint={colors.accent}
         labelColor={colors.accentText}
         onClick={onOpenTextbooks}
       />
       <HubCard
-        title="Tests & Themes"
-        label="テスト・テーマ別"
-        note="英検などのテスト対策や、テーマ別の単語セット"
+        title={t("cardSets.tests")}
+        label={t("cardSets.testsLabel")}
+        note={t("cardSets.testsNote")}
         tint={colors.gold}
         labelColor={colors.gold}
         onClick={onOpenTests}

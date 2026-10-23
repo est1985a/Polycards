@@ -10,12 +10,20 @@ import FlipCard from './FlipCard';
 import HandwritingInput from '../handwriting/HandwritingInput.jsx';
 import { loadModel } from '../handwriting/model.js';
 import { writtenAnswer } from '../handwriting/answerLayout.js';
-import { HANDWRITING_ENABLED, HW_UNAVAILABLE_MESSAGE, LENIENT_GIVES_BONUS } from '../handwriting/config.js';
+import { HANDWRITING_ENABLED, LENIENT_GIVES_BONUS } from '../handwriting/config.js';
+import { t, tx } from '../i18n';
 
 // Visually hidden but read by screen readers.
 const srOnly = { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)", whiteSpace: "nowrap" };
 
 const stampFill = (n) => Array.from({ length: CLEAR_TARGET }, (_, i) => i < n);
+
+// An answer button's text: the English line, then the Japanese line under it. English mode has
+// no Japanese line ("" in en.js), so the button shows English only.
+function answerLabel(prefix) {
+  const ja = t(`${prefix}.ja`);
+  return <>{t(`${prefix}.en`)}{ja && <><br />{ja}</>}</>;
+}
 
 // 答えを見る before the flip; after it, the まだ / わかった buttons with a reassuring note below them
 // (below, so the buttons themselves never move).
@@ -23,18 +31,18 @@ export function AnswerArea({ revealed, onReveal, onAnswer, answerSize, wide = fa
   if (!revealed) {
     return (
       <button style={{ ...btnPrimary, width: "100%", minHeight: 52, fontSize: 17, ...answerSize }} onClick={onReveal}>
-        答えを見る
+        {t("review.showAnswer")}
       </button>
     );
   }
   return (
     <div style={{ display: "grid", gap: 8 }}>
       <div style={{ display: "flex", gap: 10 }}>
-        <button style={{ ...btnDanger, flex: 1, ...answerSize }} onClick={() => onAnswer(false)}>Still learning<br />まだ</button>
-        <button style={{ ...btnPrimary, flex: 1, ...answerSize }} onClick={() => onAnswer(true)}>I knew it<br />わかった</button>
+        <button style={{ ...btnDanger, flex: 1, ...answerSize }} onClick={() => onAnswer(false)}>{answerLabel("review.notYet")}</button>
+        <button style={{ ...btnPrimary, flex: 1, ...answerSize }} onClick={() => onAnswer(true)}>{answerLabel("review.gotIt")}</button>
       </div>
       <p style={{ fontSize: wide ? 15 : 13, color: colors.muted, margin: 0, textAlign: "center" }}>
-        まだでも大丈夫！すぐにまた出てきます
+        {t("review.notYetNote")}
       </p>
     </div>
   );
@@ -88,8 +96,8 @@ export function TypingArea({
             if (e.key === "Enter" && (e.nativeEvent.isComposing || e.keyCode === 229)) e.preventDefault();
           }}
           autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false} lang="en"
-          aria-label="英語で答えを入力"
-          placeholder="English"
+          aria-label={t("review.typingLabel")}
+          placeholder={t("review.typingPlaceholder")}
           style={{
             width: "100%", boxSizing: "border-box", minHeight: 52, padding: "0 16px", borderRadius: 14,
             fontFamily: fontBody, fontSize: wide ? 24 : 20, color: colors.text, background: colors.surface,
@@ -98,7 +106,7 @@ export function TypingArea({
         />
         {retryNote && (
           <p role="status" style={{ margin: 0, textAlign: "center", fontSize: wide ? 17 : 15, color: colors.gold }}>
-            それも正しい意味ですが、この単語ではありません。もう一度！
+            {t("review.otherMeaning")}
           </p>
         )}
         <div style={{ display: "flex", gap: 10 }}>
@@ -106,14 +114,14 @@ export function TypingArea({
             type="button" disabled={checking} onClick={onDontKnow}
             style={{ ...btnGhost, flex: 1, fontSize, ...answerSize, opacity: checking ? 0.5 : 1 }}
           >
-            わからない
+            {t("review.dontKnow")}
           </button>
           {/* Tapping 答える must not take focus from the box, so the keyboard stays open for a retry. */}
           <button
             type="submit" disabled={submitOff} onPointerDown={(e) => e.preventDefault()}
             style={{ ...btnPrimary, flex: 2, fontSize, ...answerSize, opacity: submitOff ? 0.5 : 1 }}
           >
-            {checking ? "確認中…" : "答える"}
+            {checking ? t("review.checking") : t("review.submit")}
           </button>
         </div>
       </form>
@@ -125,7 +133,7 @@ export function TypingArea({
       <div style={{ display: "grid", gap: 10 }}>
         {spelling === "exact" && (
           <div style={{ textAlign: "center", fontSize: wide ? 22 : 19, fontWeight: 700, color: colors.accentText }}>
-            ✓ 正解！
+            {t("review.correct")}
           </div>
         )}
         <button
@@ -134,7 +142,7 @@ export function TypingArea({
           onKeyDown={(e) => { if (ignoreNextKey(e, nextShownAt.current)) e.preventDefault(); }}
           onClick={onNext}
         >
-          次へ
+          {t("review.next")}
         </button>
       </div>
     );
@@ -144,9 +152,9 @@ export function TypingArea({
   return (
     <div style={{ display: "grid", gap: 12 }}>
       <div style={{ display: "grid", gap: 4, textAlign: "center", fontSize: wide ? 17 : 15, color: colors.text }}>
-        {spelling === "close" && <div style={{ fontSize: wide ? 22 : 19, fontWeight: 700, color: colors.gold }}>おしい！</div>}
-        <div>あなたの答え: <span lang="en" style={{ fontWeight: 700 }}>{typed}</span></div>
-        <div>正しい答え: <span lang="en" style={{ fontWeight: 700, color: colors.accentText }}>{answer}</span></div>
+        {spelling === "close" && <div style={{ fontSize: wide ? 22 : 19, fontWeight: 700, color: colors.gold }}>{t("review.close")}</div>}
+        <div>{tx("review.yourAnswer", { answer: <span lang="en" style={{ fontWeight: 700 }}>{typed}</span> })}</div>
+        <div>{tx("review.rightAnswer", { answer: <span lang="en" style={{ fontWeight: 700, color: colors.accentText }}>{answer}</span> })}</div>
       </div>
       <AnswerArea revealed onReveal={() => {}} onAnswer={onAnswer} answerSize={answerSize} wide={wide} />
     </div>
@@ -407,7 +415,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
         textShadow: `0 2px 10px ${colors.bg}, 0 0 4px ${colors.bg}`,
       }}
     >
-      +1 スペル
+      {t("review.spellBonus")}
     </div>
   );
 
@@ -418,17 +426,17 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
     <div style={{ display: "grid", gap: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: colors.text }}>
         <span>{activeSet.name}</span>
-        <span>覚えた: {clearedCount} ・ 残り: {pile.length}</span>
+        <span>{t("review.progress", { cleared: clearedCount, left: pile.length })}</span>
       </div>
 
       {addDeckControl}
 
-      {isSrs && <div role="status" style={srOnly}>{[levelUp?.label, spellBonus && "+1 スペル"].filter(Boolean).join(" ")}</div>}
+      {isSrs && <div role="status" style={srOnly}>{[levelUp?.label, spellBonus && t("review.spellBonus")].filter(Boolean).join(" ")}</div>}
 
       {card && (
         <>
           <p ref={promptRef} style={{ fontSize: wide ? 17 : 14, color: colors.text, margin: 0, textAlign: "center" }}>
-            {card.direction === "en2jp" ? "この単語は日本語で何と言いますか？" : "この単語は英語で何と言いますか？"}
+            {card.direction === "en2jp" ? t("review.questionEn2jp") : t("review.questionJp2en")}
           </p>
           <div style={{ position: "relative" }}>
             {/* A new key per turn: the next card starts on its front without flipping back on screen. */}
@@ -474,7 +482,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
             <>
               {handwritingSession && handwritingFailed && (
                 <p role="status" style={{ margin: 0, textAlign: "center", fontSize: wide ? 15 : 13, color: colors.gold }}>
-                  {HW_UNAVAILABLE_MESSAGE}
+                  {t("handwriting.unavailable")}
                 </p>
               )}
               <TypingArea
@@ -510,9 +518,9 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
         <div style={{ ...cardStyle, position: "relative", padding: 28, textAlign: "center", display: "grid", gap: 10 }}>
           {levelUpFloat}
           {spellBonusFloat}
-          <div style={{ fontFamily: fontDisplay, fontSize: 22, color: colors.text }}>全部クリアしました！</div>
+          <div style={{ fontFamily: fontDisplay, fontSize: 22, color: colors.text }}>{t("review.allCleared")}</div>
           {addDeckControl}
-          <button style={btnGhost} onClick={onBack}>ダッシュボードに戻る</button>
+          <button style={btnGhost} onClick={onBack}>{t("review.backToDashboard")}</button>
         </div>
       )}
     </div>

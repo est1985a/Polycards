@@ -1,4 +1,5 @@
 import { colors } from '../styles/theme';
+import { t } from '../i18n';
 
 // Shade of the theme's "again" (danger) color, mixed toward surface2.
 const shade = (pct) => `color-mix(in srgb, ${colors.danger} ${pct}%, ${colors.surface2})`;
@@ -20,7 +21,7 @@ const TRIANGLES = [
 
 export default function Avatar({ size = 80 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" role="img" aria-label="アバター (Avatar)">
+    <svg width={size} height={size} viewBox="0 0 100 100" role="img" aria-label={t("gacha.starterAvatarLabel")}>
       {TRIANGLES.map(([points, fill]) => (
         <polygon key={points} points={points} fill={fill} stroke={fill} strokeWidth="0.5" strokeLinejoin="round" />
       ))}

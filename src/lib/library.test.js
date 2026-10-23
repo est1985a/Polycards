@@ -111,7 +111,7 @@ describe('schoolLabel', () => {
   it('labels school levels', () => {
     expect(schoolLabel('JHS')).toBe('中学 · JHS');
     expect(schoolLabel('HS')).toBe('高校 · HS');
-    expect(schoolLabel('Other')).toBe('Other');
+    expect(schoolLabel('Other')).toBe('その他');
   });
 });
 

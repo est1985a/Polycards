@@ -5,6 +5,7 @@ import { isUnlocked, unlockLabel } from '../lib/themeUnlocks';
 import { AnswerModeSwitch } from './MyCardsTab';
 import ThemePreview from './ThemePreview';
 import ToggleSwitch from './ToggleSwitch';
+import { t, tx } from '../i18n';
 
 // Round badge in the bottom-right corner of a theme tile: a check (selected) or a lock (locked).
 function TileBadge({ kind }) {
@@ -46,7 +47,7 @@ export function ThemeTile({ item, rank, selected, onChoose, onLocked }) {
       disabled={pending}
       aria-pressed={selected}
       aria-disabled={locked || undefined}
-      aria-label={pending ? item.name : `${item.name}（${unlockLabel(item, rank)}）`}
+      aria-label={pending ? item.name : t("themes.tileLabel", { name: item.name, status: unlockLabel(item, rank) })}
       data-theme-key={item.key}
       style={{
         position: "relative", display: "grid", gap: 6, alignContent: "start", padding: 8, minWidth: 0,
@@ -68,10 +69,10 @@ export function ThemeTile({ item, rank, selected, onChoose, onLocked }) {
 export function SessionSizeSwitch({ size, onChange }) {
   return (
     <div style={{ display: "grid", gap: 8 }}>
-      <span style={{ fontSize: 15, fontWeight: 700, color: colors.text }}>1回の枚数</span>
+      <span style={{ fontSize: 15, fontWeight: 700, color: colors.text }}>{t("settings.sessionSize")}</span>
       <div
         role="group"
-        aria-label="1回の枚数"
+        aria-label={t("settings.sessionSize")}
         style={{ display: "flex", gap: 4, padding: 4, borderRadius: 999, background: colors.surface, border: `2px solid ${colors.line}` }}
       >
         {SESSION_SIZES.map((n) => {
@@ -87,12 +88,47 @@ export function SessionSizeSwitch({ size, onChange }) {
                 fontFamily: fontBody, fontWeight: 700, fontSize: 15, whiteSpace: "nowrap", cursor: "pointer",
               }}
             >
-              <span style={{ fontFamily: fontDisplay }}>{n}</span>枚
+              {tx("settings.sessionSizeOption", { n: <span style={{ fontFamily: fontDisplay }}>{n}</span>, count: n })}
             </button>
           );
         })}
       </div>
-      <span style={{ fontSize: 12, color: colors.muted }}>1回の復習で出てくるカードの数</span>
+      <span style={{ fontSize: 12, color: colors.muted }}>{t("settings.sessionSizeNote")}</span>
+    </div>
+  );
+}
+
+// 言語 / Language: 日本語 / English. The label and both choices are the same in every language,
+// so a student can always find the way back.
+export function LanguageSwitch({ lang, onChange }) {
+  const choices = [["ja", t("settings.languageJa")], ["en", t("settings.languageEn")]];
+  return (
+    <div style={{ display: "grid", gap: 8 }}>
+      <span style={{ fontSize: 15, fontWeight: 700, color: colors.text }}>{t("settings.language")}</span>
+      <div
+        role="group"
+        aria-label={t("settings.language")}
+        style={{ display: "flex", gap: 4, padding: 4, borderRadius: 999, background: colors.surface, border: `2px solid ${colors.line}` }}
+      >
+        {choices.map(([code, label]) => {
+          const selected = code === lang;
+          return (
+            <button
+              key={code}
+              lang={code}
+              onClick={() => onChange(code)}
+              aria-pressed={selected}
+              style={{
+                flex: 1, minWidth: 0, minHeight: 44, padding: "0 8px", borderRadius: 999, border: "none",
+                background: selected ? colors.accent : "transparent", color: selected ? colors.accentInk : colors.muted,
+                fontFamily: fontBody, fontWeight: 700, fontSize: 15, whiteSpace: "nowrap", cursor: "pointer",
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -111,11 +147,13 @@ function Section({ title, children }) {
 // themes holds only Midnight). currentTheme: the key in use; rank: the student's rank (null while
 // loading: tiles show without locks or status lines and can't be tapped). onChooseTheme(key) applies and saves.
 // themeError: the save error to show. The 答え方 switch shares App's state with the one on My Cards.
+// lang / onLangChange: the 言語 / Language switch (saved on the device by App).
 export default function SettingsScreen({
   themes, themesFailed = false, currentTheme, rank, onChooseTheme, themeError = null,
   sessionSize, onSessionSizeChange,
   answerMode, onAnswerModeChange, handwritingEnabled = false,
   reduceMotion, onReduceMotionChange,
+  lang = "ja", onLangChange = () => {},
   onBack, wide = false,
 }) {
   const [lockedNote, setLockedNote] = useState(null);
@@ -123,17 +161,17 @@ export default function SettingsScreen({
   return (
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
       <div>
-        <button onClick={onBack} style={{ ...btnLink, minHeight: 44 }}>← 戻る</button>
+        <button onClick={onBack} style={{ ...btnLink, minHeight: 44 }}>{t("settings.back")}</button>
       </div>
-      <h2 style={{ margin: 0, fontWeight: 700, fontSize: 30 }}>設定</h2>
+      <h2 style={{ margin: 0, fontWeight: 700, fontSize: 30 }}>{t("settings.title")}</h2>
 
-      <Section title="テーマ">
+      <Section title={t("settings.themes")}>
         {themes === null ? (
-          <div style={{ fontSize: 14, color: colors.muted }}>読み込み中…</div>
+          <div style={{ fontSize: 14, color: colors.muted }}>{t("common.loading")}</div>
         ) : (
           <>
             {themesFailed && (
-              <div role="alert" style={{ fontSize: 14, color: colors.danger }}>テーマを読み込めませんでした</div>
+              <div role="alert" style={{ fontSize: 14, color: colors.danger }}>{t("settings.themesFailed")}</div>
             )}
             <div
               data-theme-grid=""
@@ -146,7 +184,7 @@ export default function SettingsScreen({
                   rank={rank}
                   selected={item.key === currentTheme}
                   onChoose={(key) => { setLockedNote(null); onChooseTheme(key); }}
-                  onLocked={(t) => setLockedNote(`ランク ${t.unlockLevel} になると使えます`)}
+                  onLocked={(theme) => setLockedNote(t("settings.themeLocked", { n: theme.unlockLevel }))}
                 />
               ))}
             </div>
@@ -156,12 +194,12 @@ export default function SettingsScreen({
         )}
       </Section>
 
-      <Section title="学習">
+      <Section title={t("settings.study")}>
         <SessionSizeSwitch size={sessionSize} onChange={onSessionSizeChange} />
         <AnswerModeSwitch mode={answerMode} onChange={onAnswerModeChange} handwritingEnabled={handwritingEnabled} wide={wide} />
       </Section>
 
-      <Section title="表示">
+      <Section title={t("settings.display")}>
         <div style={{ display: "grid", gap: 4 }}>
           <button
             role="switch"
@@ -173,11 +211,12 @@ export default function SettingsScreen({
               fontFamily: fontBody, fontSize: 15, fontWeight: 700, color: colors.text, textAlign: "left",
             }}
           >
-            <span>カードの動きを減らす</span>
+            <span>{t("settings.reduceMotion")}</span>
             <ToggleSwitch on={reduceMotion} />
           </button>
-          <span style={{ fontSize: 12, color: colors.muted }}>カードをめくる動きやキラキラを止めます</span>
+          <span style={{ fontSize: 12, color: colors.muted }}>{t("settings.reduceMotionNote")}</span>
         </div>
+        <LanguageSwitch lang={lang} onChange={onLangChange} />
       </Section>
     </div>
   );

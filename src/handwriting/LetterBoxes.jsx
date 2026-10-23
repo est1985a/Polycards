@@ -2,6 +2,7 @@ import { useEffect, useImperativeHandle, useMemo, useRef, useState } from "react
 import LetterBox from "./LetterBox.jsx";
 import { answerSlots, boxLayout, printPosition, slotFactor } from "./answerLayout.js";
 import { btnGhost, colors, fontDisplay } from "../styles/theme.js";
+import { t } from "../i18n";
 
 const SPACING = 6;
 const BOX_BORDER = 3; // LetterBox's border; the layout size includes it
@@ -96,7 +97,7 @@ export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer 
                     selected={!locked && selected === slot.index}
                     allowAnyPointer={allowAnyPointer}
                     locked={locked}
-                    label={`${slot.index + 1}文字目`}
+                    label={t("handwriting.boxLabel", { n: slot.index + 1 })}
                     onStroke={() => handleStroke(slot.index)}
                     onSelect={() => setSelected(slot.index)}
                   />
@@ -125,10 +126,10 @@ export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer 
       </div>
       {!locked && <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
         <button type="button" onClick={handleClear} disabled={selected === null || !hasInk} style={{ ...btnGhost, minHeight: 44, minWidth: 88 }}>
-          消す
+          {t("handwriting.clear")}
         </button>
         <button type="button" onClick={handleUndo} disabled={!hasInk} style={{ ...btnGhost, minHeight: 44, minWidth: 88 }}>
-          戻す
+          {t("handwriting.undo")}
         </button>
       </div>}
     </div>

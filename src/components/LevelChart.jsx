@@ -1,6 +1,7 @@
 import { colors, fontDisplay, panel } from '../styles/theme';
 import { MASTERED } from '../lib/srs';
 import StarIcon from './StarIcon';
+import { t, tx } from '../i18n';
 
 const CHART_HEIGHT = 150; // whole chart area, count labels included
 const LABEL_SPACE = 20;   // room for the count above the tallest bar
@@ -22,9 +23,9 @@ export default function LevelChart({ counts }) {
   return (
     <div style={{ ...panel, display: "grid", gap: 12 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: colors.text }}>レベル別カード数</h2>
+        <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: colors.text }}>{t("stats.chartTitle")}</h2>
         <span style={{ fontSize: 13, color: colors.muted }}>
-          全部で <span style={{ fontFamily: fontDisplay, fontWeight: 700, color: colors.text }}>{fmt(total)}</span>枚
+          {tx("stats.chartTotal", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700, color: colors.text }}>{fmt(total)}</span>, count: total })}
         </span>
       </div>
 
@@ -51,16 +52,16 @@ export default function LevelChart({ counts }) {
 
       <div style={{ display: "flex", gap: 6, marginTop: -6, borderTop: `2px solid ${colors.line}`, paddingTop: 6 }}>
         {counts.map((_, level) => level === MASTERED ? (
-          <span key={level} title="Mastered" style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+          <span key={level} title={t("common.mastered")} style={{ flex: 1, display: "flex", justifyContent: "center" }}>
             <StarIcon size={14} />
-            <span style={srOnly}>Mastered</span>
+            <span style={srOnly}>{t("common.mastered")}</span>
           </span>
         ) : (
-          <span key={level} style={{ flex: 1, textAlign: "center", fontSize: 11, color: colors.muted }}>Lv{level}</span>
+          <span key={level} style={{ flex: 1, textAlign: "center", fontSize: 11, color: colors.muted }}>{t("stats.chartLevel", { n: level })}</span>
         ))}
       </div>
 
-      <p style={{ fontSize: 12, color: colors.muted, margin: 0 }}>Lv7 のカードは約4か月後に復習。正解するとマスター！</p>
+      <p style={{ fontSize: 12, color: colors.muted, margin: 0 }}>{t("stats.chartNote")}</p>
     </div>
   );
 }

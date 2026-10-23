@@ -1,8 +1,9 @@
-import { colors, fontBody, fontDisplay, panel, wideLayout } from '../styles/theme';
+import { colors, fontBody, fontDisplay, panel, wideLayout, btnPrimary } from '../styles/theme';
 import { DEFAULT_SESSION_SIZE, MASTERED, extraDueTotal } from '../lib/srs';
 import PlayerStats from './PlayerStats';
 import LevelChart from './LevelChart';
 import StarIcon from './StarIcon';
+import { t, tx } from '../i18n';
 
 // Big "start review" button. The pill shows how many cards the session will have
 // (all due cards, up to sessionSize, the student's 1回の枚数); a small line under the label shows the full total when there are more.
@@ -27,10 +28,10 @@ export function ReviewButton({ dueCount, loading, onReview, nextReview = null, o
       {ready ? (
         <>
           <span style={{ minWidth: 0, display: "grid", gap: 2, textAlign: "left" }}>
-            <span style={{ fontSize: 20, fontWeight: 700 }}>復習を始める</span>
+            <span style={{ fontSize: 20, fontWeight: 700 }}>{t("myCards.startReview")}</span>
             {total !== null && (
               <span style={{ fontSize: 13, fontWeight: 700, color: `color-mix(in srgb, ${colors.accentInk} 75%, transparent)` }}>
-                全<span style={{ fontFamily: fontDisplay }}>{total.toLocaleString('en-US')}</span>枚の復習があります
+                {tx("myCards.dueTotal", { n: <span style={{ fontFamily: fontDisplay }}>{total.toLocaleString('en-US')}</span>, count: total })}
               </span>
             )}
           </span>
@@ -41,12 +42,12 @@ export function ReviewButton({ dueCount, loading, onReview, nextReview = null, o
               background: `color-mix(in srgb, ${colors.accentInk} 15%, transparent)`,
             }}
           >
-            {Math.min(dueCount, sessionSize)}枚
+            {t("myCards.sessionCount", { n: Math.min(dueCount, sessionSize) })}
           </span>
         </>
       ) : (
         <span style={{ display: "grid", gap: 2 }}>
-          <span style={{ fontSize: 16, fontWeight: 700 }}>復習するカードはありません</span>
+          <span style={{ fontSize: 16, fontWeight: 700 }}>{t("myCards.nothingDue")}</span>
           {nextReview && (
             <span style={{ fontSize: 14, fontWeight: 700, color: colors.text }}>
               {nextReview.text}
@@ -60,11 +61,11 @@ export function ReviewButton({ dueCount, loading, onReview, nextReview = null, o
 }
 
 // 答え方 switch: how Japanese → English cards are answered in reviews (saved on the device).
-// なし (buttons) / タイピング / 手書き (Apple Pencil, only when handwritingEnabled).
+// なし (buttons) / タイピング / 手書き (Apple Pencil, only when handwritingEnabled). label / note are i18n keys.
 const ANSWER_MODE_OPTIONS = [
-  { mode: "off", label: "なし", note: "答えを見て、わかった / まだ で答えます" },
-  { mode: "typing", label: "タイピング", note: "英語をタイプして答えます。正しいスペルで +1 pt" },
-  { mode: "handwriting", label: "手書き", note: "Apple Pencil で英語を書いて答えます。正しく書けたら +1 pt" },
+  { mode: "off", label: "answerMode.off", note: "answerMode.off.note" },
+  { mode: "typing", label: "answerMode.typing", note: "answerMode.typing.note" },
+  { mode: "handwriting", label: "answerMode.handwriting", note: "answerMode.handwriting.note" },
 ];
 
 export function AnswerModeSwitch({ mode = "off", onChange, handwritingEnabled = false, wide = false }) {
@@ -72,10 +73,10 @@ export function AnswerModeSwitch({ mode = "off", onChange, handwritingEnabled = 
   const current = options.find((o) => o.mode === mode) ?? options[0];
   return (
     <div style={{ display: "grid", gap: 8, padding: "4px 4px" }}>
-      <span style={{ fontSize: wide ? 16 : 15, fontWeight: 700, color: colors.text }}>答え方（日本語 → English）</span>
+      <span style={{ fontSize: wide ? 16 : 15, fontWeight: 700, color: colors.text }}>{t("answerMode.title")}</span>
       <div
         role="group"
-        aria-label="答え方"
+        aria-label={t("answerMode.label")}
         style={{
           display: "flex", gap: 4, padding: 4, borderRadius: 999,
           background: colors.surface, border: `2px solid ${colors.line}`,
@@ -94,12 +95,12 @@ export function AnswerModeSwitch({ mode = "off", onChange, handwritingEnabled = 
                 fontFamily: fontBody, fontWeight: 700, fontSize: 15, whiteSpace: "nowrap", cursor: "pointer",
               }}
             >
-              {o.label}
+              {t(o.label)}
             </button>
           );
         })}
       </div>
-      <span style={{ fontSize: 12, color: colors.muted }}>{current.note}</span>
+      <span style={{ fontSize: 12, color: colors.muted }}>{t(current.note)}</span>
     </div>
   );
 }
@@ -109,7 +110,7 @@ export function AboutButton({ onOpen }) {
   return (
     <button
       onClick={onOpen}
-      aria-label="What is Polycards? / ポリカードのしくみ"
+      aria-label={t("about.buttonLabel")}
       aria-haspopup="dialog"
       style={{
         minHeight: 44, display: "inline-flex", alignItems: "center", gap: 6, padding: "0 14px",
@@ -122,7 +123,7 @@ export function AboutButton({ onOpen }) {
         <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3" />
         <circle cx="12" cy="17" r="0.6" fill="currentColor" />
       </svg>
-      What is Polycards?
+      {t("about.button")}
     </button>
   );
 }
@@ -141,7 +142,7 @@ function MasteredButton({ count, loading, onOpen }) {
     >
       <StarIcon size={22} />
       <span style={{ flex: 1, fontFamily: fontDisplay, fontSize: 17, fontWeight: 700 }}>
-        Mastered <span style={{ color: colors.gold }}>{count.toLocaleString('en-US')}</span>
+        {tx("myCards.mastered", { n: <span style={{ color: colors.gold }}>{count.toLocaleString('en-US')}</span>, count })}
       </span>
       <span aria-hidden="true" style={{ fontSize: 22, lineHeight: 1, color: colors.muted }}>›</span>
     </button>
@@ -168,17 +169,17 @@ function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
         </span>
         {due > 0 ? (
           <span style={{ flexShrink: 0, fontSize: 13, fontWeight: 700, padding: "4px 12px", borderRadius: 999, background: colors.surface2, whiteSpace: "nowrap" }}>
-            復習 <span style={{ fontFamily: fontDisplay }}>{due}</span>枚
+            {tx("myCards.deckDue", { n: <span style={{ fontFamily: fontDisplay }}>{due}</span>, count: due })}
           </span>
         ) : (
-          <span style={{ flexShrink: 0, fontSize: 12, color: colors.muted, whiteSpace: "nowrap" }}>今は復習なし</span>
+          <span style={{ flexShrink: 0, fontSize: 12, color: colors.muted, whiteSpace: "nowrap" }}>{t("myCards.deckNothingDue")}</span>
         )}
       </button>
       <button
         onClick={() => onRemove(deck)}
         disabled={removing}
-        aria-label={removing ? "削除中..." : "削除 (Remove)"}
-        title="削除 (Remove)"
+        aria-label={removing ? t("myCards.removing") : t("myCards.remove")}
+        title={t("myCards.remove")}
         style={{
           width: 44, flexShrink: 0, marginRight: 4, background: "transparent", border: "none",
           color: colors.muted, fontSize: 22, lineHeight: 1, cursor: removing ? "default" : "pointer",
@@ -191,7 +192,7 @@ function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
 }
 
 // wide: two columns (player card, review button, chart, Mastered | マイデッキ in a 2-column grid).
-export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, answerMode = "off", onAnswerModeChange = () => {}, handwritingEnabled = false, sessionSize = DEFAULT_SESSION_SIZE, onReview, onOpenPlan, onOpenAbout = () => {}, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
+export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, answerMode = "off", onAnswerModeChange = () => {}, handwritingEnabled = false, sessionSize = DEFAULT_SESSION_SIZE, onReview, onOpenPlan, onOpenAbout = () => {}, onOpenCardSets = () => {}, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
   // A word can be in several decks, so a due card counts toward each of them.
   const dueByDeck = {};
   dueRows.forEach((r) => {
@@ -212,13 +213,14 @@ export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar =
 
   const myDecks = (
     <div style={{ display: "grid", gap: 10, alignContent: "start", gridTemplateColumns: wide ? "repeat(2, minmax(0, 1fr))" : undefined }}>
-      <h2 style={{ fontSize: 16, fontWeight: 700, margin: wide ? 0 : "8px 0 0", color: colors.text, gridColumn: "1 / -1" }}>マイデッキ</h2>
+      <h2 style={{ fontSize: 16, fontWeight: 700, margin: wide ? 0 : "8px 0 0", color: colors.text, gridColumn: "1 / -1" }}>{t("myCards.myDecks")}</h2>
       {decks.length === 0 ? (
         <div style={{ ...panel, padding: 24, textAlign: "center", gridColumn: "1 / -1" }}>
-          <h3 style={{ margin: "0 0 10px", color: colors.text }}>Your Personal Rotation</h3>
-          <p style={{ fontSize: 14, color: colors.text }}>
-            You haven't saved any sets yet! Go to the <strong>Card Sets</strong> tab to find vocabulary lists and add them to your SRS schedule.
-          </p>
+          <h3 style={{ margin: "0 0 10px", color: colors.text }}>{t("myCards.empty.heading")}</h3>
+          <p style={{ fontSize: 14, color: colors.text }}>{t("myCards.empty.body")}</p>
+          <button onClick={onOpenCardSets} style={{ ...btnPrimary, minHeight: 48, padding: "0 20px", fontSize: 16 }}>
+            {t("myCards.empty.button")}
+          </button>
         </div>
       ) : (
         decks.map((deck) => (

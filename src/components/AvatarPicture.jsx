@@ -1,6 +1,7 @@
 import { colors, fontDisplay } from '../styles/theme';
 import { rarityInfo, sparkleLayout } from '../lib/gacha';
 import Avatar from './Avatar';
+import { t } from '../i18n';
 
 // Placeholder blob: a low-poly round shape tinted with the rarity color.
 const shade = (c, pct) => `color-mix(in srgb, ${c} ${pct}%, ${colors.surface2})`;
@@ -40,7 +41,7 @@ function Picture({ avatar, size, silhouette }) {
   return (
     <svg
       width={size} height={size} viewBox="0 0 100 100" style={{ position: "relative", display: "block", ...hide }}
-      role="img" aria-label={silhouette ? "？" : avatar.name_en || "アバター"}
+      role="img" aria-label={silhouette ? t("collection.silhouetteLabel") : avatar.name_en || t("gacha.avatarFallback")}
     >
       {BLOB.map(([points, pct]) => (
         <polygon key={points} points={points} fill={shade(tint, pct)} stroke={shade(tint, pct)} strokeWidth="0.5" strokeLinejoin="round" />

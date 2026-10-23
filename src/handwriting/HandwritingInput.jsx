@@ -6,6 +6,7 @@ import { predictBatch } from "./model.js";
 import { preprocessLetter } from "./preprocess.js";
 import { HW_COLORS } from "./config.js";
 import { btnGhost, btnPrimary, colors } from "../styles/theme.js";
+import { t, tx } from "../i18n";
 
 // Reads the boxes: one batch through the model, then each box scored against its target letter.
 // → scoreWord's result plus reads (the letter read in each box, null if empty) and text (the
@@ -50,7 +51,7 @@ export default function HandwritingInput({ answer, result = null, answered = fal
     <div style={{ display: "grid", gap: 12 }}>
       {!answered && (
         <p style={{ margin: 0, textAlign: "center", fontSize: wide ? 15 : 13, color: colors.muted }}>
-          Apple Pencil で、1マスに1文字ずつ書いてください
+          {t("handwriting.hint")}
         </p>
       )}
       <LetterBoxes
@@ -64,18 +65,19 @@ export default function HandwritingInput({ answer, result = null, answered = fal
       {result && !result.allCorrect && (
         <div style={{ display: "grid", gap: 4, textAlign: "center", fontSize: wide ? 17 : 15, color: colors.text }}>
           <div>
-            読み取り:{" "}
-            <span lang="en" style={{ fontWeight: 700 }}>
-              {slots.map((s, i) => {
-                if (s.type === "gap") return <span key={i}> </span>;
-                if (s.type === "print") return <span key={i}>{s.text}</span>;
-                const score = result.scores[s.index];
-                const color = score === "wrong" ? colors.danger : score === "lenient" ? HW_COLORS.lenient : colors.text;
-                return <span key={i} style={{ color }}>{result.reads[s.index] ?? "?"}</span>;
-              })}
-            </span>
+            {tx("handwriting.read", { answer: (
+              <span lang="en" style={{ fontWeight: 700 }}>
+                {slots.map((s, i) => {
+                  if (s.type === "gap") return <span key={i}> </span>;
+                  if (s.type === "print") return <span key={i}>{s.text}</span>;
+                  const score = result.scores[s.index];
+                  const color = score === "wrong" ? colors.danger : score === "lenient" ? HW_COLORS.lenient : colors.text;
+                  return <span key={i} style={{ color }}>{result.reads[s.index] ?? "?"}</span>;
+                })}
+              </span>
+            ) })}
           </div>
-          <div>正しい答え: <span lang="en" style={{ fontWeight: 700, color: colors.accentText }}>{answer}</span></div>
+          <div>{tx("review.rightAnswer", { answer: <span lang="en" style={{ fontWeight: 700, color: colors.accentText }}>{answer}</span> })}</div>
         </div>
       )}
 
@@ -91,13 +93,13 @@ export default function HandwritingInput({ answer, result = null, answered = fal
             type="button" disabled={reading} onClick={onDontKnow}
             style={{ ...btnGhost, flex: 1, fontSize, ...answerSize, opacity: reading ? 0.5 : 1 }}
           >
-            わからない
+            {t("review.dontKnow")}
           </button>
           <button
             type="button" disabled={reading || !hasInk} onClick={handleAnswer}
             style={{ ...btnPrimary, flex: 2, fontSize, ...answerSize, opacity: reading || !hasInk ? 0.5 : 1 }}
           >
-            {reading ? "読み取り中…" : "こたえる"}
+            {reading ? t("handwriting.reading") : t("handwriting.submit")}
           </button>
         </div>
       )}

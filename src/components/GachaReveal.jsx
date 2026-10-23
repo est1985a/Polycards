@@ -3,6 +3,7 @@ import { colors, fontDisplay, fontBody, btnGhost } from '../styles/theme';
 import { rarityInfo, rarityGlow } from '../lib/gacha';
 import AvatarPicture from './AvatarPicture';
 import { reduceMotionOn } from '../lib/settings';
+import { t, tx, getLang } from '../i18n';
 
 const ANIMATION_MS = 2000;
 
@@ -44,7 +45,7 @@ export default function GachaReveal({ result, equipped, equipping, pulling, onEq
 
   return (
     <div
-      role="dialog" aria-modal="true" aria-label="ガチャの結果"
+      role="dialog" aria-modal="true" aria-label={t("gacha.result")}
       onClick={showCard ? undefined : () => setShowCard(true)}
       style={{
         position: "fixed", inset: 0, zIndex: 40, overflowY: "auto",
@@ -56,7 +57,7 @@ export default function GachaReveal({ result, equipped, equipping, pulling, onEq
       {!showCard ? (
         <div style={{ display: "grid", justifyItems: "center", gap: 24, cursor: "pointer" }}>
           <CapsuleDrop color={info.color} />
-          <div style={{ fontSize: 13, color: colors.muted }}>タップでスキップ</div>
+          <div style={{ fontSize: 13, color: colors.muted }}>{t("gacha.tapToSkip")}</div>
         </div>
       ) : (
         <div
@@ -86,14 +87,14 @@ export default function GachaReveal({ result, equipped, equipping, pulling, onEq
                 background: colors.danger, color: colors.dangerInk, fontFamily: fontDisplay, fontWeight: 700, fontSize: 14,
               }}
             >
-              NEW!
+              {t("gacha.new")}
             </span>
           </div>
 
           <div>
-            <div style={{ fontSize: 12, color: colors.muted }}>アバター</div>
+            <div style={{ fontSize: 12, color: colors.muted }}>{t("gacha.avatar")}</div>
             <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 28, lineHeight: 1.3 }}>{avatar.name_en}</div>
-            <div style={{ fontSize: 15, color: colors.muted }}>{avatar.name_ja}</div>
+            {getLang() !== "en" && <div style={{ fontSize: 15, color: colors.muted }}>{avatar.name_ja}</div>}
           </div>
 
           <button
@@ -105,7 +106,7 @@ export default function GachaReveal({ result, equipped, equipping, pulling, onEq
               fontWeight: 700, fontSize: 17,
             }}
           >
-            {equipped ? "つけ中" : equipping ? "つけています…" : "つける"}
+            {equipped ? t("gacha.wearing") : equipping ? t("gacha.equipping") : t("gacha.equip")}
           </button>
           {ticketsLeft > 0 && (
             <button
@@ -116,10 +117,10 @@ export default function GachaReveal({ result, equipped, equipping, pulling, onEq
                 background: colors.gold, color: colors.bg, fontWeight: 700, fontSize: 17,
               }}
             >
-              もう一回 <span style={{ fontSize: 13 }}>(のこり 券 {ticketsLeft}枚)</span>
+              {tx("gacha.again", { left: <span style={{ fontSize: 13 }}>{t("gacha.ticketsLeft", { n: ticketsLeft })}</span> })}
             </button>
           )}
-          <button onClick={onClose} style={{ ...btnGhost, minHeight: 44 }}>とじる</button>
+          <button onClick={onClose} style={{ ...btnGhost, minHeight: 44 }}>{t("gacha.close")}</button>
         </div>
       )}
     </div>

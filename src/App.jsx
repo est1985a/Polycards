@@ -10,13 +10,14 @@ import { nextReviewSummary } from './lib/schedule';
 import { singleFlight } from './lib/gacha';
 import { testLoginEmail, LOGIN_FAILED_MESSAGE } from './lib/login';
 import {
-  loadSessionSize, saveSessionSize, loadReduceMotion, saveReduceMotion, applyReduceMotion,
+  loadSessionSize, saveSessionSize, loadReduceMotion, saveReduceMotion, applyReduceMotion, saveLang, applyLang,
   loadThemeCache, saveThemeCache, clearThemeCache, loadSeenThemes, saveSeenThemes, devThemeOverride,
 } from './lib/settings';
 import { themeList, newThemes, featuredUnlock, markSeen } from './lib/themeUnlocks';
 import { themes, applyTheme, getTheme, DEFAULT_THEME } from './themes';
 import { wrap, gutter, headerBand, tabBarHeight, btnLink, wideLayout } from './styles/theme';
 import { useWide } from './lib/useWide';
+import { t, getLang } from './i18n';
 import Header from './components/Header';
 import LoginScreen from './components/LoginScreen';
 import Tabs from './components/Tabs';
@@ -37,8 +38,8 @@ import ThemeUnlockSheet from './components/ThemeUnlockSheet';
 const knownTheme = (key) => (themes[key] ? key : DEFAULT_THEME);
 
 const TABS = [
-  { id: 'myCards', label: 'My Cards' },
-  { id: 'cardSets', label: 'Card Sets' },
+  { id: 'myCards', label: 'tabs.myCards' },
+  { id: 'cardSets', label: 'tabs.cardSets' },
 ];
 
 function App() {
@@ -61,6 +62,7 @@ function App() {
   // Settings saved on this device (src/lib/settings.js)
   const [sessionSize, setSessionSize] = useState(() => loadSessionSize(window.localStorage)); // 1回の枚数
   const [reduceMotion, setReduceMotion] = useState(() => loadReduceMotion(window.localStorage)); // カードの動きを減らす
+  const [lang, setLangState] = useState(getLang); // 言語 / Language, applied in main.jsx before the first render
 
   // Theme: saved on the account (gacha_set_theme), cached on the device. main.jsx already applied the cache.
   const [themeKey, setThemeKey] = useState(() => knownTheme(loadThemeCache(window.localStorage)));
@@ -174,6 +176,11 @@ function App() {
     applyReduceMotion(reduceMotion);
   }, [reduceMotion]);
 
+  // <html lang>: the login screen is always Japanese; signed in, the chosen language.
+  useEffect(() => {
+    document.documentElement.lang = session ? lang : "ja";
+  }, [session, lang]);
+
   // Fetch the Global Library when the dashboard loads
   useEffect(() => {
     if (session && view === "dashboard") loadLibrary();
@@ -221,9 +228,9 @@ function App() {
   useEffect(() => {
     if (!waitingForNext) return;
     const timer = setInterval(() => {
-      const t = Date.now();
-      setNow(t);
-      if (t >= nextReview.at) loadDueRows();
+      const time = Date.now();
+      setNow(time);
+      if (time >= nextReview.at) loadDueRows();
     }, 60 * 1000);
     return () => clearInterval(timer);
   }, [waitingForNext, nextReview]);
@@ -292,6 +299,13 @@ function App() {
   function changeReduceMotion(on) {
     setReduceMotion(on);
     saveReduceMotion(window.localStorage, on);
+  }
+
+  // 言語 / Language: switches every text at once (the state change re-renders the whole app).
+  function changeLang(next) {
+    const used = applyLang(next);
+    saveLang(window.localStorage, used);
+    setLangState(used);
   }
 
   // Themes: unlocked by rank (the one the player card shows); "new" = unlocked but not yet shown.
@@ -479,7 +493,7 @@ function App() {
       setActiveSet({ id: deck.id, name: deck.name, cards: buildCards(words) });
       setView("wordList");
     } catch {
-      alert("No cards found in this deck yet!");
+      alert(t("cardSets.deckEmpty"));
     }
     setLoadingDeck(false);
   }
@@ -491,9 +505,9 @@ function App() {
     try {
       const rows = await api.fetchReviewRows(deck?.id, sessionSize);
       if (rows.length === 0) {
-        alert("今は復習するカードがありません。(Nothing is due right now.)");
+        alert(t("myCards.nothingDueAlert"));
       } else {
-        beginSession({ id: deck?.id || 'review', name: deck?.name || '復習 (Review)', cards: buildReviewCards(rows), mode: 'srs' });
+        beginSession({ id: deck?.id || 'review', name: deck?.name || t("review.defaultName"), cards: buildReviewCards(rows), mode: 'srs' });
       }
     } catch (e) {
       alert(e.message);
@@ -531,7 +545,7 @@ function App() {
 
   async function addDeck() {
     if (!session) {
-      alert("Sign in with Google to save decks to My Cards.");
+      alert(t("cardSets.signInToAdd"));
       return;
     }
     if (!activeSet) return;
@@ -547,7 +561,7 @@ function App() {
 
   async function removeDeck(deck) {
     if (!session) return;
-    if (!window.confirm(`「${deck.name}」をマイカードから削除しますか？\nRemove "${deck.name}" from My Cards? Your review progress for this deck will be lost.`)) return;
+    if (!window.confirm(t("myCards.removeConfirm", { name: deck.name }))) return;
     setRemovingDeckId(deck.id);
     try {
       await api.removeDeckFromMyCards(session.user.id, deck.id);
@@ -605,6 +619,7 @@ function App() {
                     stats={stats}
                     avatar={gacha?.equipped_avatar ?? null}
                     answerMode={answerMode}
+                    onOpenCardSets={() => changeTab("cardSets")}
                     onAnswerModeChange={changeAnswerMode}
                     handwritingEnabled={HANDWRITING_ENABLED}
                     sessionSize={sessionSize}
@@ -653,6 +668,8 @@ function App() {
                     handwritingEnabled={HANDWRITING_ENABLED}
                     reduceMotion={reduceMotion}
                     onReduceMotionChange={changeReduceMotion}
+                    lang={lang}
+                    onLangChange={changeLang}
                     onBack={() => { setView("dashboard"); window.scrollTo(0, 0); }}
                     wide={wide}
                   />
@@ -693,7 +710,7 @@ function App() {
               <>
                 <div style={{ marginBottom: 14 }}>
                   <button onClick={() => setView("dashboard")} style={btnLink}>
-                    ← ダッシュボードに戻る (Back to Dashboard)
+                    {t("common.backToDashboard")}
                   </button>
                 </div>
                 {view === "mastered" && (
