@@ -1,5 +1,8 @@
 import { colors, fontDisplay, panel } from '../styles/theme';
-import { parentPath, resolvePath, schoolLabel, levelOptions, pickLevel, textbooksForLevel, isDeckAdded } from '../lib/library';
+import {
+  parentPath, resolvePath, schoolLabel, levelOptions, pickLevel, textbooksForLevel, isDeckAdded,
+  findCollection, collectionParentPath,
+} from '../lib/library';
 import CardSetsHub from './CardSetsHub';
 import NavRow from './NavRow';
 import LevelSwitch from './LevelSwitch';
@@ -56,12 +59,19 @@ function AddedBadge() {
   );
 }
 
-// Card Sets tab: hub → textbooks → units → decks (→ word list, shown by App), or Tests & Themes.
+// Card Sets tab: hub → textbooks → units → decks (→ word list, shown by App), or
+// hub → Tests & Themes → collections (as deep as the tree goes) → decks.
 // path: which screen to show, plus the chosen school level (kept in App so it survives opening a deck);
 // onNavigate(path) changes it. myDeckIds: decks already in My Cards (they get a 追加済み badge).
-export default function CardSetsTab({ textbooks, loading, path, onNavigate, onOpenDeck, myDeckIds, disabled }) {
-  const { path: current, textbook, unit } = resolvePath(textbooks, path);
-  const back = () => onNavigate(parentPath(current));
+// collections: the Tests & Themes tree from shapeCollections, null until it first loads.
+export default function CardSetsTab({ textbooks, loading, collections = null, path, onNavigate, onOpenDeck, myDeckIds, disabled }) {
+  const resolved = resolvePath(textbooks, path);
+  let current = resolved.path;
+  const { textbook, unit } = resolved;
+  // A collection that no longer exists (once the tree has loaded) falls back to the Tests & Themes list.
+  const collection = current.screen === "collection" ? findCollection(collections, current.collectionId) : null;
+  if (current.screen === "collection" && collections && !collection) current = { screen: "tests", level: current.level };
+  const back = () => onNavigate(current.screen === "collection" ? collectionParentPath(collection, current.level) : parentPath(current));
   const { level } = current;
 
   if (current.screen === "hub") {
@@ -83,20 +93,54 @@ export default function CardSetsTab({ textbooks, loading, path, onNavigate, onOp
     </div>
   );
 
+  // One deck row (textbook and collection decks look the same and open the same word list).
+  const deckRow = (deck) => (
+    <NavRow
+      key={deck.id}
+      title={deck.name}
+      pill={tx("cardSets.wordCount", { n: count(deck.wordCount), count: deck.wordCount })}
+      badge={isDeckAdded(myDeckIds, deck.id) && <AddedBadge />}
+      onClick={() => onOpenDeck(deck)}
+      disabled={disabled}
+    />
+  );
+  // One collection row, with the number of decks inside it (sub-collections included).
+  const collectionRow = (c) => (
+    <NavRow
+      key={c.id}
+      title={c.name}
+      pill={tx("cardSets.deckCount", { n: count(c.deckCount), count: c.deckCount })}
+      onClick={() => onNavigate({ screen: "collection", collectionId: c.id, level })}
+    />
+  );
+  const loadingText = <p style={{ textAlign: "center", color: colors.muted }}>{t("cardSets.loading")}</p>;
+
   if (current.screen === "tests") {
-    return screen(t("cardSets.title"), t("cardSets.tests"), t("cardSets.testsLabel"), (
-      <EmptyPanel>
-        <div style={{ fontSize: 18, fontWeight: 700, color: colors.text, marginBottom: 6 }}>{t("cardSets.comingSoon")}</div>
-        {t("cardSets.comingSoonNote")}
-      </EmptyPanel>
-    ));
+    // Coming soon only when there are no collections at all.
+    const body = collections === null ? loadingText
+      : collections.length === 0 ? (
+        <EmptyPanel>
+          <div style={{ fontSize: 18, fontWeight: 700, color: colors.text, marginBottom: 6 }}>{t("cardSets.comingSoon")}</div>
+          {t("cardSets.comingSoonNote")}
+        </EmptyPanel>
+      )
+      : collections.map(collectionRow);
+    return screen(t("cardSets.title"), t("cardSets.tests"), t("cardSets.testsLabel"), body);
+  }
+
+  if (current.screen === "collection") {
+    if (!collection) return loadingText;
+    const parent = findCollection(collections, collection.parentId);
+    const backLabel = parent ? parent.name : t("cardSets.tests");
+    const empty = collection.children.length === 0 && collection.decks.length === 0;
+    return screen(backLabel, collection.name, parent ? parent.name : t("cardSets.testsLabel"), empty
+      ? <EmptyPanel>{t("cardSets.noDecks")}</EmptyPanel>
+      : [...collection.children.map(collectionRow), ...collection.decks.map(deckRow)]);
   }
 
   // The list screens need the library; show "loading" only before it first arrives,
   // so coming back to the dashboard doesn't flash the list away.
-  if (loading && textbooks.length === 0) {
-    return <p style={{ textAlign: "center", color: colors.muted }}>{t("cardSets.loading")}</p>;
-  }
+  if (loading && textbooks.length === 0) return loadingText;
 
   if (current.screen === "textbooks") {
     const options = levelOptions(textbooks);
@@ -131,14 +175,5 @@ export default function CardSetsTab({ textbooks, loading, path, onNavigate, onOp
   // decks
   return screen(textbook.name, unit.name, textbook.name, unit.decks.length === 0
     ? <EmptyPanel>{t("cardSets.noDecks")}</EmptyPanel>
-    : unit.decks.map((deck) => (
-      <NavRow
-        key={deck.id}
-        title={deck.name}
-        pill={tx("cardSets.wordCount", { n: count(deck.wordCount), count: deck.wordCount })}
-        badge={isDeckAdded(myDeckIds, deck.id) && <AddedBadge />}
-        onClick={() => onOpenDeck(deck)}
-        disabled={disabled}
-      />
-    )));
+    : unit.decks.map(deckRow));
 }

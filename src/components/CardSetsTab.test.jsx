@@ -1,7 +1,7 @@
 // Tests for the Card Sets hub and its list screens. Run with: npm test
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { shapeLibrary } from '../lib/library';
+import { shapeLibrary, shapeCollections } from '../lib/library';
 import CardSetsTab from './CardSetsTab';
 
 const TEXTBOOKS = shapeLibrary([
@@ -14,6 +14,21 @@ const TEXTBOOKS = shapeLibrary([
     ] },
   ] },
 ]);
+
+const COLLECTIONS = shapeCollections(
+  [
+    { id: 'eiken', name: '英検', parent_id: null, sort_order: 20 },
+    { id: 'g5', name: '5級', parent_id: 'eiken', sort_order: 0 },
+    { id: 'elem', name: '小学校の英語', parent_id: null, sort_order: 10 },
+  ],
+  [
+    { collection_id: 'elem', decks: { id: 'd10', name: '10 一日の生活', sort_order: 0, deck_words: [{ count: 19 }] } },
+    { collection_id: 'elem', decks: { id: 'd2', name: '2 色', sort_order: 0, deck_words: [{ count: 16 }] } },
+    { collection_id: 'eiken', decks: { id: 'd-mix', name: 'Mix', sort_order: 0, deck_words: [] } },
+    { collection_id: 'g5', decks: { id: 'd-g5a', name: 'A', sort_order: 0, deck_words: [{ count: 5 }] } },
+    { collection_id: 'g5', decks: { id: 'd-g5b', name: 'B', sort_order: 0, deck_words: [{ count: 5 }] } },
+  ],
+);
 
 const render = (path, props) => renderToStaticMarkup(
   <CardSetsTab textbooks={TEXTBOOKS} loading={false} path={path} onNavigate={() => {}} onOpenDeck={() => {}} disabled={false} {...props} />
@@ -110,10 +125,52 @@ describe('CardSetsTab', () => {
     expect(html.match(/disabled=""/g)).toHaveLength(2);
   });
 
-  it('tests: coming soon with a back button', () => {
-    const t = text(render({ screen: 'tests' }));
+  it('tests: coming soon with a back button when there are no collections', () => {
+    const t = text(render({ screen: 'tests' }, { collections: [] }));
     expect(t).toContain('← Card Sets');
     expect(t).toContain('準備中 — Coming soon');
+  });
+
+  it('tests: loading until the collections arrive', () => {
+    const t = text(render({ screen: 'tests' }, { collections: null }));
+    expect(t).toContain('ライブラリを読み込み中…');
+    expect(t).not.toContain('Coming soon');
+  });
+
+  it('tests: top-level collections in sort_order with their deck counts, no Coming soon', () => {
+    const t = text(render({ screen: 'tests' }, { collections: COLLECTIONS }));
+    expect(t).toContain('Tests &amp; Themes');
+    expect(t).toContain('テスト・テーマ別');
+    expect(t.indexOf('小学校の英語')).toBeLessThan(t.indexOf('英検'));
+    expect(t).toContain('3 デッキ'); // 英検: 1 of its own + 2 in 5級
+    expect(t).not.toContain('Coming soon');
+    expect(t).not.toContain('5級'); // sub-collections only show inside
+  });
+
+  it('collection: sub-collections first, then decks with word counts, numbers in order', () => {
+    const t = text(render({ screen: 'collection', collectionId: 'eiken', level: 'JHS' }, { collections: COLLECTIONS }));
+    expect(t).toContain('← Tests &amp; Themes');
+    expect(t.indexOf('5級')).toBeLessThan(t.indexOf('Mix'));
+    expect(t).toContain('2 デッキ');
+    const elem = text(render({ screen: 'collection', collectionId: 'elem' }, { collections: COLLECTIONS }));
+    expect(elem.indexOf('2 色')).toBeLessThan(elem.indexOf('10 一日の生活'));
+    expect(elem).toContain('16 語');
+  });
+
+  it('collection: a sub-collection goes back to its parent, and added decks get the badge', () => {
+    const t = text(render({ screen: 'collection', collectionId: 'g5' }, { collections: COLLECTIONS, myDeckIds: ['d-g5a'] }));
+    expect(t).toContain('← 英検');
+    expect(t).toContain('追加済み');
+  });
+
+  it('collection: loading while the tree is not there yet', () => {
+    expect(text(render({ screen: 'collection', collectionId: 'elem' }, { collections: null }))).toContain('ライブラリを読み込み中…');
+  });
+
+  it('collection: one that no longer exists falls back to the Tests & Themes list', () => {
+    const t = text(render({ screen: 'collection', collectionId: 'gone' }, { collections: COLLECTIONS }));
+    expect(t).toContain('小学校の英語');
+    expect(t).toContain('← Card Sets');
   });
 
   it('a textbook that no longer exists falls back to the hub', () => {

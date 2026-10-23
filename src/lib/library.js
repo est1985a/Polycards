@@ -121,3 +121,57 @@ export function toggleId(set, id) {
   else next.add(id);
   return next;
 }
+
+// Tests & Themes: the collections tree -------------------------------------------------
+
+// Rows from fetchCollections → the top-level collections, each { id, name, sort_order, parentId,
+// children, decks, deckCount }. children = sub-collections, decks = its own decks (with wordCount);
+// both are sorted by sort_order, then by name ("2" before "10"). deckCount counts the decks inside it
+// and all its sub-collections, each deck once. collections: { id, name, parent_id, sort_order };
+// links: { collection_id, decks: { id, name, sort_order, deck_words: [{ count }] } }.
+// A collection whose parent is missing is not shown.
+export function shapeCollections(collections, links) {
+  const sort = (a, b) => bySortOrder(a, b) || byName(a, b);
+  const nodes = new Map((collections || []).map((c) => [c.id, {
+    id: c.id, name: c.name, sort_order: c.sort_order, parentId: c.parent_id ?? null, children: [], decks: [], deckCount: 0,
+  }]));
+  for (const link of links || []) {
+    const node = nodes.get(link.collection_id);
+    if (!node || !link.decks) continue;
+    const { deck_words, ...deck } = link.decks;
+    if (!node.decks.some((d) => d.id === deck.id)) node.decks.push({ ...deck, wordCount: deck_words?.[0]?.count ?? 0 });
+  }
+  const roots = [];
+  for (const node of nodes.values()) {
+    if (node.parentId === null) roots.push(node);
+    else nodes.get(node.parentId)?.children.push(node);
+  }
+  // Sorts each level and returns the set of deck ids under a node (depth guard against bad data).
+  const finish = (node, depth) => {
+    node.children.sort(sort);
+    node.decks.sort(sort);
+    const ids = new Set(node.decks.map((d) => d.id));
+    if (depth < 10) for (const child of node.children) for (const id of finish(child, depth + 1)) ids.add(id);
+    node.deckCount = ids.size;
+    return ids;
+  };
+  roots.forEach((root) => finish(root, 0));
+  return roots.sort(sort);
+}
+
+// The collection with this id anywhere in the tree, or null.
+export function findCollection(roots, id) {
+  for (const node of roots || []) {
+    if (node.id === id) return node;
+    const found = findCollection(node.children, id);
+    if (found) return found;
+  }
+  return null;
+}
+
+// Where the back button goes from a collection: its parent collection, or the Tests & Themes list.
+export function collectionParentPath(collection, level) {
+  return collection?.parentId
+    ? { screen: "collection", collectionId: collection.parentId, level }
+    : { screen: "tests", level };
+}

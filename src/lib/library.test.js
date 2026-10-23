@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   shapeLibrary, findTextbook, findUnit, parentPath, resolvePath, schoolLabel,
   levelOf, levelOptions, textbooksForLevel, pickLevel, loadSchoolLevel, saveSchoolLevel, isDeckAdded,
+  shapeCollections, findCollection, collectionParentPath,
 } from './library';
 
 const ROWS = [
@@ -175,5 +176,66 @@ describe('isDeckAdded', () => {
   it('is false when nothing is added or the list is not loaded yet', () => {
     expect(isDeckAdded([], 201)).toBe(false);
     expect(isDeckAdded(undefined, 201)).toBe(false);
+  });
+});
+
+describe('shapeCollections', () => {
+  const deck = (id, name, count, sortOrder = 0) => ({ id, name, sort_order: sortOrder, deck_words: count == null ? [] : [{ count }] });
+  const COLS = [
+    { id: 'b', name: 'B top', parent_id: null, sort_order: 0 },
+    { id: 'a', name: 'A top', parent_id: null, sort_order: 0 },
+    { id: 'first', name: 'Z first', parent_id: null, sort_order: -5 },
+    { id: 'a1', name: 'Level 10', parent_id: 'a', sort_order: 0 },
+    { id: 'a2', name: 'Level 2', parent_id: 'a', sort_order: 0 },
+    { id: 'a2x', name: 'Deep', parent_id: 'a2', sort_order: 0 },
+    { id: 'orphan', name: 'Orphan', parent_id: 'missing', sort_order: 0 },
+  ];
+  const LINKS = [
+    { collection_id: 'a', decks: deck('d10', '10 疑問詞', 12) },
+    { collection_id: 'a', decks: deck('d2', '2 色', 15) },
+    { collection_id: 'a', decks: deck('d1', '1 あいさつ', null, 5) },
+    { collection_id: 'a1', decks: deck('d2', '2 色', 15) }, // the same deck in a sub-collection
+    { collection_id: 'a2x', decks: deck('d3', '3 数', 14) },
+    { collection_id: 'nope', decks: deck('d9', 'x', 1) },
+    { collection_id: 'a', decks: null },
+  ];
+  const TREE = shapeCollections(COLS, LINKS);
+
+  it('lists top-level collections by sort_order, then name, and hides orphans', () => {
+    expect(TREE.map((c) => c.name)).toEqual(['Z first', 'A top', 'B top']);
+  });
+
+  it('sorts sub-collections and decks by sort_order, then name numeric-aware', () => {
+    const a = findCollection(TREE, 'a');
+    expect(a.children.map((c) => c.name)).toEqual(['Level 2', 'Level 10']);
+    expect(a.decks.map((d) => d.name)).toEqual(['2 色', '10 疑問詞', '1 あいさつ']);
+  });
+
+  it('gives decks a word count and drops deck_words', () => {
+    const a = findCollection(TREE, 'a');
+    expect(a.decks[0]).toEqual({ id: 'd2', name: '2 色', sort_order: 0, wordCount: 15 });
+    expect(a.decks[2].wordCount).toBe(0);
+  });
+
+  it('counts decks in sub-collections too, each deck once', () => {
+    expect(findCollection(TREE, 'a').deckCount).toBe(4); // d10, d2, d1 + d3 two levels down
+    expect(findCollection(TREE, 'a2').deckCount).toBe(1);
+    expect(findCollection(TREE, 'b').deckCount).toBe(0);
+  });
+
+  it('finds nested collections and returns null for unknown ids', () => {
+    expect(findCollection(TREE, 'a2x').name).toBe('Deep');
+    expect(findCollection(TREE, 'orphan')).toBeNull();
+    expect(findCollection(null, 'a')).toBeNull();
+  });
+
+  it('handles empty input', () => {
+    expect(shapeCollections(null, null)).toEqual([]);
+  });
+
+  it('back goes to the parent collection, or to the Tests & Themes list from the top', () => {
+    expect(collectionParentPath(findCollection(TREE, 'a2x'), 'HS')).toEqual({ screen: 'collection', collectionId: 'a2', level: 'HS' });
+    expect(collectionParentPath(findCollection(TREE, 'a'), 'HS')).toEqual({ screen: 'tests', level: 'HS' });
+    expect(collectionParentPath(null, 'JHS')).toEqual({ screen: 'tests', level: 'JHS' });
   });
 });

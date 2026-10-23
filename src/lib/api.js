@@ -2,7 +2,7 @@
 // Each function throws an Error if something goes wrong, so screens can show the message.
 import { supabase } from './supabaseClient';
 import { DEFAULT_SESSION_SIZE, MASTERED, restoreUpdate } from './srs';
-import { shapeLibrary } from './library';
+import { shapeLibrary, shapeCollections } from './library';
 import { jstDayBounds, jstHourStart } from './schedule';
 import { t } from '../i18n';
 
@@ -18,6 +18,29 @@ export async function fetchLibrary() {
     .order('created_at', { ascending: true });
   if (error) throw new Error("Supabase Error: " + error.message);
   return shapeLibrary(data);
+}
+
+// Tests & Themes: every collection and the decks linked to each (with word counts), as a tree
+// shaped by shapeCollections. Both lists are read in pages, so nothing is cut off at 1,000 rows.
+export async function fetchCollections() {
+  const [collections, links] = await Promise.all([
+    fetchAllPages(
+      (withCount) => supabase
+        .from('collections')
+        .select('id, name, parent_id, sort_order', withCount ? { count: 'exact' } : undefined)
+        .order('id', { ascending: true }),
+      "Could not load collections: ",
+    ),
+    fetchAllPages(
+      (withCount) => supabase
+        .from('collection_decks')
+        .select('collection_id, decks ( id, name, sort_order, deck_words ( count ) )', withCount ? { count: 'exact' } : undefined)
+        .order('collection_id', { ascending: true })
+        .order('deck_id', { ascending: true }),
+      "Could not load collection decks: ",
+    ),
+  ]);
+  return shapeCollections(collections, links);
 }
 
 // Decks this student added to My Cards, oldest first.
