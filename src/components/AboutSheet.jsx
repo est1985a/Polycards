@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import { colors, fontDisplay } from '../styles/theme';
 import { levelLadder } from '../lib/schedule';
 import { shouldCloseSheet } from '../lib/sheet';
-import { ABOUT } from '../content/aboutPolycards';
+import { ABOUT, fillAboutText } from '../content/aboutPolycards';
+import { DEFAULT_SESSION_SIZE } from '../lib/srs';
 
 const chip = {
   display: "inline-flex", alignItems: "baseline", gap: 6, padding: "6px 12px", borderRadius: 999, fontSize: 14, fontWeight: 700,
@@ -27,8 +28,13 @@ function Ladder() {
 
 const paragraph = { margin: 0, fontSize: 15, lineHeight: 1.7, color: colors.text };
 
-function Section({ number, section }) {
-  const { heading, paragraphsBefore = [], paragraphsAfter = [], paragraphs = [], list = [] } = section;
+function Section({ number, section, sessionSize }) {
+  const fill = (list) => list.map((t) => fillAboutText(t, sessionSize));
+  const { heading } = section;
+  const paragraphsBefore = fill(section.paragraphsBefore ?? []);
+  const paragraphsAfter = fill(section.paragraphsAfter ?? []);
+  const paragraphs = fill(section.paragraphs ?? []);
+  const list = fill(section.list ?? []);
   const hasLadder = paragraphsBefore.length > 0 || paragraphsAfter.length > 0;
   return (
     <section style={{ display: "grid", gap: 10 }}>
@@ -51,7 +57,8 @@ function Section({ number, section }) {
 // "What is Polycards?" pop-up: how the SRS works, for students. Text lives in src/content/aboutPolycards.js.
 // Same layout as the review plan pop-up (classes in src/index.css), a little wider on big screens.
 // Focus moves to × when it opens and goes back to the button that opened it when it closes.
-export default function AboutSheet({ onClose }) {
+// sessionSize: the student's 1回の枚数, shown in the text.
+export default function AboutSheet({ onClose, sessionSize = DEFAULT_SESSION_SIZE }) {
   const closeRef = useRef(null);
 
   useEffect(() => {
@@ -93,7 +100,7 @@ export default function AboutSheet({ onClose }) {
           </button>
         </div>
         <div style={{ display: "grid", gap: 22 }}>
-          {ABOUT.sections.map((s, i) => <Section key={s.heading} number={i + 1} section={s} />)}
+          {ABOUT.sections.map((s, i) => <Section key={s.heading} number={i + 1} section={s} sessionSize={sessionSize} />)}
         </div>
       </div>
     </div>

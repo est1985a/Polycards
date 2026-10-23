@@ -10,11 +10,14 @@ export const MASTERED = MAX_LEVEL + 1;
 // Points each card (one word in one direction) is worth, by its level. New cards are worth 0;
 // the last entry is for Mastered cards.
 export const CARD_POINTS = [0, 1, 2, 3, 5, 8, 13, 21, 34];
-export const SESSION_SIZE = 20; // max cards per review session
+// Max cards per review session: the student picks 10, 20 or 30 in settings (1回の枚数, saved on
+// the device, see loadSessionSize in settings.js). 20 until they choose.
+export const SESSION_SIZES = [10, 20, 30];
+export const DEFAULT_SESSION_SIZE = 20;
 
 // The full due total, but only when it is more than one session can hold (otherwise null).
-export function extraDueTotal(dueCount) {
-  return dueCount > SESSION_SIZE ? dueCount : null;
+export function extraDueTotal(dueCount, sessionSize = DEFAULT_SESSION_SIZE) {
+  return dueCount > sessionSize ? dueCount : null;
 }
 // A mastered card put back into reviews starts again at this level, due right away.
 export const RESTORED_LEVEL = 1;

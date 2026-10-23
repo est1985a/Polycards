@@ -37,6 +37,23 @@ describe('review button', () => {
   });
 });
 
+describe('review button with another 1回の枚数', () => {
+  const renderSize = (dueCount, sessionSize) =>
+    renderToStaticMarkup(<ReviewButton dueCount={dueCount} loading={false} onReview={() => {}} sessionSize={sessionSize} />);
+
+  it('caps the pill at the chosen size and shows the total only above it', () => {
+    expect(renderSize(15, 10)).toContain('>10枚</span>');
+    expect(renderSize(15, 10)).toMatch(/全<span[^>]*>15<\/span>枚/);
+    expect(renderSize(25, 30)).toContain('>25枚</span>');
+    expect(renderSize(25, 30)).not.toContain('の復習があります');
+  });
+
+  it('extraDueTotal uses the chosen size', () => {
+    expect(extraDueTotal(15, 10)).toBe(15);
+    expect(extraDueTotal(25, 30)).toBeNull();
+  });
+});
+
 describe('wide screens', () => {
   const tab = (wide) => renderToStaticMarkup(
     <MyCardsTab

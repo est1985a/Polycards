@@ -12,6 +12,7 @@ export default function ToggleSwitch({ on }) {
       }}
     >
       <span
+        className="toggle-knob"
         style={{
           position: "absolute", top: 2, left: on ? 24 : 2, width: 22, height: 22, borderRadius: "50%",
           background: on ? colors.accentInk : colors.muted, transition: "left 150ms",

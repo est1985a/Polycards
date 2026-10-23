@@ -1,7 +1,7 @@
 // Every Supabase query the app makes lives here.
 // Each function throws an Error if something goes wrong, so screens can show the message.
 import { supabase } from './supabaseClient';
-import { SESSION_SIZE, MASTERED, restoreUpdate } from './srs';
+import { DEFAULT_SESSION_SIZE, MASTERED, restoreUpdate } from './srs';
 import { shapeLibrary } from './library';
 import { jstDayBounds, jstHourStart } from './schedule';
 
@@ -135,7 +135,8 @@ export async function removeDeckFromMyCards(userId, deckId) {
 }
 
 // Due cards for a review session (all decks, or one deck), oldest due first. Never Mastered cards.
-export async function fetchReviewRows(deckId = null) {
+// limit: the student's 1回の枚数 (10, 20 or 30).
+export async function fetchReviewRows(deckId = null, limit = DEFAULT_SESSION_SIZE) {
   const select = deckId
     ? 'word_id, direction, level, words!inner ( id, english, japanese, example_en, example_ja, deck_words!inner ( deck_id ) )'
     : 'word_id, direction, level, words!inner ( id, english, japanese, example_en, example_ja )';
@@ -145,7 +146,7 @@ export async function fetchReviewRows(deckId = null) {
     .lt('level', MASTERED)
     .lte('next_review_at', new Date().toISOString())
     .order('next_review_at', { ascending: true })
-    .limit(SESSION_SIZE);
+    .limit(limit);
   if (deckId) query = query.eq('words.deck_words.deck_id', deckId);
 
   const { data, error } = await query;
@@ -405,7 +406,19 @@ export function equipAvatar(avatarId) {
   return callGacha('gacha_equip_avatar', { p_avatar_id: avatarId });
 }
 
-// Not used by the app yet (themes come later).
+// Saves the chosen theme on the account (only themes unlocked at the student's rank, else theme_locked).
+// gacha_status() returns it as `theme`.
 export function setGachaTheme(theme) {
   return callGacha('gacha_set_theme', { p_theme: theme });
+}
+
+// The rank needed for each theme: [{ theme_key, unlock_level }]. Signed-in users may read this
+// table (the one gacha table the app reads directly). Read once after sign-in.
+export async function fetchThemeUnlocks() {
+  const { data, error } = await supabase
+    .from('theme_unlocks')
+    .select('theme_key, unlock_level')
+    .order('unlock_level', { ascending: true });
+  if (error) throw new Error("Could not load themes: " + error.message);
+  return data || [];
 }

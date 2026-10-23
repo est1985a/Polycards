@@ -1,7 +1,7 @@
 // Tests for the SRS rules. Run with: npm test
 import { describe, it, expect } from 'vitest';
 import {
-  LEVEL_HOURS, MAX_LEVEL, MASTERED, SESSION_SIZE, RESTORED_LEVEL, isMastered,
+  LEVEL_HOURS, MAX_LEVEL, MASTERED, DEFAULT_SESSION_SIZE, SESSION_SIZES, RESTORED_LEVEL, isMastered,
   levelAfterCorrect, levelAfterWrong, nextReviewDate, restoreUpdate, levelUpLabel,
 } from './srs';
 
@@ -12,7 +12,8 @@ describe('settings', () => {
 
   it('has levels 0 to 7 and 20 cards per session', () => {
     expect(MAX_LEVEL).toBe(7);
-    expect(SESSION_SIZE).toBe(20);
+    expect(DEFAULT_SESSION_SIZE).toBe(20);
+    expect(SESSION_SIZES).toEqual([10, 20, 30]);
   });
 });
 

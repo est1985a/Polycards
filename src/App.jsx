@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { supabase } from './lib/supabaseClient';
 import * as api from './lib/api';
 import { buildCards, buildReviewCards } from './lib/drill';
@@ -9,7 +9,13 @@ import { HANDWRITING_ENABLED } from './handwriting/config';
 import { nextReviewSummary } from './lib/schedule';
 import { singleFlight } from './lib/gacha';
 import { testLoginEmail, LOGIN_FAILED_MESSAGE } from './lib/login';
-import { colors, wrap, gutter, headerBand, tabBarHeight, btnLink, wideLayout } from './styles/theme';
+import {
+  loadSessionSize, saveSessionSize, loadReduceMotion, saveReduceMotion, applyReduceMotion,
+  loadThemeCache, saveThemeCache, clearThemeCache, loadSeenThemes, saveSeenThemes, devThemeOverride,
+} from './lib/settings';
+import { themeList, newThemes, featuredUnlock, markSeen } from './lib/themeUnlocks';
+import { themes, applyTheme, getTheme, DEFAULT_THEME } from './themes';
+import { wrap, gutter, headerBand, tabBarHeight, btnLink, wideLayout } from './styles/theme';
 import { useWide } from './lib/useWide';
 import Header from './components/Header';
 import LoginScreen from './components/LoginScreen';
@@ -24,6 +30,11 @@ import AboutSheet from './components/AboutSheet';
 import GachaScreen from './components/GachaScreen';
 import GachaReveal from './components/GachaReveal';
 import GachaCollection from './components/GachaCollection';
+import SettingsScreen from './components/SettingsScreen';
+import ThemeUnlockSheet from './components/ThemeUnlockSheet';
+
+// A theme key from the account or the device; unknown keys become the default theme.
+const knownTheme = (key) => (themes[key] ? key : DEFAULT_THEME);
 
 const TABS = [
   { id: 'myCards', label: 'My Cards' },
@@ -35,7 +46,7 @@ function App() {
   const [authError, setAuthError] = useState(null);
 
   // Screens: 'dashboard', 'wordList' (Card Sets deck, before the drill), 'study', 'mastered',
-  // 'gacha' or 'collection' (アバター図鑑)
+  // 'gacha', 'collection' (アバター図鑑) or 'settings' (設定)
   const [view, setView] = useState("dashboard");
   const [activeTab, setActiveTab] = useState("myCards"); // always open on My Cards
 
@@ -47,6 +58,19 @@ function App() {
   // The level starts from the one saved on the last visit.
   const [cardSetsPath, setCardSetsPath] = useState(() => ({ screen: "hub", level: loadSchoolLevel(window.localStorage) }));
   const [answerMode, setAnswerMode] = useState(() => loadAnswerMode(window.localStorage, HANDWRITING_ENABLED)); // 答え方: off / typing / handwriting
+  // Settings saved on this device (src/lib/settings.js)
+  const [sessionSize, setSessionSize] = useState(() => loadSessionSize(window.localStorage)); // 1回の枚数
+  const [reduceMotion, setReduceMotion] = useState(() => loadReduceMotion(window.localStorage)); // カードの動きを減らす
+
+  // Theme: saved on the account (gacha_set_theme), cached on the device. main.jsx already applied the cache.
+  const [themeKey, setThemeKey] = useState(() => knownTheme(loadThemeCache(window.localStorage)));
+  const [themeRows, setThemeRows] = useState(null); // theme_unlocks rows, read once after sign-in (null while loading)
+  const [themesFailed, setThemesFailed] = useState(false);
+  const [themeError, setThemeError] = useState(null); // save error shown in settings
+  // Seen themes marked in this visit, also kept in memory so the pop-up closes even when the device
+  // blocks storage: { userId, keys }.
+  const [seenNow, setSeenNow] = useState({ userId: null, keys: [] });
+  const themeSaving = useRef(false); // while a choice is being saved, an older gacha_status must not undo it
 
   // Study session
   const [activeSet, setActiveSet] = useState(null);
@@ -103,15 +127,52 @@ function App() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (!session) {
         setMyDeckIds([]); setMyDecks([]); setStats(null);
         setGacha(null); setReveal(null); setCollection(null); pulseChecked.current = false;
+        setThemeRows(null); setThemesFailed(false);
+      }
+      // Log-out: forget this account's theme on the device and go back to Midnight.
+      if (event === "SIGNED_OUT") {
+        clearThemeCache(window.localStorage);
+        setThemeKey(DEFAULT_THEME);
       }
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // The rank each theme needs, read once after sign-in. If it can't be read, only Midnight is offered.
+  const userId = session?.user?.id ?? null;
+  useEffect(() => {
+    if (!userId) return;
+    api.fetchThemeUnlocks()
+      .then((rows) => { setThemeRows(rows); setThemesFailed(false); })
+      .catch((e) => {
+        console.error(e);
+        setThemeRows([{ theme_key: DEFAULT_THEME, unlock_level: 1 }]);
+        setThemesFailed(true);
+      });
+  }, [userId]);
+
+  // Show the chosen theme (not while trying one with ?theme= in development).
+  useEffect(() => {
+    if (!devThemeOverride()) applyTheme(getTheme(themeKey));
+  }, [themeKey]);
+
+  // The account's theme from gacha_status wins over the device's copy.
+  const accountTheme = gacha?.theme ?? null;
+  useEffect(() => {
+    if (!accountTheme || themeSaving.current) return;
+    const key = knownTheme(accountTheme);
+    setThemeKey(key);
+    saveThemeCache(window.localStorage, key);
+  }, [accountTheme]);
+
+  useEffect(() => {
+    applyReduceMotion(reduceMotion);
+  }, [reduceMotion]);
 
   // Fetch the Global Library when the dashboard loads
   useEffect(() => {
@@ -223,6 +284,73 @@ function App() {
     saveAnswerMode(window.localStorage, mode);
   }
 
+  function changeSessionSize(size) {
+    setSessionSize(size);
+    saveSessionSize(window.localStorage, size);
+  }
+
+  function changeReduceMotion(on) {
+    setReduceMotion(on);
+    saveReduceMotion(window.localStorage, on);
+  }
+
+  // Themes: unlocked by rank (the one the player card shows); "new" = unlocked but not yet shown.
+  const rank = stats?.playerRank ?? null;
+  const themeItems = useMemo(() => (themeRows ? themeList(themeRows, themes) : null), [themeRows]);
+  // Unlocked themes already shown to this student: saved on the device per user (a short list,
+  // read on each render), plus the ones marked in this visit.
+  const seenThemes = [
+    ...loadSeenThemes(window.localStorage, userId),
+    ...(seenNow.userId === userId ? seenNow.keys : []),
+  ];
+  const hasNewTheme = !!themeItems && rank != null && newThemes(themeItems, rank, seenThemes).length > 0;
+  const unlock = themeItems && rank != null ? featuredUnlock(themeItems, rank, seenThemes) : null;
+
+  // Every theme unlocked now counts as seen (the dot and the pop-up go away).
+  function markThemesSeen() {
+    if (!themeItems || rank == null || !userId) return;
+    const keys = markSeen(themeItems, rank, seenThemes);
+    saveSeenThemes(window.localStorage, userId, keys);
+    setSeenNow({ userId, keys });
+  }
+
+  // Applies a theme at once, then saves it on the account. If saving fails, the previous theme
+  // comes back and the error is shown (and thrown, for the unlock pop-up).
+  async function chooseTheme(key) {
+    const previous = themeKey;
+    setThemeError(null);
+    if (key === previous) return;
+    setThemeKey(key);
+    themeSaving.current = true;
+    try {
+      await api.setGachaTheme(key);
+      saveThemeCache(window.localStorage, key);
+      setGacha((g) => g && { ...g, theme: key });
+    } catch (e) {
+      setThemeKey(previous);
+      setThemeError(e.message);
+      throw e;
+    } finally {
+      themeSaving.current = false;
+    }
+  }
+
+  function openSettings() {
+    setPlanOpen(false);
+    setAboutOpen(false);
+    setReveal(null);
+    setThemeError(null);
+    markThemesSeen();
+    setView("settings");
+    window.scrollTo(0, 0);
+  }
+
+  // Unlock pop-up: 今すぐ使う saves the theme first (the pop-up stays open if that fails).
+  async function applyUnlockedTheme() {
+    await chooseTheme(unlock.theme.key);
+    markThemesSeen();
+  }
+
   async function loadStats(userId) {
     try {
       await api.waitForPendingSaves(); // include the last answers of a review that just ended
@@ -319,6 +447,8 @@ function App() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    clearThemeCache(window.localStorage); // also done on SIGNED_OUT; here too in case that event is missed
+    setThemeKey(DEFAULT_THEME);
     goHome(); // the next sign-in starts on My Cards too
   };
 
@@ -359,7 +489,7 @@ function App() {
     if (!session) return;
     setLoadingDeck(true);
     try {
-      const rows = await api.fetchReviewRows(deck?.id);
+      const rows = await api.fetchReviewRows(deck?.id, sessionSize);
       if (rows.length === 0) {
         alert("今は復習するカードがありません。(Nothing is due right now.)");
       } else {
@@ -446,15 +576,19 @@ function App() {
 
   // Wide screens: My Cards uses the full column, study is 780 px, other screens 720 px (centered).
   const gachaView = view === "gacha" || view === "collection";
-  const contentWidth = !wide || bandHeader || gachaView ? "none"
+  const tabbedView = gachaView || view === "settings"; // full screens that keep the bottom tabs
+  const contentWidth = !wide || bandHeader || tabbedView ? "none"
     : view === "study" ? wideLayout.studyWidth : wideLayout.readWidth;
 
   return (
-    <div style={{ background: colors.bg, minHeight: "100vh" }}>
+    <div style={{ minHeight: "100vh" }}>
+      {/* The theme's background (and backdrop) behind everything; see .app-backdrop in index.css. */}
+      <div className="app-backdrop" aria-hidden="true" />
       <div style={wide ? { ...wrap, maxWidth: wideLayout.maxWidth } : wrap}>
         <Header
           variant={bandHeader ? "band" : "compact"} user={session?.user} onSignOut={handleLogout} onHome={goHome} wide={wide}
           gacha={gacha} pulseGacha={gachaPulse} onOpenGacha={openGacha}
+          rank={rank} newTheme={hasNewTheme} onOpenSettings={openSettings} onOpenHelp={() => setAboutOpen(true)}
         />
 
         <div style={{ position: "relative", padding: `0 ${wide ? wideLayout.gutter : gutter}px 60px`, marginTop: bandHeader ? -headerBand.overlap : 0 }}>
@@ -473,6 +607,7 @@ function App() {
                     answerMode={answerMode}
                     onAnswerModeChange={changeAnswerMode}
                     handwritingEnabled={HANDWRITING_ENABLED}
+                    sessionSize={sessionSize}
                     onReview={startReview}
                     onOpenPlan={openPlan}
                     onOpenAbout={() => setAboutOpen(true)}
@@ -496,11 +631,32 @@ function App() {
                 )}
                 <Tabs tabs={TABS} active={activeTab} onChange={changeTab} wide={wide} />
                 {planOpen && <ReviewPlanSheet rows={planRows} now={now} onClose={closePlan} />}
-                {aboutOpen && <AboutSheet onClose={closeAbout} />}
+                {/* New theme unlocked: only on My Cards, never during a review. */}
+                {unlock && activeTab === "myCards" && !planOpen && !aboutOpen && (
+                  <ThemeUnlockSheet item={unlock.theme} others={unlock.others} rank={rank} onUse={applyUnlockedTheme} onLater={markThemesSeen} />
+                )}
               </div>
-            ) : gachaView ? (
+            ) : tabbedView ? (
               <div style={{ paddingBottom: tabBarHeight + 32 }}>
-                {view === "gacha" ? (
+                {view === "settings" ? (
+                  <SettingsScreen
+                    themes={themeItems}
+                    themesFailed={themesFailed}
+                    currentTheme={themeKey}
+                    rank={rank}
+                    onChooseTheme={(key) => chooseTheme(key).catch(() => {})}
+                    themeError={themeError}
+                    sessionSize={sessionSize}
+                    onSessionSizeChange={changeSessionSize}
+                    answerMode={answerMode}
+                    onAnswerModeChange={changeAnswerMode}
+                    handwritingEnabled={HANDWRITING_ENABLED}
+                    reduceMotion={reduceMotion}
+                    onReduceMotionChange={changeReduceMotion}
+                    onBack={() => { setView("dashboard"); window.scrollTo(0, 0); }}
+                    wide={wide}
+                  />
+                ) : view === "gacha" ? (
                   <GachaScreen
                     status={gacha}
                     pulling={pulling}
@@ -518,7 +674,7 @@ function App() {
                     wide={wide}
                   />
                 )}
-                {/* Neither tab is highlighted on the gacha screens. */}
+                {/* Neither tab is highlighted on the gacha and settings screens. */}
                 <Tabs tabs={TABS} active={null} onChange={leaveGachaTo} wide={wide} />
                 {reveal && (
                   <GachaReveal
@@ -571,6 +727,8 @@ function App() {
           </div>
         </div>
       </div>
+      {/* 使い方 can be opened from the account menu on any screen. */}
+      {aboutOpen && <AboutSheet onClose={closeAbout} sessionSize={sessionSize} />}
     </div>
   );
 }

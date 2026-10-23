@@ -21,6 +21,28 @@ body {
   margin: 0;
 }
 
+/* Theme backdrop (App.jsx): one full-screen layer behind the whole app with the theme's
+   optional backdrop (--backdrop, "none" for most themes) over its bg. Fixed, not
+   background-attachment: fixed, which iPad Safari ignores. */
+.app-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--backdrop), var(--bg);
+}
+
+/* My Cards header band (Header.jsx): the low-poly triangles fade out at the bottom, so the
+   backdrop shows through instead of a solid bg. */
+.header-band-art {
+  -webkit-mask-image: linear-gradient(to bottom, #000 52%, transparent);
+  mask-image: linear-gradient(to bottom, #000 52%, transparent);
+}
+
+/* カードの動きを減らす (settings): data-reduce-motion="true" on <html>. Each
+   prefers-reduced-motion block below is followed by the same rules under this attribute,
+   so the app switch works like the device's own Reduce Motion setting. */
+
 /* Buttons don't inherit the page font by default. */
 button {
   font-family: inherit;
@@ -71,7 +93,11 @@ p {
 @media (prefers-reduced-motion: reduce) {
   .flip-card-inner { transition: none !important; }
   .tap-hint { animation: none !important; }
+  .toggle-knob { transition: none !important; }
 }
+:root[data-reduce-motion="true"] .flip-card-inner { transition: none !important; }
+:root[data-reduce-motion="true"] .tap-hint { animation: none !important; }
+:root[data-reduce-motion="true"] .toggle-knob { transition: none !important; }
 
 /* "Level Up!" float in SRS review: rises from the card and fades out over 1 s. */
 @keyframes polycards-level-up {
@@ -101,6 +127,7 @@ p {
 @media (prefers-reduced-motion: reduce) {
   .level-up-float, .level-up-tick { animation-name: polycards-level-up-fade; }
 }
+:root[data-reduce-motion="true"] :is(.level-up-float, .level-up-tick) { animation-name: polycards-level-up-fade; }
 
 /* Review plan pop-up (ReviewPlanSheet.jsx): a bottom sheet on phones, a centered box on wider
    screens. Colors are set inline from the theme. */
@@ -141,6 +168,7 @@ p {
 @media (prefers-reduced-motion: reduce) {
   .review-plan-sheet { animation: none; }
 }
+:root[data-reduce-motion="true"] .review-plan-sheet { animation: none; }
 
 /* Gacha button (Header.jsx): one gentle pulse when the app opens with tickets waiting. */
 @keyframes polycards-gacha-pulse {
@@ -195,6 +223,9 @@ p {
   .gacha-capsule, .gacha-half-top, .gacha-half-bottom, .gacha-burst { animation: none; }
   .gacha-reveal-in { animation: polycards-gacha-fade-in 0.4s ease-out; }
 }
+:root[data-reduce-motion="true"] .gacha-pulse { animation: none; }
+:root[data-reduce-motion="true"] :is(.gacha-capsule, .gacha-half-top, .gacha-half-bottom, .gacha-burst) { animation: none; }
+:root[data-reduce-motion="true"] .gacha-reveal-in { animation: polycards-gacha-fade-in 0.4s ease-out; }
 
 /* Rarity sparkles and glow around owned avatar pictures (AvatarPicture.jsx).
    Each star twinkles with its own delay; with reduce motion they stay still. */
@@ -224,6 +255,8 @@ p {
   .rarity-sparkle-star { animation: none; opacity: 0.85; transform: scale(0.85); }
   .rarity-glow-secret { animation: none; }
 }
+:root[data-reduce-motion="true"] .rarity-sparkle-star { animation: none; opacity: 0.85; transform: scale(0.85); }
+:root[data-reduce-motion="true"] .rarity-glow-secret { animation: none; }
 
 /* Typing mode: "+1 スペル" for a correct spelling (StudySession.jsx), top-left of the card.
    Rises and fades like the Lv tick, a little slower; only fades with reduce motion. */
@@ -233,3 +266,4 @@ p {
 @media (prefers-reduced-motion: reduce) {
   .spell-bonus-float { animation-name: polycards-level-up-fade; }
 }
+:root[data-reduce-motion="true"] .spell-bonus-float { animation-name: polycards-level-up-fade; }

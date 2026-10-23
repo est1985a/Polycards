@@ -465,9 +465,10 @@ grant execute on function
 -- ---------------------------------------------------------------------
 -- 6. Starting content
 -- ---------------------------------------------------------------------
+-- Unlock order as changed by polycards-theme-order.sql (2026-10-23).
 insert into public.theme_unlocks (theme_key, unlock_level) values
-  ('midnight', 1), ('pizza', 5), ('lagoon', 10), ('sakura', 15), ('matcha', 20),
-  ('autumn', 30), ('snow', 40), ('neon', 50), ('galaxy', 60), ('ryukoku', 70);
+  ('midnight', 1), ('ryukoku', 5), ('snow', 10), ('pizza', 15), ('lagoon', 20),
+  ('sakura', 30), ('matcha', 40), ('autumn', 50), ('neon', 60), ('galaxy', 70);
 
 -- Series 1. Pictures come later (image_url NULL = placeholder).
 -- Secrets are placeholders for now: rename them when the mascot and teachers are ready.

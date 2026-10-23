@@ -1,7 +1,7 @@
 // Checks that every theme is complete and readable. Run with: npm test
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
-import { COLOR_ROLES, themes, getTheme, DEFAULT_THEME, applyTheme } from './themes';
+import { COLOR_ROLES, themes, getTheme, DEFAULT_THEME, applyTheme, themeVars } from './themes';
 import { colors } from './styles/theme';
 
 // WCAG contrast ratio between two #rrggbb colors (1 to 21; 4.5 is the minimum for normal text).
@@ -34,6 +34,12 @@ describe.each(Object.entries(themes))('theme "%s"', (id, theme) => {
     expect(['light', 'dark']).toContain(theme.scheme);
     expect(theme.levels).toHaveLength(8);
     theme.levels.forEach((lv) => expect(lv).toMatch(HEX));
+  });
+
+  it('has no backdrop, or a non-empty CSS background string', () => {
+    if (theme.backdrop === undefined) return;
+    expect(typeof theme.backdrop).toBe('string');
+    expect(theme.backdrop.trim()).not.toBe('');
   });
 
   it('keeps text readable on its backgrounds', () => {
@@ -80,6 +86,25 @@ describe('applyTheme', () => {
     for (const role of COLOR_ROLES) expect(set[`--${role}`]).toBe(themes.lagoon.colors[role]);
     for (let i = 0; i < 8; i++) expect(set[`--lv${i}`]).toBe(themes.lagoon.levels[i]);
     expect(root.style.colorScheme).toBe('light');
+    expect(set['--backdrop']).toBe('none'); // lagoon has no backdrop
+  });
+
+  it('sets the backdrop of a theme that has one', () => {
+    const set = {};
+    const root = { style: { setProperty: (k, v) => { set[k] = v; } } };
+    applyTheme(themes.galaxy, root);
+    expect(set['--backdrop']).toBe(themes.galaxy.backdrop);
+    expect(root.style.colorScheme).toBe('dark');
+  });
+});
+
+describe('themeVars', () => {
+  it('gives every role, 8 levels and the backdrop as CSS variables', () => {
+    const vars = themeVars(themes.neon);
+    for (const role of COLOR_ROLES) expect(vars[`--${role}`]).toBe(themes.neon.colors[role]);
+    for (let i = 0; i < 8; i++) expect(vars[`--lv${i}`]).toBe(themes.neon.levels[i]);
+    expect(vars['--backdrop']).toBe(themes.neon.backdrop);
+    expect(themeVars(themes.midnight)['--backdrop']).toBe('none');
   });
 });
 
