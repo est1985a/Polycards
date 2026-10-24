@@ -31,6 +31,7 @@ vi.mock('./supabaseClient', () => ({
 const {
   fetchDueRows, fetchReviewRows, restoreMasteredCard, recordAnswer, waitForPendingSaves, holdAnswer, flushHeldAnswer, dropHeldAnswer, checkOtherMeaning, fetchBonusPoints, fetchNextReview, fetchReviewPlanRows,
   fetchCollections, fetchGachaStatus, pullGacha, fetchGachaCollection, equipAvatar, setGachaTheme, gachaErrorMessage, fetchThemeUnlocks,
+  fetchStudyDays, fetchStudyTotals, fetchTroubleWords,
 } = await import('./api');
 
 beforeEach(() => {
@@ -81,6 +82,46 @@ describe('theme unlocks', () => {
   it('throws when the table cannot be read', async () => {
     result = { data: null, error: { message: 'denied' } };
     await expect(fetchThemeUnlocks()).rejects.toThrow('Could not load themes: denied');
+  });
+});
+
+describe('stats page', () => {
+  it('reads study days in pages, oldest first, without got_it / not_yet', async () => {
+    result = { data: [{ day: '2026-10-24', reviews: 5 }], error: null, count: 1 };
+    expect(await fetchStudyDays()).toEqual([{ day: '2026-10-24', reviews: 5 }]);
+    expect(calls).toContainEqual(['from', 'user_study_daily']);
+    expect(calls).toContainEqual(['select', 'day, reviews, spelled_correctly, bonus_points', { count: 'exact' }]);
+    expect(calls).toContainEqual(['order', 'day', { ascending: true }]);
+    expect(calls).toContainEqual(['range', 0, 999]);
+    expect(JSON.stringify(calls)).not.toMatch(/got_it|not_yet/);
+  });
+
+  it('reads the totals row, or zeros when there is none', async () => {
+    result = { data: { reviews: 120, spelled_correctly: 30, bonus_points: 30 }, error: null };
+    expect(await fetchStudyTotals()).toEqual({ reviews: 120, spelled_correctly: 30, bonus_points: 30 });
+    expect(calls).toEqual([
+      ['from', 'user_study_totals'],
+      ['select', 'reviews, spelled_correctly, bonus_points'],
+      ['maybeSingle'],
+    ]);
+    result = { data: null, error: null };
+    expect(await fetchStudyTotals()).toEqual({ reviews: 0, spelled_correctly: 0, bonus_points: 0 });
+  });
+
+  it('calls my_trouble_words with its defaults', async () => {
+    const word = { word_id: 'w1', english: 'since', japanese: 'から', misses: 3, last_missed: '2026-10-23T10:00:00Z', lowest_level: 1 };
+    result = { data: [word], error: null };
+    expect(await fetchTroubleWords()).toEqual([word]);
+    expect(calls).toEqual([['rpc', 'my_trouble_words', undefined]]);
+    result = { data: null, error: null };
+    expect(await fetchTroubleWords()).toEqual([]);
+  });
+
+  it('throws when a stats query fails', async () => {
+    result = { data: null, error: { message: 'denied' }, count: null };
+    await expect(fetchStudyDays()).rejects.toThrow('Could not load study days: denied');
+    await expect(fetchStudyTotals()).rejects.toThrow('Could not load study totals: denied');
+    await expect(fetchTroubleWords()).rejects.toThrow('Could not load trouble words: denied');
   });
 });
 

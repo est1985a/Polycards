@@ -72,6 +72,14 @@ describe('account menu', () => {
     expect(html).toMatch(/color:var\(--danger\)[^>]*>ログアウト</);
   });
 
+  it('lists 学習の記録 just before 設定', () => {
+    const html = menu();
+    const stats = html.indexOf('>学習の記録<');
+    expect(stats).toBeGreaterThan(html.indexOf('aiden'));
+    expect(stats).toBeLessThan(html.indexOf('>設定<'));
+    expect(html).toMatch(/role="menuitem"[^>]*>学習の記録</);
+  });
+
   it('asks before logging out', () => {
     const html = menu({ confirming: true });
     expect(html).toContain('ログアウトしますか？');

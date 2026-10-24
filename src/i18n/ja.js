@@ -22,6 +22,7 @@ export default {
   "menu.account": "アカウント (Account)",
   "menu.accountNewTheme": "アカウント (Account) 新しいテーマがあります", // read aloud when the dot shows (a new theme is unlocked)
   "menu.rank": "ランク {n}",
+  "menu.stats": "学習の記録", // opens the stats page
   "menu.settings": "設定",
   "menu.help": "使い方", // opens the "What is Polycards?" pop-up
   "menu.signOut": "ログアウト",
@@ -63,6 +64,31 @@ export default {
   "stats.chartTotal": "全部で {n}枚",
   "stats.chartLevel": "Lv{n}", // label under each bar
   "stats.chartNote": "Lv7 のカードは約4か月後に復習。正解するとマスター！",
+  // Stats page (学習の記録). Effort only: never accuracy.
+  "stats.open": "学習の記録を見る", // aria-label of the player card (tapping it opens the stats page)
+  "stats.openHint": "記録を見る", // small hint at the bottom right of the player card, followed by ›
+  "stats.pageTitle": "学習の記録",
+  "stats.streakDays": "{n}日連続", // {n} = the streak, in big numbers
+  "stats.streakBest": "ベスト {n}日",
+  "stats.streakKeep": "今日も復習して記録をのばそう！", // streak alive, today not done yet
+  "stats.streakStart": "今日から始めよう！", // no streak
+  "stats.calendarTitle": "勉強した日（12週間）",
+  "stats.dayMon": "月", // calendar row labels (only Mon, Wed, Fri are shown)
+  "stats.dayWed": "水",
+  "stats.dayFri": "金",
+  "stats.less": "少ない", // calendar legend
+  "stats.more": "多い",
+  "stats.chartDaysTitle": "毎日のレビュー数（14日間）",
+  "stats.totalsTitle": "これまでの合計",
+  "stats.totalReviews": "レビュー",
+  "stats.totalDays": "勉強した日",
+  "stats.totalSpelled": "スペル正解",
+  "stats.totalBonus": "スペルボーナス",
+  "stats.troubleTitle": "苦手な単語",
+  "stats.troubleNote": "最近30日で「まだ」「わからない」が多かった単語",
+  "stats.troubleCount": "{n}回", // how many times the word was missed
+  "stats.troubleEmpty": "苦手な単語はありません。すごい！",
+  "stats.empty": "まだ記録がありません。My Cardsで復習すると、ここに記録が出ます。",
 
   // 答え方 switch (My Cards and settings): how Japanese → English cards are answered
   "answerMode.title": "答え方（日本語 → English）",
