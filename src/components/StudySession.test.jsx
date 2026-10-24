@@ -1,7 +1,9 @@
 // Tests for the answer area under the study card and what each review answer sends. Run with: npm test
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { AnswerArea, TypingArea } from './StudySession';
+import { AnswerArea, TypingArea, PreviousCardChip } from './StudySession';
+import { makeUndo, takeSnapshot } from '../lib/undo';
+import { setLang } from '../i18n';
 import { srsAnswer, newSessionId, saveErrorReporter } from '../lib/srs';
 
 const NOTE = 'まだでも大丈夫！すぐにまた出てきます';
@@ -199,5 +201,54 @@ describe('typing mode (TypingArea)', () => {
 
   it('no note before a retry', () => {
     expect(render()).not.toContain(RETRY_NOTE);
+  });
+});
+
+describe('previous card chip (PreviousCardChip)', () => {
+  afterEach(() => setLang('ja'));
+  const undoFor = (knew) => makeUndo(takeSnapshot({ pile: [], counts: {}, wrongCounts: {}, clearedCount: 0, typed: '', typedResult: null, retryUsed: false }), { id: 'w1-e2j', front: 'take out the garbage' }, knew);
+  const render = (props) => renderToStaticMarkup(<PreviousCardChip onUndo={() => {}} {...props} />);
+
+  it('shows the last card, ✓ わかった in accentText and the undo button', () => {
+    const html = render({ undo: undoFor(true) });
+    expect(html).toContain('前のカード');
+    expect(html).toContain('take out the garbage');
+    expect(html).toContain('✓ わかった');
+    expect(html).toContain('var(--accentText)');
+    expect(html).toContain('元に戻す');
+    expect(html).toContain('aria-label="前のカードの答えを元に戻す"');
+    expect(html).toContain('min-height:44px');
+  });
+
+  it('shows まだ in danger, with no tick', () => {
+    const html = render({ undo: undoFor(false) });
+    expect(html).toContain('まだ');
+    expect(html).not.toContain('✓');
+    expect(html).toContain('var(--danger)');
+  });
+
+  it('beside the card: centered, word cut to 3 lines, fixed-width button that is still 44 px tall', () => {
+    const html = render({ undo: undoFor(true), side: true });
+    expect(html).toContain('text-align:center');
+    expect(html).toContain('overflow-wrap:anywhere');
+    expect(html).toContain('-webkit-line-clamp:3');
+    expect(html).toContain('width:96px');
+    expect(html).toContain('min-height:44px');
+  });
+
+  it('in the row above the card: word cut to 1 line, button not fixed-width', () => {
+    const html = render({ undo: undoFor(false) });
+    expect(html).toContain('-webkit-line-clamp:1');
+    expect(html).toContain('overflow-wrap:anywhere');
+    expect(html).not.toContain('width:96px');
+  });
+
+  it('uses the English button text in English mode', () => {
+    setLang('en');
+    const html = render({ undo: undoFor(true) });
+    expect(html).toContain('Last card');
+    expect(html).toContain('✓ I knew it');
+    expect(html).toContain('>Undo<');
+    expect(html).toContain('aria-label="Undo your answer to the last card"');
   });
 });

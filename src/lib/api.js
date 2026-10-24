@@ -222,6 +222,31 @@ export async function checkOtherMeaning(wordId, typed) {
   }
 }
 
+// The last まだ / わかった answer is held back so the student can undo it (StudySession). It is
+// sent when the next answer is given, when the review is left, when the app goes to the
+// background, and before signing out. heldSend: a function that sends it (calls recordAnswer).
+let heldSend = null;
+
+// Holds one answer; an answer already held is sent first, so answers still go in order.
+export function holdAnswer(send) {
+  flushHeldAnswer();
+  heldSend = send;
+}
+
+// Sends the held answer now (it goes into pendingSaves straight away). true if there was one.
+export function flushHeldAnswer() {
+  const send = heldSend;
+  heldSend = null;
+  if (!send) return false;
+  send();
+  return true;
+}
+
+// Undo: forgets the held answer without sending it.
+export function dropHeldAnswer() {
+  heldSend = null;
+}
+
 export async function waitForPendingSaves() {
   await Promise.allSettled([...pendingSaves]);
 }

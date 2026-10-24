@@ -3,20 +3,44 @@ import { useSyncExternalStore } from 'react';
 
 export const WIDE_QUERY = '(min-width: 900px)';
 
-// False when there is no browser window or no matchMedia (tests, server rendering).
-export function isWide(win = typeof window === 'undefined' ? undefined : window) {
+// Room for the review's "previous card" chip beside the 780 px study column: a chip up to 150 px
+// wide + a 16 px gap + 16 px from the screen edge on each side = 780 + 2 × 182 = 1144, rounded up.
+export const SIDE_CHIP_QUERY = '(min-width: 1150px)';
+
+// Does the screen match a media query? False when there is no browser window or no matchMedia
+// (tests, server rendering).
+export function matches(query, win = typeof window === 'undefined' ? undefined : window) {
   if (!win || typeof win.matchMedia !== 'function') return false;
-  return win.matchMedia(WIDE_QUERY).matches;
+  return win.matchMedia(query).matches;
 }
 
-function subscribe(onChange) {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return () => {};
-  const mq = window.matchMedia(WIDE_QUERY);
-  mq.addEventListener('change', onChange);
-  return () => mq.removeEventListener('change', onChange);
+export function isWide(win = typeof window === 'undefined' ? undefined : window) {
+  return matches(WIDE_QUERY, win);
 }
 
-// true on wide screens; updates when the screen is rotated or resized.
+function subscribeTo(query) {
+  return (onChange) => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return () => {};
+    const mq = window.matchMedia(query);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  };
+}
+
+const subscribers = {};
+
+// true while the screen matches the query; updates when the screen is rotated or resized.
+export function useMedia(query) {
+  subscribers[query] ??= subscribeTo(query);
+  return useSyncExternalStore(subscribers[query], () => matches(query), () => false);
+}
+
+// true on wide screens.
 export function useWide() {
-  return useSyncExternalStore(subscribe, () => isWide(), () => false);
+  return useMedia(WIDE_QUERY);
+}
+
+// true when the "previous card" chip fits beside the study card.
+export function useSideChip() {
+  return useMedia(SIDE_CHIP_QUERY);
 }
