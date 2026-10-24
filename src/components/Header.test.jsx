@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import Header, { GachaButton, AccountMenu, AccountButton } from './Header';
 import { accountName } from '../lib/login';
+import { themes } from '../themes';
 
 describe('Header', () => {
   it('the logo is a "My Cards" button at least 44 px tall', () => {
@@ -12,6 +13,19 @@ describe('Header', () => {
       expect(html).toContain('min-height:44px');
       expect(html).toContain('Polycards');
     }
+  });
+
+  it('the top row sits above the sticky and fixed layers (so the account menu is on top), below the pop-ups', () => {
+    const html = renderToStaticMarkup(<Header user={null} onHome={() => {}} />);
+    const z = Number(html.match(/position:relative;z-index:(\d+)/)[1]);
+    expect(z).toBeGreaterThan(10); // word list bar 5, drill button and tabs 10
+    expect(z).toBeLessThan(30); // pop-ups 30, gacha reveal 40
+  });
+
+  it('the logo is always in Midnight colors, whatever the theme', () => {
+    const html = renderToStaticMarkup(<Header user={null} onHome={() => {}} />);
+    expect(html).toMatch(new RegExp(`<svg[^>]*style="[^"]*--accent:${themes.midnight.colors.accent};`));
+    expect(html).toContain(`--danger:${themes.midnight.colors.danger}`);
   });
 });
 

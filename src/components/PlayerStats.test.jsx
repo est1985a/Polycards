@@ -36,4 +36,12 @@ describe('PlayerStats', () => {
     expect(renderToStaticMarkup(<PlayerStats stats={stats} />)).not.toContain('スペルボーナス');
     expect(renderToStaticMarkup(<PlayerStats stats={{ ...stats, bonusPoints: 0 }} />)).not.toContain('スペルボーナス');
   });
+
+  it('the avatar is a button that opens the avatar collection', () => {
+    for (const wide of [false, true]) {
+      const html = renderToStaticMarkup(<PlayerStats stats={stats} wide={wide} onOpenCollection={() => {}} />);
+      expect(html).toMatch(/<button type="button" aria-label="アバター図鑑を開く" class="avatar-button"/);
+      expect(html).toContain(wide ? 'width:128px;height:128px' : 'width:104px;height:104px');
+    }
+  });
 });

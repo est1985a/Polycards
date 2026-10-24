@@ -192,7 +192,7 @@ function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
 }
 
 // wide: two columns (player card, review button, chart, Mastered | マイデッキ in a 2-column grid).
-export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, answerMode = "off", onAnswerModeChange = () => {}, handwritingEnabled = false, sessionSize = DEFAULT_SESSION_SIZE, onReview, onOpenPlan, onOpenAbout = () => {}, onOpenCardSets = () => {}, onRemove, onOpenMastered, loading, removingDeckId, wide = false }) {
+export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, answerMode = "off", onAnswerModeChange = () => {}, handwritingEnabled = false, sessionSize = DEFAULT_SESSION_SIZE, onReview, onOpenPlan, onOpenAbout = () => {}, onOpenCardSets = () => {}, onRemove, onOpenMastered, onOpenCollection, loading, removingDeckId, wide = false }) {
   // A word can be in several decks, so a due card counts toward each of them.
   const dueByDeck = {};
   dueRows.forEach((r) => {
@@ -203,7 +203,7 @@ export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar =
 
   const overview = (
     <>
-      <PlayerStats stats={stats} avatar={avatar} wide={wide} />
+      <PlayerStats stats={stats} avatar={avatar} wide={wide} onOpenCollection={onOpenCollection} />
       <ReviewButton dueCount={dueRows.length} loading={loading} onReview={() => onReview()} nextReview={nextReview} onOpenPlan={onOpenPlan} sessionSize={sessionSize} wide={wide} />
       <AnswerModeSwitch mode={answerMode} onChange={onAnswerModeChange} handwritingEnabled={handwritingEnabled} wide={wide} />
       {stats && <LevelChart counts={stats.levelCounts} />}

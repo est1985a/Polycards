@@ -1,4 +1,5 @@
 import { colors } from '../styles/theme';
+import { themes, themeVars } from '../themes';
 
 const mix = (a, b, pct) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
 
@@ -37,10 +38,11 @@ function Capsule({ x, y, color }) {
   );
 }
 
-// Low-poly capsule toy machine (decoration only).
+// Low-poly capsule toy machine (decoration only). Always in Midnight colors, whatever the theme:
+// Midnight's CSS variables are set on the svg itself (like ThemePreview's box).
 export default function GachaMachine({ size = 220 }) {
   return (
-    <svg width={size} height={size * 1.3} viewBox="0 0 200 260" aria-hidden="true" style={{ display: "block", margin: "0 auto", maxWidth: "100%" }}>
+    <svg width={size} height={size * 1.3} viewBox="0 0 200 260" aria-hidden="true" style={{ ...themeVars(themes.midnight), display: "block", margin: "0 auto", maxWidth: "100%" }}>
       {/* shadow */}
       <ellipse cx="100" cy="246" rx="70" ry="8" fill={mix(colors.bg, colors.text, 85)} />
       {DOME.map(([points, fill]) => (

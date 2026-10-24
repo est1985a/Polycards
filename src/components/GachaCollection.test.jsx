@@ -58,4 +58,12 @@ describe('GachaCollection', () => {
       expect(html).toContain('>Cat</div>');
     }
   });
+
+  it('the back button follows where the collection was opened from', () => {
+    const at = (from) => renderToStaticMarkup(<GachaCollection rows={[]} onEquip={() => {}} onBack={() => {}} from={from} />);
+    expect(at(undefined)).toContain('← ガチャ');
+    expect(at('gacha')).toContain('← ガチャ');
+    expect(at('dashboard')).toContain('← 戻る');
+    expect(at('dashboard')).not.toContain('← ガチャ');
+  });
 });

@@ -1,10 +1,12 @@
 import { colors, tintLight, tintDark } from '../styles/theme';
+import { themes, themeVars } from '../themes';
 
 // Mix of two colors, so the facet shades follow the theme without hard-coded colors.
 const mix = (a, b, pct) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
 
-// Polycards logo: two low-poly landscape cards. Front card = theme accent, back card = theme danger
-// (mint + pink in Midnight). 16 facets, light from the top left. Same picture as public/favicon.svg.
+// Polycards logo: two low-poly landscape cards. Front card = accent, back card = danger.
+// Always in Midnight colors (mint + pink), whatever the theme: Midnight's CSS variables are set on
+// the svg itself (like ThemePreview's box). 16 facets, light from the top left. Same picture as public/favicon.svg.
 const FACETS = [
   ["52.7,23.5 16.1,10.7 71.3,1.0", mix(colors.danger, tintLight, 81)],
   ["52.7,23.5 71.3,1.0 77.1,5.0", mix(colors.danger, tintDark, 94)],
@@ -27,7 +29,7 @@ const FACETS = [
 // style: extra CSS, e.g. a width/height in other units (CSS sizes win over the height attribute).
 export default function LogoMark({ height = 24, style }) {
   return (
-    <svg height={height} width={Math.round(height * 84.3 / 73.4)} viewBox="0 0 84.3 73.4" aria-hidden="true" style={{ flexShrink: 0, ...style }}>
+    <svg height={height} width={Math.round(height * 84.3 / 73.4)} viewBox="0 0 84.3 73.4" aria-hidden="true" style={{ ...themeVars(themes.midnight), flexShrink: 0, ...style }}>
       {FACETS.map(([points, fill], i) => (
         <polygon key={i} points={points} fill={fill} stroke={fill} strokeWidth="0.5" strokeLinejoin="round" />
       ))}
