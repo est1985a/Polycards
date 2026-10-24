@@ -3,7 +3,8 @@ import { colors, fontDisplay, fontBody, cardStyle, btnPrimary, btnGhost, btnDang
 import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
 import { srsAnswer, newSessionId, saveErrorReporter } from '../lib/srs';
 import { checkSpelling, ignoreNextKey, isAlternateAnswer, needsOtherMeaningCheck } from '../lib/spelling';
-import { recordAnswer, checkOtherMeaning } from '../lib/api';
+import { recordAnswer, checkOtherMeaning, holdAnswer, flushHeldAnswer, dropHeldAnswer } from '../lib/api';
+import { takeSnapshot, makeUndo, restoreState, chipLabelKey } from '../lib/undo';
 import Stamp from './Stamp';
 import AddDeckButton from './AddDeckButton';
 import FlipCard from './FlipCard';
@@ -44,6 +45,36 @@ export function AnswerArea({ revealed, onReveal, onAnswer, answerSize, wide = fa
       <p style={{ fontSize: wide ? 15 : 13, color: colors.muted, margin: 0, textAlign: "center" }}>
         {t("review.notYetNote")}
       </p>
+    </div>
+  );
+}
+
+// The "previous card" chip: the last card's front word, the button pressed, and 元に戻す.
+// side: beside the card (wide screens with room, see SIDE_CHIP_QUERY), a narrow column whose word
+// wraps; otherwise a slim row above the card. Small and muted, with no animation.
+export function PreviousCardChip({ undo, onUndo, side = false }) {
+  const prefix = chipLabelKey(undo.knew);
+  const pressed = t(`${prefix}.ja`) || t(`${prefix}.en`); // English mode has no Japanese line
+  const pressedColor = undo.knew ? colors.accentText : colors.danger;
+  return (
+    <div
+      style={{
+        display: "flex", alignItems: side ? "flex-start" : "center", gap: side ? 6 : 10,
+        flexDirection: side ? "column" : "row", fontSize: 13, color: colors.muted, minWidth: 0,
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: side ? "column" : "row", gap: side ? 2 : 8, alignItems: side ? "flex-start" : "baseline", minWidth: 0, flexWrap: "wrap" }}>
+        <span>{t("review.previousCard")}</span>
+        <span style={{ fontWeight: 700, color: colors.text, overflowWrap: "anywhere" }}>{undo.front}</span>
+        <span style={{ fontWeight: 700, color: pressedColor }}>{undo.knew ? "✓ " : ""}{pressed}</span>
+      </div>
+      <button
+        style={{ ...btnGhost, minHeight: 44, padding: "0 14px", fontSize: 13, color: colors.muted, flexShrink: 0 }}
+        aria-label={t("review.undoAria")}
+        onClick={onUndo}
+      >
+        {t("review.undo")}
+      </button>
     </div>
   );
 }
@@ -173,7 +204,13 @@ export function TypingArea({
 // Give it a new `key` to start a fresh session. wide: bigger card text and taller answer buttons.
 // answerMode: how Japanese → English cards in an SRS review are answered: "off" (buttons), "typing"
 // or "handwriting" (Apple Pencil, src/handwriting/). The drill always uses the buttons.
-export default function StudySession({ activeSet, isAdded, saving, onAddDeck, onBack, answerMode = "off", wide = false }) {
+// sideChip: there is room for the "previous card" chip beside the card (else it goes above it).
+//
+// Undo: the last まだ / わかった answer is held (holdAnswer in api.js), not sent, so 元に戻す can throw
+// it away and put the session back as it was (src/lib/undo.js). It is sent when the next answer is
+// given, when this screen closes, and when the app goes to the background. A correct spelling and
+// わからない are not undoable: they are sent at once, after the held answer.
+export default function StudySession({ activeSet, isAdded, saving, onAddDeck, onBack, answerMode = "off", wide = false, sideChip = false }) {
   const isSrs = activeSet.mode === 'srs';
   const [pile, setPile] = useState(() => shuffle(activeSet.cards.map((c) => c.id)));
   const [counts, setCounts] = useState({});           // drill: correct answers per card
@@ -190,9 +227,30 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
   const [checking, setChecking] = useState(false);      // typing mode: waiting for other_meaning_check
   const [retryUsed, setRetryUsed] = useState(false);    // typing mode: this showing of the card had its retry
   const [handwritingFailed, setHandwritingFailed] = useState(false); // the letter model couldn't run: typing instead
+  const [undo, setUndo] = useState(null); // the held まだ / わかった answer that can be undone (makeUndo)
+  const [answeredOnce, setAnsweredOnce] = useState(false); // keeps the chip's row reserved after the first answer
   const promptRef = useRef(null);
   const turnRef = useRef(turn); // the current turn, for answers that arrive after a wait
   useEffect(() => { turnRef.current = turn; }, [turn]);
+
+  // Leaving the review in any way sends the held answer. A layout-effect cleanup runs while React
+  // is still updating the screen, before App's effects wait for pending saves and recount points.
+  useLayoutEffect(() => () => { flushHeldAnswer(); }, []);
+
+  // The app going to the background (or the page closing) sends it too; then there is nothing to undo.
+  useEffect(() => {
+    const onHide = (e) => {
+      if (e.type === "visibilitychange" && document.visibilityState !== "hidden") return;
+      flushHeldAnswer();
+      setUndo(null);
+    };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", onHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", onHide);
+    };
+  }, []);
 
   const done = pile.length === 0;
   const card = done ? null : activeSet.cards.find((c) => c.id === pile[0]) || null;
@@ -238,6 +296,46 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
     setChecking(false);
     setRetryUsed(false); // a card that comes back later gets a fresh retry
     setTurn((t) => t + 1);
+    setAnsweredOnce(true);
+  }
+
+  // The session as it is now, before an answer changes it (for Undo).
+  function snapshotNow() {
+    return takeSnapshot({ pile, counts, wrongCounts, clearedCount, typed, typedResult, retryUsed });
+  }
+
+  // A まだ / わかった answer: held (sent later, see the top of StudySession) so it can be undone.
+  // sendIt sends it; the drill saves nothing, so there it does nothing.
+  function holdForUndo(snapshot, knew, sendIt) {
+    holdAnswer(sendIt);
+    setUndo(makeUndo(snapshot, card, knew));
+  }
+
+  // Before an answer that is sent at once (correct spelling, わからない): send the held one first.
+  function sendHeld() {
+    flushHeldAnswer();
+    setUndo(null);
+  }
+
+  // 元に戻す: forget the held answer and put the session back as it was, with the card on top and
+  // its まだ / わかった showing again (a new turn key, so it appears already flipped, no animation).
+  function handleUndo() {
+    if (!undo) return;
+    dropHeldAnswer();
+    const state = restoreState(undo);
+    setPile(state.pile);
+    setCounts(state.counts);
+    setWrongCounts(state.wrongCounts);
+    setClearedCount(state.clearedCount);
+    setTyped(state.typed);
+    setTypedResult(state.typedResult);
+    setRetryUsed(state.retryUsed);
+    setChecking(state.checking);
+    setRevealed(state.revealed);
+    setLevelUp(null);
+    setSpellBonus(null);
+    setUndo(null);
+    setTurn((t) => t + 1);
   }
 
   // Sends one SRS answer. typedText / localSpelling: typing mode only. The database checks the
@@ -260,10 +358,15 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
   function handleSrsAnswer(knew) {
     // card.level is the level the card had when the session started; the database works out
     // and saves the new level itself (same rules as src/lib/srs.js).
+    const snapshot = snapshotNow();
     const answer = srsAnswer(card.level, knew ? "got_it" : "not_yet", wrongCounts[card.id] || 0);
     // Typing mode, one letter off or wrong: the student's choice goes with what they typed.
-    if (typedResult) send(answer.result, typed, typedResult.spelling);
-    else send(answer.result);
+    if (typedResult) {
+      const typedText = typed, spelling = typedResult.spelling;
+      holdForUndo(snapshot, knew, () => send(answer.result, typedText, spelling));
+    } else {
+      holdForUndo(snapshot, knew, () => send(answer.result));
+    }
 
     showFloats(answer);
     let nextPile = pile.slice(1);
@@ -304,6 +407,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
     setRevealed(true);
     if (spelling === "exact") {
       const answer = srsAnswer(card.level, "got_it", wrongCounts[card.id] || 0, spelling);
+      sendHeld();
       send(answer.result, typed, spelling);
       showFloats(answer);
       setTypedResult({ spelling, next: true, again: false, alternate: isAlternateAnswer(typed, card.en, card.altAnswers) ? typed.trim() : null });
@@ -318,12 +422,14 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
   // Otherwise the card flips and the student chooses まだ / わかった, sent with what was read.
   // An alternate that fits the boxes may be accepted instead (read.accepted): it is sent instead of
   // the textbook word, and 教科書の答え shows the textbook word.
-  function handleHandwritingResult(read) {
-    if (!card || typedResult) return;
+  // readTurn: the turn the boxes were written on; a read that finishes after an Undo is ignored.
+  function handleHandwritingResult(read, readTurn) {
+    if (!card || typedResult || turnRef.current !== readTurn) return;
     setRevealed(true);
     if (read.allCorrect) {
       const bonus = !read.hasLenient || LENIENT_GIVES_BONUS;
       const answer = srsAnswer(card.level, "got_it", wrongCounts[card.id] || 0, bonus ? "exact" : null);
+      sendHeld();
       send(answer.result, bonus ? read.accepted ?? writtenAnswer(card.en) : null, bonus ? "exact" : null);
       showFloats(answer);
       setTypedResult({ spelling: "exact", next: true, again: false, alternate: read.accepted ?? null, handwriting: read });
@@ -337,6 +443,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
   function handleDontKnow() {
     if (!card || typedResult || checking) return;
     const answer = srsAnswer(card.level, "dont_know", wrongCounts[card.id] || 0);
+    sendHeld();
     send(answer.result);
     setWrongCounts({ ...wrongCounts, [card.id]: answer.wrongs });
     setRevealed(true);
@@ -352,6 +459,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
   }
 
   function handleDrillAnswer(knew) {
+    holdForUndo(snapshotNow(), knew, () => {}); // the drill saves nothing, but can be undone
     const nextCounts = { ...counts };
     let nextPile = pile.slice(1);
     let clearedDelta = 0;
@@ -444,12 +552,26 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
 
       {isSrs && <div role="status" style={srOnly}>{[levelUp?.label, spellBonus && t("review.spellBonus")].filter(Boolean).join(" ")}</div>}
 
+      {/* No room beside the card: a row above the question. After the first answer it keeps its */}
+      {/* height even when there is nothing to undo, so the card doesn't jump between cards. */}
+      {card && !sideChip && answeredOnce && (
+        <div style={{ minHeight: 44, display: "flex", alignItems: "center" }}>
+          {undo && <PreviousCardChip undo={undo} onUndo={handleUndo} />}
+        </div>
+      )}
+
       {card && (
         <>
           <p ref={promptRef} style={{ fontSize: wide ? 17 : 14, color: colors.text, margin: 0, textAlign: "center" }}>
             {card.direction === "en2jp" ? t("review.questionEn2jp") : t("review.questionJp2en")}
           </p>
           <div style={{ position: "relative" }}>
+            {/* Room beside the card: the chip sits to its left, vertically centered, outside the column. */}
+            {sideChip && undo && (
+              <div style={{ position: "absolute", right: "calc(100% + 16px)", top: "50%", transform: "translateY(-50%)", width: "max-content", maxWidth: 150 }}>
+                <PreviousCardChip undo={undo} onUndo={handleUndo} side />
+              </div>
+            )}
             {/* A new key per turn: the next card starts on its front without flipping back on screen. */}
             {/* Prefixed keys (card-, levelup-, spell-): the floats below share this div, and a float made on */}
             {/* the same turn would otherwise have the same key as the card, leaving the old card on screen. */}
@@ -474,7 +596,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
                 alternates={fittingAlternates(card.en, card.altAnswers)}
                 result={typedResult?.handwriting ?? null}
                 answered={Boolean(typedResult)}
-                onResult={handleHandwritingResult}
+                onResult={(read) => handleHandwritingResult(read, turn)}
                 onDontKnow={handleDontKnow}
                 onError={() => setHandwritingFailed(true)}
                 answerSize={answerSize}
@@ -535,6 +657,11 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
           {levelUpFloat}
           {spellBonusFloat}
           <div style={{ fontFamily: fontDisplay, fontSize: 22, color: colors.text }}>{t("review.allCleared")}</div>
+          {undo && (
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <PreviousCardChip undo={undo} onUndo={handleUndo} />
+            </div>
+          )}
           {addDeckControl}
           <button style={btnGhost} onClick={onBack}>{t("review.backToDashboard")}</button>
         </div>

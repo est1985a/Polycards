@@ -29,7 +29,7 @@ vi.mock('./supabaseClient', () => ({
 }));
 
 const {
-  fetchDueRows, fetchReviewRows, restoreMasteredCard, recordAnswer, waitForPendingSaves, checkOtherMeaning, fetchBonusPoints, fetchNextReview, fetchReviewPlanRows,
+  fetchDueRows, fetchReviewRows, restoreMasteredCard, recordAnswer, waitForPendingSaves, holdAnswer, flushHeldAnswer, dropHeldAnswer, checkOtherMeaning, fetchBonusPoints, fetchNextReview, fetchReviewPlanRows,
   fetchGachaStatus, pullGacha, fetchGachaCollection, equipAvatar, setGachaTheme, gachaErrorMessage, fetchThemeUnlocks,
 } = await import('./api');
 
@@ -181,6 +181,53 @@ describe('saving review answers (record_answer)', () => {
     expect(await recordAnswer(card, 'got_it', SESSION)).toBeNull();
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
+  });
+});
+
+describe('the held answer (undo)', () => {
+  const card = { wordId: 3, direction: 'en2jp' };
+  const SESSION = '11111111-2222-4333-8444-555555555555';
+  const rpcResults = () => calls.filter((c) => c[0] === 'rpc').map((c) => c[2].p_result);
+
+  it('sends nothing until it is flushed, then sends it once', async () => {
+    holdAnswer(() => recordAnswer(card, 'not_yet', SESSION));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(rpcResults()).toEqual([]);
+    expect(flushHeldAnswer()).toBe(true);
+    expect(flushHeldAnswer()).toBe(false);
+    await waitForPendingSaves();
+    expect(rpcResults()).toEqual(['not_yet']);
+  });
+
+  it('is in the pending saves as soon as it is flushed, so points wait for it', async () => {
+    let finish;
+    rpcImpl = (name, args) => { calls.push(['rpc', name, args]); return new Promise((resolve) => { finish = () => resolve(result); }); };
+    let saved = false;
+    holdAnswer(() => recordAnswer(card, 'got_it', SESSION).then(() => { saved = true; }));
+    flushHeldAnswer();
+    const waiting = waitForPendingSaves();
+    await new Promise((r) => setTimeout(r, 0));
+    finish();
+    await waiting;
+    await new Promise((r) => setTimeout(r, 0));
+    expect(saved).toBe(true);
+  });
+
+  it('sends nothing after an undo', async () => {
+    holdAnswer(() => recordAnswer(card, 'got_it', SESSION));
+    dropHeldAnswer();
+    expect(flushHeldAnswer()).toBe(false);
+    await waitForPendingSaves();
+    expect(rpcResults()).toEqual([]);
+  });
+
+  it('sends the held answer before the next one, keeping the order', async () => {
+    holdAnswer(() => recordAnswer(card, 'not_yet', SESSION));
+    holdAnswer(() => recordAnswer(card, 'got_it', SESSION)); // the next まだ / わかった
+    flushHeldAnswer(); // e.g. a correct spelling: the held answer goes first...
+    recordAnswer(card, 'dont_know', SESSION); // ...then the answer sent at once
+    await waitForPendingSaves();
+    expect(rpcResults()).toEqual(['not_yet', 'got_it', 'dont_know']);
   });
 });
 

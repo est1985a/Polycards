@@ -16,7 +16,7 @@ import {
 import { themeList, newThemes, featuredUnlock, markSeen } from './lib/themeUnlocks';
 import { themes, applyTheme, getTheme, DEFAULT_THEME } from './themes';
 import { wrap, gutter, headerBand, tabBarHeight, btnLink, wideLayout } from './styles/theme';
-import { useWide } from './lib/useWide';
+import { useWide, useSideChip } from './lib/useWide';
 import { t, getLang } from './i18n';
 import Header from './components/Header';
 import LoginScreen from './components/LoginScreen';
@@ -126,6 +126,7 @@ function App() {
   }));
 
   const wide = useWide(); // landscape iPad or bigger: wider layout
+  const sideChip = useSideChip(); // room for the review's "previous card" chip beside the card
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
@@ -460,6 +461,9 @@ function App() {
   };
 
   const handleLogout = async () => {
+    // A review's held まだ / わかった answer must be saved while still signed in.
+    api.flushHeldAnswer();
+    await api.waitForPendingSaves();
     await supabase.auth.signOut();
     clearThemeCache(window.localStorage); // also done on SIGNED_OUT; here too in case that event is missed
     setThemeKey(DEFAULT_THEME);
@@ -467,7 +471,8 @@ function App() {
   };
 
   // Logo: back to the My Cards dashboard, with Card Sets reset to its hub (the school level is kept).
-  // Leaving a review loses nothing: each answer is saved as soon as it is given.
+  // Leaving a review loses nothing: answers are saved as they are given, and the last まだ / わかった
+  // (held so it can be undone) is sent when StudySession closes.
   function goHome() {
     setPlanOpen(false);
     setAboutOpen(false);
@@ -737,6 +742,7 @@ function App() {
                     onBack={() => setView("dashboard")}
                     answerMode={answerMode}
                     wide={wide}
+                    sideChip={sideChip}
                   />
                 )}
               </>

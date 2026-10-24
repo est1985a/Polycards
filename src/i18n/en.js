@@ -107,6 +107,9 @@ export default {
   "review.textbookAnswer": "Textbook answer: {answer}",
   "review.spellBonus": "+1 spelling",
   "review.next": "Next",
+  "review.previousCard": "Last card",
+  "review.undo": "Undo",
+  "review.undoAria": "Undo your answer to the last card",
   "review.allCleared": "All done!",
   "review.backToDashboard": "Back to My Cards",
 

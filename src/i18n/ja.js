@@ -102,6 +102,9 @@ export default {
   "review.textbookAnswer": "教科書の答え: {answer}", // an alternate answer was accepted
   "review.spellBonus": "+1 スペル", // floats up: one bonus point for the right spelling
   "review.next": "次へ",
+  "review.previousCard": "前のカード", // label of the chip showing the last card's answer
+  "review.undo": "元に戻す", // button on that chip: takes back the last まだ / わかった
+  "review.undoAria": "前のカードの答えを元に戻す", // aria-label of that button
   "review.allCleared": "全部クリアしました！", // end of a review or drill
   "review.backToDashboard": "ダッシュボードに戻る",
 
