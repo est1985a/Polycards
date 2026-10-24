@@ -6,8 +6,9 @@ import { loadSchoolLevel, saveSchoolLevel } from './lib/library';
 import { totalPoints, levelCounts, playerRank, newPeak } from './lib/points';
 import { loadAnswerMode, saveAnswerMode } from './lib/spelling';
 import { HANDWRITING_ENABLED } from './handwriting/config';
-import { nextReviewSummary } from './lib/schedule';
+import { nextReviewSummary, jstDateKey } from './lib/schedule';
 import { singleFlight } from './lib/gacha';
+import { openScreen, leaveScreen, reviewKept } from './lib/screens';
 import { testLoginEmail, LOGIN_FAILED_MESSAGE } from './lib/login';
 import {
   loadSessionSize, saveSessionSize, loadReduceMotion, saveReduceMotion, applyReduceMotion, saveLang, applyLang,
@@ -32,6 +33,7 @@ import GachaScreen from './components/GachaScreen';
 import GachaReveal from './components/GachaReveal';
 import GachaCollection from './components/GachaCollection';
 import SettingsScreen from './components/SettingsScreen';
+import StatsScreen from './components/StatsScreen';
 import ThemeUnlockSheet from './components/ThemeUnlockSheet';
 
 // A theme key from the account or the device; unknown keys become the default theme.
@@ -47,11 +49,13 @@ function App() {
   const [authError, setAuthError] = useState(null);
 
   // Screens: 'dashboard', 'wordList' (Card Sets deck, before the drill), 'study', 'mastered',
-  // 'gacha', 'collection' (アバター図鑑) or 'settings' (設定)
+  // 'gacha', 'collection' (アバター図鑑), 'settings' (設定) or 'stats' (学習の記録)
   const [view, setView] = useState("dashboard");
-  // The screen settings was opened from, so 戻る returns there. Opened during a review ('study'),
-  // the StudySession stays mounted (just hidden) so the review carries on where it was.
+  // The screen settings / stats was opened from, so 戻る returns there (they can stack one level,
+  // see src/lib/screens.js). Opened during a review ('study'), the StudySession stays mounted (just
+  // hidden) so the review carries on where it was.
   const [settingsFrom, setSettingsFrom] = useState("dashboard");
+  const [statsFrom, setStatsFrom] = useState("dashboard");
   const [activeTab, setActiveTab] = useState("myCards"); // always open on My Cards
 
   // Card Sets (global library)
@@ -97,6 +101,11 @@ function App() {
   const [stats, setStats] = useState(null); // points and rank
   const [masteredCards, setMasteredCards] = useState([]);
   const [restoringCardId, setRestoringCardId] = useState(null);
+
+  // Stats page (学習の記録): { days, totals, trouble }, null while loading
+  const [statsData, setStatsData] = useState(null);
+  const [statsError, setStatsError] = useState(null);
+  const statsLoad = useRef(0); // only the newest load is shown
 
   // Gacha (tickets and avatars come only from the database functions, see api.js)
   const [gacha, setGacha] = useState(null); // gacha_status, null while loading
@@ -369,16 +378,44 @@ function App() {
     setReveal(null);
     setThemeError(null);
     markThemesSeen();
-    if (view !== "settings") setSettingsFrom(view);
-    setView("settings");
+    showScreen(openScreen(screens, "settings"));
+  }
+
+  // Settings and stats: which one is open and where each was opened from (src/lib/screens.js).
+  const screens = { view, settingsFrom, statsFrom };
+  function showScreen(next) {
+    setSettingsFrom(next.settingsFrom);
+    setStatsFrom(next.statsFrom);
+    setView(next.view);
     window.scrollTo(0, 0);
   }
 
-  // 戻る in settings: back to the screen it was opened from (a review continues where it was).
-  function leaveSettings() {
-    const back = settingsFrom === "study" && !activeSet ? "dashboard" : settingsFrom;
-    setView(back === "settings" ? "dashboard" : back);
+  // 戻る in settings or stats: back one step (a review behind them continues where it was).
+  function leaveScreenNow() {
+    setView(leaveScreen(screens, !!activeSet));
     window.scrollTo(0, 0);
+  }
+
+  // 学習の記録: open the page at once (読み込み中…), then load the days, totals and trouble words.
+  // Shown again from settings (settings was opened on it), it keeps the data it has.
+  async function openStats() {
+    setPlanOpen(false);
+    setAboutOpen(false);
+    setReveal(null);
+    const next = openScreen(screens, "stats");
+    showScreen(next);
+    if (!next.reload) return;
+    const load = ++statsLoad.current;
+    setStatsData(null);
+    setStatsError(null);
+    try {
+      await api.waitForPendingSaves(); // include the answers just given
+      const [days, totals, trouble] = await Promise.all([api.fetchStudyDays(), api.fetchStudyTotals(), api.fetchTroubleWords()]);
+      if (load === statsLoad.current) setStatsData({ days, totals, trouble });
+    } catch (e) {
+      console.error(e);
+      if (load === statsLoad.current) setStatsError(e.message);
+    }
   }
 
   // Unlock pop-up: 今すぐ使う saves the theme first (the pop-up stays open if that fails).
@@ -629,10 +666,12 @@ function App() {
 
   // Wide screens: My Cards uses the full column, study is 780 px, other screens 720 px (centered).
   const gachaView = view === "gacha" || view === "collection";
-  const tabbedView = gachaView || view === "settings"; // full screens that keep the bottom tabs
-  // Settings opened during a review: the review is kept (hidden) underneath and comes back on 戻る.
-  const reviewBehindSettings = view === "settings" && settingsFrom === "study" && !!activeSet;
-  const contentWidth = !wide || bandHeader || tabbedView ? "none"
+  const tabbedView = gachaView || view === "settings" || view === "stats"; // full screens that keep the bottom tabs
+  // Settings or stats opened during a review: the review is kept (hidden) underneath and comes back on 戻る.
+  const reviewBehind = tabbedView && !gachaView && reviewKept(screens, !!activeSet);
+  const contentWidth = !wide || bandHeader ? "none"
+    : view === "stats" ? wideLayout.readWidth
+    : tabbedView ? "none"
     : view === "study" ? wideLayout.studyWidth : wideLayout.readWidth;
 
   return (
@@ -643,7 +682,7 @@ function App() {
         <Header
           variant={bandHeader ? "band" : "compact"} user={session?.user} onSignOut={handleLogout} onHome={goHome} wide={wide}
           gacha={gacha} pulseGacha={gachaPulse} onOpenGacha={openGacha}
-          rank={rank} newTheme={hasNewTheme} onOpenSettings={openSettings} onOpenHelp={() => setAboutOpen(true)}
+          rank={rank} newTheme={hasNewTheme} onOpenStats={openStats} onOpenSettings={openSettings} onOpenHelp={() => setAboutOpen(true)}
         />
 
         <div style={{ position: "relative", padding: `0 ${wide ? wideLayout.gutter : gutter}px 60px`, marginTop: bandHeader ? -headerBand.overlap : 0 }}>
@@ -670,6 +709,7 @@ function App() {
                     onRemove={removeDeck}
                     onOpenMastered={openMastered}
                     onOpenCollection={() => openCollection("dashboard")}
+                    onOpenStats={openStats}
                     loading={loadingDeck}
                     removingDeckId={removingDeckId}
                     wide={wide}
@@ -697,7 +737,9 @@ function App() {
             ) : null}
             {session && tabbedView && (
               <div style={{ paddingBottom: tabBarHeight + 32 }}>
-                {view === "settings" ? (
+                {view === "stats" ? (
+                  <StatsScreen data={statsData} error={statsError} today={jstDateKey(Date.now())} onBack={leaveScreenNow} wide={wide} />
+                ) : view === "settings" ? (
                   <SettingsScreen
                     themes={themeItems}
                     themesFailed={themesFailed}
@@ -714,7 +756,7 @@ function App() {
                     onReduceMotionChange={changeReduceMotion}
                     lang={lang}
                     onLangChange={changeLang}
-                    onBack={leaveSettings}
+                    onBack={leaveScreenNow}
                     wide={wide}
                   />
                 ) : view === "gacha" ? (
@@ -736,7 +778,7 @@ function App() {
                     wide={wide}
                   />
                 )}
-                {/* Neither tab is highlighted on the gacha and settings screens. */}
+                {/* Neither tab is highlighted on the gacha, settings and stats screens. */}
                 <Tabs tabs={TABS} active={null} onChange={leaveGachaTo} wide={wide} />
                 {reveal && (
                   <GachaReveal
@@ -752,8 +794,8 @@ function App() {
                 )}
               </div>
             )}
-            {session && (!tabbedView || reviewBehindSettings) && view !== "dashboard" && (
-              <div style={reviewBehindSettings ? { display: "none" } : undefined}>
+            {session && (!tabbedView || reviewBehind) && view !== "dashboard" && (
+              <div style={reviewBehind ? { display: "none" } : undefined}>
                 <div style={{ marginBottom: 14 }}>
                   <button onClick={() => setView("dashboard")} style={btnLink}>
                     {t("common.backToDashboard")}
@@ -773,7 +815,7 @@ function App() {
                     wide={wide}
                   />
                 )}
-                {activeSet && (view === "study" || reviewBehindSettings) && (
+                {activeSet && (view === "study" || reviewBehind) && (
                   <StudySession
                     key={sessionKey}
                     activeSet={activeSet}

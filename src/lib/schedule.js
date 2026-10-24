@@ -20,6 +20,11 @@ export function jstDayBounds(now) {
   return { midnight, endOfTomorrow: midnight + DAY };
 }
 
+// The Japan date a time falls on, as 'YYYY-MM-DD' (the same as the day column in user_study_daily).
+export function jstDateKey(time) {
+  return jstClock(time).toISOString().slice(0, 10);
+}
+
 // Start of the Japan-time clock hour a time falls in (18:42 → 18:00).
 export function jstHourStart(time) {
   return Math.floor((time + JST) / HOUR) * HOUR - JST;

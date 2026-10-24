@@ -53,9 +53,9 @@ const menuItem = {
   textAlign: "left", fontFamily: fontBody, fontSize: 16, fontWeight: 700, color: colors.text, cursor: "pointer",
 };
 
-// The menu under the account button: name and rank, 設定, 使い方, then ログアウト (asks first,
+// The menu under the account button: name and rank, 学習の記録, 設定, 使い方, then ログアウト (asks first,
 // inside the menu). confirming: the ログアウトしますか？ step is showing.
-export function AccountMenu({ user, rank = null, confirming = false, onSettings, onHelp, onAskSignOut, onSignOut, onCancelSignOut }) {
+export function AccountMenu({ user, rank = null, confirming = false, onStats, onSettings, onHelp, onAskSignOut, onSignOut, onCancelSignOut }) {
   return (
     <div
       role="menu"
@@ -85,6 +85,7 @@ export function AccountMenu({ user, rank = null, confirming = false, onSettings,
         </div>
       ) : (
         <>
+          <button role="menuitem" onClick={onStats} style={menuItem}>{t("menu.stats")}</button>
           <button role="menuitem" onClick={onSettings} style={menuItem}>{t("menu.settings")}</button>
           <button role="menuitem" onClick={onHelp} style={menuItem}>{t("menu.help")}</button>
           <div aria-hidden="true" style={{ height: 2, background: colors.line, margin: "4px 4px" }} />
@@ -97,7 +98,7 @@ export function AccountMenu({ user, rank = null, confirming = false, onSettings,
 
 // Round button with the user's initial; opens the account menu.
 // dot: a small accent dot when a newly unlocked theme hasn't been seen in settings yet.
-export function AccountButton({ user, rank = null, dot = false, onSignOut, onOpenSettings, onOpenHelp }) {
+export function AccountButton({ user, rank = null, dot = false, onSignOut, onOpenStats, onOpenSettings, onOpenHelp }) {
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email || "?";
@@ -137,6 +138,7 @@ export function AccountButton({ user, rank = null, dot = false, onSignOut, onOpe
             user={user}
             rank={rank}
             confirming={confirming}
+            onStats={() => { close(); onOpenStats?.(); }}
             onSettings={() => { close(); onOpenSettings?.(); }}
             onHelp={() => { close(); onOpenHelp?.(); }}
             onAskSignOut={() => setConfirming(true)}
@@ -186,10 +188,10 @@ export function GachaButton({ tickets = 0, pulse = false, onOpen }) {
 // user: the Supabase user, or null when signed out (then no account button).
 // onHome: called when the logo is tapped. wide: wide-screen side padding.
 // gacha: the gacha status (null while loading); pulseGacha / onOpenGacha: for the gacha button.
-// rank, newTheme (the dot), onOpenSettings, onOpenHelp: for the account menu.
+// rank, newTheme (the dot), onOpenStats, onOpenSettings, onOpenHelp: for the account menu.
 export default function Header({
   variant = "compact", user, onSignOut, onHome, wide = false, gacha = null, pulseGacha = false, onOpenGacha,
-  rank = null, newTheme = false, onOpenSettings, onOpenHelp,
+  rank = null, newTheme = false, onOpenStats, onOpenSettings, onOpenHelp,
 }) {
   const side = wide ? wideLayout.gutter : gutter;
   // zIndex 25: above everything sticky or fixed on the page (word list bar 5, drill button and tabs 10),
@@ -200,7 +202,7 @@ export default function Header({
       {user && (
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <GachaButton tickets={gacha?.tickets ?? 0} pulse={pulseGacha} onOpen={onOpenGacha} />
-          <AccountButton user={user} rank={rank} dot={newTheme} onSignOut={onSignOut} onOpenSettings={onOpenSettings} onOpenHelp={onOpenHelp} />
+          <AccountButton user={user} rank={rank} dot={newTheme} onSignOut={onSignOut} onOpenStats={onOpenStats} onOpenSettings={onOpenSettings} onOpenHelp={onOpenHelp} />
         </div>
       )}
     </div>

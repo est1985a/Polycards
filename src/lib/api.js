@@ -403,6 +403,40 @@ export async function fetchBonusPoints() {
   return data?.bonus_points ?? 0;
 }
 
+// Stats page: every day the student studied (Japan dates, oldest first). Only effort counters are
+// read, never got_it / not_yet (the stats page shows no accuracy).
+export async function fetchStudyDays() {
+  return fetchAllPages(
+    () => supabase
+      .from('user_study_daily')
+      .select('day, reviews, spelled_correctly, bonus_points', { count: 'exact' })
+      .order('day', { ascending: true }),
+    "Could not load study days: ",
+  );
+}
+
+// Stats page: all-time totals (zeros if the student has no row yet).
+export async function fetchStudyTotals() {
+  const { data, error } = await supabase
+    .from('user_study_totals')
+    .select('reviews, spelled_correctly, bonus_points')
+    .maybeSingle();
+  if (error) throw new Error("Could not load study totals: " + error.message);
+  return {
+    reviews: data?.reviews ?? 0,
+    spelled_correctly: data?.spelled_correctly ?? 0,
+    bonus_points: data?.bonus_points ?? 0,
+  };
+}
+
+// Stats page: the most-missed words of the last 30 days (my_trouble_words() with its defaults,
+// supabase/polycards-trouble-words.sql): [{ word_id, english, japanese, misses, last_missed, lowest_level }].
+export async function fetchTroubleWords() {
+  const { data, error } = await supabase.rpc('my_trouble_words');
+  if (error) throw new Error("Could not load trouble words: " + error.message);
+  return data || [];
+}
+
 // The database trigger also keeps the highest value, so this can never lower the peak.
 export async function savePeakPoints(userId, peakPoints) {
   const { error } = await supabase

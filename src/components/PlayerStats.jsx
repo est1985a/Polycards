@@ -10,7 +10,9 @@ const fmt = (n) => n.toLocaleString('en-US');
 // Rank and the next-rank bar use peak + spelling bonus (bonusPoints, from typing mode).
 // avatar: the equipped avatar from gacha_status (null = the starter cat). wide: a bigger avatar.
 // onOpenCollection: tapping the avatar opens the アバター図鑑.
-export default function PlayerStats({ stats, avatar = null, wide = false, onOpenCollection }) {
+// onOpenStats: tapping anywhere else on the card opens the stats page (学習の記録). The card is a
+// div with role="button" (not a <button>), so the avatar button isn't a button inside a button.
+export default function PlayerStats({ stats, avatar = null, wide = false, onOpenCollection, onOpenStats }) {
   // Keep the space while points are loading, so the page doesn't jump.
   if (!stats) return <div style={{ ...panel, minHeight: 190 }} aria-busy="true" />;
 
@@ -23,12 +25,22 @@ export default function PlayerStats({ stats, avatar = null, wide = false, onOpen
   const toNext = next - rankPoints;
   const progress = Math.min(1, Math.max(0, (rankPoints - start) / (next - start)));
 
+  // Enter / Space on the card itself (not on the avatar button inside it) opens the stats page.
+  const onKeyDown = (e) => {
+    if (e.target !== e.currentTarget || (e.key !== "Enter" && e.key !== " ")) return;
+    e.preventDefault();
+    onOpenStats();
+  };
+  const cardProps = onOpenStats
+    ? { role: "button", tabIndex: 0, "aria-label": t("stats.open"), className: "stats-card-button", onClick: onOpenStats, onKeyDown }
+    : {};
+
   return (
-    <div style={{ ...panel, display: "grid", gap: 14 }}>
+    <div {...cardProps} style={{ ...panel, display: "grid", gap: 14, cursor: onOpenStats ? "pointer" : undefined }}>
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         <button
           type="button"
-          onClick={onOpenCollection}
+          onClick={(e) => { e.stopPropagation(); onOpenCollection?.(); }}
           aria-label={t("stats.openCollection")}
           className="avatar-button"
           style={{
@@ -61,6 +73,12 @@ export default function PlayerStats({ stats, avatar = null, wide = false, onOpen
           <div style={{ width: `${progress * 100}%`, height: "100%", borderRadius: 6, background: colors.accent }} />
         </div>
       </div>
+
+      {onOpenStats && (
+        <div aria-hidden="true" style={{ justifySelf: "end", marginTop: -6, fontSize: 13, color: colors.muted }}>
+          {t("stats.openHint")} ›
+        </div>
+      )}
     </div>
   );
 }

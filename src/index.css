@@ -273,3 +273,9 @@ p {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
+
+/* The player card opens the stats page (role="button"). */
+.stats-card-button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}

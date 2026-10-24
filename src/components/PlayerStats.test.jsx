@@ -44,4 +44,18 @@ describe('PlayerStats', () => {
       expect(html).toContain(wide ? 'width:128px;height:128px' : 'width:104px;height:104px');
     }
   });
+
+  it('opens the stats page from the card (role="button", no button inside a button) and shows the hint', () => {
+    const html = renderToStaticMarkup(<PlayerStats stats={stats} onOpenStats={() => {}} onOpenCollection={() => {}} />);
+    expect(html).toMatch(/^<div role="button" tabindex="0" aria-label="学習の記録を見る"/);
+    expect(html).toMatch(/color:var\(--muted\)[^>]*>記録を見る ›</);
+    expect(html).toContain('aria-label="アバター図鑑を開く"');
+    expect(html.match(/<button/g)).toHaveLength(1);
+  });
+
+  it('is a plain card without onOpenStats', () => {
+    const html = renderToStaticMarkup(<PlayerStats stats={stats} />);
+    expect(html).not.toContain('role="button"');
+    expect(html).not.toContain('記録を見る');
+  });
 });
