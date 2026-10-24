@@ -105,7 +105,8 @@ function SummaryPanel({ rows, equipped }) {
 
 // アバター図鑑. rows: from gacha_collection (null while loading).
 // wide: summary panel on the left, avatars on the right.
-export default function GachaCollection({ rows, equippingId, onEquip, onBack, wide = false }) {
+// from: where it was opened ("gacha" → ← ガチャ, "dashboard" → ← 戻る); onBack goes back there.
+export default function GachaCollection({ rows, equippingId, onEquip, onBack, from = "gacha", wide = false }) {
   const owned = (rows || []).filter((r) => r.owned).length;
   const equipped = (rows || []).find((r) => r.equipped) || null;
 
@@ -138,7 +139,7 @@ export default function GachaCollection({ rows, equippingId, onEquip, onBack, wi
   return (
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
       <div>
-        <button onClick={onBack} style={{ ...btnLink, minHeight: 44 }}>{t("collection.back")}</button>
+        <button onClick={onBack} style={{ ...btnLink, minHeight: 44 }}>{t(from === "dashboard" ? "collection.backToDashboard" : "collection.back")}</button>
       </div>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
         <h2 style={{ margin: 0, fontWeight: 700, fontSize: 28 }}>{t("collection.title")}</h2>

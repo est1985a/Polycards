@@ -192,8 +192,10 @@ export default function Header({
   rank = null, newTheme = false, onOpenSettings, onOpenHelp,
 }) {
   const side = wide ? wideLayout.gutter : gutter;
+  // zIndex 25: above everything sticky or fixed on the page (word list bar 5, drill button and tabs 10),
+  // so the account menu and its close-on-tap-outside layer cover them; below the pop-ups (30, 40).
   const row = (
-    <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", padding: `16px ${side}px` }}>
+    <div style={{ position: "relative", zIndex: 25, display: "flex", alignItems: "center", justifyContent: "space-between", padding: `16px ${side}px` }}>
       <Logo onHome={onHome} />
       {user && (
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

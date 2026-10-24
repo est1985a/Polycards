@@ -55,6 +55,7 @@ export default {
   "stats.points": "{n} pt",
   "stats.best": "ベスト {n} pt", // highest points ever (shown when higher than the current points)
   "stats.spellingBonus": "スペルボーナス {n} pt", // points earned by correct spelling in typing mode
+  "stats.openCollection": "アバター図鑑を開く", // aria-label of the avatar on the player card
   "stats.toNextRank": "次のランクまで",
   "stats.toNextRankLeft": "あと{value}", // {value} = stats.toNextRankValue, in bold
   "stats.toNextRankValue": "{n} pt → Rank {rank}", // points still needed, then the next rank
@@ -207,6 +208,7 @@ export default {
 
   // Avatar collection (アバター図鑑)
   "collection.back": "← ガチャ",
+  "collection.backToDashboard": "← 戻る", // back button when the collection was opened from the player card
   "collection.title": "アバター図鑑",
   "collection.wornAvatar": "つけ中のアバター", // heading of the summary panel
   "collection.notOwned": "まだ持っていないアバター", // read aloud for a dark silhouette tile

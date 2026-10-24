@@ -60,6 +60,7 @@ export default {
   "stats.points": "{n} pt",
   "stats.best": "Best {n} pt",
   "stats.spellingBonus": "Spelling bonus {n} pt",
+  "stats.openCollection": "Open avatar collection",
   "stats.toNextRank": "Next rank",
   "stats.toNextRankLeft": "{value}",
   "stats.toNextRankValue": "{n} pt more → Rank {rank}",
@@ -212,6 +213,7 @@ export default {
 
   // Avatar collection
   "collection.back": "← Gacha",
+  "collection.backToDashboard": "← Back",
   "collection.title": "Avatar Collection",
   "collection.wornAvatar": "Your avatar",
   "collection.notOwned": "An avatar you don't have yet",

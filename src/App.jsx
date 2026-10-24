@@ -103,6 +103,7 @@ function App() {
   const [reveal, setReveal] = useState(null); // gacha_pull result being shown
   const [revealKey, setRevealKey] = useState(0); // new reveal animation for each pull
   const [collection, setCollection] = useState(null); // gacha_collection rows
+  const [collectionFrom, setCollectionFrom] = useState("gacha"); // where the collection was opened: 'gacha' or 'dashboard'
   const [equippingId, setEquippingId] = useState(null);
 
   // The pull is wrapped once (kept across re-renders), so a double tap only pulls once.
@@ -410,7 +411,9 @@ function App() {
     window.scrollTo(0, 0);
   }
 
-  async function openCollection() {
+  // from: 'gacha' (the gacha screen's link) or 'dashboard' (the avatar on the player card).
+  async function openCollection(from = "gacha") {
+    setCollectionFrom(from);
     setCollection(null);
     setView("collection");
     window.scrollTo(0, 0);
@@ -418,6 +421,17 @@ function App() {
       setCollection(await api.fetchGachaCollection());
     } catch (e) {
       alert(e.message);
+      leaveCollection(from);
+    }
+  }
+
+  // Back from the collection to where it was opened: the gacha screen, or the My Cards dashboard.
+  function leaveCollection(from = collectionFrom) {
+    if (from === "dashboard") {
+      setView("dashboard");
+      setActiveTab("myCards");
+      window.scrollTo(0, 0);
+    } else {
       setView("gacha");
     }
   }
@@ -633,6 +647,7 @@ function App() {
                     onOpenAbout={() => setAboutOpen(true)}
                     onRemove={removeDeck}
                     onOpenMastered={openMastered}
+                    onOpenCollection={() => openCollection("dashboard")}
                     loading={loadingDeck}
                     removingDeckId={removingDeckId}
                     wide={wide}
@@ -684,7 +699,7 @@ function App() {
                     pulling={pulling}
                     error={gachaError}
                     onPull={pullOnce}
-                    onOpenCollection={openCollection}
+                    onOpenCollection={() => openCollection("gacha")}
                     wide={wide}
                   />
                 ) : (
@@ -692,7 +707,8 @@ function App() {
                     rows={collection}
                     equippingId={equippingId}
                     onEquip={equip}
-                    onBack={() => setView("gacha")}
+                    from={collectionFrom}
+                    onBack={() => leaveCollection()}
                     wide={wide}
                   />
                 )}

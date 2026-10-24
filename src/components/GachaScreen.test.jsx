@@ -2,6 +2,8 @@
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import GachaScreen, { GachaOdds, PullButton } from './GachaScreen';
+import GachaMachine from './GachaMachine';
+import { themes } from '../themes';
 
 // The percentage shown in one rarity box.
 const boxText = (html, rarity) => html.match(new RegExp(`data-rarity="${rarity}"[^>]*>(.*?)</div></div>`))[1];
@@ -72,5 +74,13 @@ describe('GachaScreen', () => {
       expect(html).toContain('width:100%');
       expect(html).toContain('100 レビューごとに 1枚（1日1枚まで）');
     }
+  });
+});
+
+describe('GachaMachine', () => {
+  it('is always drawn in Midnight colors, whatever the theme', () => {
+    const html = renderToStaticMarkup(<GachaMachine />);
+    expect(html).toMatch(new RegExp(`<svg[^>]*style="[^"]*--accent:${themes.midnight.colors.accent};`));
+    expect(html).toContain(`--gold:${themes.midnight.colors.gold}`);
   });
 });
