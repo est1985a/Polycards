@@ -2,7 +2,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { setLang } from '../i18n';
-import StatsScreen from './StatsScreen';
+import StatsScreen, { MonthCalendar, MonthChart } from './StatsScreen';
 
 afterEach(() => setLang('ja'));
 
@@ -31,19 +31,20 @@ describe('StatsScreen', () => {
     expect(plain).toContain('2日連続');
     expect(plain).toContain('ベスト 2日');
     expect(plain).toContain('今日も復習して記録をのばそう！');
-    // 12 weeks of 7 days, the 3 days after today (Thu–Sat) are empty.
-    expect(count(html, /data-cell="/g)).toBe(84);
-    expect(count(html, /data-cell="future"/g)).toBe(3);
-    expect(html).toMatch(/data-cell="2026-10-01"><span data-shade="4"/);
-    expect(html).toMatch(/data-cell="2026-10-19"><span data-shade="2"/);
-    expect(html).toMatch(/data-cell="2026-10-21"><span data-shade="0"[^>]*outline:2px solid var\(--text\)/);
-    expect(plain).toContain('月');
+    // October 2026 starts on a Thursday: 4 blanks, 31 days, 5 weeks; the 10 days after today are future.
+    expect(plain).toContain('勉強した日');
+    expect(plain).toContain('2026年10月');
+    expect(count(html, /data-day="/g)).toBe(31);
+    expect(count(html, /data-blank=""/g)).toBe(4);
+    expect(count(html, /data-shade="future"/g)).toBe(10);
+    expect(plain).toContain('この月は4日勉強しました');
     expect(plain).toContain('少ない');
     expect(plain).toContain('多い');
-    // 14 bars, ending today in the accent color.
-    expect(count(html, /data-bar="/g)).toBe(14);
-    expect(html).toMatch(/data-bar="2026-10-08"/);
-    expect(html).toContain('毎日のレビュー数（14日間）');
+    // The chart shows the same month: 31 bars, and no numbers until a day is tapped.
+    expect(count(html, /data-bar="/g)).toBe(31);
+    expect(plain).toContain('レビュー数 2026年10月');
+    expect(plain).toContain('この月のレビュー：167');
+    expect(html).not.toContain('毎日のレビュー数');
     // Totals: days studied comes from the days, the rest from the totals row.
     expect(plain).toContain('レビュー1,234');
     expect(plain).toContain('勉強した日4');
@@ -107,16 +108,113 @@ describe('StatsScreen', () => {
     expect(plain).toContain('1-day streak');
     expect(plain).toContain('Best: 1 day');
     expect(plain).toContain('Review today to keep your streak going!');
-    expect(plain).toContain('Study days (12 weeks)');
-    expect(plain).toContain('Mon');
-    expect(plain).toContain('Wed');
-    expect(plain).toContain('Fri');
-    expect(plain).toContain('Reviews per day (14 days)');
+    expect(plain).toContain('Study days');
+    expect(plain).toContain('October 2026');
+    expect(plain).toContain('SunMonTueWedThuFriSat');
+    expect(plain).toContain('Studied on 1 day this month');
+    expect(plain).toContain('Reviews October 2026');
+    expect(plain).toContain('4 reviews this month');
     expect(plain).toContain('Spelling bonus38 pt');
     expect(plain).toContain('1 time');
     expect(plain).not.toMatch(/[぀-ヿ]/); // no kana left (the word's Japanese, 駅, is data and kanji only)
     const empty = text(render({ data: { ...DATA, trouble: [] } }));
     expect(empty).toContain('Best: 2 days');
     expect(empty).toContain('No trouble words right now. Great job!');
+  });
+});
+
+describe('MonthCalendar', () => {
+  const OCT = { year: 2026, month: 10 };
+  const cal = (props = {}) => renderToStaticMarkup(<MonthCalendar days={DATA.days} today={TODAY} month={OCT} {...props} />);
+  const prev = (html) => /<button[^>]*aria-label="前の月"[^>]*>/.exec(html)[0];
+  const next = (html) => /<button[^>]*aria-label="次の月"[^>]*>/.exec(html)[0];
+
+  it('shows the weekday row, Sunday in danger and Saturday in accentText', () => {
+    const html = cal();
+    expect(text(html)).toContain('日月火水木金土');
+    expect(html).toMatch(/data-weekday="0"[^>]*color:var\(--danger\)/);
+    expect(html).toMatch(/data-weekday="6"[^>]*color:var\(--accentText\)/);
+    expect(html).toMatch(/data-weekday="3"[^>]*color:var\(--muted\)/);
+  });
+
+  it('this month: › is disabled, ‹ goes back to the first study month', () => {
+    const html = cal({ days: [...DATA.days, day('2026-08-03', 2)] });
+    expect(next(html)).toContain('disabled');
+    expect(prev(html)).not.toContain('disabled');
+  });
+
+  it('a past month: › is enabled, no future days, and ‹ stops at the first study month', () => {
+    const html = cal({ days: [...DATA.days, day('2026-09-03', 2)], month: { year: 2026, month: 9 } });
+    expect(text(html)).toContain('2026年9月');
+    expect(next(html)).not.toContain('disabled');
+    expect(prev(html)).toContain('disabled');
+    expect(html).not.toContain('data-shade="future"');
+    expect(html).not.toContain('outline:2px solid');
+  });
+
+  it('with only this month, both arrows are disabled', () => {
+    const html = cal();
+    expect(prev(html)).toContain('disabled');
+    expect(next(html)).toContain('disabled');
+  });
+
+  it('outlines today, shades days, and uses accentInk for the number on bright days', () => {
+    const html = cal();
+    expect(html).toMatch(/data-day="2026-10-21" data-shade="0"[^>]*outline:2px solid var\(--text\)/);
+    expect(html).toMatch(/<button data-day="2026-10-01" data-shade="4"[^>]*color:var\(--accentInk\)[^>]*>1</);
+    expect(html).toMatch(/<button data-day="2026-10-19" data-shade="2"[^>]*color:var\(--text\)[^>]*>19</);
+    // Only days with reviews are buttons; a day with none is a plain square.
+    expect(html).toMatch(/<span data-day="2026-10-05"/);
+    expect(html.match(/<button data-day=/g)).toHaveLength(4);
+  });
+
+  it("shows the tapped day's reviews under the grid", () => {
+    expect(text(cal())).not.toContain('レビュー');
+    const html = cal({ selectedDay: '2026-10-19' });
+    expect(html).toMatch(/role="status"[^>]*>10月19日：30レビュー</);
+    expect(html).toMatch(/data-day="2026-10-19"[^>]*aria-pressed="true"/);
+  });
+
+  it('works in English', () => {
+    setLang('en');
+    const html = cal({ days: [day('2026-10-19', 1)], selectedDay: '2026-10-19' });
+    expect(text(html)).toContain('October 2026');
+    expect(text(html)).toContain('SunMonTueWedThuFriSat');
+    expect(html).toMatch(/role="status"[^>]*>Oct 19: 1 review</);
+    expect(text(html)).toContain('Studied on 1 day this month');
+    expect(html).toContain('aria-label="Previous month"');
+  });
+});
+
+describe('MonthChart', () => {
+  const chart = (props = {}) => renderToStaticMarkup(<MonthChart days={DATA.days} today={TODAY} month={{ year: 2026, month: 10 }} {...props} />);
+  const labels = (html) => [...html.matchAll(/<span style="flex:1[^>]*>(\d*)<\/span>/g)].map((m) => m[1]).filter(Boolean);
+
+  it('has one bar per day of the month, labeled only on some days', () => {
+    expect(chart().match(/data-bar="/g)).toHaveLength(31);
+    expect(labels(chart())).toEqual(['1', '5', '10', '15', '20', '25', '31']);
+    const feb = chart({ month: { year: 2028, month: 2 }, today: '2028-03-01' });
+    expect(feb.match(/data-bar="/g)).toHaveLength(29);
+    expect(labels(feb)).toEqual(['1', '5', '10', '15', '20', '25', '29']);
+  });
+
+  it("shows no numbers until a day is selected, then that bar's number and outline", () => {
+    const plain = chart();
+    expect(plain).not.toMatch(/>30</);
+    const html = chart({ selectedDay: '2026-10-19' });
+    expect(html).toMatch(/<button data-bar="2026-10-19"[^>]*aria-pressed="true"[^>]*><span[^>]*>30<\/span><span[^>]*outline:2px solid var\(--text\)/);
+  });
+
+  it("colors today's bar with the accent, has no bars on future days, and totals the month", () => {
+    const html = chart({ days: [...DATA.days, day(TODAY, 7)] });
+    expect(html).toMatch(/data-bar="2026-10-21"[^>]*>(<span[^>]*>\d+<\/span>)?<span[^>]*background:var\(--accent\)/);
+    expect(html).toMatch(/data-bar="2026-10-25"[^>]*><span[^>]*height:0/);
+    expect(text(html)).toContain('この月のレビュー：174');
+  });
+
+  it('uses English plurals', () => {
+    setLang('en');
+    expect(text(chart({ days: [day('2026-10-19', 1)] }))).toContain('1 review this month');
+    expect(text(chart())).toContain('Reviews October 2026');
   });
 });

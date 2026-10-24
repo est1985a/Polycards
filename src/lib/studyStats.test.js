@@ -1,7 +1,10 @@
 // Tests for the stats page logic (streaks, calendar, daily chart). Pure, never touches the database.
 // Run with: npm test
 import { describe, it, expect } from 'vitest';
-import { currentStreak, bestStreak, daysStudied, lastNDays, calendarWeeks, shade } from './studyStats';
+import {
+  currentStreak, bestStreak, daysStudied, shade,
+  monthOf, addMonths, compareMonths, firstStudyMonth, monthRange, monthDays, monthGrid, monthTotals,
+} from './studyStats';
 import { jstDateKey } from './schedule';
 
 const rows = (...list) => list.map(([day, reviews]) => ({ day, reviews, spelled_correctly: 0, bonus_points: 0 }));
@@ -60,52 +63,84 @@ describe('bestStreak and daysStudied', () => {
   });
 });
 
-describe('lastNDays', () => {
-  it('fills missing days with 0, oldest first, ending today', () => {
-    const list = lastNDays(rows(['2026-10-30', 4], ['2026-11-02', 7]), '2026-11-02', 5);
-    expect(list).toEqual([
-      { day: '2026-10-29', reviews: 0 },
-      { day: '2026-10-30', reviews: 4 },
-      { day: '2026-10-31', reviews: 0 },
-      { day: '2026-11-01', reviews: 0 },
-      { day: '2026-11-02', reviews: 7 },
-    ]);
+describe('months', () => {
+  it('moves between months across years', () => {
+    expect(monthOf('2026-10-24')).toEqual({ year: 2026, month: 10 });
+    expect(addMonths({ year: 2026, month: 12 }, 1)).toEqual({ year: 2027, month: 1 });
+    expect(addMonths({ year: 2027, month: 1 }, -1)).toEqual({ year: 2026, month: 12 });
+    expect(addMonths({ year: 2026, month: 10 }, -14)).toEqual({ year: 2025, month: 8 });
+    expect(compareMonths({ year: 2026, month: 9 }, { year: 2026, month: 10 })).toBe(-1);
+    expect(compareMonths({ year: 2027, month: 1 }, { year: 2026, month: 12 })).toBe(1);
   });
 
-  it('works with no data', () => {
-    const list = lastNDays([], '2026-10-24', 14);
-    expect(list).toHaveLength(14);
-    expect(list.every((d) => d.reviews === 0)).toBe(true);
-    expect(list[13].day).toBe('2026-10-24');
+  it('finds the first study month, ignoring days with 0 reviews', () => {
+    expect(firstStudyMonth([])).toBeNull();
+    expect(firstStudyMonth(rows(['2026-07-31', 0], ['2026-08-03', 2], ['2026-10-01', 5]))).toEqual({ year: 2026, month: 8 });
+  });
+
+  it('ranges from the first study month to this month (only this month with no data)', () => {
+    expect(monthRange(rows(['2026-08-03', 2]), '2026-10-24')).toEqual({ first: { year: 2026, month: 8 }, last: { year: 2026, month: 10 } });
+    expect(monthRange([], '2026-10-24')).toEqual({ first: { year: 2026, month: 10 }, last: { year: 2026, month: 10 } });
   });
 });
 
-describe('calendarWeeks', () => {
-  it('is 12 weeks of Sunday → Saturday, with this week last', () => {
-    const today = '2026-10-21'; // a Wednesday
-    const weeks = calendarWeeks([], today);
-    expect(weeks).toHaveLength(12);
+describe('monthDays', () => {
+  it('has every day of the month', () => {
+    expect(monthDays([], 2026, 10, '2026-10-24')).toHaveLength(31);
+    expect(monthDays([], 2026, 11, '2026-10-24')).toHaveLength(30);
+    expect(monthDays([], 2026, 2, '2026-10-24')).toHaveLength(28);
+    expect(monthDays([], 2028, 2, '2028-03-01').at(-1).day).toBe('2028-02-29');
+  });
+
+  it('puts reviews on the right day, and marks today and future days', () => {
+    const data = rows(['2026-10-01', 60], ['2026-10-22', 12], ['2026-09-30', 9]);
+    const list = monthDays(data, 2026, 10, '2026-10-24');
+    expect(list[0]).toEqual({ day: '2026-10-01', date: 1, reviews: 60, future: false, isToday: false });
+    expect(list[21].reviews).toBe(12);
+    expect(list[23]).toMatchObject({ date: 24, isToday: true, future: false });
+    expect(list.slice(24).every((d) => d.future && d.reviews === 0)).toBe(true);
+    expect(monthTotals(data, 2026, 10, '2026-10-24')).toEqual({ studied: 2, reviews: 72 });
+  });
+
+  it('a past month has no future days', () => {
+    expect(monthDays([], 2026, 9, '2026-10-24').some((d) => d.future || d.isToday)).toBe(false);
+  });
+});
+
+describe('monthGrid', () => {
+  const shape = (weeks) => weeks.map((w) => w.map((c) => (c ? c.date : 0)));
+
+  it('a month starting on a Sunday (February 2026) fills exactly 4 weeks', () => {
+    const weeks = monthGrid([], 2026, 2, '2026-10-24');
+    expect(weekday('2026-02-01')).toBe(0);
+    expect(weeks).toHaveLength(4);
+    expect(shape(weeks)[0]).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(weeks.flat().every(Boolean)).toBe(true);
+  });
+
+  it('a month starting on a Saturday (August 2026) needs 6 weeks', () => {
+    const weeks = monthGrid([], 2026, 8, '2026-10-24');
+    expect(weekday('2026-08-01')).toBe(6);
+    expect(weeks).toHaveLength(6);
+    expect(shape(weeks)[0]).toEqual([0, 0, 0, 0, 0, 0, 1]);
+    expect(shape(weeks)[5]).toEqual([30, 31, 0, 0, 0, 0, 0]);
+  });
+
+  it('February 2028 (leap year) has 29 days', () => {
+    const weeks = monthGrid([], 2028, 2, '2028-03-01');
+    expect(weekday('2028-02-01')).toBe(2);
+    expect(weeks.flat().filter(Boolean)).toHaveLength(29);
+    expect(shape(weeks)[0]).toEqual([0, 0, 1, 2, 3, 4, 5]);
+    expect(weeks).toHaveLength(5);
+  });
+
+  it("today's month has today and future days; every week has 7 cells", () => {
+    const weeks = monthGrid(rows(['2026-10-22', 12]), 2026, 10, '2026-10-21');
     weeks.forEach((w) => expect(w).toHaveLength(7));
-    expect(weekday(weeks[0][0].day)).toBe(0);
-    expect(weekday(weeks[11][6].day)).toBe(6);
-    const last = weeks[11];
-    expect(last[3]).toMatchObject({ day: today, isToday: true, future: false });
-    expect(last.slice(4).every((c) => c.future && c.reviews === 0)).toBe(true);
-    expect(last.slice(0, 3).every((c) => !c.future)).toBe(true);
-  });
-
-  it('places reviews on the right day, across a month boundary', () => {
-    const weeks = calendarWeeks(rows(['2026-09-30', 12], ['2026-10-01', 60]), '2026-10-03');
-    const cells = weeks.flat();
-    expect(cells.find((c) => c.day === '2026-09-30').reviews).toBe(12);
-    expect(cells.find((c) => c.day === '2026-10-01').reviews).toBe(60);
-    expect(cells.filter((c) => c.reviews > 0)).toHaveLength(2);
-  });
-
-  it('has no future days when today is a Saturday', () => {
-    const weeks = calendarWeeks([], '2026-10-24');
-    expect(weekday('2026-10-24')).toBe(6);
-    expect(weeks.flat().some((c) => c.future)).toBe(false);
+    const cells = weeks.flat().filter(Boolean);
+    expect(cells.find((c) => c.isToday).day).toBe('2026-10-21');
+    expect(cells.filter((c) => c.future)).toHaveLength(10);
+    expect(cells.find((c) => c.day === '2026-10-22').reviews).toBe(0); // future days show no reviews
   });
 });
 

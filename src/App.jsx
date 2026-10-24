@@ -8,6 +8,7 @@ import { loadAnswerMode, saveAnswerMode } from './lib/spelling';
 import { HANDWRITING_ENABLED } from './handwriting/config';
 import { nextReviewSummary, jstDateKey } from './lib/schedule';
 import { singleFlight } from './lib/gacha';
+import { openScreen, leaveScreen, reviewKept } from './lib/screens';
 import { testLoginEmail, LOGIN_FAILED_MESSAGE } from './lib/login';
 import {
   loadSessionSize, saveSessionSize, loadReduceMotion, saveReduceMotion, applyReduceMotion, saveLang, applyLang,
@@ -50,10 +51,11 @@ function App() {
   // Screens: 'dashboard', 'wordList' (Card Sets deck, before the drill), 'study', 'mastered',
   // 'gacha', 'collection' (アバター図鑑), 'settings' (設定) or 'stats' (学習の記録)
   const [view, setView] = useState("dashboard");
-  // The screen settings was opened from, so 戻る returns there. Opened during a review ('study'),
-  // the StudySession stays mounted (just hidden) so the review carries on where it was.
+  // The screen settings / stats was opened from, so 戻る returns there (they can stack one level,
+  // see src/lib/screens.js). Opened during a review ('study'), the StudySession stays mounted (just
+  // hidden) so the review carries on where it was.
   const [settingsFrom, setSettingsFrom] = useState("dashboard");
-  const [statsFrom, setStatsFrom] = useState("dashboard"); // the same, for the stats page
+  const [statsFrom, setStatsFrom] = useState("dashboard");
   const [activeTab, setActiveTab] = useState("myCards"); // always open on My Cards
 
   // Card Sets (global library)
@@ -376,27 +378,33 @@ function App() {
     setReveal(null);
     setThemeError(null);
     markThemesSeen();
-    // Opened from the stats page: 戻る goes where the stats page would have gone (they never stack).
-    if (view !== "settings") setSettingsFrom(view === "stats" ? statsFrom : view);
-    setView("settings");
+    showScreen(openScreen(screens, "settings"));
+  }
+
+  // Settings and stats: which one is open and where each was opened from (src/lib/screens.js).
+  const screens = { view, settingsFrom, statsFrom };
+  function showScreen(next) {
+    setSettingsFrom(next.settingsFrom);
+    setStatsFrom(next.statsFrom);
+    setView(next.view);
     window.scrollTo(0, 0);
   }
 
-  // 戻る in settings: back to the screen it was opened from (a review continues where it was).
-  function leaveSettings() {
-    const back = settingsFrom === "study" && !activeSet ? "dashboard" : settingsFrom;
-    setView(back === "settings" ? "dashboard" : back);
+  // 戻る in settings or stats: back one step (a review behind them continues where it was).
+  function leaveScreenNow() {
+    setView(leaveScreen(screens, !!activeSet));
     window.scrollTo(0, 0);
   }
 
   // 学習の記録: open the page at once (読み込み中…), then load the days, totals and trouble words.
+  // Shown again from settings (settings was opened on it), it keeps the data it has.
   async function openStats() {
     setPlanOpen(false);
     setAboutOpen(false);
     setReveal(null);
-    if (view !== "stats") setStatsFrom(view === "settings" ? settingsFrom : view);
-    setView("stats");
-    window.scrollTo(0, 0);
+    const next = openScreen(screens, "stats");
+    showScreen(next);
+    if (!next.reload) return;
     const load = ++statsLoad.current;
     setStatsData(null);
     setStatsError(null);
@@ -408,13 +416,6 @@ function App() {
       console.error(e);
       if (load === statsLoad.current) setStatsError(e.message);
     }
-  }
-
-  // 戻る on the stats page: back to the screen it was opened from (a review continues where it was).
-  function leaveStats() {
-    const back = statsFrom === "study" && !activeSet ? "dashboard" : statsFrom;
-    setView(back === "stats" || back === "settings" ? "dashboard" : back);
-    window.scrollTo(0, 0);
   }
 
   // Unlock pop-up: 今すぐ使う saves the theme first (the pop-up stays open if that fails).
@@ -667,8 +668,7 @@ function App() {
   const gachaView = view === "gacha" || view === "collection";
   const tabbedView = gachaView || view === "settings" || view === "stats"; // full screens that keep the bottom tabs
   // Settings or stats opened during a review: the review is kept (hidden) underneath and comes back on 戻る.
-  const reviewBehind = !!activeSet && (
-    (view === "settings" && settingsFrom === "study") || (view === "stats" && statsFrom === "study"));
+  const reviewBehind = tabbedView && !gachaView && reviewKept(screens, !!activeSet);
   const contentWidth = !wide || bandHeader ? "none"
     : view === "stats" ? wideLayout.readWidth
     : tabbedView ? "none"
@@ -738,7 +738,7 @@ function App() {
             {session && tabbedView && (
               <div style={{ paddingBottom: tabBarHeight + 32 }}>
                 {view === "stats" ? (
-                  <StatsScreen data={statsData} error={statsError} today={jstDateKey(Date.now())} onBack={leaveStats} wide={wide} />
+                  <StatsScreen data={statsData} error={statsError} today={jstDateKey(Date.now())} onBack={leaveScreenNow} wide={wide} />
                 ) : view === "settings" ? (
                   <SettingsScreen
                     themes={themeItems}
@@ -756,7 +756,7 @@ function App() {
                     onReduceMotionChange={changeReduceMotion}
                     lang={lang}
                     onLangChange={changeLang}
-                    onBack={leaveSettings}
+                    onBack={leaveScreenNow}
                     wide={wide}
                   />
                 ) : view === "gacha" ? (

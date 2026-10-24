@@ -72,13 +72,24 @@ export default {
   "stats.streakBest": "ベスト {n}日",
   "stats.streakKeep": "今日も復習して記録をのばそう！", // streak alive, today not done yet
   "stats.streakStart": "今日から始めよう！", // no streak
-  "stats.calendarTitle": "勉強した日（12週間）",
-  "stats.dayMon": "月", // calendar row labels (only Mon, Wed, Fri are shown)
-  "stats.dayWed": "水",
-  "stats.dayFri": "金",
+  "stats.calendarTitle": "勉強した日",
+  "stats.monthTitle": "{year}年{month}月", // the month shown by the calendar and the chart; {month} is 1–12
+  "stats.prevMonth": "前の月",
+  "stats.nextMonth": "次の月",
+  "stats.weekday0": "日", // calendar weekday row, Sunday first
+  "stats.weekday1": "月",
+  "stats.weekday2": "火",
+  "stats.weekday3": "水",
+  "stats.weekday4": "木",
+  "stats.weekday5": "金",
+  "stats.weekday6": "土",
+  "stats.monthStudied": "この月は{n}日勉強しました",
+  "stats.date": "{month}月{day}日", // {date} in stats.dayDetail
+  "stats.dayDetail": "{date}：{n}レビュー", // shown when a day is tapped
+  "stats.chartMonthTitle": "レビュー数", // followed by the month name
+  "stats.monthReviews": "この月のレビュー：{n}",
   "stats.less": "少ない", // calendar legend
   "stats.more": "多い",
-  "stats.chartDaysTitle": "毎日のレビュー数（14日間）",
   "stats.totalsTitle": "これまでの合計",
   "stats.totalReviews": "レビュー",
   "stats.totalDays": "勉強した日",

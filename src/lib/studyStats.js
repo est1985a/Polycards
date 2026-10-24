@@ -1,4 +1,4 @@
-// Stats page (学習の記録): streaks, the study calendar and the daily chart. Pure functions.
+// Stats page (学習の記録): streaks, the month calendar and the month's review chart. Pure functions.
 //
 // days: user_study_daily rows [{ day: 'YYYY-MM-DD', reviews, … }] (Japan dates). today: today's
 // Japan date in the same form (jstDateKey() in schedule.js). A "study day" is a day with reviews > 0.
@@ -47,29 +47,66 @@ export function daysStudied(days) {
   return studyMap(days).size;
 }
 
-// The last n days, oldest → newest, ending today: [{ day, reviews }] (0 for days with no reviews).
-export function lastNDays(days, today, n) {
+// A month as { year, month } (month 1–12). The month a 'YYYY-MM-DD' date is in:
+export function monthOf(key) {
+  return { year: Number(key.slice(0, 4)), month: Number(key.slice(5, 7)) };
+}
+
+// n months later (or earlier when n < 0), across years.
+export function addMonths({ year, month }, n) {
+  const index = year * 12 + (month - 1) + n;
+  return { year: Math.floor(index / 12), month: (index % 12) + 1 };
+}
+
+// -1, 0 or 1, so months can be compared.
+export function compareMonths(a, b) {
+  return Math.sign(a.year * 12 + a.month - (b.year * 12 + b.month));
+}
+
+// The month of the first study day, or null when there is none.
+export function firstStudyMonth(days) {
+  const first = Math.min(...studyMap(days).keys());
+  return Number.isFinite(first) ? monthOf(dayKey(first)) : null;
+}
+
+// The months the calendar can show: from the first study month (or this month) to this month.
+export function monthRange(days, today) {
+  const last = monthOf(today);
+  const first = firstStudyMonth(days);
+  return { first: first && compareMonths(first, last) < 0 ? first : last, last };
+}
+
+// Every day of a month: [{ day: 'YYYY-MM-DD', date (1–31), reviews, future, isToday }].
+// Days after today are future, with 0 reviews.
+export function monthDays(days, year, month, today) {
   const map = studyMap(days);
   const t = dayNumber(today);
-  return Array.from({ length: n }, (_, i) => {
-    const d = t - (n - 1 - i);
-    return { day: dayKey(d), reviews: map.get(d) ?? 0 };
+  const first = Date.UTC(year, month - 1, 1) / DAY;
+  const length = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return Array.from({ length }, (_, i) => {
+    const d = first + i;
+    const future = d > t;
+    return { day: dayKey(d), date: i + 1, reviews: future ? 0 : map.get(d) ?? 0, future, isToday: d === t };
   });
 }
 
-// Study calendar: `weeks` columns, oldest first, the last one being this week. Each column is
-// 7 cells, Sunday → Saturday: { day, reviews, isToday, future } (days after today are future, with 0 reviews).
-export function calendarWeeks(days, today, weeks = 12) {
-  const map = studyMap(days);
-  const t = dayNumber(today);
-  const weekday = new Date(t * DAY).getUTCDay(); // 0 = Sunday
-  const firstSunday = t - weekday - (weeks - 1) * 7;
-  return Array.from({ length: weeks }, (_, w) =>
-    Array.from({ length: 7 }, (_, r) => {
-      const d = firstSunday + w * 7 + r;
-      const future = d > t;
-      return { day: dayKey(d), reviews: future ? 0 : map.get(d) ?? 0, isToday: d === t, future };
-    }));
+// Month calendar: weeks of 7 cells, Sunday first. Cells are monthDays() entries, or null for the
+// blanks before the 1st and after the last day (4, 5 or 6 weeks).
+export function monthGrid(days, year, month, today) {
+  const list = monthDays(days, year, month, today);
+  const lead = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  const cells = [...Array(lead).fill(null), ...list];
+  while (cells.length % 7) cells.push(null);
+  return Array.from({ length: cells.length / 7 }, (_, w) => cells.slice(w * 7, w * 7 + 7));
+}
+
+// Study days and total reviews in a month.
+export function monthTotals(days, year, month, today) {
+  const list = monthDays(days, year, month, today);
+  return {
+    studied: list.filter((d) => d.reviews > 0).length,
+    reviews: list.reduce((sum, d) => sum + d.reviews, 0),
+  };
 }
 
 // Calendar shade for a day's reviews: 0 (none) to 4 (100 or more).
