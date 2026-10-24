@@ -50,26 +50,39 @@ export function AnswerArea({ revealed, onReveal, onAnswer, answerSize, wide = fa
 }
 
 // The "previous card" chip: the last card's front word, the button pressed, and 元に戻す.
-// side: beside the card (wide screens with room, see SIDE_CHIP_QUERY), a narrow column whose word
-// wraps; otherwise a slim row above the card. Small and muted, with no animation.
+// side: beside the card (wide screens with room, see SIDE_CHIP_QUERY), one centered column with a
+// fixed-width button (same size in Japanese and English); otherwise a slim row above the card.
+// The word is cut to 3 lines beside the card, 1 in the row, ending with "…"; a long word with no
+// spaces breaks anywhere, so nothing sticks out. Small and muted, with no animation.
 export function PreviousCardChip({ undo, onUndo, side = false }) {
   const prefix = chipLabelKey(undo.knew);
   const pressed = t(`${prefix}.ja`) || t(`${prefix}.en`); // English mode has no Japanese line
   const pressedColor = undo.knew ? colors.accentText : colors.danger;
+  const align = side ? "center" : "baseline";
   return (
     <div
       style={{
-        display: "flex", alignItems: side ? "flex-start" : "center", gap: side ? 6 : 10,
-        flexDirection: side ? "column" : "row", fontSize: 13, color: colors.muted, minWidth: 0,
+        display: "flex", alignItems: "center", gap: side ? 6 : 10, flexDirection: side ? "column" : "row",
+        fontSize: 13, color: colors.muted, minWidth: 0, textAlign: side ? "center" : "left",
       }}
     >
-      <div style={{ display: "flex", flexDirection: side ? "column" : "row", gap: side ? 2 : 8, alignItems: side ? "flex-start" : "baseline", minWidth: 0, flexWrap: "wrap" }}>
-        <span>{t("review.previousCard")}</span>
-        <span style={{ fontWeight: 700, color: colors.text, overflowWrap: "anywhere" }}>{undo.front}</span>
-        <span style={{ fontWeight: 700, color: pressedColor }}>{undo.knew ? "✓ " : ""}{pressed}</span>
+      <div style={{ display: "flex", flexDirection: side ? "column" : "row", gap: side ? 2 : 8, alignItems: align, minWidth: 0, maxWidth: "100%" }}>
+        <span style={{ flexShrink: 0 }}>{t("review.previousCard")}</span>
+        <span
+          style={{
+            fontWeight: 700, color: colors.text, overflowWrap: "anywhere", minWidth: 0, flex: "0 1 auto",
+            display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: side ? 3 : 1, overflow: "hidden",
+          }}
+        >
+          {undo.front}
+        </span>
+        <span style={{ fontWeight: 700, color: pressedColor, flexShrink: 0 }}>{undo.knew ? "✓ " : ""}{pressed}</span>
       </div>
       <button
-        style={{ ...btnGhost, minHeight: 44, padding: "0 14px", fontSize: 13, color: colors.muted, flexShrink: 0 }}
+        style={{
+          ...btnGhost, minHeight: 44, fontSize: 13, color: colors.muted, flexShrink: 0,
+          ...(side ? { width: 96, padding: 0 } : { padding: "0 14px" }),
+        }}
         aria-label={t("review.undoAria")}
         onClick={onUndo}
       >
@@ -566,10 +579,14 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
             {card.direction === "en2jp" ? t("review.questionEn2jp") : t("review.questionJp2en")}
           </p>
           <div style={{ position: "relative" }}>
-            {/* Room beside the card: the chip sits to its left, vertically centered, outside the column. */}
+            {/* Room beside the card: the chip is centered in the space between the screen edge and the */}
+            {/* card, vertically centered on the card. The column is centered, so that space is */}
+            {/* 50vw - half the card's width (% here = the card's width). */}
             {sideChip && undo && (
-              <div style={{ position: "absolute", right: "calc(100% + 16px)", top: "50%", transform: "translateY(-50%)", width: "max-content", maxWidth: 150 }}>
-                <PreviousCardChip undo={undo} onUndo={handleUndo} side />
+              <div style={{ position: "absolute", right: "100%", width: "calc(50vw - 50%)", top: "50%", transform: "translateY(-50%)", display: "flex", justifyContent: "center" }}>
+                <div style={{ maxWidth: 150 }}>
+                  <PreviousCardChip undo={undo} onUndo={handleUndo} side />
+                </div>
               </div>
             )}
             {/* A new key per turn: the next card starts on its front without flipping back on screen. */}

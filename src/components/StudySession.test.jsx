@@ -227,8 +227,20 @@ describe('previous card chip (PreviousCardChip)', () => {
     expect(html).toContain('var(--danger)');
   });
 
-  it('lets a long word wrap beside the card', () => {
-    expect(render({ undo: undoFor(true), side: true })).toContain('overflow-wrap:anywhere');
+  it('beside the card: centered, word cut to 3 lines, fixed-width button that is still 44 px tall', () => {
+    const html = render({ undo: undoFor(true), side: true });
+    expect(html).toContain('text-align:center');
+    expect(html).toContain('overflow-wrap:anywhere');
+    expect(html).toContain('-webkit-line-clamp:3');
+    expect(html).toContain('width:96px');
+    expect(html).toContain('min-height:44px');
+  });
+
+  it('in the row above the card: word cut to 1 line, button not fixed-width', () => {
+    const html = render({ undo: undoFor(false) });
+    expect(html).toContain('-webkit-line-clamp:1');
+    expect(html).toContain('overflow-wrap:anywhere');
+    expect(html).not.toContain('width:96px');
   });
 
   it('uses the English button text in English mode', () => {
