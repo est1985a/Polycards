@@ -49,6 +49,9 @@ function App() {
   // Screens: 'dashboard', 'wordList' (Card Sets deck, before the drill), 'study', 'mastered',
   // 'gacha', 'collection' (アバター図鑑) or 'settings' (設定)
   const [view, setView] = useState("dashboard");
+  // The screen settings was opened from, so 戻る returns there. Opened during a review ('study'),
+  // the StudySession stays mounted (just hidden) so the review carries on where it was.
+  const [settingsFrom, setSettingsFrom] = useState("dashboard");
   const [activeTab, setActiveTab] = useState("myCards"); // always open on My Cards
 
   // Card Sets (global library)
@@ -366,7 +369,15 @@ function App() {
     setReveal(null);
     setThemeError(null);
     markThemesSeen();
+    if (view !== "settings") setSettingsFrom(view);
     setView("settings");
+    window.scrollTo(0, 0);
+  }
+
+  // 戻る in settings: back to the screen it was opened from (a review continues where it was).
+  function leaveSettings() {
+    const back = settingsFrom === "study" && !activeSet ? "dashboard" : settingsFrom;
+    setView(back === "settings" ? "dashboard" : back);
     window.scrollTo(0, 0);
   }
 
@@ -619,6 +630,8 @@ function App() {
   // Wide screens: My Cards uses the full column, study is 780 px, other screens 720 px (centered).
   const gachaView = view === "gacha" || view === "collection";
   const tabbedView = gachaView || view === "settings"; // full screens that keep the bottom tabs
+  // Settings opened during a review: the review is kept (hidden) underneath and comes back on 戻る.
+  const reviewBehindSettings = view === "settings" && settingsFrom === "study" && !!activeSet;
   const contentWidth = !wide || bandHeader || tabbedView ? "none"
     : view === "study" ? wideLayout.studyWidth : wideLayout.readWidth;
 
@@ -681,7 +694,8 @@ function App() {
                   <ThemeUnlockSheet item={unlock.theme} others={unlock.others} rank={rank} onUse={applyUnlockedTheme} onLater={markThemesSeen} />
                 )}
               </div>
-            ) : tabbedView ? (
+            ) : null}
+            {session && tabbedView && (
               <div style={{ paddingBottom: tabBarHeight + 32 }}>
                 {view === "settings" ? (
                   <SettingsScreen
@@ -700,7 +714,7 @@ function App() {
                     onReduceMotionChange={changeReduceMotion}
                     lang={lang}
                     onLangChange={changeLang}
-                    onBack={() => { setView("dashboard"); window.scrollTo(0, 0); }}
+                    onBack={leaveSettings}
                     wide={wide}
                   />
                 ) : view === "gacha" ? (
@@ -737,8 +751,9 @@ function App() {
                   />
                 )}
               </div>
-            ) : (
-              <>
+            )}
+            {session && (!tabbedView || reviewBehindSettings) && view !== "dashboard" && (
+              <div style={reviewBehindSettings ? { display: "none" } : undefined}>
                 <div style={{ marginBottom: 14 }}>
                   <button onClick={() => setView("dashboard")} style={btnLink}>
                     {t("common.backToDashboard")}
@@ -758,7 +773,7 @@ function App() {
                     wide={wide}
                   />
                 )}
-                {activeSet && view === "study" && (
+                {activeSet && (view === "study" || reviewBehindSettings) && (
                   <StudySession
                     key={sessionKey}
                     activeSet={activeSet}
@@ -771,7 +786,7 @@ function App() {
                     sideChip={sideChip}
                   />
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>

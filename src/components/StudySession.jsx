@@ -293,7 +293,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
     if (!viewport) return;
     const keepVisible = () => {
       const el = promptRef.current;
-      if (!el) return;
+      if (!el || !el.getClientRects().length) return; // hidden while settings is open
       window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 8 });
     };
     viewport.addEventListener("resize", keepVisible);
