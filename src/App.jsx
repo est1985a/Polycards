@@ -54,6 +54,7 @@ function App() {
   // Card Sets (global library)
   const [libraryData, setLibraryData] = useState([]); // textbooks, from shapeLibrary
   const [loadingLibrary, setLoadingLibrary] = useState(false);
+  const [collectionsData, setCollectionsData] = useState(null); // Tests & Themes tree (shapeCollections), null until loaded
   // Which Card Sets screen is open, plus the chosen school level (see src/lib/library.js).
   // Kept here so that coming back from a deck's word list or drill returns to the same deck list.
   // The level starts from the one saved on the last visit.
@@ -246,6 +247,14 @@ function App() {
 
   async function loadLibrary() {
     setLoadingLibrary(true);
+    // Tests & Themes loads on its own, so a problem there never hides the textbooks (and the
+    // other way round). If it fails, the list shows Coming soon.
+    api.fetchCollections()
+      .then(setCollectionsData)
+      .catch((e) => {
+        console.error(e);
+        setCollectionsData((prev) => prev ?? []);
+      });
     try {
       setLibraryData(await api.fetchLibrary());
     } catch (e) {
@@ -657,6 +666,7 @@ function App() {
                   <CardSetsTab
                     textbooks={libraryData}
                     loading={loadingLibrary}
+                    collections={collectionsData}
                     path={cardSetsPath}
                     onNavigate={navigateCardSets}
                     onOpenDeck={startDeck}

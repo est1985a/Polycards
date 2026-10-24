@@ -30,7 +30,7 @@ vi.mock('./supabaseClient', () => ({
 
 const {
   fetchDueRows, fetchReviewRows, restoreMasteredCard, recordAnswer, waitForPendingSaves, holdAnswer, flushHeldAnswer, dropHeldAnswer, checkOtherMeaning, fetchBonusPoints, fetchNextReview, fetchReviewPlanRows,
-  fetchGachaStatus, pullGacha, fetchGachaCollection, equipAvatar, setGachaTheme, gachaErrorMessage, fetchThemeUnlocks,
+  fetchCollections, fetchGachaStatus, pullGacha, fetchGachaCollection, equipAvatar, setGachaTheme, gachaErrorMessage, fetchThemeUnlocks,
 } = await import('./api');
 
 beforeEach(() => {
@@ -81,6 +81,22 @@ describe('theme unlocks', () => {
   it('throws when the table cannot be read', async () => {
     result = { data: null, error: { message: 'denied' } };
     await expect(fetchThemeUnlocks()).rejects.toThrow('Could not load themes: denied');
+  });
+});
+
+describe('collections (Tests & Themes)', () => {
+  it('reads collections and their decks in pages, with word counts', async () => {
+    await fetchCollections();
+    expect(calls).toContainEqual(['from', 'collections']);
+    expect(calls).toContainEqual(['from', 'collection_decks']);
+    expect(calls.filter((c) => c[0] === 'range' && c[1] === 0 && c[2] === 999)).toHaveLength(2);
+    const select = calls.find((c) => c[0] === 'select' && String(c[1]).includes('collection_id'));
+    expect(select[1]).toContain('deck_words ( count )');
+  });
+
+  it('throws when the query fails', async () => {
+    result = { data: null, error: { message: 'boom' }, count: null };
+    await expect(fetchCollections()).rejects.toThrow('boom');
   });
 });
 
