@@ -371,27 +371,27 @@ export default {
   "themes.later": "あとで",
 
   // "What is Polycards?" pop-up (button at the top of My Cards; also 使い方 in the account menu)
-  "about.button": "What is Polycards?",
-  "about.buttonLabel": "What is Polycards? / ポリカードのしくみ", // read aloud for the button
+  "about.button": "Polycardsとは？",
+  "about.buttonLabel": "Polycardsとは？", // read aloud for the button
   "about.title": "Polycardsとは？",
   "about.subtitle": "ポリカードのしくみ",
-  "about.forgetting.heading": "Forgetting is normal",
+  "about.forgetting.heading": "忘れるのはふつうのこと",
   "about.forgetting.p1": "新しく覚えた単語は、何もしないと数日でほとんど忘れてしまいます。これは「忘却曲線」と言って、だれにでも起こることです。でも、忘れそうになったときにもう一度思い出すと、記憶は前よりずっと長く残ります。",
-  "about.ladder.heading": "The level ladder",
+  "about.ladder.heading": "レベルのしくみ",
   "about.ladder.before": "「わかった」を押すと、カードは1段上がり、次に出てくるまでの時間がのびます。", // above the level chips
   "about.ladder.after": "「まだ」を押すと、カードは少し下がって、早めにまた出てきます。まちがえても大丈夫。思い出そうとすること自体が勉強です。", // below the level chips
   "about.ladderLabel": "レベルと次の復習まで", // read aloud for the row of level chips
   "about.ladderLevel": "Lv{n}", // one level chip (followed by its wait, a time.wait* text)
   "about.ladderMastered": "Mastered!", // last chip
-  "about.science.heading": "The science",
+  "about.science.heading": "研究でわかっていること",
   "about.science.p1": "Polycardsは、研究で効果が確かめられている2つの方法を使っています。",
-  "about.science.spaced": "Spaced repetition（間隔反復）：時間をあけて何回か復習する。一度にたくさんやるより、よく覚えられます。",
-  "about.science.retrieval": "Retrieval practice（思い出す練習）：答えを見る前に、頭の中で思い出す。ただ読むだけより、記憶に残ります。",
-  "about.why.heading": "Why it helps you",
+  "about.science.spaced": "時間をあけて復習する（Spaced repetition）：時間をあけて何回か復習する。一度にたくさんやるより、よく覚えられます。",
+  "about.science.retrieval": "思い出す練習（Retrieval practice）：答えを見る前に、頭の中で思い出す。ただ読むだけより、記憶に残ります。",
+  "about.why.heading": "どうして役に立つの？",
   "about.why.1": "覚えている単語には時間を使わず、忘れそうな単語だけ復習できる",
   "about.why.2": "1回は{sessionSize}枚まで。毎日少しずつでOK", // {sessionSize} = the student's 1回の枚数 (10, 20 or 30)
   "about.why.3": "テストのあとも、ずっと覚えていられる",
-  "about.tips.heading": "Tips",
+  "about.tips.heading": "上手に使うコツ",
   "about.tips.1": "毎日少しずつやろう（まとめてやるより効果的）",
   "about.tips.2": "答えを見る前に、本気で思い出そう",
   "about.tips.3": "正直に「わかった」「まだ」を押そう。うそをつくと、自分が覚えられなくなるだけです",
