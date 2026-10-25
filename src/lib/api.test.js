@@ -365,9 +365,9 @@ describe('gacha', () => {
     result = { data: null, error: { message: 'no_tickets' } };
     await expect(pullGacha()).rejects.toThrow('ガチャ券がありません');
     result = { data: null, error: { message: 'collection_complete' } };
-    await expect(pullGacha()).rejects.toThrow('全部そろいました！新しいアバターをお楽しみに');
+    await expect(pullGacha()).rejects.toThrow('全部そろいました！新しいポリアバターをお楽しみに');
     result = { data: null, error: { message: 'not_owned' } };
-    await expect(equipAvatar(1)).rejects.toThrow('このアバターはまだ持っていません');
+    await expect(equipAvatar(1)).rejects.toThrow('このポリアバターはまだ持っていません');
     result = { data: null, error: { message: 'theme_locked' } };
     await expect(setGachaTheme('neon')).rejects.toThrow('このテーマはまだ使えません');
   });

@@ -25,7 +25,7 @@ describe('AboutSheet', () => {
     expect(html).toContain('Polycardsとは？');
     expect(html).toContain('ポリカードのしくみ');
     expect(ABOUT.sections).toHaveLength(8);
-    ['忘れるのはふつうのこと', 'レベルのしくみ', '研究でわかっていること', 'どうして役に立つの？', '書いて答えよう', 'トレーニング', 'ガチャとアバター', '上手に使うコツ'].forEach((heading, i) => {
+    ['忘れるのはふつうのこと', 'レベルのしくみ', '研究でわかっていること', 'どうして役に立つの？', '書いて答えよう', 'トレーニング', 'ガチャとポリアバター', '上手に使うコツ'].forEach((heading, i) => {
       expect(html).toMatch(new RegExp(`<h3[^>]*><span[^>]*>${i + 1}\\.</span> ${heading}</h3>`));
     });
   });

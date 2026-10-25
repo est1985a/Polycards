@@ -40,7 +40,7 @@ describe('PlayerStats', () => {
   it('the avatar is a button that opens the avatar collection', () => {
     for (const wide of [false, true]) {
       const html = renderToStaticMarkup(<PlayerStats stats={stats} wide={wide} onOpenCollection={() => {}} />);
-      expect(html).toMatch(/<button type="button" aria-label="アバター図鑑を開く" class="avatar-button"/);
+      expect(html).toMatch(/<button type="button" aria-label="ポリアバター図鑑を開く" class="avatar-button"/);
       expect(html).toContain(wide ? 'width:128px;height:128px' : 'width:104px;height:104px');
     }
   });
@@ -49,7 +49,7 @@ describe('PlayerStats', () => {
     const html = renderToStaticMarkup(<PlayerStats stats={stats} onOpenStats={() => {}} onOpenCollection={() => {}} />);
     expect(html).toMatch(/^<div role="button" tabindex="0" aria-label="学習の記録を見る"/);
     expect(html).toMatch(/color:var\(--muted\)[^>]*>記録を見る ›</);
-    expect(html).toContain('aria-label="アバター図鑑を開く"');
+    expect(html).toContain('aria-label="ポリアバター図鑑を開く"');
     expect(html.match(/<button/g)).toHaveLength(1);
   });
 

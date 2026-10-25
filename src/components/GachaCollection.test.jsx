@@ -1,4 +1,4 @@
-// Tests for the アバター図鑑 (collection). Run with: npm test
+// Tests for the ポリアバター図鑑 (collection). Run with: npm test
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import GachaCollection, { CollectionTile } from './GachaCollection';
@@ -51,7 +51,7 @@ describe('GachaCollection', () => {
     for (const wide of [false, true]) {
       const html = renderToStaticMarkup(<GachaCollection rows={[cat, owned, unowned, secret]} onEquip={() => {}} onBack={() => {}} wide={wide} />);
       expect(html).toContain('← ガチャ');
-      expect(html).toContain('アバター図鑑');
+      expect(html).toContain('ポリアバター図鑑');
       expect(html).toContain('2 / 4');
       expect(html).toContain('0 / ?');
       expect(html).toContain('Series 1');

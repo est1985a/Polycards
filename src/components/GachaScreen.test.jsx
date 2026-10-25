@@ -16,7 +16,7 @@ describe('GachaOdds', () => {
     expect(boxText(html, 'super_rare')).toContain('5%');
     expect(boxText(html, 'secret')).toContain('1%');
     expect(html).toContain('出る確率');
-    expect(html).toContain('同じアバターは出ません。毎回新しいアバター！');
+    expect(html).toContain('同じポリアバターは出ません。毎回新しいポリアバター！');
   });
 
   it('follows the status when the odds change, and dims a rarity at 0%', () => {
@@ -55,7 +55,7 @@ describe('GachaScreen', () => {
   it('shows tickets, the collection link and progress to the next ticket', () => {
     for (const wide of [false, true]) {
       const html = renderToStaticMarkup(<GachaScreen status={status} pulling={false} wide={wide} />);
-      expect(html).toContain('アバター図鑑 4 / 50 →');
+      expect(html).toContain('ポリアバター図鑑 4 / 50 →');
       expect(html).toContain('× 2');
       expect(html).toMatch(/次のガチャ券まで あと .*30.* レビュー/);
       expect(html).toContain('100 レビューごとに 1枚（1日1枚まで）');
