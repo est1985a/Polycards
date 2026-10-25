@@ -31,6 +31,7 @@ export default {
   // Bottom tab bar
   "tabs.myCards": "My Cards",
   "tabs.cardSets": "Card Sets",
+  "tabs.training": "トレーニング",
 
   // My Cards dashboard: review button and マイデッキ list
   "myCards.startReview": "復習を始める",
@@ -172,6 +173,19 @@ export default {
   "practice.unavailable": "手書きの準備ができませんでした",
   "practice.done": "できた！", // all 4 boxes green
   "practice.again": "もう一回",
+  "practice.nextLetter": "次の文字へ", // Training tab only: go on to the next letter
+
+  // Training tab (トレーニング)
+  "training.title": "トレーニング",
+  "training.abc.title": "ABCを書こう",
+  "training.abc.description": "アルファベットを4線に書く練習", // DRAFT
+  "training.abc.pencil": "Apple Pencil で書こう", // DRAFT
+  "training.abc.capitals": "大文字",
+  "training.abc.small": "小文字",
+  "training.abc.doneCount": "{n} / 26 できた", // DRAFT: letters completed this visit
+  "training.abc.doneAria": "{letter}（できた）", // read aloud for a completed letter
+  "training.prev": "前の文字",
+  "training.next": "次の文字",
   "practice.hint.shape": "お手本をよく見て、もう一度書いてみよう",
   "practice.hint.ascender": "{letter} のたて線は、いちばん上の線までのばそう",
   "practice.hint.tail": "下の線までのばそう",

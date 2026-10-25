@@ -46,6 +46,31 @@ function CaseSwitch({ letter, onChange }) {
   );
 }
 
+// できた！ with もう一回 and とじる, plus 次の文字へ when onNext is given (full page, not at Z / z).
+export function DonePanel({ onAgain, onClose, onNext }) {
+  const size = { minHeight: 48, minWidth: 120, fontSize: 15 };
+  return (
+    <div style={{ display: "grid", gap: 12, justifyItems: "center" }}>
+      <div className="practice-done" style={{ fontFamily: fontDisplay, fontSize: 32, fontWeight: 700, color: HW_COLORS.pass }}>
+        {t("practice.done")}
+      </div>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+        {onNext && (
+          <button type="button" onClick={onNext} style={{ ...btnPrimary, ...size }}>
+            {t("practice.nextLetter")}
+          </button>
+        )}
+        <button type="button" onClick={onAgain} style={{ ...(onNext ? btnGhost : btnPrimary), ...size }}>
+          {t("practice.again")}
+        </button>
+        <button type="button" onClick={onClose} style={{ ...btnGhost, ...size }}>
+          {t("practice.close")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Letter practice for one letter: the stroke-order guide, then 4 boxes on the four lines (the first
 // one with the letter to trace). Each box is checked a moment after the pen lifts (shape by the
 // model, height by the four lines): green when right, red with a hint when not. A red box keeps its
@@ -53,7 +78,9 @@ function CaseSwitch({ letter, onChange }) {
 // Practice saves nothing (no SRS, points, bonus, tickets or answer log).
 // Used as a pop-up from a review (PracticeSheet) and later as a full page.
 // onClose: とじる (and × when closeRef is given, in the pop-up). onComplete(letter): all 4 boxes green.
-export default function LetterPractice({ letter: startLetter, onClose, onComplete, closeRef = null, allowAnyPointer = false, titleId = "practice-title" }) {
+// Full page (Training tab): onLetterChange(letter) is called by the B ⇄ b switch, and onNext (when given;
+// not at Z / z) adds 次の文字へ to the できた！ panel.
+export default function LetterPractice({ letter: startLetter, onClose, onComplete, onLetterChange, onNext, closeRef = null, allowAnyPointer = false, titleId = "practice-title" }) {
   const [letter, setLetter] = useState(startLetter);
   const [round, setRound] = useState(0); // a new set of empty boxes
   const [states, setStates] = useState(() => Array(BOXES).fill(null)); // null | "checking" | "pass" | "wrong"
@@ -177,7 +204,7 @@ export default function LetterPractice({ letter: startLetter, onClose, onComplet
         <h2 id={titleId} style={{ margin: 0, flex: "1 1 auto", fontSize: 20, fontWeight: 700 }}>
           {t("practice.title", { letter })}
         </h2>
-        <CaseSwitch letter={letter} onChange={(l) => reset(l)} />
+        <CaseSwitch letter={letter} onChange={(l) => { reset(l); onLetterChange?.(l); }} />
         {closeRef && (
           <button
             ref={closeRef} type="button" onClick={onClose} aria-label={t("common.close")}
@@ -226,19 +253,7 @@ export default function LetterPractice({ letter: startLetter, onClose, onComplet
           </div>
 
           {allPass ? (
-            <div style={{ display: "grid", gap: 12, justifyItems: "center" }}>
-              <div className="practice-done" style={{ fontFamily: fontDisplay, fontSize: 32, fontWeight: 700, color: HW_COLORS.pass }}>
-                {t("practice.done")}
-              </div>
-              <div style={{ display: "flex", gap: 10 }}>
-                <button type="button" onClick={() => reset()} style={{ ...btnPrimary, minHeight: 48, minWidth: 120, fontSize }}>
-                  {t("practice.again")}
-                </button>
-                <button type="button" onClick={onClose} style={{ ...btnGhost, minHeight: 48, minWidth: 120, fontSize }}>
-                  {t("practice.close")}
-                </button>
-              </div>
-            </div>
+            <DonePanel onAgain={() => reset()} onClose={onClose} onNext={onNext} />
           ) : (
             <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
               <button type="button" onClick={handleClear} disabled={inkCount === 0} style={{ ...btnGhost, minHeight: 48, minWidth: 100, fontSize, opacity: inkCount === 0 ? 0.5 : 1 }}>

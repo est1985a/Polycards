@@ -36,6 +36,7 @@ export default {
   // Bottom tab bar
   "tabs.myCards": "My Cards",
   "tabs.cardSets": "Card Sets",
+  "tabs.training": "Training",
 
   // My Cards dashboard: review button and My Decks list
   "myCards.startReview": "Start review",
@@ -178,6 +179,19 @@ export default {
   "practice.unavailable": "Handwriting isn't ready.",
   "practice.done": "You did it!",
   "practice.again": "Again",
+  "practice.nextLetter": "Next letter",
+
+  // Training tab. "Training" and "Write the ABCs" are Andre's; the rest are DRAFTS for Andre to check.
+  "training.title": "Training",
+  "training.abc.title": "Write the ABCs",
+  "training.abc.description": "Practice writing letters on the four lines",
+  "training.abc.pencil": "Write with your Apple Pencil",
+  "training.abc.capitals": "Capital letters",
+  "training.abc.small": "Small letters",
+  "training.abc.doneCount": "{n} / 26 done",
+  "training.abc.doneAria": "{letter} (done)",
+  "training.prev": "Previous letter",
+  "training.next": "Next letter",
   "practice.hint.shape": "Look at the example and try again.",
   "practice.hint.ascender": "Make the tall line of {letter} reach the top line.",
   "practice.hint.tail": "Make the tail reach the bottom line.",

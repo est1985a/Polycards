@@ -19,6 +19,13 @@ const ICONS = {
       <rect x="13" y="13" width="8" height="8" rx="2" fill="currentColor" />
     </svg>
   ),
+  // a pencil (トレーニング)
+  training: (
+    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 20l1.2-4.6L15.6 5a2 2 0 0 1 2.8 0l.6.6a2 2 0 0 1 0 2.8L8.6 18.8z" fill="currentColor" />
+      <path d="M4 20l4.6-1.2-3.4-3.4z" fill="currentColor" opacity="0.45" />
+    </svg>
+  ),
 };
 
 // Bottom tab bar, fixed to the bottom of the screen.
