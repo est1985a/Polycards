@@ -56,7 +56,7 @@ export function WordRow({ word, hideJa, revealed, first, onToggle, speech = null
         <span style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", columnGap: 12, rowGap: 2 }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 18, color: colors.text }}>{word.en}</span>
-            {speech && <SpeakerButton text={word.en} slow={speech.slow} style={{ margin: "-4px 0" }} />}
+            {speech && <SpeakerButton text={word.en} audioPath={word.audioPath} slow={speech.slow} style={{ margin: "-4px 0" }} />}
           </span>
           {jp}
         </span>

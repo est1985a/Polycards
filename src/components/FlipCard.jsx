@@ -66,15 +66,15 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
   // Auto-play the English front when the card appears. Leaving the screen stops any reading.
   useEffect(() => {
     const s = speechRef.current;
-    if (s?.autoPlay && frontIsEnglish && !shownFlipped.current) speakWord(card.en, { slow: s.slow });
+    if (s?.autoPlay && frontIsEnglish && !shownFlipped.current) speakWord(card.en, { slow: s.slow, audioPath: card.audioPath });
     return () => stopSpeaking();
-  }, [card.en, frontIsEnglish]);
+  }, [card.en, card.audioPath, frontIsEnglish]);
 
   // Auto-play the English answer when a Japanese → English card flips.
   useEffect(() => {
     const s = speechRef.current;
-    if (revealed && !frontIsEnglish && !shownFlipped.current && s?.autoPlay) speakWord(card.en, { slow: s.slow });
-  }, [revealed, frontIsEnglish, card.en]);
+    if (revealed && !frontIsEnglish && !shownFlipped.current && s?.autoPlay) speakWord(card.en, { slow: s.slow, audioPath: card.audioPath });
+  }, [revealed, frontIsEnglish, card.en, card.audioPath]);
 
   // After the flip, move keyboard / screen-reader focus to the answer (not to an answer button).
   useEffect(() => {
@@ -88,7 +88,7 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
   const withSpeaker = (line) => !speech ? line : (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
       {line}
-      <SpeakerButton text={card.en} slow={speech.slow} size={speakerSize} />
+      <SpeakerButton text={card.en} audioPath={card.audioPath} slow={speech.slow} size={speakerSize} />
     </div>
   );
 
@@ -173,7 +173,7 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
               backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "translateZ(1px)",
             }}
           >
-            <SpeakerButton text={card.en} slow={speech.slow} size={speakerSize} />
+            <SpeakerButton text={card.en} audioPath={card.audioPath} slow={speech.slow} size={speakerSize} />
           </div>
         )}
       </div>
