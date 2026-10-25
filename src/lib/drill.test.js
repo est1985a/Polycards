@@ -82,6 +82,13 @@ describe('shuffle', () => {
 });
 
 describe('alternate answers', () => {
+  it("cards carry the word's audio_path (null when there is no recording)", () => {
+    expect(buildCards([{ id: 'a', english: 'pretty', japanese: 'かわいい', audio_path: 'a-1234abcd.mp3' }])[0].audioPath).toBe('a-1234abcd.mp3');
+    expect(buildCards([{ id: 'b', english: 'herb', japanese: 'ハーブ' }])[0].audioPath).toBeNull();
+    const [review] = buildReviewCards([{ word_id: 'a', direction: 'jp2en', level: 1, words: { id: 'a', english: 'pretty', japanese: 'かわいい', audio_path: 'a.mp3' } }]);
+    expect(review.audioPath).toBe('a.mp3');
+  });
+
   it("cards carry the word's alt_answers, blanks dropped, [] when missing", () => {
     const [card] = buildCards([{ id: 'a', english: 'pretty', japanese: 'かわいい', alt_answers: ['cute', ' ', null] }]);
     expect(card.altAnswers).toEqual(['cute']);

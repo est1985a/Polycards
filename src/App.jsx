@@ -12,12 +12,14 @@ import { openScreen, leaveScreen, reviewKept } from './lib/screens';
 import { testLoginEmail, LOGIN_FAILED_MESSAGE } from './lib/login';
 import {
   loadSessionSize, saveSessionSize, loadReduceMotion, saveReduceMotion, applyReduceMotion, saveLang, applyLang,
+  loadAutoPlay, saveAutoPlay, loadSlowSpeech, saveSlowSpeech,
   loadThemeCache, saveThemeCache, clearThemeCache, loadSeenThemes, saveSeenThemes, devThemeOverride,
 } from './lib/settings';
 import { themeList, newThemes, featuredUnlock, markSeen } from './lib/themeUnlocks';
 import { themes, applyTheme, getTheme, DEFAULT_THEME } from './themes';
 import { wrap, gutter, headerBand, tabBarHeight, btnLink, wideLayout } from './styles/theme';
 import { useWide, useSideChip } from './lib/useWide';
+import { speechAvailable } from './lib/speech';
 import { t, getLang } from './i18n';
 import Header from './components/Header';
 import LoginScreen from './components/LoginScreen';
@@ -70,6 +72,10 @@ function App() {
   // Settings saved on this device (src/lib/settings.js)
   const [sessionSize, setSessionSize] = useState(() => loadSessionSize(window.localStorage)); // 1回の枚数
   const [reduceMotion, setReduceMotion] = useState(() => loadReduceMotion(window.localStorage)); // カードの動きを減らす
+  const [autoPlay, setAutoPlay] = useState(() => loadAutoPlay(window.localStorage)); // 自動再生
+  const [slowSpeech, setSlowSpeech] = useState(() => loadSlowSpeech(window.localStorage)); // ゆっくり
+  const [canSpeak] = useState(() => speechAvailable()); // no speech in this browser: no speaker buttons
+  const speech = canSpeak ? { autoPlay, slow: slowSpeech } : null;
   const [lang, setLangState] = useState(getLang); // 言語 / Language, applied in main.jsx before the first render
 
   // Theme: saved on the account (gacha_set_theme), cached on the device. main.jsx already applied the cache.
@@ -322,6 +328,16 @@ function App() {
   function changeReduceMotion(on) {
     setReduceMotion(on);
     saveReduceMotion(window.localStorage, on);
+  }
+
+  function changeAutoPlay(on) {
+    setAutoPlay(on);
+    saveAutoPlay(window.localStorage, on);
+  }
+
+  function changeSlowSpeech(on) {
+    setSlowSpeech(on);
+    saveSlowSpeech(window.localStorage, on);
   }
 
   // 言語 / Language: switches every text at once (the state change re-renders the whole app).
@@ -754,6 +770,11 @@ function App() {
                     handwritingEnabled={HANDWRITING_ENABLED}
                     reduceMotion={reduceMotion}
                     onReduceMotionChange={changeReduceMotion}
+                    canSpeak={canSpeak}
+                    autoPlay={autoPlay}
+                    onAutoPlayChange={changeAutoPlay}
+                    slowSpeech={slowSpeech}
+                    onSlowSpeechChange={changeSlowSpeech}
                     lang={lang}
                     onLangChange={changeLang}
                     onBack={leaveScreenNow}
@@ -813,6 +834,7 @@ function App() {
                     onAddDeck={addDeck}
                     onStart={() => beginSession(activeSet)}
                     wide={wide}
+                    speech={speech}
                   />
                 )}
                 {activeSet && (view === "study" || reviewBehind) && (
@@ -826,6 +848,7 @@ function App() {
                     answerMode={answerMode}
                     wide={wide}
                     sideChip={sideChip}
+                    speech={speech}
                   />
                 )}
               </div>

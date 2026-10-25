@@ -4,6 +4,7 @@ import { colors, fontDisplay, fontBody, gutter, panel, btnPrimary, wideLayout } 
 import AddDeckButton from './AddDeckButton';
 import Highlighted from './Highlighted';
 import ToggleSwitch from './ToggleSwitch';
+import SpeakerButton from './SpeakerButton';
 import { t, tx } from '../i18n';
 
 const blurred = { filter: "blur(6px)", userSelect: "none" };
@@ -12,7 +13,8 @@ const blurred = { filter: "blur(6px)", userSelect: "none" };
 // hideJa: the 日本語をかくす switch is on, so the Japanese word becomes a button that shows/hides it.
 // revealed: this word was tapped open while the switch is on.
 // word: an English-to-Japanese card from buildCards ({ wordId, en, jp, exampleEn, exampleJa }).
-export function WordRow({ word, hideJa, revealed, first, onToggle }) {
+// speech: { slow } for the 発音を聞く button after the English word, or null (no button).
+export function WordRow({ word, hideJa, revealed, first, onToggle, speech = null }) {
   const hidden = hideJa && !revealed;
   // Props for the Japanese parts: hidden and skipped by screen readers while hidden.
   const jaHidden = hidden || undefined;
@@ -52,7 +54,10 @@ export function WordRow({ word, hideJa, revealed, first, onToggle }) {
     <li style={{ borderTop: first ? "none" : `1px solid ${colors.line}` }}>
       <div style={{ boxSizing: "border-box", minHeight: 44, padding: "12px 16px", textAlign: "left", fontFamily: fontBody }}>
         <span style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", columnGap: 12, rowGap: 2 }}>
-          <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 18, color: colors.text }}>{word.en}</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 18, color: colors.text }}>{word.en}</span>
+            {speech && <SpeakerButton text={word.en} audioPath={word.audioPath} slow={speech.slow} style={{ margin: "-4px 0" }} />}
+          </span>
           {jp}
         </span>
         {word.exampleEn && (
@@ -73,7 +78,8 @@ export function WordRow({ word, hideJa, revealed, first, onToggle }) {
 // Card Sets: every word of a deck, shown before the drill starts.
 // activeSet.cards comes from buildCards (two cards per word, in deck order).
 // wide: the fixed start bar matches the 720 px list instead of 480 px.
-export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStart, wide = false }) {
+// speech: { slow } for the speaker buttons, or null when the browser can't speak.
+export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStart, wide = false, speech = null }) {
   const words = activeSet.cards.filter((c) => c.direction === "en2jp");
   const [hideJa, setHideJa] = useState(false);
   // words tapped open while hidden; cleared by the switch, and reset when the deck is left
@@ -125,6 +131,7 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
             key={w.wordId}
             word={w}
             first={i === 0}
+            speech={speech}
             hideJa={hideJa}
             revealed={revealed.has(w.wordId)}
             onToggle={() => setRevealed((r) => toggleId(r, w.wordId))}

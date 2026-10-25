@@ -25,3 +25,6 @@ dist-ssr
 
 # Handwriting model hand-off folder (files copied into public/models/emnist and src/handwriting)
 polycards_hw_model/
+
+# Keys for the audio recording script (scripts/generate-audio.mjs). Never commit.
+.env.audio

@@ -13,6 +13,7 @@ function wordFields(w) {
   return {
     jp: w.japanese, en: w.english, exampleEn: example(w.example_en), exampleJa: example(w.example_ja),
     altAnswers: alternates(w.alt_answers),
+    audioPath: w.audio_path || null, // recorded pronunciation (npm run audio), null = built-in voice
   };
 }
 

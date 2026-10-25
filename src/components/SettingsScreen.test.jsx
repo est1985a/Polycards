@@ -183,3 +183,14 @@ describe('ThemeUnlockSheet', () => {
     expect(html).not.toContain('ほかにも');
   });
 });
+
+describe('発音 settings (自動再生, ゆっくり)', () => {
+  it('shows both switches, off by default, only when the browser can speak', () => {
+    const html = render({ canSpeak: true });
+    expect(html).toContain('発音');
+    expect(html).toMatch(/aria-checked="false"[^>]*><span>自動再生<\/span>/);
+    expect(html).toMatch(/aria-checked="false"[^>]*><span>ゆっくり<\/span>/);
+    expect(render({ canSpeak: true, autoPlay: true, slowSpeech: true })).toMatch(/aria-checked="true"[^>]*><span>自動再生/);
+    expect(render()).not.toContain('自動再生');
+  });
+});

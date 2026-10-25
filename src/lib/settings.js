@@ -8,6 +8,8 @@ import { LANGS, DEFAULT_LANG, setLang } from '../i18n';
 
 const SESSION_SIZE_KEY = "polycards.sessionSize";
 const REDUCE_MOTION_KEY = "polycards.reduceMotion";
+const AUTO_PLAY_KEY = "polycards.autoPlay";
+const SLOW_SPEECH_KEY = "polycards.slowSpeech";
 const THEME_KEY = "polycards.theme";
 const LANG_KEY = "polycards.lang";
 const SEEN_THEMES_PREFIX = "polycards.seenThemes.";
@@ -46,6 +48,24 @@ export function loadReduceMotion(storage) {
 
 export function saveReduceMotion(storage, on) {
   write(storage, REDUCE_MOTION_KEY, on ? "true" : "false");
+}
+
+// 自動再生 (read the English word aloud when it appears): off unless "true" is saved.
+export function loadAutoPlay(storage) {
+  return read(storage, AUTO_PLAY_KEY) === "true";
+}
+
+export function saveAutoPlay(storage, on) {
+  write(storage, AUTO_PLAY_KEY, on ? "true" : "false");
+}
+
+// ゆっくり (slower speech): off unless "true" is saved.
+export function loadSlowSpeech(storage) {
+  return read(storage, SLOW_SPEECH_KEY) === "true";
+}
+
+export function saveSlowSpeech(storage, on) {
+  write(storage, SLOW_SPEECH_KEY, on ? "true" : "false");
 }
 
 // Theme cache: the key of the last theme applied (null if none). An unknown key is still

@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "audio": "node --env-file=.env.audio scripts/generate-audio.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

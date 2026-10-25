@@ -29,7 +29,7 @@ vi.mock('./supabaseClient', () => ({
 }));
 
 const {
-  fetchDueRows, fetchReviewRows, restoreMasteredCard, recordAnswer, waitForPendingSaves, holdAnswer, flushHeldAnswer, dropHeldAnswer, checkOtherMeaning, fetchBonusPoints, fetchNextReview, fetchReviewPlanRows,
+  fetchDueRows, fetchReviewRows, fetchDeckWords, restoreMasteredCard, recordAnswer, waitForPendingSaves, holdAnswer, flushHeldAnswer, dropHeldAnswer, checkOtherMeaning, fetchBonusPoints, fetchNextReview, fetchReviewPlanRows,
   fetchCollections, fetchGachaStatus, pullGacha, fetchGachaCollection, equipAvatar, setGachaTheme, gachaErrorMessage, fetchThemeUnlocks,
   fetchStudyDays, fetchStudyTotals, fetchTroubleWords,
 } = await import('./api');
@@ -52,6 +52,15 @@ describe('Mastered cards are never due', () => {
     calls.length = 0;
     await fetchReviewRows(7);
     expect(calls).toContainEqual(['lt', 'level', MASTERED]);
+  });
+});
+
+describe('recorded audio', () => {
+  it('word queries load audio_path (deck word list and both review queries)', async () => {
+    const selects = async (fn) => { calls.length = 0; await fn(); return calls.filter((c) => c[0] === 'select').map((c) => c[1]); };
+    expect((await selects(() => fetchDeckWords(3)))[0]).toContain('audio_path');
+    expect((await selects(() => fetchReviewRows()))[0]).toContain('audio_path');
+    expect((await selects(() => fetchReviewRows(7)))[0]).toContain('audio_path');
   });
 });
 

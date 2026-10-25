@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { colors, fontDisplay, fontBody } from '../styles/theme';
 import WordInfo from './WordInfo';
+import SpeakerButton from './SpeakerButton';
+import { speakWord, stopSpeaking } from '../lib/speech';
 import { directionLabel } from '../lib/drill';
 import { t } from '../i18n';
 
@@ -48,9 +50,31 @@ function wordStyle(text, isEnglish, size, jaSize = Math.round(size * 5 / 6)) {
 // compact (typing mode, before answering): a short card so the text box and buttons fit above the
 // on-screen keyboard. The front can't be tapped (that would show the answer) and the back's
 // content isn't drawn until it flips, so it doesn't stretch the card.
-export default function FlipCard({ card, showLevel, revealed, onFlip, compact = false, wide = false }) {
+// speech: { autoPlay, slow } for the 発音を聞く button, or null when the browser can't speak.
+// The button reads the main English (card.en) and only shows where the English is already visible:
+// the front of an English → Japanese card, and the back of every card (so never before the answer
+// on a Japanese → English card). Auto-play: when the front of an English → Japanese card appears,
+// or when a Japanese → English card flips. A card that appears already flipped (Undo) stays quiet.
+export default function FlipCard({ card, showLevel, revealed, onFlip, compact = false, wide = false, speech = null }) {
   const backRef = useRef(null);
   const frontIsEnglish = card.direction === "en2jp";
+  const shownFlipped = useRef(revealed); // flipped from the start (Undo): no auto-play
+  const speechRef = useRef(speech);
+  // The latest settings, read by the effects below (changing a setting mid-card doesn't replay the word).
+  useEffect(() => { speechRef.current = speech; });
+
+  // Auto-play the English front when the card appears. Leaving the screen stops any reading.
+  useEffect(() => {
+    const s = speechRef.current;
+    if (s?.autoPlay && frontIsEnglish && !shownFlipped.current) speakWord(card.en, { slow: s.slow, audioPath: card.audioPath });
+    return () => stopSpeaking();
+  }, [card.en, card.audioPath, frontIsEnglish]);
+
+  // Auto-play the English answer when a Japanese → English card flips.
+  useEffect(() => {
+    const s = speechRef.current;
+    if (revealed && !frontIsEnglish && !shownFlipped.current && s?.autoPlay) speakWord(card.en, { slow: s.slow, audioPath: card.audioPath });
+  }, [revealed, frontIsEnglish, card.en, card.audioPath]);
 
   // After the flip, move keyboard / screen-reader focus to the answer (not to an answer button).
   useEffect(() => {
@@ -59,6 +83,14 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
 
   const minHeight = compact ? (wide ? 180 : 150) : (wide ? 420 : 320);
   const Front = compact ? "div" : "button";
+  const speakerSize = wide ? 52 : 44;
+  // A line of English with the speaker button after it.
+  const withSpeaker = (line) => !speech ? line : (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+      {line}
+      <SpeakerButton text={card.en} audioPath={card.audioPath} slow={speech.slow} size={speakerSize} />
+    </div>
+  );
 
   return (
     <div style={{ perspective: 1200 }}>
@@ -119,13 +151,31 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
                 {showLevel && <LevelChip level={card.level} />}
               </div>
               <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 12 }}>
-                <div style={{ ...wordStyle(card.front, frontIsEnglish, wide ? 30 : 22), fontWeight: 500, color: colors.muted }}>{card.front}</div>
-                <div style={{ ...(wide ? wordStyle(card.back, !frontIsEnglish, 48, 48) : wordStyle(card.back, !frontIsEnglish, 32)), color: colors.accentText }}>{card.back}</div>
+                {(() => {
+                  const question = <div style={{ ...wordStyle(card.front, frontIsEnglish, wide ? 30 : 22), fontWeight: 500, color: colors.muted }}>{card.front}</div>;
+                  const answer = <div style={{ ...(wide ? wordStyle(card.back, !frontIsEnglish, 48, 48) : wordStyle(card.back, !frontIsEnglish, 32)), color: colors.accentText }}>{card.back}</div>;
+                  return frontIsEnglish ? <>{withSpeaker(question)}{answer}</> : <>{question}{withSpeaker(answer)}</>;
+                })()}
                 <WordInfo english={card.en} exampleEn={card.exampleEn} exampleJa={card.exampleJa} wide={wide} />
               </div>
             </>
           )}
         </div>
+
+        {/* Speaker on the English front: its own item in the same grid cell (a button can't hold a */}
+        {/* button), in the bottom-right corner, turning away with the front. */}
+        {speech && frontIsEnglish && !compact && (
+          <div
+            data-front-speaker=""
+            inert={revealed}
+            style={{
+              gridArea: "1 / 1", alignSelf: "end", justifySelf: "end", margin: 14,
+              backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "translateZ(1px)",
+            }}
+          >
+            <SpeakerButton text={card.en} audioPath={card.audioPath} slow={speech.slow} size={speakerSize} />
+          </div>
+        )}
       </div>
     </div>
   );

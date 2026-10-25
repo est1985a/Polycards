@@ -92,3 +92,10 @@ describe('toggleId', () => {
     expect([...start]).toEqual(['a']);
   });
 });
+
+describe('WordRow speaker (発音を聞く)', () => {
+  it('shows a speaker after the English word only when the browser can speak', () => {
+    expect(renderRow({ speech: { slow: false } })).toMatch(/>already<\/span><button[^>]*aria-label="発音を聞く"/);
+    expect(renderRow()).not.toContain('発音を聞く');
+  });
+});
