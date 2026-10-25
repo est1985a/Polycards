@@ -1,6 +1,8 @@
 {
   "rewrites": [
     { "source": "/hw-test", "destination": "/index.html" },
-    { "source": "/hw-test/", "destination": "/index.html" }
+    { "source": "/hw-test/", "destination": "/index.html" },
+    { "source": "/hw-letters", "destination": "/index.html" },
+    { "source": "/hw-letters/", "destination": "/index.html" }
   ]
 }

@@ -140,18 +140,18 @@ describe('answer mode switch なし / タイピング / 手書き', () => {
 });
 
 describe('What is Polycards? button', () => {
-  it('is a pill with an accent outline, accent-colored text and both-language aria-label', () => {
+  it('is a pill with an accent outline, accent-colored text and an aria-label', () => {
     const html = renderToStaticMarkup(<AboutButton onOpen={() => {}} />);
-    expect(html).toContain('aria-label="What is Polycards? / ポリカードのしくみ"');
+    expect(html).toContain('aria-label="Polycardsとは？"');
     expect(html).toContain('aria-haspopup="dialog"');
     expect(html).toContain('border:2px solid var(--accent)');
     expect(html).toContain('color:var(--accentText)');
-    expect(html).toContain('What is Polycards?</button>');
+    expect(html).toContain('Polycardsとは？</button>');
   });
 
   it('sits on the My Cards dashboard', () => {
     const html = renderToStaticMarkup(<MyCardsTab decks={[]} dueRows={[]} stats={null} onReview={() => {}} />);
-    expect(html).toContain('ポリカードのしくみ');
+    expect(html).toContain('Polycardsとは？');
   });
 });
 

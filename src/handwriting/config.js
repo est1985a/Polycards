@@ -8,6 +8,33 @@ export function isHwTestPath(pathname) {
   return HANDWRITING_ENABLED && /^\/hw-test\/?$/.test(pathname);
 }
 
+// Letter practice (れんしゅう？ under a red / orange box after a handwriting answer). false hides it
+// (and the /hw-letters page).
+export const PRACTICE_ENABLED = true;
+
+// The hidden page showing every letter guide (not linked from the app).
+export function isHwLettersPath(pathname) {
+  return HANDWRITING_ENABLED && PRACTICE_ENABLED && /^\/hw-letters\/?$/.test(pathname);
+}
+
+// A practice box passes the shape check when the model's top letter is the target, or the target got
+// at least this probability. Look-alikes (LENIENT_PAIRS) pass only when the height check passes too.
+export const PRACTICE_MIN_TARGET_PROB = 0.25;
+
+// Height check against the four lines: how far the top / bottom of the ink may be from the line it
+// should touch, as a fraction of the gap between two lines. false switches the height check (and the
+// i / j dot check) off, so only the model decides.
+export const PRACTICE_HEIGHT_TOLERANCE = 0.4;
+export const PRACTICE_HEIGHT_CHECK = true;
+
+// A practice box is checked this long after the pen last lifted (a new stroke restarts the wait).
+export const PRACTICE_CHECK_DELAY_MS = 1000;
+
+// The model's input is drawn again with an ink width of this fraction of the letter's own size, so a
+// small letter in a tall practice box looks like a letter in the answer boxes (where the ink is about
+// this thick for a letter that fills the box).
+export const PRACTICE_MODEL_INK = 0.09;
+
 // The letter model (public/models/emnist/), loaded only when handwriting is used.
 export const MODEL_URL = "/models/emnist/model.json";
 export const TEST_DATA_URL = "/models/emnist/test/";
@@ -39,4 +66,15 @@ export const HW_COLORS = {
   paper: "#ffffff",
   lenient: "#ff8a1f",
   lenientBg: "#ffe3c7",
+  // Letter practice: a passed box is always this green, whatever the theme, so it reads as correct.
+  pass: "#1f9d55",
+  passBg: "#d6f5e1",
+  passInk: "#ffffff",
+  // The four lines (line 2 dashed, line 3 the red baseline), the faint letter to trace, and the
+  // numbered start dots of the stroke-order guide.
+  guide: "#9aa3b5",
+  guideBaseline: "#e5484d",
+  trace: "#cdd2dc",
+  startDot: "#2f6fde",
+  startText: "#ffffff",
 };

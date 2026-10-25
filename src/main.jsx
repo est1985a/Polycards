@@ -4,7 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import { applyTheme, getTheme } from './themes.js'
 import { loadThemeCache, loadReduceMotion, applyReduceMotion, loadLang, applyLang, devThemeOverride } from './lib/settings.js'
-import { isHwTestPath } from './handwriting/config.js'
+import { isHwLettersPath, isHwTestPath } from './handwriting/config.js'
 import HwTestRoot from './handwriting/HwTestRoot.jsx'
 
 // Before the first screen draws: the theme saved on this device (a copy of the account's theme,
@@ -19,7 +19,9 @@ applyLang(loadLang(storage))
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    {/* /hw-test: hidden handwriting test page */}
-    {isHwTestPath(location.pathname) ? <HwTestRoot /> : <App />}
+    {/* /hw-test: hidden handwriting test page; /hw-letters: every letter-practice guide */}
+    {isHwTestPath(location.pathname) ? <HwTestRoot />
+      : isHwLettersPath(location.pathname) ? <HwTestRoot page="letters" />
+      : <App />}
   </StrictMode>,
 )

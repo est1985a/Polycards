@@ -22,10 +22,10 @@ describe('AboutSheet', () => {
 
   it('shows the title, subtitle and all five section headings', () => {
     const html = render();
-    expect(html).toContain('What is Polycards?');
+    expect(html).toContain('Polycardsとは？');
     expect(html).toContain('ポリカードのしくみ');
     expect(ABOUT.sections).toHaveLength(5);
-    ['Forgetting is normal', 'The level ladder', 'The science', 'Why it helps you', 'Tips'].forEach((heading, i) => {
+    ['忘れるのはふつうのこと', 'レベルのしくみ', '研究でわかっていること', 'どうして役に立つの？', '上手に使うコツ'].forEach((heading, i) => {
       expect(html).toMatch(new RegExp(`<h3[^>]*><span[^>]*>${i + 1}\\.</span> ${heading}</h3>`));
     });
   });

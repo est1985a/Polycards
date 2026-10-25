@@ -164,7 +164,26 @@ p {
   }
   /* "What is Polycards?" (AboutSheet.jsx) is a longer read, so its box is wider. */
   .about-sheet { max-width: 560px; }
+  /* Letter practice (PracticeSheet.jsx): the guide beside the 4 boxes on a landscape iPad. */
+  .practice-sheet { max-width: 820px; }
 }
+.practice-sheet { max-height: 94vh; }
+
+/* Letter practice: できた！ when all 4 boxes are green (only a fade with reduce motion). */
+@keyframes polycards-practice-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes polycards-practice-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.practice-done { animation: polycards-practice-pop 0.45s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .practice-done { animation-name: polycards-practice-fade; }
+}
+:root[data-reduce-motion="true"] .practice-done { animation-name: polycards-practice-fade; }
 @media (prefers-reduced-motion: reduce) {
   .review-plan-sheet { animation: none; }
 }

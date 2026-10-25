@@ -8,6 +8,11 @@ describe('scoreBox', () => {
     expect(scoreBox('a', 'a', 0.9)).toBe('correct');
     expect(scoreBox('J', 'j', 0.6)).toBe('correct');
   });
+  it('a capital I is correct with or without its bars (a plain line is read as l)', () => {
+    expect(scoreBox('I', 'i', 0.95)).toBe('correct'); // barred I
+    expect(scoreBox('I', 'l', 0.1)).toBe('correct'); // plain line: no orange warning
+    expect(scoreBox('i', 'l', 0.1)).toBe('lenient'); // small i read as l is still a look-alike
+  });
   it('a target probability of at least MIN_TARGET_PROB is lenient', () => {
     expect(MIN_TARGET_PROB).toBe(0.25);
     expect(scoreBox('i', 'j', 0.45)).toBe('lenient');
@@ -23,7 +28,6 @@ describe('scoreBox', () => {
     expect(scoreBox('l', 'i', 0.01)).toBe('lenient');
     expect(scoreBox('g', 'q', 0)).toBe('lenient');
     expect(scoreBox('q', 'g', 0)).toBe('lenient');
-    expect(scoreBox('I', 'l', 0)).toBe('lenient');
   });
   it('a missing probability counts as 0', () => {
     expect(scoreBox('o', 'd')).toBe('wrong');

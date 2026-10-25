@@ -29,8 +29,9 @@ export default {
   "menu.signOutConfirm": "ログアウトしますか？",
 
   // Bottom tab bar
-  "tabs.myCards": "My Cards",
-  "tabs.cardSets": "Card Sets",
+  "tabs.myCards": "マイカード",
+  "tabs.cardSets": "カードセット",
+  "tabs.training": "トレーニング",
 
   // My Cards dashboard: review button and マイデッキ list
   "myCards.startReview": "復習を始める",
@@ -157,6 +158,77 @@ export default {
   "handwriting.read": "読み取り: {answer}", // what the app read in the boxes
   "handwriting.lenient": "「{target}」が「{read}」に見えるかも。気をつけて書こう！", // e.g. the i looks like an l
   "handwriting.unavailable": "手書きの準備ができませんでした。今回はタイピングで答えてください。",
+
+  // Letter practice (れんしゅう？ under a red / orange box after a handwriting answer)
+  "practice.chip": "れんしゅう？",
+  "practice.chipAria": "「{letter}」をれんしゅうする",
+  "practice.title": "「{letter}」をれんしゅうしよう",
+  "practice.caseSwitch": "大文字・小文字", // B ⇄ b switch (aria-label)
+  "practice.guideAria": "「{letter}」の書き順",
+  "practice.replay": "もう一度見る", // play the stroke order again
+  "practice.boxLabel": "れんしゅう {n}マス目",
+  "practice.clear": "消す",
+  "practice.close": "とじる",
+  "practice.loading": "準備中…",
+  "practice.unavailable": "手書きの準備ができませんでした",
+  "practice.done": "できた！", // all 4 boxes green
+  "practice.again": "もう一回",
+  "practice.nextLetter": "次の文字へ", // Training tab only: go on to the next letter
+
+  // Training tab (トレーニング)
+  "training.title": "トレーニング",
+  "training.abc.title": "ABCを書こう",
+  "training.abc.description": "アルファベットを4線に書く練習", // DRAFT
+  "training.abc.pencil": "Apple Pencil で書こう", // DRAFT
+  "training.abc.capitals": "大文字",
+  "training.abc.small": "小文字",
+  "training.abc.doneCount": "{n} / 26 できた", // DRAFT: letters completed this visit
+  "training.abc.doneAria": "{letter}（できた）", // read aloud for a completed letter
+  "training.prev": "前の文字",
+  "training.next": "次の文字",
+  "practice.hint.shape": "お手本をよく見て、もう一度書いてみよう",
+  "practice.hint.ascender": "{letter} のたて線は、いちばん上の線までのばそう",
+  "practice.hint.tail": "下の線までのばそう",
+  "practice.hint.small": "小文字の {letter} は2本目と3本目の線のあいだに書こう",
+  "practice.hint.capital": "大文字は上の線から3本目の線までの高さで書こう",
+  "practice.hint.baseline": "赤い線の上にのせよう",
+  "practice.hint.capitalI": "大文字の I は上と下に短い横線を書こう",
+  "practice.hint.dot": "{letter} の点をわすれずに、2本目の線より上に書こう",
+  "practice.hint.erase": "書き直すときは「消す」をおしてね", // under every hint
+  // One line per stroke under the stroke-order guide
+  "practice.stroke.down": "上から下へまっすぐ",
+  "practice.stroke.across": "左から右へまっすぐ",
+  "practice.stroke.barTop": "上の線に短い横線",
+  "practice.stroke.barBottom": "赤い線に短い横線",
+  "practice.stroke.slantDownLeft": "左下へななめに",
+  "practice.stroke.slantDownRight": "右下へななめに",
+  "practice.stroke.slantUpRight": "右上へななめに",
+  "practice.stroke.bumps": "右に2つふくらませる",
+  "practice.stroke.bowlRight": "右に大きくふくらませる",
+  "practice.stroke.bowlThenLeg": "右にふくらませて、右下へ",
+  "practice.stroke.cLeft": "右上から左回りに",
+  "practice.stroke.circleLeft": "上から左回りにひと回り",
+  "practice.stroke.gShape": "左回りに書いて、内側へ横線",
+  "practice.stroke.downHookLeft": "下へおりて、左へまげる",
+  "practice.stroke.downThenRight": "下へおりて、右へ",
+  "practice.stroke.uShape": "下へおりて、丸く右へ上がる",
+  "practice.stroke.vee": "右下へおりて、右上へ上がる",
+  "practice.stroke.doubleVee": "下・上・下・上とつづけて",
+  "practice.stroke.zShape": "右へ、左下へ、右へ",
+  "practice.stroke.sShape": "右上からSの形に",
+  "practice.stroke.circleThenDown": "左回りに丸く書いて、下へまっすぐ",
+  "practice.stroke.circleThenUpDown": "左回りに丸く書いて、上まで上がり、下へ",
+  "practice.stroke.circleThenHook": "左回りに丸く書いて、下へおりて左へまげる",
+  "practice.stroke.downThenRound": "下へおりて、もどって右に丸く",
+  "practice.stroke.eShape": "右へ横線、そのまま左回りに",
+  "practice.stroke.hookDown": "右上から曲がって、下へ",
+  "practice.stroke.dot": "点を打つ",
+  "practice.stroke.angle": "左へななめにおりて、右下へ",
+  "practice.stroke.downThenHump": "下へおりて、もどって山を1つ",
+  "practice.stroke.downThenTwoHumps": "下へおりて、もどって山を2つ",
+  "practice.stroke.downThenShoulder": "下へおりて、もどって右へ少し",
+  "practice.stroke.downCurveRight": "下へおりて、右へ曲げる",
+  "practice.stroke.uThenDown": "下へおりて丸く上がり、まっすぐ下へ",
 
   // Back of the card: example sentence and dictionary link
   "wordInfo.example": "例文",
@@ -299,27 +371,27 @@ export default {
   "themes.later": "あとで",
 
   // "What is Polycards?" pop-up (button at the top of My Cards; also 使い方 in the account menu)
-  "about.button": "What is Polycards?",
-  "about.buttonLabel": "What is Polycards? / ポリカードのしくみ", // read aloud for the button
-  "about.title": "What is Polycards?",
+  "about.button": "Polycardsとは？",
+  "about.buttonLabel": "Polycardsとは？", // read aloud for the button
+  "about.title": "Polycardsとは？",
   "about.subtitle": "ポリカードのしくみ",
-  "about.forgetting.heading": "Forgetting is normal",
+  "about.forgetting.heading": "忘れるのはふつうのこと",
   "about.forgetting.p1": "新しく覚えた単語は、何もしないと数日でほとんど忘れてしまいます。これは「忘却曲線」と言って、だれにでも起こることです。でも、忘れそうになったときにもう一度思い出すと、記憶は前よりずっと長く残ります。",
-  "about.ladder.heading": "The level ladder",
+  "about.ladder.heading": "レベルのしくみ",
   "about.ladder.before": "「わかった」を押すと、カードは1段上がり、次に出てくるまでの時間がのびます。", // above the level chips
   "about.ladder.after": "「まだ」を押すと、カードは少し下がって、早めにまた出てきます。まちがえても大丈夫。思い出そうとすること自体が勉強です。", // below the level chips
   "about.ladderLabel": "レベルと次の復習まで", // read aloud for the row of level chips
   "about.ladderLevel": "Lv{n}", // one level chip (followed by its wait, a time.wait* text)
   "about.ladderMastered": "Mastered!", // last chip
-  "about.science.heading": "The science",
+  "about.science.heading": "研究でわかっていること",
   "about.science.p1": "Polycardsは、研究で効果が確かめられている2つの方法を使っています。",
-  "about.science.spaced": "Spaced repetition（間隔反復）：時間をあけて何回か復習する。一度にたくさんやるより、よく覚えられます。",
-  "about.science.retrieval": "Retrieval practice（思い出す練習）：答えを見る前に、頭の中で思い出す。ただ読むだけより、記憶に残ります。",
-  "about.why.heading": "Why it helps you",
+  "about.science.spaced": "時間をあけて復習する（Spaced repetition）：時間をあけて何回か復習する。一度にたくさんやるより、よく覚えられます。",
+  "about.science.retrieval": "思い出す練習（Retrieval practice）：答えを見る前に、頭の中で思い出す。ただ読むだけより、記憶に残ります。",
+  "about.why.heading": "どうして役に立つの？",
   "about.why.1": "覚えている単語には時間を使わず、忘れそうな単語だけ復習できる",
   "about.why.2": "1回は{sessionSize}枚まで。毎日少しずつでOK", // {sessionSize} = the student's 1回の枚数 (10, 20 or 30)
   "about.why.3": "テストのあとも、ずっと覚えていられる",
-  "about.tips.heading": "Tips",
+  "about.tips.heading": "上手に使うコツ",
   "about.tips.1": "毎日少しずつやろう（まとめてやるより効果的）",
   "about.tips.2": "答えを見る前に、本気で思い出そう",
   "about.tips.3": "正直に「わかった」「まだ」を押そう。うそをつくと、自分が覚えられなくなるだけです",

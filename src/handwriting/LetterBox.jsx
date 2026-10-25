@@ -7,6 +7,7 @@ const STATE_STYLE = {
   correct: { border: colors.accent, background: HW_COLORS.paper },
   lenient: { border: HW_COLORS.lenient, background: HW_COLORS.lenientBg },
   wrong: { border: colors.danger, background: HW_COLORS.paper },
+  pass: { border: HW_COLORS.pass, background: HW_COLORS.passBg }, // letter practice: always green
 };
 
 // Draws one stroke (or a single segment, or a dot for one point): black, round caps and joins.
@@ -28,29 +29,44 @@ function drawStroke(ctx, stroke, lineWidth) {
   ctx.stroke();
 }
 
-// One square letter box: a canvas the student writes one letter in.
+// One letter box: a canvas the student writes one letter in. Square (size × size) in the answer;
+// letter practice passes a taller `height`, an `overlay` (the four lines, drawn on top and never on the
+// canvas, so the model never sees them) and its own `inkWidth`.
 // Only the Apple Pencil draws (pointerType "pen") unless allowAnyPointer is set (test page).
 // A finger or mouse tap that doesn't draw selects the box instead (for 消す).
 // The very first pen contact draws: no tap, focus or selection is needed first.
 // locked: answered, so nothing draws (the ink stays for the result).
-// ref → { undo(), clear(), isEmpty(), getGray() }
-export default function LetterBox({ ref, size, state = null, selected = false, allowAnyPointer = false, locked = false, label, onStroke, onSelect }) {
+// onPenDown: a stroke is starting (before it draws). onStroke: the pen lifted.
+// ref → { undo(), clear(), isEmpty(), getGray({ inkRatio }), getStrokes() }
+export default function LetterBox({
+  ref, size, height = size, inkWidth, overlay = null, state = null, selected = false, allowAnyPointer = false, locked = false,
+  label, onStroke, onSelect, onPenDown,
+}) {
   const canvasRef = useRef(null);
   const strokes = useRef([]); // each stroke: [{ x, y }] in CSS pixels
   const drawing = useRef(null); // { pointerId, stroke }
 
-  const lineWidth = Math.max(2, size * STROKE_RATIO);
+  const lineWidth = inkWidth ?? Math.max(2, size * STROKE_RATIO);
 
   // Draws all strokes from scratch (after undo / clear / resize).
   function redraw() {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    paint(canvas, lineWidth);
+  }
+
+  // The on-screen canvas is transparent (only ink), so the box background and the four lines show
+  // through it. paper: fill it white first (the copies the model reads).
+  function paint(canvas, width, paper = false) {
     const ctx = canvas.getContext("2d");
     const dpr = canvas.width / size;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = HW_COLORS.paper;
-    ctx.fillRect(0, 0, size, size);
-    for (const stroke of strokes.current) drawStroke(ctx, stroke, lineWidth);
+    ctx.clearRect(0, 0, size, height);
+    if (paper) {
+      ctx.fillStyle = HW_COLORS.paper;
+      ctx.fillRect(0, 0, size, height);
+    }
+    for (const stroke of strokes.current) drawStroke(ctx, stroke, width);
   }
 
   // Size the canvas at the device pixel ratio so strokes are sharp.
@@ -58,10 +74,10 @@ export default function LetterBox({ ref, size, state = null, selected = false, a
     const canvas = canvasRef.current;
     const dpr = window.devicePixelRatio || 1;
     canvas.width = Math.round(size * dpr);
-    canvas.height = Math.round(size * dpr);
+    canvas.height = Math.round(height * dpr);
     redraw();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [size]);
+  }, [size, height]);
 
   useImperativeHandle(ref, () => ({
     undo() {
@@ -76,21 +92,42 @@ export default function LetterBox({ ref, size, state = null, selected = false, a
       return strokes.current.length === 0;
     },
     // Grayscale pixels of the box (red channel; white paper, black ink) at the canvas's real
-    // pixel size, which is what preprocessLetter is given.
-    getGray() {
-      const canvas = canvasRef.current;
-      const { width, height } = canvas;
-      const { data } = canvas.getContext("2d").getImageData(0, 0, width, height);
-      const gray = new Uint8Array(width * height);
-      for (let i = 0; i < width * height; i++) gray[i] = data[i * 4];
-      return { gray, width, height };
+    // pixel size, which is what preprocessLetter is given. The ink is copied onto white paper off
+    // screen (the canvas itself is transparent), so the lines and tints never reach the model.
+    // inkRatio (letter practice): the strokes are drawn again with an ink width of this fraction of
+    // the letter's own size, so the model sees the usual stroke thickness.
+    getGray({ inkRatio } = {}) {
+      const source = canvasRef.current;
+      const canvas = document.createElement("canvas");
+      canvas.width = source.width;
+      canvas.height = source.height;
+      if (inkRatio) {
+        const points = strokes.current.flat();
+        const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
+        const extent = points.length ? Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) : 0;
+        paint(canvas, Math.max(1.5, extent * inkRatio), true);
+      } else {
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = HW_COLORS.paper;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(source, 0, 0);
+      }
+      const { width, height: h } = canvas;
+      const { data } = canvas.getContext("2d").getImageData(0, 0, width, h);
+      const gray = new Uint8Array(width * h);
+      for (let i = 0; i < width * h; i++) gray[i] = data[i * 4];
+      return { gray, width, height: h };
+    },
+    // The strokes as written: [[{ x, y }]] in CSS pixels (a copy).
+    getStrokes() {
+      return strokes.current.map((stroke) => stroke.map((p) => ({ ...p })));
     },
   }));
 
   // Latest props for the native listeners below (attached once, so they read them from here).
-  const latest = useRef({ size, allowAnyPointer, locked, onStroke, onSelect, lineWidth });
+  const latest = useRef({ size, height, allowAnyPointer, locked, onStroke, onSelect, onPenDown, lineWidth });
   useLayoutEffect(() => {
-    latest.current = { size, allowAnyPointer, locked, onStroke, onSelect, lineWidth };
+    latest.current = { size, height, allowAnyPointer, locked, onStroke, onSelect, onPenDown, lineWidth };
   });
 
   // Pen input. The listeners are attached directly to the canvas with { passive: false } rather
@@ -104,8 +141,8 @@ export default function LetterBox({ ref, size, state = null, selected = false, a
 
     const point = (e) => {
       const rect = canvas.getBoundingClientRect();
-      const { size: s } = latest.current;
-      return { x: ((e.clientX - rect.left) / rect.width) * s, y: ((e.clientY - rect.top) / rect.height) * s };
+      const { size: w, height: h } = latest.current;
+      return { x: ((e.clientX - rect.left) / rect.width) * w, y: ((e.clientY - rect.top) / rect.height) * h };
     };
     const canDraw = (e) => e.pointerType === "pen" || latest.current.allowAnyPointer;
     const ctx = () => canvas.getContext("2d");
@@ -116,6 +153,7 @@ export default function LetterBox({ ref, size, state = null, selected = false, a
       } catch {
         // not available for this pointer: the stroke still works inside the box
       }
+      latest.current.onPenDown?.();
       const p = point(e);
       const stroke = [p];
       strokes.current.push(stroke);
@@ -189,22 +227,27 @@ export default function LetterBox({ ref, size, state = null, selected = false, a
     <div
       style={{
         position: "relative", flex: "none", borderRadius: 10, overflow: "hidden",
-        border: `3px solid ${look.border}`, background: HW_COLORS.paper,
+        border: `3px solid ${look.border}`, background: look.background,
         boxShadow: selected && !state ? `0 0 0 2px ${colors.gold}` : "none",
       }}
     >
+      {/* Layers, bottom to top: the box background (white, or the tint of a checked box), the four
+          lines and trace letter (overlay), then the transparent ink canvas, so the ink is never covered. */}
+      {overlay && <div aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>{overlay}</div>}
       <canvas
         ref={canvasRef}
         role="img"
         aria-label={label}
         style={{
-          width: size, height: size, display: "block",
+          position: "relative", width: size, height, display: "block", background: "transparent",
           touchAction: "none", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none",
         }}
       />
-      {/* A checked box is tinted on top (the canvas itself stays white paper for the model). */}
-      {look.background !== HW_COLORS.paper && (
-        <div aria-hidden="true" style={{ position: "absolute", inset: 0, background: look.background, mixBlendMode: "multiply", pointerEvents: "none" }} />
+      {state === "pass" && (
+        <span aria-hidden="true" style={{
+          position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: 999, pointerEvents: "none",
+          display: "grid", placeItems: "center", background: HW_COLORS.pass, color: HW_COLORS.passInk, fontSize: 14, fontWeight: 700, lineHeight: 1,
+        }}>✓</span>
       )}
     </div>
   );

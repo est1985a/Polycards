@@ -19,11 +19,14 @@ import { themeList, newThemes, featuredUnlock, markSeen } from './lib/themeUnloc
 import { themes, applyTheme, getTheme, DEFAULT_THEME } from './themes';
 import { wrap, gutter, headerBand, tabBarHeight, btnLink, wideLayout } from './styles/theme';
 import { useWide, useSideChip } from './lib/useWide';
+import { showTrainingTab, TRAINING_START } from './lib/training';
 import { speechAvailable } from './lib/speech';
 import { t, getLang } from './i18n';
 import Header from './components/Header';
 import LoginScreen from './components/LoginScreen';
 import Tabs from './components/Tabs';
+import TrainingTab from './components/TrainingTab';
+import AbcPractice from './components/AbcPractice';
 import MyCardsTab from './components/MyCardsTab';
 import CardSetsTab from './components/CardSetsTab';
 import StudySession from './components/StudySession';
@@ -44,6 +47,8 @@ const knownTheme = (key) => (themes[key] ? key : DEFAULT_THEME);
 const TABS = [
   { id: 'myCards', label: 'tabs.myCards' },
   { id: 'cardSets', label: 'tabs.cardSets' },
+  // トレーニング: only when switched on and it has an activity (src/lib/training.js)
+  ...(showTrainingTab() ? [{ id: 'training', label: 'tabs.training' }] : []),
 ];
 
 function App() {
@@ -68,6 +73,10 @@ function App() {
   // Kept here so that coming back from a deck's word list or drill returns to the same deck list.
   // The level starts from the one saved on the last visit.
   const [cardSetsPath, setCardSetsPath] = useState(() => ({ screen: "hub", level: loadSchoolLevel(window.localStorage) }));
+  // Training tab: which screen is open (menu / ABC grid / one letter, see src/lib/training.js) and the
+  // letters completed in ABCを書こう during this visit (a ✓ on the grid; never saved).
+  const [trainingPath, setTrainingPath] = useState(TRAINING_START);
+  const [trainingDone, setTrainingDone] = useState(() => new Set());
   const [answerMode, setAnswerMode] = useState(() => loadAnswerMode(window.localStorage, HANDWRITING_ENABLED)); // 答え方: off / typing / handwriting
   // Settings saved on this device (src/lib/settings.js)
   const [sessionSize, setSessionSize] = useState(() => loadSessionSize(window.localStorage)); // 1回の枚数
@@ -555,6 +564,7 @@ function App() {
     clearThemeCache(window.localStorage); // also done on SIGNED_OUT; here too in case that event is missed
     setThemeKey(DEFAULT_THEME);
     goHome(); // the next sign-in starts on My Cards too
+    setTrainingDone(new Set());
   };
 
   // Logo: back to the My Cards dashboard, with Card Sets reset to its hub (the school level is kept).
@@ -567,6 +577,7 @@ function App() {
     setView("dashboard");
     setActiveTab("myCards");
     setCardSetsPath((p) => ({ screen: "hub", level: p.level }));
+    setTrainingPath(TRAINING_START);
     window.scrollTo(0, 0);
   }
 
@@ -671,9 +682,21 @@ function App() {
     window.scrollTo(0, 0);
   }
 
-  // Tapping Card Sets while already on it goes back to the hub.
+  // Each Training screen starts at the top of the page.
+  function navigateTraining(path) {
+    setTrainingPath(path);
+    window.scrollTo(0, 0);
+  }
+
+  // A letter in ABCを書こう got all 4 boxes green: a ✓ on the grid for this visit.
+  const completeLetter = useCallback((letter) => {
+    setTrainingDone((done) => (done.has(letter) ? done : new Set(done).add(letter)));
+  }, []);
+
+  // Tapping Card Sets (or Training) while already on it goes back to its first screen.
   function changeTab(id) {
     if (id === "cardSets" && activeTab === "cardSets") setCardSetsPath((p) => ({ screen: "hub", level: p.level }));
+    if (id === "training" && activeTab === "training") setTrainingPath(TRAINING_START);
     setActiveTab(id);
   }
 
@@ -742,6 +765,13 @@ function App() {
                     myDeckIds={myDeckIds}
                     disabled={loadingDeck}
                   />
+                )}
+                {activeTab === "training" && (
+                  trainingPath.screen === "menu" ? (
+                    <TrainingTab wide={wide} onOpen={(id) => { if (id === "abc") navigateTraining({ ...trainingPath, screen: "abc" }); }} />
+                  ) : (
+                    <AbcPractice path={trainingPath} onNavigate={navigateTraining} done={trainingDone} onComplete={completeLetter} />
+                  )
                 )}
                 <Tabs tabs={TABS} active={activeTab} onChange={changeTab} wide={wide} />
                 {planOpen && <ReviewPlanSheet rows={planRows} now={now} onClose={closePlan} />}

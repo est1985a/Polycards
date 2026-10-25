@@ -46,6 +46,18 @@ describe('HandwritingInput', () => {
     expect(h).toContain('読み取り');
   });
 
+  it('after わからない (answered, nothing read) the boxes stay open to practice in: 消す / 戻す, no こたえる', () => {
+    const h = render({ answered: true, result: null });
+    expect(h).toContain('>消す<');
+    expect(h).toContain('>戻す<');
+    expect(h).not.toContain('こたえる');
+  });
+
+  it('after a read answer the boxes are locked (no 消す / 戻す)', () => {
+    const h = render({ answered: true, result: result(['f', 'o', 's', 'h']) });
+    expect(h).not.toContain('>消す<');
+  });
+
   it('a correct answer shows no reading and no warning', () => {
     const h = render({ answered: true, result: result(['f', 'i', 's', 'h']) });
     expect(h).not.toContain('読み取り');
