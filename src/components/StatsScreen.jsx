@@ -209,12 +209,12 @@ export function MonthChart({ days, today, month, selectedDay = null, onSelect = 
   );
 }
 
-function TotalsCard({ days, totals, wide }) {
+function TotalsCard({ days, totals, masteredCount, wide }) {
   const tiles = [
     ["stats.totalReviews", fmt(totals.reviews)],
     ["stats.totalDays", fmt(daysStudied(days))],
     ["stats.totalSpelled", fmt(totals.spelled_correctly)],
-    ["stats.totalBonus", t("stats.points", { n: fmt(totals.bonus_points) })],
+    ["stats.totalMastered", fmt(masteredCount)],
   ];
   return (
     <Card title={t("stats.totalsTitle")}>
@@ -270,7 +270,8 @@ function TroubleCard({ trouble }) {
 // 学習の記録 / My Stats (view "stats" in App.jsx). Effort only: never got_it / not_yet or accuracy.
 // data: { days, totals, trouble } from fetchStudyDays / fetchStudyTotals / fetchTroubleWords, null while
 // loading. error: the load error message. today: today's Japan date ('YYYY-MM-DD', jstDateKey()).
-export default function StatsScreen({ data, error = null, today, onBack, wide = false }) {
+// masteredCount: Mastered cards, from App's stats.levelCounts (no extra query; 0 until stats load).
+export default function StatsScreen({ data, error = null, today, onBack, masteredCount = 0, wide = false }) {
   // The month shown by both the calendar and the chart (starts on this month), and the tapped day.
   const [month, setMonth] = useState(() => monthOf(today));
   const [selectedDay, setSelectedDay] = useState(null);
@@ -294,7 +295,7 @@ export default function StatsScreen({ data, error = null, today, onBack, wide = 
           <StreakCard days={data.days} today={today} />
           <MonthCalendar days={data.days} today={today} month={month} selectedDay={selectedDay} onMonth={changeMonth} onSelect={setSelectedDay} />
           <MonthChart days={data.days} today={today} month={month} selectedDay={selectedDay} onSelect={setSelectedDay} />
-          <TotalsCard days={data.days} totals={data.totals} wide={wide} />
+          <TotalsCard days={data.days} totals={data.totals} masteredCount={masteredCount} wide={wide} />
           <TroubleCard trouble={data.trouble} />
         </>
       )}

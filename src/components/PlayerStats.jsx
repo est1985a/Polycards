@@ -7,7 +7,8 @@ const fmt = (n) => n.toLocaleString('en-US');
 
 // Player card: avatar, rank, points, and progress to the next rank.
 // stats: { playerRank, currentPoints, peakPoints, bonusPoints, levelCounts } (from src/lib/points.js).
-// Rank and the next-rank bar use peak + spelling bonus (bonusPoints, from typing mode).
+// The big EXP number, the rank and the next-rank bar all use peak + spelling bonus (bonusPoints,
+// from typing mode), so EXP never goes down when cards lose levels (currentPoints is not shown).
 // avatar: the equipped avatar from gacha_status (null = the starter cat). wide: a bigger avatar.
 // onOpenCollection: tapping the avatar opens the ポリアバター図鑑.
 // onOpenStats: tapping anywhere else on the card opens the stats page (学習の記録). The card is a
@@ -16,7 +17,7 @@ export default function PlayerStats({ stats, avatar = null, wide = false, onOpen
   // Keep the space while points are loading, so the page doesn't jump.
   if (!stats) return <div style={{ ...panel, minHeight: 190 }} aria-busy="true" />;
 
-  // Rank comes from the peak plus the spelling bonus, so progress is measured with them too.
+  // Rank comes from the peak plus the spelling bonus, so EXP and progress are measured with them too.
   const bonus = stats.bonusPoints ?? 0;
   const rankPoints = stats.peakPoints + bonus;
   const rank = stats.playerRank;
@@ -53,8 +54,7 @@ export default function PlayerStats({ stats, avatar = null, wide = false, onOpen
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 12, color: colors.muted }}>{t("stats.rankLabel")}</div>
           <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 46, lineHeight: 1.05, color: colors.accentText }}>{t("stats.rank", { n: rank })}</div>
-          <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 22, lineHeight: 1.3, color: colors.gold }}>{t("stats.points", { n: fmt(stats.currentPoints) })}</div>
-          {stats.peakPoints > stats.currentPoints && <div style={{ fontSize: 13, color: colors.muted }}>{t("stats.best", { n: fmt(stats.peakPoints) })}</div>}
+          <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 22, lineHeight: 1.3, color: colors.gold }}>{t("stats.points", { n: fmt(rankPoints) })}</div>
           {bonus > 0 && <div style={{ fontSize: 13, color: colors.muted }}>{t("stats.spellingBonus", { n: fmt(bonus) })}</div>}
         </div>
       </div>

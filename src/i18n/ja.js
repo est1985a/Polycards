@@ -54,13 +54,12 @@ export default {
   // Player card and level chart on My Cards
   "stats.rankLabel": "ランク", // small label above the big "Rank N"
   "stats.rank": "Rank {n}",
-  "stats.points": "{n} pt",
-  "stats.best": "ベスト {n} pt", // highest points ever (shown when higher than the current points)
-  "stats.spellingBonus": "スペルボーナス {n} pt", // points earned by correct spelling in typing mode
+  "stats.points": "{n} EXP",
+  "stats.spellingBonus": "スペルボーナス {n} EXP", // points earned by correct spelling in typing mode
   "stats.openCollection": "ポリアバター図鑑を開く", // aria-label of the avatar on the player card
   "stats.toNextRank": "次のランクまで",
   "stats.toNextRankLeft": "あと{value}", // {value} = stats.toNextRankValue, in bold
-  "stats.toNextRankValue": "{n} pt → Rank {rank}", // points still needed, then the next rank
+  "stats.toNextRankValue": "{n} EXP → Rank {rank}", // points still needed, then the next rank
   "stats.chartTitle": "レベル別カード数",
   "stats.chartTotal": "全部で {n}枚",
   "stats.chartLevel": "Lv{n}", // label under each bar
@@ -95,7 +94,7 @@ export default {
   "stats.totalReviews": "レビュー",
   "stats.totalDays": "勉強した日",
   "stats.totalSpelled": "スペル正解",
-  "stats.totalBonus": "スペルボーナス",
+  "stats.totalMastered": "マスターしたカード",
   "stats.troubleTitle": "苦手な単語",
   "stats.troubleNote": "最近30日で「まだ」「わからない」が多かった単語",
   "stats.troubleCount": "{n}回", // how many times the word was missed
@@ -108,9 +107,9 @@ export default {
   "answerMode.off": "なし", // answer with the buttons (no typing)
   "answerMode.off.note": "答えを見て、わかった / まだ で答えます",
   "answerMode.typing": "タイピング",
-  "answerMode.typing.note": "英語をタイプして答えます。正しいスペルで +1 pt",
+  "answerMode.typing.note": "英語をタイプして答えます。正しいスペルで +1 EXP",
   "answerMode.handwriting": "手書き",
-  "answerMode.handwriting.note": "Apple Pencil で英語を書いて答えます。正しく書けたら +1 pt",
+  "answerMode.handwriting.note": "Apple Pencil で英語を書いて答えます。正しく書けたら +1 EXP",
 
   // Review and Card Sets drill: the study card and the answer area
   "review.questionEn2jp": "この単語は日本語で何と言いますか？",
@@ -140,7 +139,7 @@ export default {
   "review.yourAnswer": "あなたの答え: {answer}",
   "review.rightAnswer": "正しい答え: {answer}",
   "review.textbookAnswer": "教科書の答え: {answer}", // an alternate answer was accepted
-  "review.spellBonus": "+1 スペル", // floats up: one bonus point for the right spelling
+  "review.spellBonus": "スペル +1 EXP", // floats up: one bonus point for the right spelling
   "review.next": "次へ",
   "review.previousCard": "前のカード", // label of the chip showing the last card's answer
   "review.undo": "元に戻す", // button on that chip: takes back the last まだ / わかった
@@ -300,8 +299,8 @@ export default {
   "gacha.ticketTomorrow": "今日のガチャ券はゲット！ 次の券は明日もらえます", // today's review ticket is already earned
   "gacha.toNextTicket": "次のガチャ券まで あと {n} レビュー",
   "gacha.perTicket": "{n} レビューごとに 1枚（1日1枚まで）", // one ticket per {n} reviews, at most one a day
-  "gacha.spellToNext": "スペルのガチャ券まで あと {n} pt",
-  "gacha.spellPerTicket": "スペルボーナス {n} ptごとに 1枚", // spelling tickets have no daily cap
+  "gacha.spellToNext": "スペルのガチャ券まで あと {n} EXP",
+  "gacha.spellPerTicket": "スペルボーナス {n} EXPごとに 1枚", // spelling tickets have no daily cap
   "gacha.odds": "出る確率", // heading of the chance boxes
   "gacha.percent": "{n}%",
   "gacha.noRepeats": "同じポリアバターは出ません。毎回新しいポリアバター！",
@@ -393,12 +392,12 @@ export default {
   "about.why.1": "覚えている単語には時間を使わず、忘れそうな単語だけ復習できる",
   "about.why.2": "1回は{sessionSize}枚まで。毎日少しずつでOK", // {sessionSize} = the student's 1回の枚数 (10, 20 or 30)
   "about.why.3": "テストのあとも、ずっと覚えていられる",
-  // The numbers in about.write.1 (150 pt) and about.gacha.p1 (100レビュー, 1日1枚) are typed by hand.
+  // The numbers in about.write.1 (150 EXP) and about.gacha.p1 (100レビュー, 1日1枚) are typed by hand.
   // Update them here and in en.js if gacha_setting('spelling_points_per_ticket') or
   // gacha_setting('reviews_per_ticket') (or the daily cap) changes in Supabase.
   "about.write.heading": "書いて答えよう",
   "about.write.p1": "設定で「手書き」にすると、Apple Pencil で英語を書いて答えられます。",
-  "about.write.1": "正しく書けたら +1 pt！150 pt ごとにガチャ券が1枚もらえます", // 150 = spelling_points_per_ticket
+  "about.write.1": "正しく書けたら +1 EXP！150 EXP ごとにガチャ券が1枚もらえます", // 150 = spelling_points_per_ticket
   "about.write.2": "「れんしゅう？」を押すと、その文字を練習できます",
   "about.training.heading": "トレーニング",
   "about.training.p1": "「トレーニング」タブで、アルファベットの書き方を練習できます。練習はこれから増えていきます。",

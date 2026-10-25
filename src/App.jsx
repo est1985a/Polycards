@@ -4,6 +4,7 @@ import * as api from './lib/api';
 import { buildCards, buildReviewCards } from './lib/drill';
 import { loadSchoolLevel, saveSchoolLevel } from './lib/library';
 import { totalPoints, levelCounts, playerRank, newPeak } from './lib/points';
+import { MASTERED } from './lib/srs';
 import { loadAnswerMode, saveAnswerMode } from './lib/spelling';
 import { HANDWRITING_ENABLED } from './handwriting/config';
 import { nextReviewSummary, jstDateKey } from './lib/schedule';
@@ -784,7 +785,7 @@ function App() {
             {session && tabbedView && (
               <div style={{ paddingBottom: tabBarHeight + 32 }}>
                 {view === "stats" ? (
-                  <StatsScreen data={statsData} error={statsError} today={jstDateKey(Date.now())} onBack={leaveScreenNow} wide={wide} />
+                  <StatsScreen data={statsData} error={statsError} today={jstDateKey(Date.now())} onBack={leaveScreenNow} masteredCount={stats?.levelCounts?.[MASTERED] ?? 0} wide={wide} />
                 ) : view === "settings" ? (
                   <SettingsScreen
                     themes={themeItems}
