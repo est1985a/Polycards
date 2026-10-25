@@ -7,10 +7,20 @@ import {
 describe('recordingText', () => {
   it('uses speak_as when set (trimmed), otherwise the cleaned English', () => {
     expect(recordingText({ english: 'How old ...?', speak_as: '  How old are you?  ' })).toBe('How old are you?');
-    expect(recordingText({ english: 'How old ...?', speak_as: '   ' })).toBe('How old');
-    expect(recordingText({ english: 'enjoy ...ing', speak_as: null })).toBe('enjoy');
-    expect(recordingText({ english: 'already' })).toBe('already');
+    expect(recordingText({ english: 'How old ...?', speak_as: '   ' })).toBe('How old.');
+    expect(recordingText({ english: 'enjoy ...ing', speak_as: null })).toBe('enjoy.');
+    expect(recordingText({ english: 'already' })).toBe('already.');
     expect(recordingText({ english: '...' })).toBe('');
+  });
+
+  it('adds a full stop unless the text already ends in . ? or !', () => {
+    expect(recordingText({ english: 'tiny' })).toBe('tiny.');
+    expect(recordingText({ english: 'brown', speak_as: 'brown' })).toBe('brown.');
+    expect(recordingText({ english: 'tiny', speak_as: 'tiny.' })).toBe('tiny.');
+    expect(recordingText({ english: 'Hello!' })).toBe('Hello!');
+    expect(recordingText({ english: 'Who', speak_as: 'Who are you?' })).toBe('Who are you?');
+    expect(recordingText({ english: 'Mr.' })).toBe('Mr.');
+    expect(recordingText({ english: 'tiny', speak_as: '  tiny  ' })).toBe('tiny.');
   });
 });
 

@@ -7,10 +7,13 @@ export const LANGUAGE = "en-US";
 export const DEFAULT_DELAY_MS = 250;
 
 // What to record for a word: speak_as when set, otherwise the English cleaned the same way the
-// app's built-in voice reads it ("How old ...?" → "How old"). "" = nothing to record.
+// app's built-in voice reads it ("How old ...?" → "How old"), ending in a full stop unless it
+// already ends in . ? or ! ("tiny" → "tiny."). "" = nothing to record.
 export function recordingText(word) {
   const speakAs = (word.speak_as || "").trim();
-  return speakAs || speechText(word.english);
+  const text = speakAs || speechText(word.english);
+  if (!text || /[.?!]$/.test(text)) return text;
+  return `${text}.`;
 }
 
 // True when the word has no file yet, or its text or the voice changed since it was recorded.
