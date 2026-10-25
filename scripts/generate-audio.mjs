@@ -1,5 +1,5 @@
 // Records word pronunciations with Google Cloud Text-to-Speech and uploads them to Supabase Storage.
-// Mac only, never part of the app. Keys come from .env.audio (in .gitignore).
+// Runs on the Mac or the Windows PC (each has its own .env.audio), never part of the app. Keys come from .env.audio (in .gitignore).
 //
 //   npm run audio -- --dry-run     list what would be recorded (no Google calls, no uploads)
 //   npm run audio -- --limit 5     record only 5 words
