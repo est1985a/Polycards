@@ -223,7 +223,7 @@ export function TypingArea({
 // it away and put the session back as it was (src/lib/undo.js). It is sent when the next answer is
 // given, when this screen closes, and when the app goes to the background. A correct spelling and
 // わからない are not undoable: they are sent at once, after the held answer.
-export default function StudySession({ activeSet, isAdded, saving, onAddDeck, onBack, answerMode = "off", wide = false, sideChip = false }) {
+export default function StudySession({ activeSet, isAdded, saving, onAddDeck, onBack, answerMode = "off", wide = false, sideChip = false, speech = null }) {
   const isSrs = activeSet.mode === 'srs';
   const [pile, setPile] = useState(() => shuffle(activeSet.cards.map((c) => c.id)));
   const [counts, setCounts] = useState({});           // drill: correct answers per card
@@ -595,7 +595,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
             {/* compact while typing: a short card, so the box and buttons fit above the keyboard. */}
             <FlipCard
               key={`card-${turn}`} card={card} showLevel={isSrs} revealed={revealed} onFlip={() => setRevealed(true)}
-              compact={typingPhase === "typing"} wide={wide}
+              compact={typingPhase === "typing"} wide={wide} speech={speech}
             />
             {levelUpFloat}
             {spellBonusFloat}

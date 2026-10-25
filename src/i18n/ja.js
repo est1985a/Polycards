@@ -117,6 +117,7 @@ export default {
   "review.progress": "覚えた: {cleared} ・ 残り: {left}", // top right: cards done and cards left
   "review.defaultName": "復習 (Review)", // review title when it isn't one deck
   "review.tapToFlip": "タップしてめくる", // pulsing hint on the front of the card
+  "speech.listen": "発音を聞く", // aria-label of the speaker button (cards and word list)
   "review.answerPill": "答え", // small label on the back of the card
   "review.levelChip": "Lv {n}", // the card's level, top right of the card
   "review.levelUp": "Lv {n}!", // floats up after a correct answer
@@ -272,6 +273,11 @@ export default {
   "settings.display": "表示", // section with reduce motion
   "settings.reduceMotion": "カードの動きを減らす",
   "settings.reduceMotionNote": "カードをめくる動きやキラキラを止めます",
+  "settings.speech": "発音", // section with auto-play and slow speech
+  "settings.autoPlay": "自動再生",
+  "settings.autoPlayNote": "英語が出たときに自動で読み上げます",
+  "settings.slowSpeech": "ゆっくり",
+  "settings.slowSpeechNote": "ゆっくり読み上げます",
   "settings.language": "言語 / Language", // same text in every language, so a student can always find the way back
   "settings.languageJa": "日本語", // same text in every language
   "settings.languageEn": "English", // same text in every language

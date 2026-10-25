@@ -142,17 +142,41 @@ function Section({ title, children }) {
   );
 }
 
+// One on/off setting: the label and switch in a 44 px row, with a small note under it.
+function SwitchRow({ label, note, on, onChange }) {
+  return (
+    <div style={{ display: "grid", gap: 4 }}>
+      <button
+        role="switch"
+        aria-checked={on}
+        onClick={() => onChange(!on)}
+        style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, minHeight: 44, width: "100%",
+          padding: 0, background: "transparent", border: "none", cursor: "pointer",
+          fontFamily: fontBody, fontSize: 15, fontWeight: 700, color: colors.text, textAlign: "left",
+        }}
+      >
+        <span>{label}</span>
+        <ToggleSwitch on={on} />
+      </button>
+      <span style={{ fontSize: 12, color: colors.muted }}>{note}</span>
+    </div>
+  );
+}
+
 // 設定 screen (view "settings" in App.jsx).
 // themes: themeList() rows (null while loading); themesFailed: theme_unlocks couldn't be read (then
 // themes holds only Midnight). currentTheme: the key in use; rank: the student's rank (null while
 // loading: tiles show without locks or status lines and can't be tapped). onChooseTheme(key) applies and saves.
 // themeError: the save error to show. The 答え方 switch shares App's state with the one on My Cards.
 // lang / onLangChange: the 言語 / Language switch (saved on the device by App).
+// canSpeak: the browser can read words aloud; only then the 発音 section (自動再生, ゆっくり) shows.
 export default function SettingsScreen({
   themes, themesFailed = false, currentTheme, rank, onChooseTheme, themeError = null,
   sessionSize, onSessionSizeChange,
   answerMode, onAnswerModeChange, handwritingEnabled = false,
   reduceMotion, onReduceMotionChange,
+  canSpeak = false, autoPlay = false, onAutoPlayChange = () => {}, slowSpeech = false, onSlowSpeechChange = () => {},
   lang = "ja", onLangChange = () => {},
   onBack, wide = false,
 }) {
@@ -199,23 +223,15 @@ export default function SettingsScreen({
         <AnswerModeSwitch mode={answerMode} onChange={onAnswerModeChange} handwritingEnabled={handwritingEnabled} wide={wide} />
       </Section>
 
+      {canSpeak && (
+        <Section title={t("settings.speech")}>
+          <SwitchRow label={t("settings.autoPlay")} note={t("settings.autoPlayNote")} on={autoPlay} onChange={onAutoPlayChange} />
+          <SwitchRow label={t("settings.slowSpeech")} note={t("settings.slowSpeechNote")} on={slowSpeech} onChange={onSlowSpeechChange} />
+        </Section>
+      )}
+
       <Section title={t("settings.display")}>
-        <div style={{ display: "grid", gap: 4 }}>
-          <button
-            role="switch"
-            aria-checked={reduceMotion}
-            onClick={() => onReduceMotionChange(!reduceMotion)}
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, minHeight: 44, width: "100%",
-              padding: 0, background: "transparent", border: "none", cursor: "pointer",
-              fontFamily: fontBody, fontSize: 15, fontWeight: 700, color: colors.text, textAlign: "left",
-            }}
-          >
-            <span>{t("settings.reduceMotion")}</span>
-            <ToggleSwitch on={reduceMotion} />
-          </button>
-          <span style={{ fontSize: 12, color: colors.muted }}>{t("settings.reduceMotionNote")}</span>
-        </div>
+        <SwitchRow label={t("settings.reduceMotion")} note={t("settings.reduceMotionNote")} on={reduceMotion} onChange={onReduceMotionChange} />
         <LanguageSwitch lang={lang} onChange={onLangChange} />
       </Section>
     </div>

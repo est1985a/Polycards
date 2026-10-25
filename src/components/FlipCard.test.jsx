@@ -68,4 +68,44 @@ describe('FlipCard', () => {
     expect(html).not.toContain('>already<');
     expect(html).toContain('min-height:150px');
   });
+
+  describe('発音を聞く (speaker button)', () => {
+    const SPEECH = { autoPlay: false, slow: false };
+    const JP2EN = { ...CARD, direction: 'jp2en', front: 'もう、すでに', back: 'already' };
+    const LISTEN = 'aria-label="発音を聞く"';
+    // The front speaker is its own item after the back face (marked data-front-speaker).
+    const parts = (html) => {
+      const { front, back } = faces(html);
+      const at = back.indexOf('data-front-speaker');
+      return { front, back: at < 0 ? back : back.slice(0, at), frontSpeaker: at < 0 ? '' : back.slice(at) };
+    };
+
+    it('English → Japanese: on the front (turning away with it) and on the back', () => {
+      const { front, back, frontSpeaker } = parts(render({ speech: SPEECH }));
+      expect(front).not.toContain(LISTEN); // never inside the front button
+      expect(frontSpeaker).toContain(LISTEN);
+      expect(frontSpeaker).not.toMatch(/^data-front-speaker=""[^>]*inert/);
+      expect(back).toContain(LISTEN);
+      expect(parts(render({ speech: SPEECH, revealed: true })).frontSpeaker).toMatch(/^data-front-speaker="" inert=""/);
+    });
+
+    it('Japanese → English: never on the front, only on the back', () => {
+      const { front, back, frontSpeaker } = parts(render({ speech: SPEECH, card: JP2EN }));
+      expect(front).not.toContain(LISTEN);
+      expect(frontSpeaker).toBe('');
+      expect(back).toContain(LISTEN);
+      expect(back).toMatch(/inert=""/); // the back can't be used until it flips
+    });
+
+    it('none in typing mode before answering (compact) and none without speech', () => {
+      expect(render({ speech: SPEECH, card: JP2EN, compact: true })).not.toContain(LISTEN);
+      expect(render()).not.toContain(LISTEN);
+      expect(render({ card: JP2EN, revealed: true })).not.toContain(LISTEN);
+    });
+
+    it('is 52 px on wide screens, 44 px otherwise', () => {
+      expect(render({ speech: SPEECH })).toMatch(/aria-label="発音を聞く"[^>]*width:44px;height:44px/);
+      expect(render({ speech: SPEECH, wide: true })).toMatch(/aria-label="発音を聞く"[^>]*width:52px;height:52px/);
+    });
+  });
 });

@@ -5,6 +5,7 @@ import {
   loadSessionSize, saveSessionSize, loadReduceMotion, saveReduceMotion,
   loadThemeCache, saveThemeCache, clearThemeCache, loadSeenThemes, saveSeenThemes,
   applyReduceMotion, reduceMotionOn, devThemeOverride, loadLang, saveLang, applyLang,
+  loadAutoPlay, saveAutoPlay, loadSlowSpeech, saveSlowSpeech,
 } from './settings';
 import { getLang, setLang } from '../i18n';
 
@@ -122,6 +123,37 @@ describe('カードの動きを減らす (polycards.reduceMotion)', () => {
     expect(reduceMotionOn(win(null, false))).toBe(false);
     expect(reduceMotionOn({ document: {} })).toBe(false); // no matchMedia
     expect(reduceMotionOn(null)).toBe(false);
+  });
+});
+
+describe('自動再生 / ゆっくり (polycards.autoPlay, polycards.slowSpeech)', () => {
+  const pairs = [
+    ['polycards.autoPlay', loadAutoPlay, saveAutoPlay],
+    ['polycards.slowSpeech', loadSlowSpeech, saveSlowSpeech],
+  ];
+
+  it('are off by default and remember the choice', () => {
+    for (const [key, load, save] of pairs) {
+      const storage = memory();
+      expect(load(storage), key).toBe(false);
+      save(storage, true);
+      expect(storage.getItem(key)).toBe('true');
+      expect(load(storage), key).toBe(true);
+      save(storage, false);
+      expect(load(storage), key).toBe(false);
+    }
+  });
+
+  it('are off for broken values or blocked storage', () => {
+    for (const [key, load, save] of pairs) {
+      const storage = memory();
+      for (const bad of ['1', 'yes', 'TRUE', '']) {
+        storage.setItem(key, bad);
+        expect(load(storage), `${key} ${bad}`).toBe(false);
+      }
+      expect(load(blocked)).toBe(false);
+      expect(() => save(blocked, true)).not.toThrow();
+    }
   });
 });
 
