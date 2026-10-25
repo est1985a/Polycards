@@ -20,12 +20,12 @@ describe('AboutSheet', () => {
     expect(html).toContain('aria-label="閉じる (Close)"');
   });
 
-  it('shows the title, subtitle and all five section headings', () => {
+  it('shows the title, subtitle and all eight section headings', () => {
     const html = render();
     expect(html).toContain('Polycardsとは？');
     expect(html).toContain('ポリカードのしくみ');
-    expect(ABOUT.sections).toHaveLength(5);
-    ['忘れるのはふつうのこと', 'レベルのしくみ', '研究でわかっていること', 'どうして役に立つの？', '上手に使うコツ'].forEach((heading, i) => {
+    expect(ABOUT.sections).toHaveLength(8);
+    ['忘れるのはふつうのこと', 'レベルのしくみ', '研究でわかっていること', 'どうして役に立つの？', '書いて答えよう', 'トレーニング', 'ガチャとポリアバター', '上手に使うコツ'].forEach((heading, i) => {
       expect(html).toMatch(new RegExp(`<h3[^>]*><span[^>]*>${i + 1}\\.</span> ${heading}</h3>`));
     });
   });

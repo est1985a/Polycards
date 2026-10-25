@@ -9,7 +9,7 @@ const fmt = (n) => n.toLocaleString('en-US');
 // stats: { playerRank, currentPoints, peakPoints, bonusPoints, levelCounts } (from src/lib/points.js).
 // Rank and the next-rank bar use peak + spelling bonus (bonusPoints, from typing mode).
 // avatar: the equipped avatar from gacha_status (null = the starter cat). wide: a bigger avatar.
-// onOpenCollection: tapping the avatar opens the アバター図鑑.
+// onOpenCollection: tapping the avatar opens the ポリアバター図鑑.
 // onOpenStats: tapping anywhere else on the card opens the stats page (学習の記録). The card is a
 // div with role="button" (not a <button>), so the avatar button isn't a button inside a button.
 export default function PlayerStats({ stats, avatar = null, wide = false, onOpenCollection, onOpenStats }) {

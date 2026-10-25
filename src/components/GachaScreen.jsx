@@ -1,5 +1,5 @@
 import { colors, fontDisplay, panel, btnLink } from '../styles/theme';
-import { RARITY_ORDER, rarityInfo, ticketProgress } from '../lib/gacha';
+import { RARITY_ORDER, rarityInfo, ticketProgress, spellingProgress } from '../lib/gacha';
 import GachaMachine from './GachaMachine';
 import { TicketIcon } from './GachaIcons';
 import { t, tx } from '../i18n';
@@ -73,6 +73,8 @@ export default function GachaScreen({ status, pulling, error, onPull, onOpenColl
   const { toNext, per, fraction } = ticketProgress(status);
   // Today's review ticket is already earned (the database gives at most 1 per day).
   const capped = status.next_ticket_tomorrow === true;
+  // Spelling tickets have no daily cap, so there is no "tomorrow" state here.
+  const spell = spellingProgress(status);
 
   const content = (
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
@@ -107,6 +109,19 @@ export default function GachaScreen({ status, pulling, error, onPull, onOpenColl
           <div style={{ width: `${(capped ? 1 : fraction) * 100}%`, height: "100%", borderRadius: 6, background: colors.gold }} />
         </div>
         <div style={{ fontSize: 13, color: colors.muted }}>{t("gacha.perTicket", { n: per })}</div>
+      </div>
+
+      <div style={{ ...panel, display: "grid", gap: 8 }}>
+        <div style={{ fontSize: 14 }}>
+          {tx("gacha.spellToNext", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, color: colors.gold }}>{spell.toNext}</span>, count: spell.toNext })}
+        </div>
+        <div
+          role="progressbar" aria-valuemin={0} aria-valuemax={spell.per} aria-valuenow={spell.per - spell.toNext}
+          style={{ height: 12, borderRadius: 6, background: colors.surface2, overflow: "hidden" }}
+        >
+          <div style={{ width: `${spell.fraction * 100}%`, height: "100%", borderRadius: 6, background: colors.gold }} />
+        </div>
+        <div style={{ fontSize: 13, color: colors.muted }}>{t("gacha.spellPerTicket", { n: spell.per })}</div>
       </div>
 
       <GachaOdds odds={status.odds} />

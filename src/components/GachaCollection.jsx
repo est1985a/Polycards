@@ -103,7 +103,7 @@ function SummaryPanel({ rows, equipped }) {
   );
 }
 
-// アバター図鑑. rows: from gacha_collection (null while loading).
+// ポリアバター図鑑. rows: from gacha_collection (null while loading).
 // wide: summary panel on the left, avatars on the right.
 // from: where it was opened ("gacha" → ← ガチャ, "dashboard" → ← 戻る); onBack goes back there.
 export default function GachaCollection({ rows, equippingId, onEquip, onBack, from = "gacha", wide = false }) {

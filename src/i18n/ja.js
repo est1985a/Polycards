@@ -57,7 +57,7 @@ export default {
   "stats.points": "{n} pt",
   "stats.best": "ベスト {n} pt", // highest points ever (shown when higher than the current points)
   "stats.spellingBonus": "スペルボーナス {n} pt", // points earned by correct spelling in typing mode
-  "stats.openCollection": "アバター図鑑を開く", // aria-label of the avatar on the player card
+  "stats.openCollection": "ポリアバター図鑑を開く", // aria-label of the avatar on the player card
   "stats.toNextRank": "次のランクまで",
   "stats.toNextRankLeft": "あと{value}", // {value} = stats.toNextRankValue, in bold
   "stats.toNextRankValue": "{n} pt → Rank {rank}", // points still needed, then the next rank
@@ -291,7 +291,7 @@ export default {
 
   // Gacha screen and the pull result
   "gacha.title": "ガチャ",
-  "gacha.collectionLink": "アバター図鑑 {owned} / {total} →", // link to the collection: avatars owned / all avatars
+  "gacha.collectionLink": "ポリアバター図鑑 {owned} / {total} →", // link to the collection: avatars owned / all avatars
   "gacha.tickets": "ガチャ券",
   "gacha.ticketCount": "× {n}",
   "gacha.pull": "ガチャを回す",
@@ -300,15 +300,17 @@ export default {
   "gacha.ticketTomorrow": "今日のガチャ券はゲット！ 次の券は明日もらえます", // today's review ticket is already earned
   "gacha.toNextTicket": "次のガチャ券まで あと {n} レビュー",
   "gacha.perTicket": "{n} レビューごとに 1枚（1日1枚まで）", // one ticket per {n} reviews, at most one a day
+  "gacha.spellToNext": "スペルのガチャ券まで あと {n} pt",
+  "gacha.spellPerTicket": "スペルボーナス {n} ptごとに 1枚", // spelling tickets have no daily cap
   "gacha.odds": "出る確率", // heading of the chance boxes
   "gacha.percent": "{n}%",
-  "gacha.noRepeats": "同じアバターは出ません。毎回新しいアバター！",
+  "gacha.noRepeats": "同じポリアバターは出ません。毎回新しいポリアバター！",
   "gacha.result": "ガチャの結果", // read aloud for the result pop-up
   "gacha.tapToSkip": "タップでスキップ", // under the capsule animation
   "gacha.new": "NEW!",
-  "gacha.avatar": "アバター", // small label above the avatar's name
-  "gacha.avatarFallback": "アバター", // read aloud for an avatar picture with no name
-  "gacha.starterAvatarLabel": "アバター (Avatar)", // read aloud for the starter cat picture
+  "gacha.avatar": "ポリアバター", // small label above the avatar's name
+  "gacha.avatarFallback": "ポリアバター", // read aloud for an avatar picture with no name
+  "gacha.starterAvatarLabel": "ポリアバター (Polyavatar)", // read aloud for the starter cat picture
   "gacha.equip": "つける", // wear this avatar
   "gacha.equipping": "つけています…",
   "gacha.wearing": "つけ中", // this avatar is being worn
@@ -316,12 +318,12 @@ export default {
   "gacha.ticketsLeft": "(のこり 券 {n}枚)",
   "gacha.close": "とじる",
 
-  // Avatar collection (アバター図鑑)
+  // Avatar collection (ポリアバター図鑑)
   "collection.back": "← ガチャ",
   "collection.backToDashboard": "← 戻る", // back button when the collection was opened from the player card
-  "collection.title": "アバター図鑑",
-  "collection.wornAvatar": "つけ中のアバター", // heading of the summary panel
-  "collection.notOwned": "まだ持っていないアバター", // read aloud for a dark silhouette tile
+  "collection.title": "ポリアバター図鑑",
+  "collection.wornAvatar": "つけ中のポリアバター", // heading of the summary panel
+  "collection.notOwned": "まだ持っていないポリアバター", // read aloud for a dark silhouette tile
   "collection.silhouetteLabel": "？", // read aloud for a silhouette picture
   "collection.wornLabel": "{nameJa} ({nameEn}) つけ中", // read aloud for the avatar being worn
   "collection.equipLabel": "{nameJa} ({nameEn}) をつける", // read aloud for an owned avatar: tap to wear it
@@ -391,6 +393,17 @@ export default {
   "about.why.1": "覚えている単語には時間を使わず、忘れそうな単語だけ復習できる",
   "about.why.2": "1回は{sessionSize}枚まで。毎日少しずつでOK", // {sessionSize} = the student's 1回の枚数 (10, 20 or 30)
   "about.why.3": "テストのあとも、ずっと覚えていられる",
+  // The numbers in about.write.1 (150 pt) and about.gacha.p1 (100レビュー, 1日1枚) are typed by hand.
+  // Update them here and in en.js if gacha_setting('spelling_points_per_ticket') or
+  // gacha_setting('reviews_per_ticket') (or the daily cap) changes in Supabase.
+  "about.write.heading": "書いて答えよう",
+  "about.write.p1": "設定で「手書き」にすると、Apple Pencil で英語を書いて答えられます。",
+  "about.write.1": "正しく書けたら +1 pt！150 pt ごとにガチャ券が1枚もらえます", // 150 = spelling_points_per_ticket
+  "about.write.2": "「れんしゅう？」を押すと、その文字を練習できます",
+  "about.training.heading": "トレーニング",
+  "about.training.p1": "「トレーニング」タブで、アルファベットの書き方を練習できます。練習はこれから増えていきます。",
+  "about.gacha.heading": "ガチャとポリアバター",
+  "about.gacha.p1": "100レビューごとにガチャ券が1枚もらえます（1日1枚まで）。ガチャを回して、ポリアバターを集めよう！「わかった」でも「まだ」でも同じなので、正直に答えよう。", // 100 = reviews_per_ticket
   "about.tips.heading": "上手に使うコツ",
   "about.tips.1": "毎日少しずつやろう（まとめてやるより効果的）",
   "about.tips.2": "答えを見る前に、本気で思い出そう",
@@ -412,8 +425,8 @@ export default {
   "errors.cardNotFound": "このカードは見つかりませんでした",
   "errors.notSignedIn": "ログインしてください",
   "errors.noTickets": "ガチャ券がありません",
-  "errors.collectionComplete": "全部そろいました！新しいアバターをお楽しみに", // the student has every avatar
-  "errors.notOwned": "このアバターはまだ持っていません",
+  "errors.collectionComplete": "全部そろいました！新しいポリアバターをお楽しみに", // the student has every avatar
+  "errors.notOwned": "このポリアバターはまだ持っていません",
   "errors.themeLocked": "このテーマはまだ使えません",
   "errors.gachaFailed": "ガチャを読み込めませんでした ({detail})", // {detail} = the technical error, in English
 };

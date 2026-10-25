@@ -43,6 +43,13 @@ export function ticketProgress(status) {
   return { toNext, per, fraction: Math.min(1, Math.max(0, (per - toNext) / per)) };
 }
 
+// Progress to the next spelling ticket (1 per spelling_points_per_ticket bonus points, no daily cap).
+export function spellingProgress(status) {
+  const per = status?.spelling_points_per_ticket || 150;
+  const toNext = status?.spelling_to_next_ticket ?? per;
+  return { toNext, per, fraction: Math.min(1, Math.max(0, (per - toNext) / per)) };
+}
+
 // Collection rows → [{ series, groups: [{ rarity, avatars }] }], keeping the order from the database.
 export function groupCollection(rows) {
   const series = [];

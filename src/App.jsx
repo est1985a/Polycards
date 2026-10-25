@@ -56,7 +56,7 @@ function App() {
   const [authError, setAuthError] = useState(null);
 
   // Screens: 'dashboard', 'wordList' (Card Sets deck, before the drill), 'study', 'mastered',
-  // 'gacha', 'collection' (アバター図鑑), 'settings' (設定) or 'stats' (学習の記録)
+  // 'gacha', 'collection' (ポリアバター図鑑), 'settings' (設定) or 'stats' (学習の記録)
   const [view, setView] = useState("dashboard");
   // The screen settings / stats was opened from, so 戻る returns there (they can stack one level,
   // see src/lib/screens.js). Opened during a review ('study'), the StudySession stays mounted (just
