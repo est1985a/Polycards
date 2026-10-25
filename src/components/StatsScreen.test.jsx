@@ -49,7 +49,7 @@ describe('StatsScreen', () => {
     expect(plain).toContain('レビュー1,234');
     expect(plain).toContain('勉強した日4');
     expect(plain).toContain('スペル正解40');
-    expect(plain).toContain('スペルボーナス38 pt');
+    expect(plain).toContain('スペルボーナス38 EXP');
     // Trouble words.
     expect(count(html, /data-trouble="/g)).toBe(2);
     expect(plain).toContain('since');
@@ -114,7 +114,7 @@ describe('StatsScreen', () => {
     expect(plain).toContain('Studied on 1 day this month');
     expect(plain).toContain('Reviews October 2026');
     expect(plain).toContain('4 reviews this month');
-    expect(plain).toContain('Spelling bonus38 pt');
+    expect(plain).toContain('Spelling bonus38 EXP');
     expect(plain).toContain('1 time');
     expect(plain).not.toMatch(/[぀-ヿ]/); // no kana left (the word's Japanese, 駅, is data and kanji only)
     const empty = text(render({ data: { ...DATA, trouble: [] } }));

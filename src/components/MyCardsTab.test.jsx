@@ -123,7 +123,7 @@ describe('answer mode switch なし / タイピング / 手書き', () => {
   it('marks the chosen one and shows its note', () => {
     expect(html('off')).toMatch(/aria-pressed="true"[^>]*>なし</);
     expect(html('typing')).toMatch(/aria-pressed="true"[^>]*>タイピング</);
-    expect(html('typing')).toContain('英語をタイプして答えます。正しいスペルで +1 pt');
+    expect(html('typing')).toContain('英語をタイプして答えます。正しいスペルで +1 EXP');
     expect(html('handwriting')).toMatch(/aria-pressed="true"[^>]*>手書き</);
     expect(html('handwriting')).toContain('Apple Pencil');
   });
