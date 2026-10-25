@@ -60,7 +60,6 @@ export default {
   "stats.rankLabel": "Your rank",
   "stats.rank": "Rank {n}",
   "stats.points": "{n} EXP",
-  "stats.best": "Best {n} EXP",
   "stats.spellingBonus": "Spelling bonus {n} EXP",
   "stats.openCollection": "Open Polyavatar Collection",
   "stats.toNextRank": "Next rank",

@@ -55,7 +55,6 @@ export default {
   "stats.rankLabel": "ランク", // small label above the big "Rank N"
   "stats.rank": "Rank {n}",
   "stats.points": "{n} EXP",
-  "stats.best": "ベスト {n} EXP", // highest points ever (shown when higher than the current points)
   "stats.spellingBonus": "スペルボーナス {n} EXP", // points earned by correct spelling in typing mode
   "stats.openCollection": "ポリアバター図鑑を開く", // aria-label of the avatar on the player card
   "stats.toNextRank": "次のランクまで",
