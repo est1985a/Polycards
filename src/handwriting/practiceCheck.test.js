@@ -120,8 +120,8 @@ describe('practiceResult', () => {
       expect(practiceResult({ target: 'l', probs: probs('i'), strokes: [line(1, 2)] }).hint.key).toBe('ascender');
     });
 
-    it('capital I read as l passes (same shape in print)', () => {
-      expect(practiceResult({ target: 'I', probs: probs('l'), strokes: [line(0, 2)] }).pass).toBe(true);
+    it('capital I read as l passes when it has its bars', () => {
+      expect(practiceResult({ target: 'I', probs: probs('l'), strokes: [line(0, 2), [[0, 0], [0.8, 0]], [[0, 2], [0.8, 2]]] }).pass).toBe(true);
     });
 
     it('g ↔ q pass or fail by the height', () => {
@@ -138,6 +138,34 @@ describe('practiceResult', () => {
     it('with the height check off, a look-alike read does not pass', () => {
       const r = practiceResult({ target: 'i', probs: probs('l'), strokes: [line(1, 2), dotAt(0.5)] }, { heightCheck: false });
       expect(r.pass).toBe(false);
+    });
+  });
+
+  describe('capital I needs its top and bottom bars', () => {
+    const stem = line(0, 2, 0.4);
+    const topBar = [[0, 0], [0.8, 0]];
+    const bottomBar = [[0, 2], [0.8, 2]];
+
+    it('the line and both bars, from line 1 to the baseline, passes (read as i)', () => {
+      expect(practiceResult({ target: 'I', probs: probs('i'), strokes: [stem, topBar, bottomBar] }).pass).toBe(true);
+    });
+
+    it('a single line fails with the bars hint, even though it is read as l', () => {
+      const r = practiceResult({ target: 'I', probs: probs('l'), strokes: [stem] });
+      expect(r).toMatchObject({ pass: false, hint: { key: 'capitalI' } });
+    });
+
+    it('only one bar (2 strokes) is not enough', () => {
+      expect(practiceResult({ target: 'I', probs: probs('i'), strokes: [stem, topBar] }).hint.key).toBe('capitalI');
+    });
+
+    it('with the bars but too short fails on the height', () => {
+      const short = [line(1, 2, 0.4), [[0, 1], [0.8, 1]], [[0, 2], [0.8, 2]]];
+      expect(practiceResult({ target: 'I', probs: probs('i'), strokes: short }).hint.key).toBe('capital');
+    });
+
+    it('small l and small i don\'t need bars', () => {
+      expect(practiceResult({ target: 'l', probs: probs('l'), strokes: [line(0, 2)] }).pass).toBe(true);
     });
   });
 

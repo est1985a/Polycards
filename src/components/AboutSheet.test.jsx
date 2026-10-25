@@ -22,7 +22,7 @@ describe('AboutSheet', () => {
 
   it('shows the title, subtitle and all five section headings', () => {
     const html = render();
-    expect(html).toContain('What is Polycards?');
+    expect(html).toContain('Polycardsとは？');
     expect(html).toContain('ポリカードのしくみ');
     expect(ABOUT.sections).toHaveLength(5);
     ['Forgetting is normal', 'The level ladder', 'The science', 'Why it helps you', 'Tips'].forEach((heading, i) => {

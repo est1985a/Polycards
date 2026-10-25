@@ -104,7 +104,7 @@ describe('four lines', () => {
     expect(lines[0]).toBeCloseTo(FOUR_LINES[0] * 130);
     expect(lines[3] - lines[2]).toBeCloseTo(gap);
     expect(lines[2] - lines[1]).toBeCloseTo(gap);
-    const map = letterMapper('I', 90, 130);
+    const map = letterMapper('l', 90, 130); // l is one line (width 0), so it sits in the middle
     expect(map([0, 0])).toEqual([45, top]);
     expect(map([0, 2])[1]).toBeCloseTo(lines[2]);
   });

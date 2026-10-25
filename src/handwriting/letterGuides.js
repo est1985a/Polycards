@@ -117,7 +117,8 @@ export const LETTER_GUIDES = {
   F: def(1.1, down(0), across(0, 1.1, 0), across(0, 0.95, 1)),
   G: def(1.53, s("gShape").arc(0.78, 1, 0.75, 1, -45, -350).L(1.52, 1.05).L(0.95, 1.05)),
   H: def(1.3, down(0), down(1.3), across(0, 1.3, 1)),
-  I: def(0, down(0)),
+  // Capital I with short bars at the top and bottom (as taught in Japan), so it isn't mistaken for l.
+  I: def(0.8, down(0.4), s("barTop").M(0, 0).L(0.8, 0), s("barBottom").M(0, 2).L(0.8, 2)),
   J: def(1, s("downHookLeft").M(1, 0).L(1, 1.5).arc(0.5, 1.5, 0.5, 0.5, 0, 180)),
   K: def(1.25, down(0), s("slantDownLeft").M(1.2, 0).L(0, 1.15), s("slantDownRight").M(0.42, 0.75).L(1.25, 2)),
   L: def(1.1, s("downThenRight").M(0, 0).L(0, 2).L(1.1, 2)),

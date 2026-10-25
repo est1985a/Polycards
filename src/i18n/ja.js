@@ -29,8 +29,8 @@ export default {
   "menu.signOutConfirm": "ログアウトしますか？",
 
   // Bottom tab bar
-  "tabs.myCards": "My Cards",
-  "tabs.cardSets": "Card Sets",
+  "tabs.myCards": "マイカード",
+  "tabs.cardSets": "カードセット",
   "tabs.training": "トレーニング",
 
   // My Cards dashboard: review button and マイデッキ list
@@ -192,11 +192,14 @@ export default {
   "practice.hint.small": "小文字の {letter} は2本目と3本目の線のあいだに書こう",
   "practice.hint.capital": "大文字は上の線から3本目の線までの高さで書こう",
   "practice.hint.baseline": "赤い線の上にのせよう",
+  "practice.hint.capitalI": "大文字の I は上と下に短い横線を書こう",
   "practice.hint.dot": "{letter} の点をわすれずに、2本目の線より上に書こう",
   "practice.hint.erase": "書き直すときは「消す」をおしてね", // under every hint
   // One line per stroke under the stroke-order guide
   "practice.stroke.down": "上から下へまっすぐ",
   "practice.stroke.across": "左から右へまっすぐ",
+  "practice.stroke.barTop": "上の線に短い横線",
+  "practice.stroke.barBottom": "赤い線に短い横線",
   "practice.stroke.slantDownLeft": "左下へななめに",
   "practice.stroke.slantDownRight": "右下へななめに",
   "practice.stroke.slantUpRight": "右上へななめに",
@@ -370,7 +373,7 @@ export default {
   // "What is Polycards?" pop-up (button at the top of My Cards; also 使い方 in the account menu)
   "about.button": "What is Polycards?",
   "about.buttonLabel": "What is Polycards? / ポリカードのしくみ", // read aloud for the button
-  "about.title": "What is Polycards?",
+  "about.title": "Polycardsとは？",
   "about.subtitle": "ポリカードのしくみ",
   "about.forgetting.heading": "Forgetting is normal",
   "about.forgetting.p1": "新しく覚えた単語は、何もしないと数日でほとんど忘れてしまいます。これは「忘却曲線」と言って、だれにでも起こることです。でも、忘れそうになったときにもう一度思い出すと、記憶は前よりずっと長く残ります。",

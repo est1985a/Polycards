@@ -24,6 +24,17 @@ export function needsDot(letter) {
   return letter === "i" || letter === "j";
 }
 
+// Capital I is taught with short bars at the top and bottom (so it isn't mistaken for l): in practice
+// it needs at least 3 strokes (the line and the two bars; the height check makes sure the ink reaches
+// from line 1 to the baseline).
+export function needsBars(letter) {
+  return letter === "I";
+}
+
+export function hasBars(strokes) {
+  return strokes.length >= 3;
+}
+
 // A dot: a short stroke (not the only one) lying above line 2.
 export function hasDot(strokes, tol = PRACTICE_HEIGHT_TOLERANCE) {
   if (strokes.length < 2) return false;
@@ -62,7 +73,8 @@ export function heightProblem(letter, top, bottom, tol = PRACTICE_HEIGHT_TOLERAN
 // (null = nothing written); strokes: the ink in line units.
 // → { pass, hint: { key, letter } | null, read, targetProb }
 //   Shape: the top letter is the target, or the target got at least minProb. A look-alike read
-//   (i ↔ l, g ↔ q) counts only together with the height check. Small i and j also need their dot.
+//   (i ↔ l, g ↔ q) counts only together with the height check. Small i and j also need their dot,
+//   capital I its top and bottom bars.
 export function practiceResult({ target, probs, strokes }, {
   heightCheck = PRACTICE_HEIGHT_CHECK, tol = PRACTICE_HEIGHT_TOLERANCE, minProb = PRACTICE_MIN_TARGET_PROB,
 } = {}) {
@@ -79,6 +91,7 @@ export function practiceResult({ target, probs, strokes }, {
   if (!heightCheck) return { pass: true, hint: null, read, targetProb };
 
   if (needsDot(target) && !hasDot(strokes, tol)) return fail("dot");
+  if (needsBars(target) && !hasBars(strokes)) return fail("capitalI");
   const problem = heightProblem(target, bounds.top, bounds.bottom, tol);
   if (problem) return fail(problem);
   return { pass: true, hint: null, read, targetProb };
