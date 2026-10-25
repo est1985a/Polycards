@@ -94,7 +94,7 @@ export default {
   "stats.totalReviews": "レビュー",
   "stats.totalDays": "勉強した日",
   "stats.totalSpelled": "スペル正解",
-  "stats.totalBonus": "スペルボーナス",
+  "stats.totalMastered": "マスターしたカード",
   "stats.troubleTitle": "苦手な単語",
   "stats.troubleNote": "最近30日で「まだ」「わからない」が多かった単語",
   "stats.troubleCount": "{n}回", // how many times the word was missed

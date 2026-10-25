@@ -100,7 +100,7 @@ export default {
   "stats.totalReviews": "Reviews",
   "stats.totalDays": "Days studied",
   "stats.totalSpelled": "Spelled correctly",
-  "stats.totalBonus": "Spelling bonus",
+  "stats.totalMastered": "Cards mastered",
   "stats.troubleTitle": "Trouble words",
   "stats.troubleNote": "Words you missed most in the last 30 days",
   "stats.troubleCount": plural("{n} time", "{n} times"),

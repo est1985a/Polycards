@@ -17,7 +17,7 @@ const DATA = {
   ],
 };
 
-const render = (props = {}) => renderToStaticMarkup(<StatsScreen data={DATA} today={TODAY} onBack={() => {}} {...props} />);
+const render = (props = {}) => renderToStaticMarkup(<StatsScreen data={DATA} today={TODAY} onBack={() => {}} masteredCount={1500} {...props} />);
 const text = (html) => html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
 const count = (html, re) => (html.match(re) || []).length;
 
@@ -49,7 +49,8 @@ describe('StatsScreen', () => {
     expect(plain).toContain('レビュー1,234');
     expect(plain).toContain('勉強した日4');
     expect(plain).toContain('スペル正解40');
-    expect(plain).toContain('スペルボーナス38 EXP');
+    expect(plain).toContain('マスターしたカード1,500');
+    expect(plain).not.toContain('スペルボーナス');
     // Trouble words.
     expect(count(html, /data-trouble="/g)).toBe(2);
     expect(plain).toContain('since');
@@ -96,6 +97,11 @@ describe('StatsScreen', () => {
     expect(html).toMatch(/role="alert"[^>]*>Could not load study days: boom</);
   });
 
+  it('shows 0 mastered cards when no count is passed (stats not loaded yet)', () => {
+    const plain = text(renderToStaticMarkup(<StatsScreen data={DATA} today={TODAY} onBack={() => {}} />));
+    expect(plain).toContain('マスターしたカード0');
+  });
+
   it('puts the totals in 4 columns on wide screens', () => {
     expect(render()).toContain('repeat(2, minmax(0, 1fr))');
     expect(render({ wide: true })).toContain('repeat(4, minmax(0, 1fr))');
@@ -114,7 +120,8 @@ describe('StatsScreen', () => {
     expect(plain).toContain('Studied on 1 day this month');
     expect(plain).toContain('Reviews October 2026');
     expect(plain).toContain('4 reviews this month');
-    expect(plain).toContain('Spelling bonus38 EXP');
+    expect(plain).toContain('Cards mastered1,500');
+    expect(plain).not.toContain('Spelling bonus');
     expect(plain).toContain('1 time');
     expect(plain).not.toMatch(/[぀-ヿ]/); // no kana left (the word's Japanese, 駅, is data and kanji only)
     const empty = text(render({ data: { ...DATA, trouble: [] } }));
