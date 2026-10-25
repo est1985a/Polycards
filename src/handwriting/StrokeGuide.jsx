@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import FourLines from "./FourLines.jsx";
 import { HW_COLORS } from "./config.js";
-import { LETTER_GUIDES, letterMapper, lineMetrics, strokePath } from "./letterGuides.js";
+import { LETTER_GUIDES, letterMapper, lineMetrics, phraseParts, strokePath } from "./letterGuides.js";
 import { reduceMotionOn } from "../lib/settings.js";
 import { btnGhost, colors, fontDisplay } from "../styles/theme.js";
 import { t } from "../i18n";
@@ -115,14 +115,16 @@ export default function StrokeGuide({ letter, width = 150, height = 216, autoPla
         </svg>
       </div>
       {steps && (
-        <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 2, fontSize: 13, color: colors.text, maxWidth: Math.max(width, 200) }}>
+        <ol style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 2, fontSize: 13, color: colors.text, maxWidth: Math.max(width, 250) }}>
           {guide.strokes.map((st, i) => (
             <li key={i} style={{ display: "flex", gap: 6, alignItems: "baseline", fontWeight: active === i ? 700 : 400 }}>
               <span style={{
                 flex: "none", width: 18, height: 18, borderRadius: 999, display: "inline-grid", placeItems: "center",
                 background: HW_COLORS.startDot, color: HW_COLORS.startText, fontFamily: fontDisplay, fontSize: 11, fontWeight: 700,
               }}>{i + 1}</span>
-              <span>{t(`practice.stroke.${st.kind}`)}</span>
+              <span>{phraseParts(t(`practice.stroke.${st.kind}`)).map((part, j) => (
+                <span key={j} style={{ display: "inline-block", whiteSpace: "nowrap" }}>{part}</span>
+              ))}</span>
             </li>
           ))}
         </ol>

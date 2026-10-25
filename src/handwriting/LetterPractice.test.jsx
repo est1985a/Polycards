@@ -24,10 +24,12 @@ describe('LetterPractice', () => {
 
   it('box 1 has the letter to trace, the others only the four lines', () => {
     const h = render();
-    // the trace color appears in the guide and in box 1 only
-    const boxes = h.split('aria-label="れんしゅう ').slice(1);
-    expect(boxes[0]).toContain(`stroke="${HW_COLORS.trace}"`);
-    expect(boxes[1].split('aria-label=')[0]).not.toContain(`stroke="${HW_COLORS.trace}"`);
+    // Each box's lines (and trace) come just before its ink canvas, which is drawn on top.
+    const parts = h.split('aria-label="れんしゅう ');
+    const box1Layers = parts[0].slice(parts[0].lastIndexOf('<svg'));
+    expect(box1Layers).toContain(`stroke="${HW_COLORS.trace}"`);
+    expect(parts[1]).not.toContain(`stroke="${HW_COLORS.trace}"`); // box 2's lines
+    expect(parts[1]).toContain(`stroke="${HW_COLORS.guideBaseline}"`);
     expect(h).toContain(`stroke="${HW_COLORS.guideBaseline}"`); // the red baseline
     expect(h).toContain('stroke-dasharray="5 4"'); // dashed line 2
   });
@@ -35,7 +37,9 @@ describe('LetterPractice', () => {
   it('shows the stroke-order guide with one line per stroke and もう一度見る', () => {
     const h = render();
     expect(h).toContain('「b」の書き順');
-    expect(h).toContain('下へおりて、もどって右に丸く');
+    // split after 、 into parts that each stay on one line
+    expect(h).toContain('white-space:nowrap">下へおりて、</span>');
+    expect(h).toContain('white-space:nowrap">もどって右に丸く</span>');
     expect(h).toContain('もう一度見る');
   });
 

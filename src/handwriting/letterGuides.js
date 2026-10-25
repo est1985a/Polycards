@@ -168,6 +168,13 @@ export const LETTER_GUIDES = {
 // Every stroke kind used above (each needs practice.stroke.<kind> in ja.js and en.js).
 export const STROKE_KINDS = [...new Set(Object.values(LETTER_GUIDES).flatMap((g) => g.strokes.map((st) => st.kind)))];
 
+// A stroke description split after each Japanese comma (、, built from its character code below) or English ", ".
+// Each part is kept on one line, so a long description wraps only at a natural point and never
+// leaves one character alone on a line.
+export function phraseParts(text) {
+  return String(text).split(new RegExp(`(?<=${String.fromCharCode(0x3001)})|(?<=, )`)).filter(Boolean);
+}
+
 // Which heights a letter should reach on the four lines.
 //   capital: line 1 → line 3          xheight: line 2 → line 3
 //   ascender (b d f h k l): line 1 → line 3

@@ -55,12 +55,17 @@ export default function LetterBox({
     paint(canvas, lineWidth);
   }
 
-  function paint(canvas, width) {
+  // The on-screen canvas is transparent (only ink), so the box background and the four lines show
+  // through it. paper: fill it white first (the copies the model reads).
+  function paint(canvas, width, paper = false) {
     const ctx = canvas.getContext("2d");
     const dpr = canvas.width / size;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = HW_COLORS.paper;
-    ctx.fillRect(0, 0, size, height);
+    ctx.clearRect(0, 0, size, height);
+    if (paper) {
+      ctx.fillStyle = HW_COLORS.paper;
+      ctx.fillRect(0, 0, size, height);
+    }
     for (const stroke of strokes.current) drawStroke(ctx, stroke, width);
   }
 
@@ -87,20 +92,25 @@ export default function LetterBox({
       return strokes.current.length === 0;
     },
     // Grayscale pixels of the box (red channel; white paper, black ink) at the canvas's real
-    // pixel size, which is what preprocessLetter is given.
-    // inkRatio (letter practice): the strokes are drawn again off screen with an ink width of this
-    // fraction of the letter's own size, so the model sees the usual stroke thickness.
+    // pixel size, which is what preprocessLetter is given. The ink is copied onto white paper off
+    // screen (the canvas itself is transparent), so the lines and tints never reach the model.
+    // inkRatio (letter practice): the strokes are drawn again with an ink width of this fraction of
+    // the letter's own size, so the model sees the usual stroke thickness.
     getGray({ inkRatio } = {}) {
-      let canvas = canvasRef.current;
+      const source = canvasRef.current;
+      const canvas = document.createElement("canvas");
+      canvas.width = source.width;
+      canvas.height = source.height;
       if (inkRatio) {
-        const copy = document.createElement("canvas");
-        copy.width = canvas.width;
-        copy.height = canvas.height;
         const points = strokes.current.flat();
         const xs = points.map((p) => p.x), ys = points.map((p) => p.y);
         const extent = points.length ? Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) : 0;
-        paint(copy, Math.max(1.5, extent * inkRatio));
-        canvas = copy;
+        paint(canvas, Math.max(1.5, extent * inkRatio), true);
+      } else {
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = HW_COLORS.paper;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(source, 0, 0);
       }
       const { width, height: h } = canvas;
       const { data } = canvas.getContext("2d").getImageData(0, 0, width, h);
@@ -217,24 +227,22 @@ export default function LetterBox({
     <div
       style={{
         position: "relative", flex: "none", borderRadius: 10, overflow: "hidden",
-        border: `3px solid ${look.border}`, background: HW_COLORS.paper,
+        border: `3px solid ${look.border}`, background: look.background,
         boxShadow: selected && !state ? `0 0 0 2px ${colors.gold}` : "none",
       }}
     >
+      {/* Layers, bottom to top: the box background (white, or the tint of a checked box), the four
+          lines and trace letter (overlay), then the transparent ink canvas, so the ink is never covered. */}
+      {overlay && <div aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>{overlay}</div>}
       <canvas
         ref={canvasRef}
         role="img"
         aria-label={label}
         style={{
-          width: size, height, display: "block",
+          position: "relative", width: size, height, display: "block", background: "transparent",
           touchAction: "none", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none",
         }}
       />
-      {/* A checked box is tinted on top (the canvas itself stays white paper for the model). */}
-      {look.background !== HW_COLORS.paper && (
-        <div aria-hidden="true" style={{ position: "absolute", inset: 0, background: look.background, mixBlendMode: "multiply", pointerEvents: "none" }} />
-      )}
-      {overlay && <div aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>{overlay}</div>}
       {state === "pass" && (
         <span aria-hidden="true" style={{
           position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: 999, pointerEvents: "none",

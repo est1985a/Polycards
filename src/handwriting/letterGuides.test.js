@@ -2,7 +2,7 @@
 // the right lines, and every stroke description exists in both languages. Run with: npm test
 import { describe, it, expect } from 'vitest';
 import {
-  FOUR_LINES, LETTER_GUIDES, STROKE_KINDS, guideBounds, letterCategory, letterMapper, lineMetrics, strokePath,
+  FOUR_LINES, LETTER_GUIDES, STROKE_KINDS, guideBounds, letterCategory, letterMapper, lineMetrics, phraseParts, strokePath,
 } from './letterGuides.js';
 import { hasDot, heightProblem, needsDot } from './practiceCheck.js';
 import ja from '../i18n/ja.js';
@@ -68,6 +68,20 @@ describe('LETTER_GUIDES', () => {
     for (const kind of STROKE_KINDS) {
       expect(ja[`practice.stroke.${kind}`], kind).toBeTruthy();
       expect(en[`practice.stroke.${kind}`], kind).toBeTruthy();
+    }
+  });
+});
+
+describe('phraseParts', () => {
+  it('splits a stroke description only after 、 or ", " (each part stays on one line)', () => {
+    expect(phraseParts('下へおりて、もどって右に丸く')).toEqual(['下へおりて、', 'もどって右に丸く']);
+    expect(phraseParts('上から下へまっすぐ')).toEqual(['上から下へまっすぐ']);
+    expect(phraseParts('Down, back up, then one hump')).toEqual(['Down, ', 'back up, ', 'then one hump']);
+  });
+
+  it('no part of any Japanese stroke description is longer than the column (16 characters)', () => {
+    for (const kind of STROKE_KINDS) {
+      for (const part of phraseParts(ja[`practice.stroke.${kind}`])) expect(part.length, kind).toBeLessThanOrEqual(16);
     }
   });
 });

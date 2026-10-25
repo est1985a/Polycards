@@ -66,7 +66,7 @@ export default function HandwritingInput({ answer, alternates = [], result = nul
         ref={boxesRef}
         answer={answer}
         scores={result?.scores ?? []}
-        locked={answered || reading}
+        locked={reading || Boolean(result)} // after わからない (answered, no result) the boxes stay open to practice in; nothing is read
         onChange={() => setHasInk(boxesRef.current?.hasInk() ?? false)}
         onPractice={practiceEnabled && result ? (index) => setPracticeLetter(letterAt(index)) : undefined}
       />
