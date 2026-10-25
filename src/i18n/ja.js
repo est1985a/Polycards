@@ -300,6 +300,8 @@ export default {
   "gacha.ticketTomorrow": "今日のガチャ券はゲット！ 次の券は明日もらえます", // today's review ticket is already earned
   "gacha.toNextTicket": "次のガチャ券まで あと {n} レビュー",
   "gacha.perTicket": "{n} レビューごとに 1枚（1日1枚まで）", // one ticket per {n} reviews, at most one a day
+  "gacha.spellToNext": "スペルのガチャ券まで あと {n} pt",
+  "gacha.spellPerTicket": "スペルボーナス {n} ptごとに 1枚", // spelling tickets have no daily cap
   "gacha.odds": "出る確率", // heading of the chance boxes
   "gacha.percent": "{n}%",
   "gacha.noRepeats": "同じアバターは出ません。毎回新しいアバター！",
@@ -391,6 +393,17 @@ export default {
   "about.why.1": "覚えている単語には時間を使わず、忘れそうな単語だけ復習できる",
   "about.why.2": "1回は{sessionSize}枚まで。毎日少しずつでOK", // {sessionSize} = the student's 1回の枚数 (10, 20 or 30)
   "about.why.3": "テストのあとも、ずっと覚えていられる",
+  // The numbers in about.write.1 (150 pt) and about.gacha.p1 (100レビュー, 1日1枚) are typed by hand.
+  // Update them here and in en.js if gacha_setting('spelling_points_per_ticket') or
+  // gacha_setting('reviews_per_ticket') (or the daily cap) changes in Supabase.
+  "about.write.heading": "書いて答えよう",
+  "about.write.p1": "設定で「手書き」にすると、Apple Pencil で英語を書いて答えられます。",
+  "about.write.1": "正しく書けたら +1 pt！150 pt ごとにガチャ券が1枚もらえます", // 150 = spelling_points_per_ticket
+  "about.write.2": "「れんしゅう？」を押すと、その文字を練習できます",
+  "about.training.heading": "トレーニング",
+  "about.training.p1": "「トレーニング」タブで、アルファベットの書き方を練習できます。練習はこれから増えていきます。",
+  "about.gacha.heading": "ガチャとアバター",
+  "about.gacha.p1": "100レビューごとにガチャ券が1枚もらえます（1日1枚まで）。ガチャを回して、アバターを集めよう！「わかった」でも「まだ」でも同じなので、正直に答えよう。", // 100 = reviews_per_ticket
   "about.tips.heading": "上手に使うコツ",
   "about.tips.1": "毎日少しずつやろう（まとめてやるより効果的）",
   "about.tips.2": "答えを見る前に、本気で思い出そう",

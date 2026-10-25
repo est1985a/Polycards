@@ -31,6 +31,19 @@ export const ABOUT = {
       list: ['about.why.1', 'about.why.2', 'about.why.3'],
     },
     {
+      heading: 'about.write.heading',
+      paragraphs: ['about.write.p1'],
+      list: ['about.write.1', 'about.write.2'],
+    },
+    {
+      heading: 'about.training.heading',
+      paragraphs: ['about.training.p1'],
+    },
+    {
+      heading: 'about.gacha.heading',
+      paragraphs: ['about.gacha.p1'],
+    },
+    {
       heading: 'about.tips.heading',
       list: ['about.tips.1', 'about.tips.2', 'about.tips.3', 'about.tips.4'],
     },

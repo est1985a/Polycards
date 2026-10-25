@@ -1,11 +1,23 @@
 // Tests for the gacha helpers. Run with: npm test
 import { describe, it, expect, vi } from 'vitest';
-import { ticketProgress, groupCollection, rarityCounts, tileState, singleFlight, sparkleLayout } from './gacha';
+import { ticketProgress, spellingProgress, groupCollection, rarityCounts, tileState, singleFlight, sparkleLayout } from './gacha';
 
 describe('ticketProgress', () => {
   it('measures progress to the next ticket from the status', () => {
     expect(ticketProgress({ reviews_to_next_ticket: 25, reviews_per_ticket: 100 })).toEqual({ toNext: 25, per: 100, fraction: 0.75 });
     expect(ticketProgress({ reviews_to_next_ticket: 100, reviews_per_ticket: 100 }).fraction).toBe(0);
+  });
+});
+
+describe('spellingProgress', () => {
+  it('measures progress to the next spelling ticket from the status', () => {
+    expect(spellingProgress({ spelling_to_next_ticket: 30, spelling_points_per_ticket: 150 })).toEqual({ toNext: 30, per: 150, fraction: 0.8 });
+    expect(spellingProgress({ spelling_to_next_ticket: 150, spelling_points_per_ticket: 150 }).fraction).toBe(0);
+  });
+
+  it('falls back to 150 points per ticket when the status has no spelling fields', () => {
+    expect(spellingProgress({})).toEqual({ toNext: 150, per: 150, fraction: 0 });
+    expect(spellingProgress(null)).toEqual({ toNext: 150, per: 150, fraction: 0 });
   });
 });
 

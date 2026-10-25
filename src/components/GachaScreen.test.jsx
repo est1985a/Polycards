@@ -75,6 +75,17 @@ describe('GachaScreen', () => {
       expect(html).toContain('100 レビューごとに 1枚（1日1枚まで）');
     }
   });
+
+  it('shows progress to the next spelling ticket, with no daily cap', () => {
+    const spelled = { ...status, spelling_points: 120, spelling_to_next_ticket: 30, spelling_points_per_ticket: 150 };
+    for (const next_ticket_tomorrow of [false, true]) {
+      const html = renderToStaticMarkup(<GachaScreen status={{ ...spelled, next_ticket_tomorrow }} pulling={false} />);
+      expect(html).toMatch(/スペルのガチャ券まで あと .*30.* pt/);
+      expect(html).toContain('スペルボーナス 150 ptごとに 1枚');
+      expect(html).toContain('aria-valuemax="150" aria-valuenow="120"');
+      expect(html).toContain('width:80%');
+    }
+  });
 });
 
 describe('GachaMachine', () => {
