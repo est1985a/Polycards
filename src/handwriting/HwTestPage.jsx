@@ -5,7 +5,12 @@ import { preprocessLetter } from "./preprocess.js";
 import { flatten28, modelCheck, preprocessCheck } from "./selfCheck.js";
 import { answerSlots } from "./answerLayout.js";
 import { lenientMessage, scoreWord } from "./checkAnswer.js";
-import { BATCH_SIZE, HW_COLORS, LABELS, MIN_TARGET_PROB, TEST_DATA_URL } from "./config.js";
+import { BATCH_SIZE, HW_COLORS, LABELS, MIN_TARGET_PROB, PRACTICE_MIN_TARGET_PROB, PRACTICE_MODEL_INK, TEST_DATA_URL } from "./config.js";
+import LetterBox from "./LetterBox.jsx";
+import FourLines from "./FourLines.jsx";
+import { LETTER_GUIDES, lineMetrics } from "./letterGuides.js";
+import { inkBounds, practiceResult, strokesToUnits } from "./practiceCheck.js";
+import { t } from "../i18n";
 import { btnPrimary, colors, fontBody, fontDisplay, panel } from "../styles/theme.js";
 
 // Hidden test page at /hw-test (not linked from the app): self-checks against the Python
@@ -94,6 +99,98 @@ function CheckBlock({ title, rows, describe }) {
         ))}
       </ul>
     </div>
+  );
+}
+
+// One letter-practice box (same size and lines as in the practice pop-up) with what the check saw:
+// the 28×28 input with the model's ink width (what practice uses) next to the input with the ink as
+// drawn, the top 3, the target's probability, the ink's top / bottom in line units and the verdict.
+const PRACTICE_W = 90, PRACTICE_H = 130;
+
+function PracticeBoxDebug({ anyPointer, modelReady }) {
+  const [letter, setLetter] = useState("b");
+  const [round, setRound] = useState(0);
+  const [info, setInfo] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const boxRef = useRef(null);
+  const valid = Boolean(LETTER_GUIDES[letter]);
+  const metrics = lineMetrics(PRACTICE_H);
+
+  async function check() {
+    const box = boxRef.current;
+    if (!box || box.isEmpty()) return;
+    setBusy(true);
+    try {
+      const practice = box.getGray({ inkRatio: PRACTICE_MODEL_INK });
+      const asDrawn = box.getGray();
+      const input = preprocessLetter(practice.gray, practice.width, practice.height);
+      const rawInput = preprocessLetter(asDrawn.gray, asDrawn.width, asDrawn.height);
+      const { probs } = await predictBatch([input, rawInput]);
+      const strokes = strokesToUnits(box.getStrokes(), metrics);
+      const result = practiceResult({ target: letter, probs: probs[0], strokes });
+      setInfo({ input, rawInput, top3: topK(probs[0], 3), rawTop3: topK(probs[1], 3), bounds: inkBounds(strokes), result });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section style={{ ...panel, display: "grid", gap: 14 }}>
+      <h2 style={{ margin: 0, fontSize: 18 }}>練習ボックス</h2>
+      <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        文字：
+        <input
+          value={letter} maxLength={1}
+          onChange={(e) => { setLetter(e.target.value); setInfo(null); setRound((r) => r + 1); }}
+          autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false} lang="en"
+          style={{ fontSize: 18, padding: "8px 10px", minHeight: 44, borderRadius: 8, border: `1px solid ${colors.line}`, background: colors.surface2, color: colors.text, width: 60 }}
+        />
+      </label>
+      {valid && (
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
+          <LetterBox
+            key={`${letter}-${round}`} ref={boxRef} size={PRACTICE_W} height={PRACTICE_H}
+            inkWidth={Math.max(3, metrics.gap * 0.14)}
+            overlay={<FourLines width={PRACTICE_W} height={PRACTICE_H} />}
+            state={info ? (info.result.pass ? "pass" : "wrong") : null}
+            allowAnyPointer={anyPointer} label="practice"
+            onStroke={() => setInfo(null)}
+          />
+          <div style={{ display: "grid", gap: 8 }}>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button type="button" onClick={check} disabled={busy || !modelReady} style={{ ...btnPrimary, minHeight: 44, padding: "0 16px" }}>
+                {busy ? "判定中…" : "判定"}
+              </button>
+              <button type="button" onClick={() => { setRound((r) => r + 1); setInfo(null); }} style={{ ...btnPrimary, minHeight: 44, padding: "0 16px", background: colors.surface2, color: colors.text }}>
+                消す
+              </button>
+            </div>
+            {info && (
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", fontSize: 13 }}>
+                <div style={{ display: "grid", gap: 4, justifyItems: "center" }}>
+                  <InputPreview input={info.input} />
+                  <div>練習用（インク {PRACTICE_MODEL_INK}）</div>
+                  <div style={{ fontFamily: "monospace" }}>{info.top3.map((x) => `${x.letter} ${(x.prob * 100).toFixed(1)}%`).join(" / ")}</div>
+                </div>
+                <div style={{ display: "grid", gap: 4, justifyItems: "center" }}>
+                  <InputPreview input={info.rawInput} />
+                  <div style={{ color: colors.muted }}>比較：書いた太さのまま</div>
+                  <div style={{ fontFamily: "monospace", color: colors.muted }}>{info.rawTop3.map((x) => `${x.letter} ${(x.prob * 100).toFixed(1)}%`).join(" / ")}</div>
+                </div>
+                <div style={{ display: "grid", gap: 4, alignContent: "start" }}>
+                  <div>「{letter}」の確率 <b>{(info.result.targetProb * 100).toFixed(1)}%</b>（基準 {Math.round(PRACTICE_MIN_TARGET_PROB * 100)}%）</div>
+                  <div>読み取り：<b>{info.result.read}</b></div>
+                  <div>上端 <b>{info.bounds.top.toFixed(2)}</b> ／ 下端 <b>{info.bounds.bottom.toFixed(2)}</b>（線1 = 0、線2 = 1、赤線 = 2、線4 = 3）</div>
+                  <div style={{ fontWeight: 700, color: info.result.pass ? HW_COLORS.pass : colors.danger }}>
+                    {info.result.pass ? "合格" : `不合格：${t(`practice.hint.${info.result.hint.key}`, { letter: info.result.hint.letter })}`}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -273,6 +370,8 @@ export default function HwTestPage() {
             </div>
           )}
         </section>
+
+        <PracticeBoxDebug anyPointer={anyPointer} modelReady={model.status === "ready"} />
       </div>
     </div>
   );

@@ -14,6 +14,7 @@ const ALLOWED_FILES = new Set([
   'components/LoginScreen.jsx',
   'lib/login.js',
   'handwriting/HwTestPage.jsx',
+  'handwriting/HwLettersPage.jsx',
   'handwriting/HwTestRoot.jsx',
   'handwriting/selfCheck.js',
 ]);

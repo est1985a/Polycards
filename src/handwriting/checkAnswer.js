@@ -67,6 +67,11 @@ export function bestMatch(probs, targetLists, options) {
   return { ...results[best], accepted: best };
 }
 
+// A checked box that gets the れんしゅう？ chip: red (wrong) or orange (lenient).
+export function needsPractice(score) {
+  return score === "wrong" || score === "lenient";
+}
+
 // The warning line for one lenient pair: 「i」が「l」に見えるかも。気をつけて書こう！
 export function lenientMessage({ target, read }) {
   return t("handwriting.lenient", { target, read });

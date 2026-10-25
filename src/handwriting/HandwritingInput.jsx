@@ -4,7 +4,8 @@ import { answerSlots, readText } from "./answerLayout.js";
 import { bestMatch, lenientMessage } from "./checkAnswer.js";
 import { predictBatch } from "./model.js";
 import { preprocessLetter } from "./preprocess.js";
-import { HW_COLORS } from "./config.js";
+import PracticeSheet from "./PracticeSheet.jsx";
+import { HW_COLORS, PRACTICE_ENABLED } from "./config.js";
 import { btnGhost, btnPrimary, colors } from "../styles/theme.js";
 import { t, tx } from "../i18n";
 
@@ -29,12 +30,16 @@ async function readAnswer(boxes, slots, alternates) {
 // answer: what to write (writtenAnswer(card.en)). result: what onResult reported, once read.
 // alternates: other answers that fit the same boxes (fittingAlternates); a correct one is accepted too.
 // answered: after こたえる or わからない. onError: the model couldn't run (fall back to typing).
+// After a result, each red / orange box has a れんしゅう？ chip that opens letter practice for that
+// box's letter (from the main answer, same case) in a pop-up; the review waits behind it.
 // Give it a new `key` per card.
-export default function HandwritingInput({ answer, alternates = [], result = null, answered = false, onResult, onDontKnow, onError, answerSize, wide = false }) {
+export default function HandwritingInput({ answer, alternates = [], result = null, answered = false, onResult, onDontKnow, onError, answerSize, wide = false, practiceEnabled = PRACTICE_ENABLED }) {
   const slots = useMemo(() => answerSlots(answer), [answer]);
   const boxesRef = useRef(null);
   const [hasInk, setHasInk] = useState(false);
   const [reading, setReading] = useState(false);
+  const [practiceLetter, setPracticeLetter] = useState(null);
+  const letterAt = (index) => slots.find((s) => s.type === "box" && s.index === index)?.letter;
   const fontSize = wide ? 18 : 16;
 
   async function handleAnswer() {
@@ -63,7 +68,9 @@ export default function HandwritingInput({ answer, alternates = [], result = nul
         scores={result?.scores ?? []}
         locked={answered || reading}
         onChange={() => setHasInk(boxesRef.current?.hasInk() ?? false)}
+        onPractice={practiceEnabled && result ? (index) => setPracticeLetter(letterAt(index)) : undefined}
       />
+      {practiceLetter && <PracticeSheet letter={practiceLetter} onClose={() => setPracticeLetter(null)} />}
 
       {result && !result.allCorrect && (
         <div style={{ display: "grid", gap: 4, textAlign: "center", fontSize: wide ? 17 : 15, color: colors.text }}>

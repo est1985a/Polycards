@@ -1,19 +1,41 @@
 import { useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import LetterBox from "./LetterBox.jsx";
 import { answerSlots, boxLayout, printPosition, slotFactor } from "./answerLayout.js";
+import { needsPractice } from "./checkAnswer.js";
 import { btnGhost, colors, fontDisplay } from "../styles/theme.js";
 import { t } from "../i18n";
 
 const SPACING = 6;
 const BOX_BORDER = 3; // LetterBox's border; the layout size includes it
 
+// れんしゅう？ under a red / orange box: small to look at, 44 px tall to tap.
+function PracticeChip({ size, letter, onClick }) {
+  return (
+    <button
+      type="button" onClick={onClick} aria-label={t("practice.chipAria", { letter })}
+      style={{
+        minHeight: 44, padding: 0, margin: 0, border: "none", background: "transparent", cursor: "pointer",
+        display: "grid", placeItems: "center", maxWidth: size + SPACING,
+      }}
+    >
+      <span style={{
+        padding: "3px 8px", borderRadius: 999, whiteSpace: "nowrap", fontWeight: 700, fontSize: size < 72 ? 10 : 12,
+        background: colors.surface2, color: colors.text, border: `1px solid ${colors.line}`,
+      }}>
+        {t("practice.chip")}
+      </span>
+    </button>
+  );
+}
+
 // The row (or two rows) of letter boxes for one answer, with printed characters between them,
 // plus 消す (clear the tapped / last-written box) and 戻す (undo the last stroke).
 // Shared by the /hw-test page and (Phase 2) HandwritingInput.
 // scores: per box index, "correct" | "lenient" | "wrong" | null (colors the boxes after checking)
 // locked: answered: the ink stays, nothing draws, and 消す / 戻す are hidden.
+// onPractice(index): when given, a locked red or orange box gets a れんしゅう？ chip under it.
 // ref → { getBoxes(): [{ gray, width, height } | null] (null = empty box), hasInk(), clearAll() }
-export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer = false, locked = false, onChange }) {
+export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer = false, locked = false, onChange, onPractice }) {
   const slots = useMemo(() => answerSlots(answer), [answer]);
   const boxCount = slots.filter((s) => s.type === "box").length;
   const containerRef = useRef(null);
@@ -33,6 +55,8 @@ export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer 
   }, []);
 
   const { rows, size } = boxLayout(slots, width, { spacing: SPACING });
+  const practiceAt = (index) => Boolean(onPractice) && locked && needsPractice(scores[index]);
+  const anyChip = slots.some((s) => s.type === "box" && practiceAt(s.index));
 
   useImperativeHandle(ref, () => ({
     getBoxes() {
@@ -85,12 +109,11 @@ export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer 
         userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none",
       }}>
         {width > 0 && rows.map((row, r) => (
-          <div key={r} style={{ display: "flex", alignItems: "center", gap: SPACING }}>
+          <div key={r} style={{ display: "flex", alignItems: anyChip ? "flex-start" : "center", gap: SPACING }}>
             {row.map((slot, i) => {
               if (slot.type === "box") {
-                return (
+                const box = (
                   <LetterBox
-                    key={`b${slot.index}`}
                     ref={(el) => { boxRefs.current[slot.index] = el; }}
                     size={size - 2 * BOX_BORDER}
                     state={scores[slot.index] ?? null}
@@ -101,6 +124,16 @@ export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer 
                     onStroke={() => handleStroke(slot.index)}
                     onSelect={() => setSelected(slot.index)}
                   />
+                );
+                // Each box is a column (box, then its chip after answering). Always the same wrapper, so
+                // the box (and its ink) isn't rebuilt when the chips appear; the row is then top-aligned.
+                return (
+                  <div key={`b${slot.index}`} style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: "none", width: size }}>
+                    {box}
+                    {practiceAt(slot.index) && (
+                      <PracticeChip size={size} letter={slot.letter} onClick={() => onPractice(slot.index)} />
+                    )}
+                  </div>
                 );
               }
               if (slot.type === "gap") return <div key={`g${r}-${i}`} style={{ width: size * 0.45 - SPACING, flex: "none" }} />;
