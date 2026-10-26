@@ -29,7 +29,7 @@ vi.mock('./supabaseClient', () => ({
 }));
 
 const {
-  fetchDueRows, fetchReviewRows, fetchDeckWords, restoreMasteredCard, recordAnswer, waitForPendingSaves, holdAnswer, flushHeldAnswer, dropHeldAnswer, checkOtherMeaning, fetchBonusPoints, fetchNextReview, fetchReviewPlanRows,
+  fetchDueRows, fetchReviewRows, fetchDeckWords, fetchMasteredCards, restoreMasteredCard, recordAnswer, waitForPendingSaves, holdAnswer, flushHeldAnswer, dropHeldAnswer, checkOtherMeaning, fetchBonusPoints, fetchNextReview, fetchReviewPlanRows,
   fetchCollections, fetchGachaStatus, pullGacha, fetchGachaCollection, equipAvatar, setGachaTheme, gachaErrorMessage, fetchThemeUnlocks,
   fetchStudyDays, fetchStudyTotals, fetchTroubleWords, addDeckToMyCards, fetchOwnedWordIds,
 } = await import('./api');
@@ -61,6 +61,25 @@ describe('recorded audio', () => {
     expect((await selects(() => fetchDeckWords(3)))[0]).toContain('audio_path');
     expect((await selects(() => fetchReviewRows()))[0]).toContain('audio_path');
     expect((await selects(() => fetchReviewRows(7)))[0]).toContain('audio_path');
+  });
+});
+
+describe('parts of speech', () => {
+  it('word queries load pos (deck word list, both review queries and the Mastered list)', async () => {
+    const selects = async (fn) => { calls.length = 0; await fn(); return calls.filter((c) => c[0] === 'select').map((c) => c[1]); };
+    expect((await selects(() => fetchDeckWords(3)))[0]).toMatch(/words \(.*\bpos\b/);
+    expect((await selects(() => fetchReviewRows()))[0]).toMatch(/words!inner \(.*\bpos\b/);
+    expect((await selects(() => fetchReviewRows(7)))[0]).toMatch(/words!inner \(.*\bpos\b/);
+    expect((await selects(() => fetchMasteredCards()))[0]).toContain('words ( english, japanese, pos )');
+  });
+
+  it('Mastered cards carry pos (null when missing or unknown)', async () => {
+    result = { data: [
+      { word_id: 'a', direction: 'en2jp', mastered_at: '2026-10-01', words: { english: 'dog', japanese: '犬', pos: 'noun' } },
+      { word_id: 'b', direction: 'jp2en', mastered_at: '2026-09-01', words: { english: 'herb', japanese: 'ハーブ', pos: null } },
+      { word_id: 'c', direction: 'jp2en', mastered_at: '2026-08-01', words: { english: 'x', japanese: 'x', pos: 'nounz' } },
+    ], error: null, count: 3 };
+    expect((await fetchMasteredCards()).map((c) => c.pos)).toEqual(['noun', null, null]);
   });
 });
 

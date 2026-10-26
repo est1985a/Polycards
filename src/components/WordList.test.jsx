@@ -142,3 +142,18 @@ describe('owned words (所持済み) before adding', () => {
     expect(html).toMatch(/<button[^>]*aria-label="日本語を見る: already"/);
   });
 });
+
+describe('品詞 chip in the word list', () => {
+  const CHIP = 'aria-label="品詞：副詞（説明を見る）"';
+  it('comes after the English word (and the speaker), before 所持済み', () => {
+    const html = renderRow({ word: { ...ALREADY, pos: 'adverb' }, speech: { slow: false }, owned: true });
+    expect(html).toContain(CHIP);
+    expect(html.indexOf('>already<')).toBeLessThan(html.indexOf('発音を聞く'));
+    expect(html.indexOf('発音を聞く')).toBeLessThan(html.indexOf(CHIP));
+    expect(html.indexOf(CHIP)).toBeLessThan(html.indexOf('所持済み'));
+  });
+
+  it('nothing when the word has no part of speech', () => {
+    expect(renderRow()).not.toContain('品詞');
+  });
+});

@@ -1,4 +1,5 @@
 // Helpers for building and shuffling study piles.
+import { posKey } from './partsOfSpeech';
 
 export const CLEAR_TARGET = 2; // only used for the Card Sets practice drill
 
@@ -14,6 +15,7 @@ function wordFields(w) {
     jp: w.japanese, en: w.english, exampleEn: example(w.example_en), exampleJa: example(w.example_ja),
     altAnswers: alternates(w.alt_answers),
     audioPath: w.audio_path || null, // recorded pronunciation (npm run audio), null = built-in voice
+    pos: posKey(w.pos), // part of speech (words.pos), null = no chip
   };
 }
 
