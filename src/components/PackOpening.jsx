@@ -1,17 +1,17 @@
 import { useState, useEffect, useRef, useId } from 'react';
 import { colors, fontDisplay, fontBody, btnPrimary } from '../styles/theme';
 import { reduceMotionOn } from '../lib/settings';
-import { PACK_STEPS, PACK_STEP_ORDER, reached, fanLayout } from '../lib/packOpening';
+import { PACK_STEPS, PACK_STEP_ORDER, reached, fanLayout, packFit, packShown, cardFontSize, closeTooSoon } from '../lib/packOpening';
 import { t } from '../i18n';
 
 // Mix of two theme colors, so the pack follows the theme without hard-coded colors.
 const mix = (a, b, pct) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
 
 // Stage: the fan is centered at FAN_Y, the deck the new cards fly into sits DECK_DROP below it.
+// Card size and cards per row come from packFit() (smaller on narrow screens).
 const STAGE = { width: 380, height: 470 };
 const FAN_Y = 175;
 const DECK_DROP = 245;
-const CARD = { width: 66, height: 88 };
 
 // A zigzag (crimped) edge from x 4 to 116 at height y, teeth pointing `dir` (-1 up, 1 down).
 function crimp(y, dir) {
@@ -81,7 +81,7 @@ function DeckStack({ bump, dim }) {
 
 // One card in the fan. Before `fan` it waits inside the pack; at `fly` a new card drops into
 // the deck while an owned one stays behind, grayed with 所持済み.
-function FanCard({ item, index, pos, phase, known }) {
+function FanCard({ item, index, pos, phase, known, card }) {
   const sorted = reached(phase, "sort") && known;
   let transform = "translate(0px, 0px) scale(0.5) rotate(0deg)";
   let opacity = 0;
@@ -98,8 +98,8 @@ function FanCard({ item, index, pos, phase, known }) {
     <div
       className="pack-card"
       style={{
-        position: "absolute", left: `calc(50% - ${CARD.width / 2}px)`, top: FAN_Y - CARD.height / 2,
-        width: CARD.width, height: CARD.height, boxSizing: "border-box", borderRadius: 8, padding: 4,
+        position: "absolute", left: `calc(50% - ${card.width / 2}px)`, top: FAN_Y - card.height / 2,
+        width: card.width, height: card.height, boxSizing: "border-box", borderRadius: 8, padding: 4,
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4,
         background: sorted && item.owned ? colors.surface2 : colors.surface,
         border: `2px solid ${glow ? colors.accent : colors.line}`,
@@ -108,7 +108,11 @@ function FanCard({ item, index, pos, phase, known }) {
         transform, opacity, transitionDelay: `${delay}ms`,
       }}
     >
-      <span lang="en" style={{ fontSize: 12, fontWeight: 700, lineHeight: 1.15, textAlign: "center", overflowWrap: "anywhere", color: colors.text }}>
+      {/* Breaks only between words; a long word gets smaller text instead (cardFontSize). */}
+      <span lang="en" style={{
+        fontSize: cardFontSize(item.en, card.width - 12), fontWeight: 700, lineHeight: 1.15, textAlign: "center",
+        overflowWrap: "normal", wordBreak: "normal", hyphens: "manual", color: colors.text,
+      }}>
         {item.en}
       </span>
       {sorted && item.owned && (
@@ -125,6 +129,10 @@ function FanCard({ item, index, pos, phase, known }) {
 export function PackSummaryPanel({ summary, onClose, closeRef }) {
   const { newCount, ownedCount, known, allOwned, items } = summary;
   const owned = items.filter((w) => w.owned);
+  // Ignore taps on OK for a moment, so the second tap of a double tap (skip) can't close it.
+  const shownAt = useRef(0);
+  useEffect(() => { shownAt.current = Date.now(); }, []);
+  const close = () => { if (!closeTooSoon(shownAt.current)) onClose(); };
   return (
     <div
       className="gacha-reveal-in"
@@ -169,7 +177,7 @@ export function PackSummaryPanel({ summary, onClose, closeRef }) {
         </div>
       )}
 
-      <button ref={closeRef} onClick={onClose} style={{ ...btnPrimary, minWidth: 140, minHeight: 44, borderRadius: 999 }}>
+      <button ref={closeRef} onClick={close} style={{ ...btnPrimary, minWidth: 140, minHeight: 44, borderRadius: 999 }}>
         {t("pack.close")}
       </button>
     </div>
@@ -181,6 +189,7 @@ export function PackSummaryPanel({ summary, onClose, closeRef }) {
 // About 2.7 s; tap to skip. Reduce motion goes straight to the summary.
 export default function PackOpening({ summary, onClose }) {
   const [skipAnimation] = useState(() => reduceMotionOn());
+  const [fit] = useState(() => packFit(typeof window !== "undefined" ? window.innerWidth : 1024));
   const [phase, setPhase] = useState(skipAnimation ? "done" : "shake");
   const closeRef = useRef(null);
   const done = phase === "done";
@@ -200,7 +209,8 @@ export default function PackOpening({ summary, onClose }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [done, onClose]);
 
-  const fan = fanLayout(summary.shown.length);
+  const { shown, hiddenCount } = packShown(summary.items, fit.shownMax);
+  const fan = fanLayout(shown.length, fit);
   const landing = reached(phase, "fly") && summary.newCount > 0;
 
   return (
@@ -217,15 +227,16 @@ export default function PackOpening({ summary, onClose }) {
       {done ? (
         <PackSummaryPanel summary={summary} onClose={onClose} closeRef={closeRef} />
       ) : (
-        <div style={{ display: "grid", justifyItems: "center", gap: 12, cursor: "pointer" }}>
-          <div style={{ position: "relative", width: STAGE.width, height: STAGE.height, maxWidth: "100%" }}>
+        <div style={{ width: "100%", display: "grid", justifyItems: "center", gap: 12, cursor: "pointer" }}>
+          {/* Full width up to STAGE.width, so the fan stays centered on narrow phones. */}
+          <div style={{ position: "relative", width: "100%", maxWidth: STAGE.width, height: STAGE.height }}>
             <FoilPack phase={phase} />
-            {summary.shown.map((item, i) => (
-              <FanCard key={item.id} item={item} index={i} pos={fan[i]} phase={phase} known={summary.known} />
+            {shown.map((item, i) => (
+              <FanCard key={item.id} item={item} index={i} pos={fan[i]} phase={phase} known={summary.known} card={fit.card} />
             ))}
-            {summary.hiddenCount > 0 && reached(phase, "sort") && (
+            {hiddenCount > 0 && reached(phase, "sort") && (
               <div style={{ position: "absolute", left: 0, right: 0, top: FAN_Y + 130, textAlign: "center", fontSize: 13, color: colors.muted }}>
-                {t("pack.more", { n: summary.hiddenCount, count: summary.hiddenCount })}
+                {t("pack.more", { n: hiddenCount, count: hiddenCount })}
               </div>
             )}
             {reached(phase, "fan") && (
