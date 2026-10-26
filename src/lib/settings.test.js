@@ -3,7 +3,7 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
   loadSessionSize, saveSessionSize, loadReduceMotion, saveReduceMotion,
-  loadThemeCache, saveThemeCache, clearThemeCache, loadSeenThemes, saveSeenThemes,
+  loadThemeCache, saveThemeCache, clearThemeCache,
   applyReduceMotion, reduceMotionOn, devThemeOverride, loadLang, saveLang, applyLang,
   loadAutoPlay, saveAutoPlay, loadSlowSpeech, saveSlowSpeech,
 } from './settings';
@@ -175,30 +175,6 @@ describe('theme cache (polycards.theme)', () => {
     expect(loadThemeCache(blocked)).toBeNull();
     expect(() => saveThemeCache(blocked, 'neon')).not.toThrow();
     expect(() => clearThemeCache(blocked)).not.toThrow();
-  });
-});
-
-describe('seen themes (polycards.seenThemes.<user id>)', () => {
-  it('is saved per user', () => {
-    const storage = memory();
-    expect(loadSeenThemes(storage, 'u1')).toEqual([]);
-    saveSeenThemes(storage, 'u1', ['midnight', 'ryukoku']);
-    expect(storage.getItem('polycards.seenThemes.u1')).toBe('["midnight","ryukoku"]');
-    expect(loadSeenThemes(storage, 'u1')).toEqual(['midnight', 'ryukoku']);
-    expect(loadSeenThemes(storage, 'u2')).toEqual([]);
-  });
-
-  it('treats broken data, no user or blocked storage as nothing seen', () => {
-    const storage = memory();
-    for (const bad of ['not json', '{"a":1}', '"ryukoku"', 'null']) {
-      storage.setItem('polycards.seenThemes.u1', bad);
-      expect(loadSeenThemes(storage, 'u1'), bad).toEqual([]);
-    }
-    storage.setItem('polycards.seenThemes.u1', '["snow", 3, null]');
-    expect(loadSeenThemes(storage, 'u1')).toEqual(['snow']);
-    expect(loadSeenThemes(storage, null)).toEqual([]);
-    expect(loadSeenThemes(blocked, 'u1')).toEqual([]);
-    expect(() => saveSeenThemes(blocked, 'u1', ['snow'])).not.toThrow();
   });
 });
 

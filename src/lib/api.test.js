@@ -31,6 +31,7 @@ vi.mock('./supabaseClient', () => ({
 const {
   fetchDueRows, fetchReviewRows, fetchDeckWords, fetchMasteredCards, restoreMasteredCard, recordAnswer, waitForPendingSaves, holdAnswer, flushHeldAnswer, dropHeldAnswer, checkOtherMeaning, fetchBonusPoints, fetchNextReview, fetchReviewPlanRows,
   fetchCollections, fetchGachaStatus, pullGacha, fetchGachaCollection, equipAvatar, setGachaTheme, gachaErrorMessage, fetchThemeUnlocks,
+  fetchSeenThemeUnlocks, markThemeUnlocksSeen, fetchTrainingProgress, recordTrainingCompletion,
   fetchStudyDays, fetchStudyTotals, fetchTroubleWords, addDeckToMyCards, fetchOwnedWordIds,
 } = await import('./api');
 
@@ -354,6 +355,49 @@ describe('next review', () => {
     await fetchReviewPlanRows();
     expect(calls).toContainEqual(['range', 0, 999]);
     expect(calls).toContainEqual(['lt', 'level', MASTERED]);
+  });
+});
+
+describe('seen theme unlocks (saved on the account)', () => {
+  it('reads and adds to the list through the database functions', async () => {
+    result = { data: ['ryukoku'], error: null };
+    expect(await fetchSeenThemeUnlocks()).toEqual(['ryukoku']);
+    result = { data: ['ryukoku', 'snow'], error: null };
+    expect(await markThemeUnlocksSeen(['snow'])).toEqual(['ryukoku', 'snow']);
+    expect(calls).toEqual([
+      ['rpc', 'seen_theme_unlocks', undefined],
+      ['rpc', 'mark_theme_unlocks_seen', { p_keys: ['snow'] }],
+    ]);
+  });
+
+  it('gives an empty list for no data and throws on errors', async () => {
+    result = { data: null, error: null };
+    expect(await fetchSeenThemeUnlocks()).toEqual([]);
+    result = { data: null, error: { message: 'denied' } };
+    await expect(fetchSeenThemeUnlocks()).rejects.toThrow('Could not load seen themes: denied');
+    await expect(markThemeUnlocksSeen(['snow'])).rejects.toThrow('Could not save seen themes: denied');
+  });
+});
+
+describe('training progress', () => {
+  it('reads own rows from user_training_progress', async () => {
+    result = { data: [{ practice_id: 'abc-upper-b', times_completed: 2 }], error: null };
+    expect(await fetchTrainingProgress()).toEqual([{ practice_id: 'abc-upper-b', times_completed: 2 }]);
+    expect(calls).toEqual([
+      ['from', 'user_training_progress'],
+      ['select', 'practice_id, times_completed, first_completed_at, last_completed_at'],
+    ]);
+  });
+
+  it('saves a completion only through record_training_completion', async () => {
+    await recordTrainingCompletion('abc-lower-b');
+    expect(calls).toEqual([['rpc', 'record_training_completion', { p_practice_id: 'abc-lower-b' }]]);
+  });
+
+  it('throws on errors', async () => {
+    result = { data: null, error: { message: 'denied' } };
+    await expect(fetchTrainingProgress()).rejects.toThrow('Could not load training progress: denied');
+    await expect(recordTrainingCompletion('abc-lower-b')).rejects.toThrow('Could not save training progress: denied');
   });
 });
 
