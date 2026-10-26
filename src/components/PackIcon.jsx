@@ -1,6 +1,8 @@
 import { useId } from 'react';
 import { colors, mix, tintLight } from '../styles/theme';
 import { PACK_BODY, PACK_STRIP } from '../lib/packShape';
+import { themes, themeVars } from '../themes';
+import LogoMark from './LogoMark';
 
 // Small emblems in the middle of the pack.
 function Emblem({ kind }) {
@@ -23,6 +25,17 @@ function Emblem({ kind }) {
         <polygon points="60,84 86,78 86,104 60,110" fill={mix(tintLight, colors.gold, 72)} />
         <line x1="60" y1="84" x2="60" y2="110" stroke={mix(colors.gold, colors.text, 55)} strokeWidth="3" />
       </>
+    );
+  }
+  if (kind === "logo") {
+    // The Polycards logo on a dark plate. The plate and the logo are always in Midnight colors
+    // (Midnight's variables are set on the group, like LogoMark does on its own svg), so the
+    // mint / pink logo stands out on the gold pack in every theme.
+    return (
+      <g style={themeVars(themes.midnight)}>
+        <polygon points="30,66 90,66 96,92 90,118 30,118 24,92" fill={colors.surface2} stroke={colors.gold} strokeWidth="3" strokeLinejoin="round" />
+        <g transform="translate(37 72)"><LogoMark height={40} /></g>
+      </g>
     );
   }
   return null;

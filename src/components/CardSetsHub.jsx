@@ -88,7 +88,7 @@ export default function CardSetsHub({ onOpenTextbooks, onOpenTests }) {
         note={t("cardSets.testsNote")}
         tint={colors.gold}
         labelColor={colors.gold}
-        pack={{ strip: colors.accent, emblem: "none" }}
+        pack={{ strip: colors.accent, emblem: "logo" }}
         onClick={onOpenTests}
       />
     </div>

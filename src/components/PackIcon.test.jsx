@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import PackIcon from './PackIcon';
 import { crimp, PACK_BODY, PACK_STRIP } from '../lib/packShape';
 import CardSetsHub from './CardSetsHub';
+import { themes } from '../themes';
 import Tabs from './Tabs';
 
 describe('PackIcon', () => {
@@ -27,6 +28,16 @@ describe('PackIcon', () => {
     }
   });
 
+  it('draws the logo emblem (Select Packs) as LogoMark on a plate, always in Midnight colors', () => {
+    const html = renderToStaticMarkup(<PackIcon emblem="logo" />);
+    expect(html).toContain('viewBox="0 0 84.3 73.4"'); // LogoMark itself, not a copy
+    expect(html.match(/<polygon/g).length).toBeGreaterThanOrEqual(16 + 1);
+    expect(html).toContain('points="30,66 90,66 96,92 90,118 30,118 24,92"'); // the plate
+    // Midnight's variables are set around the plate, whatever theme the app uses
+    expect(html).toContain(`--surface2:${themes.midnight.colors.surface2}`);
+    expect(html).toContain(`--accent:${themes.midnight.colors.accent}`);
+  });
+
   it('puts the animation classes on the strip and the shine', () => {
     const html = renderToStaticMarkup(<PackIcon stripClass="pack-strip-off" shineClass="pack-shine" />);
     expect(html).toContain('class="pack-strip-off"');
@@ -39,10 +50,11 @@ describe('PackIcon', () => {
 });
 
 describe('Word Packs hub pictures', () => {
-  it('shows a pack on each card: a book on Textbook Packs (accent), plain on Select Packs (gold)', () => {
+  it('shows a pack on each card: a book on Textbook Packs (accent), the logo on Select Packs (gold)', () => {
     const html = renderToStaticMarkup(<CardSetsHub onOpenTextbooks={() => {}} onOpenTests={() => {}} />);
     expect(html.match(/viewBox="0 0 120 160"/g)).toHaveLength(2);
     expect(html.match(/points="34,78 60,84 60,110 34,104"/g)).toHaveLength(1);
+    expect(html.match(/viewBox="0 0 84.3 73.4"/g)).toHaveLength(1); // the logo on Select Packs
     expect(html).toContain('color-mix(in srgb, var(--gold) 75%, var(--surface))');
   });
 });
