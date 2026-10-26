@@ -33,11 +33,12 @@ function PracticeChip({ size, letter, onClick }) {
 // Shared by the /hw-test page and (Phase 2) HandwritingInput.
 // scores: per box index, "correct" | "lenient" | "wrong" | null (colors the boxes after checking)
 // locked: answered: the ink stays, nothing draws, and 消す / 戻す are hidden.
+// loading: the letter model isn't ready yet: the boxes are dimmed and take no ink (消す / 戻す stay, off).
 // onPractice(index): when given, a locked red or orange box gets a れんしゅう？ chip under it.
 // maxSize: the largest box (px, border included); the review passes a smaller one on short screens so
 // the boxes and buttons fit under the card. Boxes still shrink to fit the width as before.
 // ref → { getBoxes(): [{ gray, width, height } | null] (null = empty box), hasInk(), clearAll() }
-export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer = false, locked = false, onChange, onPractice, maxSize = 96 }) {
+export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer = false, locked = false, loading = false, onChange, onPractice, maxSize = 96 }) {
   const slots = useMemo(() => answerSlots(answer), [answer]);
   const boxCount = slots.filter((s) => s.type === "box").length;
   const containerRef = useRef(null);
@@ -108,7 +109,7 @@ export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer 
     <div style={{ display: "grid", gap: 12 }}>
       <div ref={containerRef} style={{
         display: "grid", gap: 10, justifyItems: "center", minWidth: 0,
-        userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none",
+        userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none", opacity: loading ? 0.5 : 1,
       }}>
         {width > 0 && rows.map((row, r) => (
           <div key={r} style={{ display: "flex", alignItems: anyChip ? "flex-start" : "center", gap: SPACING }}>
@@ -121,7 +122,7 @@ export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer 
                     state={scores[slot.index] ?? null}
                     selected={!locked && selected === slot.index}
                     allowAnyPointer={allowAnyPointer}
-                    locked={locked}
+                    locked={locked || loading}
                     label={t("handwriting.boxLabel", { n: slot.index + 1 })}
                     onStroke={() => handleStroke(slot.index)}
                     onSelect={() => setSelected(slot.index)}
@@ -160,10 +161,10 @@ export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer 
         ))}
       </div>
       {!locked && <div style={{ display: "flex", justifyContent: "center", gap: 10 }}>
-        <button type="button" onClick={handleClear} disabled={selected === null || !hasInk} style={{ ...btnGhost, minHeight: 44, minWidth: 88 }}>
+        <button type="button" onClick={handleClear} disabled={loading || selected === null || !hasInk} style={{ ...btnGhost, minHeight: 44, minWidth: 88 }}>
           {t("handwriting.clear")}
         </button>
-        <button type="button" onClick={handleUndo} disabled={!hasInk} style={{ ...btnGhost, minHeight: 44, minWidth: 88 }}>
+        <button type="button" onClick={handleUndo} disabled={loading || !hasInk} style={{ ...btnGhost, minHeight: 44, minWidth: 88 }}>
           {t("handwriting.undo")}
         </button>
       </div>}

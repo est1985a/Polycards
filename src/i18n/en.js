@@ -160,6 +160,7 @@ export default {
   "handwriting.undo": "Undo",
   "handwriting.submit": "Answer",
   "handwriting.reading": "Reading…",
+  "handwriting.loading": "Getting ready…", // DRAFT
   "handwriting.read": "I read: {answer}",
   "handwriting.lenient": "Your \"{target}\" looks like \"{read}\". Write carefully!",
   "handwriting.unavailable": "Handwriting isn't ready. Please type your answer this time.",
@@ -200,6 +201,7 @@ export default {
   "practice.hint.capitalI": "Write capital I with a short line at the top and the bottom.",
   "practice.hint.dot": "Don't forget the dot on {letter}. Put it above line 2.",
   "practice.hint.erase": "To write it again, tap \"Erase\".",
+  "practice.hint.retry": "Please write it again.", // DRAFT
   "practice.stroke.down": "Straight down",
   "practice.stroke.across": "Left to right",
   "practice.stroke.barTop": "A short line on the top line",

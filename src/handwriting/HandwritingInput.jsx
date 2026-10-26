@@ -1,11 +1,12 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import LetterBoxes from "./LetterBoxes.jsx";
 import { answerSlots, readText } from "./answerLayout.js";
 import { bestMatch, lenientMessage } from "./checkAnswer.js";
-import { predictBatch } from "./model.js";
+import { isModelReady, modelReady, predictBatch, withTimeout } from "./model.js";
+import { penLog } from "./penDebug.js";
 import { preprocessLetter } from "./preprocess.js";
 import PracticeSheet from "./PracticeSheet.jsx";
-import { HW_COLORS, PRACTICE_ENABLED } from "./config.js";
+import { HW_COLORS, PRACTICE_ENABLED, RECOGNITION_TIMEOUT_MS } from "./config.js";
 import { btnGhost, btnPrimary, colors } from "../styles/theme.js";
 import { t, tx } from "../i18n";
 
@@ -17,7 +18,7 @@ async function readAnswer(boxes, slots, alternates) {
   const targets = slots.filter((s) => s.type === "box").map((s) => s.letter);
   const altTargets = alternates.map((alt) => answerSlots(alt).filter((s) => s.type === "box").map((s) => s.letter));
   const inputs = boxes.getBoxes().map((b) => (b ? preprocessLetter(b.gray, b.width, b.height) : null));
-  const { probs } = await predictBatch(inputs.filter(Boolean));
+  const { probs } = await withTimeout(predictBatch(inputs.filter(Boolean)), RECOGNITION_TIMEOUT_MS);
   let k = 0;
   const boxProbs = inputs.map((x) => (x ? probs[k++] : null));
   const { accepted, ...result } = bestMatch(boxProbs, [targets, ...altTargets]);
@@ -41,6 +42,15 @@ export default function HandwritingInput({ answer, alternates = [], result = nul
   const [hasInk, setHasInk] = useState(false);
   const [reading, setReading] = useState(false);
   const [practiceLetter, setPracticeLetter] = useState(null);
+  // The boxes take ink once the model has loaded and warmed up (StudySession starts loading it when
+  // the review starts; a load that fails switches the review to typing there).
+  const [ready, setReady] = useState(isModelReady);
+  useEffect(() => {
+    if (ready) return undefined;
+    let alive = true;
+    modelReady().then(() => alive && setReady(true), () => {});
+    return () => { alive = false; };
+  }, [ready]);
   const letterAt = (index) => slots.find((s) => s.type === "box" && s.index === index)?.letter;
   const fontSize = wide ? 18 : 16;
 
@@ -48,10 +58,15 @@ export default function HandwritingInput({ answer, alternates = [], result = nul
     if (reading || answered || !hasInk) return;
     setReading(true);
     onReadingStart?.();
+    const start = performance.now();
     try {
-      onResult(await readAnswer(boxesRef.current, slots, alternates));
+      const read = await readAnswer(boxesRef.current, slots, alternates);
+      penLog({ recognition: { ms: Math.round(performance.now() - start), result: `read "${read.text}" for "${answer}"${read.allCorrect ? " (correct)" : ""}` } });
+      onResult(read);
     } catch (error) {
+      // also a read that took too long: the review switches to typing, with a message
       console.warn("Handwriting could not be read:", error);
+      penLog({ recognition: { ms: Math.round(performance.now() - start), error: String(error?.message ?? error) } });
       onError(error);
     } finally {
       setReading(false);
@@ -62,7 +77,7 @@ export default function HandwritingInput({ answer, alternates = [], result = nul
     <div style={{ display: "grid", gap: short ? 8 : 12 }}>
       {!answered && (
         <p style={{ margin: 0, textAlign: "center", fontSize: wide ? 15 : 13, color: colors.muted }}>
-          {t("handwriting.hint")}
+          {ready ? t("handwriting.hint") : t("handwriting.loading")}
         </p>
       )}
       <LetterBoxes
@@ -70,6 +85,7 @@ export default function HandwritingInput({ answer, alternates = [], result = nul
         answer={answer}
         scores={result?.scores ?? []}
         locked={reading || Boolean(result)} // after わからない (answered, no result) the boxes stay open to practice in; nothing is read
+        loading={!ready && !result}
         onChange={() => setHasInk(boxesRef.current?.hasInk() ?? false)}
         onPractice={practiceEnabled && result ? (index) => setPracticeLetter(letterAt(index)) : undefined}
         maxSize={boxMax}

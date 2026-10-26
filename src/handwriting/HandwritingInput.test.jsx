@@ -1,10 +1,14 @@
 // Tests for what the handwriting answer shows (before and after answering). The model and the
 // pen can't run here, so results are passed in. Run with: npm test
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import HandwritingInput from './HandwritingInput.jsx';
 import { scoreWord } from './checkAnswer.js';
 import { HW_COLORS } from './config.js';
+
+// Whether the letter model counts as loaded and warmed up (the real one never loads here).
+const model = vi.hoisted(() => ({ ready: true }));
+vi.mock('./model.js', async (importOriginal) => ({ ...(await importOriginal()), isModelReady: () => model.ready }));
 
 const render = (props) => renderToStaticMarkup(
   <HandwritingInput answer="fish" onResult={() => {}} onDontKnow={() => {}} onError={() => {}} {...props} />,
@@ -16,6 +20,21 @@ const result = (reads, probs = []) => {
 };
 
 describe('HandwritingInput', () => {
+  it('until the model is ready: 準備中… instead of the hint, the boxes dimmed and 消す / 戻す / こたえる off', () => {
+    model.ready = false;
+    try {
+      const h = render({});
+      expect(h).toContain('準備中…');
+      expect(h).not.toContain('Apple Pencil で');
+      expect(h).toContain('opacity:0.5');
+      expect(h).toMatch(/<button[^>]*disabled=""[^>]*>消す<\/button>/);
+      expect(h).toMatch(/<button[^>]*disabled=""[^>]*>こたえる<\/button>/);
+      expect(h).toContain('わからない');
+    } finally {
+      model.ready = true;
+    }
+  });
+
   it('before answering: the hint, わからない and こたえる (off until something is written)', () => {
     const h = render({});
     expect(h).toContain('Apple Pencil で、1マスに1文字ずつ書いてください');

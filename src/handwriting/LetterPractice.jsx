@@ -2,17 +2,25 @@ import { useEffect, useRef, useState } from "react";
 import LetterBox from "./LetterBox.jsx";
 import FourLines from "./FourLines.jsx";
 import StrokeGuide from "./StrokeGuide.jsx";
-import { loadModel, predictBatch } from "./model.js";
+import { isModelReady, modelReady, predictBatch, withTimeout } from "./model.js";
+import { penLog } from "./penDebug.js";
 import { preprocessLetter } from "./preprocess.js";
 import { PRACTICE_BOXES, PRACTICE_BOX_GAP, lineMetrics, practiceBoxWidth } from "./letterGuides.js";
 import { practiceResult, strokesToUnits } from "./practiceCheck.js";
-import { HW_COLORS, PRACTICE_CHECK_DELAY_MS, PRACTICE_MODEL_INK } from "./config.js";
+import { HW_COLORS, PRACTICE_CHECK_DELAY_MS, PRACTICE_MODEL_INK, RECOGNITION_TIMEOUT_MS } from "./config.js";
 import { btnGhost, btnPrimary, colors, fontBody, fontDisplay } from "../styles/theme.js";
 import { t } from "../i18n";
 
 const BOXES = PRACTICE_BOXES;
 const GAP = PRACTICE_BOX_GAP;
 const RATIO = 1.45; // box height / width (about 90 × 130 on the iPad)
+const MAX_FAILURES = 3; // reads in a row that fail or time out before practice gives up (unavailable)
+
+// → a function giving the ms since it was started (for the debug overlay)
+function stopwatch() {
+  const start = performance.now();
+  return () => Math.round(performance.now() - start);
+}
 
 // The hint under the boxes: what to fix, then how to start again.
 function hintText(hint) {
@@ -83,10 +91,10 @@ export function DonePanel({ onAgain, onClose, onNext }) {
 export default function LetterPractice({ letter: startLetter, onClose, onComplete, onLetterChange, onNext, closeRef = null, allowAnyPointer = false, titleId = "practice-title" }) {
   const [letter, setLetter] = useState(startLetter);
   const [round, setRound] = useState(0); // a new set of empty boxes
-  const [states, setStates] = useState(() => Array(BOXES).fill(null)); // null | "checking" | "pass" | "wrong"
+  const [states, setStates] = useState(() => Array(BOXES).fill(null)); // null | "checking" | "pass" | "wrong" | "retry"
   const [hint, setHint] = useState(null);
   const [inkCount, setInkCount] = useState(0); // boxes with ink that aren't green (for 消す)
-  const [model, setModel] = useState("loading"); // loading | ready | error
+  const [model, setModel] = useState(() => (isModelReady() ? "ready" : "loading")); // loading | ready | error
   const [width, setWidth] = useState(0);
   const boxesRef = useRef(null);
   const boxRefs = useRef([]);
@@ -95,10 +103,13 @@ export default function LetterPractice({ letter: startLetter, onClose, onComplet
   const history = useRef([]); // box index of each stroke, in order
   const statesRef = useRef(states);
   const completed = useRef(false);
+  const failures = useRef(0);
 
+  // The boxes take ink only once the model has loaded and warmed up: the warm-up can block the page for
+  // seconds on a slow iPad, and pen strokes made meanwhile could be lost or wait with no result.
   useEffect(() => {
     let alive = true;
-    loadModel().then(() => alive && setModel("ready"), () => alive && setModel("error"));
+    modelReady().then(() => alive && setModel("ready"), () => alive && setModel("error"));
     return () => { alive = false; };
   }, []);
 
@@ -166,20 +177,28 @@ export default function LetterPractice({ letter: startLetter, onClose, onComplet
     const box = boxRefs.current[i];
     if (!box || box.isEmpty()) return;
     setState(i, "checking");
+    const ms = stopwatch();
     try {
       const { gray, width: w, height: h } = box.getGray({ inkRatio: PRACTICE_MODEL_INK });
       const input = preprocessLetter(gray, w, h);
-      const { probs } = await predictBatch(input ? [input] : []);
-      if (versions.current[i] !== version) return; // written in again meanwhile
+      const { probs } = await withTimeout(predictBatch(input ? [input] : []), RECOGNITION_TIMEOUT_MS);
+      if (versions.current[i] !== version) return; // written in again meanwhile (that stroke is checked when the pen lifts)
       const strokes = strokesToUnits(box.getStrokes(), lineMetrics(boxH));
       const result = practiceResult({ target: letter, probs: input ? probs[0] : null, strokes });
+      failures.current = 0;
+      penLog({ recognition: { ms: ms(), result: `box ${i + 1}: read "${result.read ?? "-"}" (${letter} ${Math.round((result.targetProb ?? 0) * 100)}%) ${result.pass ? "pass" : `wrong: ${result.hint?.key}`}` } });
       setState(i, result.pass ? "pass" : "wrong");
       setHint(result.pass ? null : result.hint);
       if (result.pass) countInk();
     } catch (error) {
+      // Never leave the box waiting: it asks to write again (the ink stays; 消す clears it).
       console.warn("Practice box could not be checked:", error);
-      if (versions.current[i] === version) setState(i, null);
-      setModel("error");
+      penLog({ recognition: { ms: ms(), error: String(error?.message ?? error) } });
+      if (versions.current[i] !== version) return;
+      setState(i, "retry");
+      setHint({ key: "retry", letter });
+      failures.current += 1;
+      if (failures.current >= MAX_FAILURES) setModel("error");
     }
   }
 
@@ -221,7 +240,10 @@ export default function LetterPractice({ letter: startLetter, onClose, onComplet
         <div style={{ flex: "1 1 340px", minWidth: 0, display: "grid", gap: 12 }}>
           <div
             ref={boxesRef}
-            style={{ display: "flex", gap: GAP, justifyContent: "center", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}
+            style={{
+              display: "flex", gap: GAP, justifyContent: "center", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none",
+              opacity: model === "loading" ? 0.5 : 1,
+            }}
           >
             {Array.from({ length: BOXES }, (_, i) => (
               <LetterBox
@@ -231,9 +253,9 @@ export default function LetterPractice({ letter: startLetter, onClose, onComplet
                 height={boxH}
                 inkWidth={Math.max(3, lineMetrics(boxH).gap * 0.14)}
                 overlay={<FourLines width={boxW} height={boxH} trace={i === 0 ? letter : null} />}
-                state={states[i] === "pass" || states[i] === "wrong" ? states[i] : null}
+                state={states[i]}
                 allowAnyPointer={allowAnyPointer}
-                locked={states[i] === "pass" || model === "error" || allPass}
+                locked={states[i] === "pass" || model !== "ready" || allPass}
                 label={t("practice.boxLabel", { n: i + 1 })}
                 onPenDown={() => handlePenDown(i)}
                 onStroke={() => handleStroke(i)}
@@ -246,7 +268,7 @@ export default function LetterPractice({ letter: startLetter, onClose, onComplet
             {model === "error" && <span style={{ color: colors.danger }}>{t("practice.unavailable")}</span>}
             {model !== "error" && hint && (
               <>
-                <span style={{ color: colors.danger }}>{hintText(hint)}</span>
+                <span style={{ color: hint.key === "retry" ? colors.text : colors.danger }}>{hintText(hint)}</span>
                 <span style={{ color: colors.muted, fontWeight: 400, fontSize: 13 }}>{t("practice.hint.erase")}</span>
               </>
             )}

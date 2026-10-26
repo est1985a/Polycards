@@ -45,6 +45,10 @@ export const LABELS = "abcdefghijklmnopqrstuvwxyz".split("");
 // fixed shape means it compiles only once (during the warm-up).
 export const BATCH_SIZE = 16;
 
+// A read that takes longer than this is given up (practice: the box asks to write again; review: typing
+// instead), so a box is never left waiting with no result. A normal read takes well under a second.
+export const RECOGNITION_TIMEOUT_MS = 15000;
+
 // Letters the model often mixes up. Target letter → what it may be read as.
 // A box read this way still counts as correct, but gets an orange warning.
 export const LENIENT_PAIRS = { i: "l", l: "i", g: "q", q: "g" };
