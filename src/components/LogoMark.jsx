@@ -1,8 +1,5 @@
-import { colors, tintLight, tintDark } from '../styles/theme';
+import { colors, mix, tintLight, tintDark } from '../styles/theme';
 import { themes, themeVars } from '../themes';
-
-// Mix of two colors, so the facet shades follow the theme without hard-coded colors.
-const mix = (a, b, pct) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
 
 // Polycards logo: two low-poly landscape cards. Front card = accent, back card = danger.
 // Always in Midnight colors (mint + pink), whatever the theme: Midnight's CSS variables are set on

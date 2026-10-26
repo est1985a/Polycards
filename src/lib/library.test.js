@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   shapeLibrary, findTextbook, findUnit, parentPath, resolvePath, schoolLabel,
   levelOf, levelOptions, textbooksForLevel, pickLevel, loadSchoolLevel, saveSchoolLevel, isDeckAdded,
-  shapeCollections, findCollection, collectionParentPath,
+  shapeCollections, findCollection, collectionParentPath, ownedCounts,
 } from './library';
 
 const ROWS = [
@@ -237,5 +237,34 @@ describe('shapeCollections', () => {
     expect(collectionParentPath(findCollection(TREE, 'a2x'), 'HS')).toEqual({ screen: 'collection', collectionId: 'a2', level: 'HS' });
     expect(collectionParentPath(findCollection(TREE, 'a'), 'HS')).toEqual({ screen: 'tests', level: 'HS' });
     expect(collectionParentPath(null, 'JHS')).toEqual({ screen: 'tests', level: 'JHS' });
+  });
+});
+
+describe('ownedCounts (add button counts)', () => {
+  // two cards per word, like buildCards
+  const cards = ['a', 'b', 'c'].flatMap((wordId) => [
+    { wordId, direction: 'en2jp' }, { wordId, direction: 'jp2en' },
+  ]);
+
+  it('is null when the check failed (plain button)', () => {
+    expect(ownedCounts(cards, null)).toBeNull();
+    expect(ownedCounts(cards, undefined)).toBeNull();
+  });
+
+  it('is null when no word is owned (plain button)', () => {
+    expect(ownedCounts(cards, [])).toBeNull();
+    expect(ownedCounts(cards, ['zzz'])).toBeNull();
+  });
+
+  it('counts words, not cards', () => {
+    expect(ownedCounts(cards, ['a'])).toEqual({ newCount: 2, ownedCount: 1, allOwned: false });
+  });
+
+  it('ignores owned ids from other decks', () => {
+    expect(ownedCounts(cards, ['a', 'x', 'y'])).toEqual({ newCount: 2, ownedCount: 1, allOwned: false });
+  });
+
+  it('knows when every word is owned', () => {
+    expect(ownedCounts(cards, ['a', 'b', 'c'])).toEqual({ newCount: 0, ownedCount: 3, allOwned: true });
   });
 });

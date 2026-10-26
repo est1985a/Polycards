@@ -160,11 +160,11 @@ describe('empty My Cards (no decks yet)', () => {
 
   it('explains in Japanese how to add a deck', () => {
     expect(html).toContain('まだデッキがありません');
-    expect(html).toContain('「Card Sets」タブで教科書のユニットを選んで、「＋ マイカードに追加」を押しましょう。');
+    expect(html).toContain('「単語パック」タブで教科書のユニットを選んで、「＋ マイデッキに追加」を押しましょう。');
     expect(html).not.toContain('Personal Rotation');
   });
 
-  it('has a button to the Card Sets tab', () => {
-    expect(html).toMatch(/<button[^>]*>Card Setsを見る<\/button>/);
+  it('has a button to the Word Packs tab', () => {
+    expect(html).toMatch(/<button[^>]*>単語パックを見る<\/button>/);
   });
 });

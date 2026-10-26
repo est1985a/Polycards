@@ -80,7 +80,7 @@ describe('StatsScreen', () => {
     const html = render({ data: { days: [], totals: { reviews: 0, spelled_correctly: 0, bonus_points: 0 }, trouble: [] } });
     const plain = text(html);
     expect(plain).toContain('学習の記録');
-    expect(plain).toContain('まだ記録がありません。My Cardsで復習すると、ここに記録が出ます。');
+    expect(plain).toContain('まだ記録がありません。マイデッキで復習すると、ここに記録が出ます。');
     expect(plain).not.toContain('日連続');
     expect(html).not.toContain('data-cell');
     expect(plain).not.toContain('苦手な単語');

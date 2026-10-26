@@ -1,11 +1,9 @@
-import { useState, useEffect, useRef, useId } from 'react';
-import { colors, fontDisplay, fontBody, btnPrimary } from '../styles/theme';
+import { useState, useEffect, useRef } from 'react';
+import { colors, mix, fontDisplay, fontBody, btnPrimary } from '../styles/theme';
 import { reduceMotionOn } from '../lib/settings';
 import { PACK_STEPS, PACK_STEP_ORDER, reached, fanLayout, packFit, packShown, cardFontSize, closeTooSoon } from '../lib/packOpening';
 import { t } from '../i18n';
-
-// Mix of two theme colors, so the pack follows the theme without hard-coded colors.
-const mix = (a, b, pct) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
+import PackIcon from './PackIcon';
 
 // Stage: the fan is centered at FAN_Y, the deck the new cards fly into sits DECK_DROP below it.
 // Card size and cards per row come from packFit() (smaller on narrow screens).
@@ -13,51 +11,18 @@ const STAGE = { width: 380, height: 470 };
 const FAN_Y = 175;
 const DECK_DROP = 245;
 
-// A zigzag (crimped) edge from x 4 to 116 at height y, teeth pointing `dir` (-1 up, 1 down).
-function crimp(y, dir) {
-  const pts = [];
-  for (let x = 4, i = 0; x <= 116; x += 8, i++) pts.push(`${x},${y + (i % 2 ? dir * 6 : 0)}`);
-  return pts;
-}
-
-// The foil pack: low-poly body, a strip at the top that tears off, and a shine that sweeps across.
+// The foil pack (PackIcon): shakes, its top strip tears off, and a shine sweeps across.
 function FoilPack({ phase }) {
-  const clip = useId();
-  const accent = colors.accent;
-  const body = [
-    ["4,22 116,22 60,64", mix(accent, colors.surface, 75)],
-    ["4,22 60,64 4,104", mix(accent, colors.surface, 55)],
-    ["116,22 116,104 60,64", mix(accent, colors.surface, 90)],
-    ["4,104 60,64 60,150", mix(accent, colors.bg, 70)],
-    ["60,64 116,104 60,150", mix(accent, colors.surface, 65)],
-    ["4,104 60,150 4,150", mix(accent, colors.bg, 50)],
-    ["116,104 116,150 60,150", mix(accent, colors.bg, 80)],
-  ];
-  const bodyOutline = ["4,22", "116,22", ...crimp(144, 1).reverse()].join(" ");
-  const stripPoints = [...crimp(6, -1), "116,22", "4,22"].join(" ");
   return (
     <div
       className={reached(phase, "fan") ? "pack-fade-out" : phase === "shake" ? "pack-shake" : undefined}
       style={{ position: "absolute", left: "calc(50% - 60px)", top: FAN_Y - 80, width: 120, height: 160 }}
       aria-hidden="true"
     >
-      <svg viewBox="0 0 120 160" width="120" height="160" style={{ overflow: "visible", display: "block" }}>
-        <defs>
-          <clipPath id={clip}><polygon points={bodyOutline} /></clipPath>
-        </defs>
-        <g clipPath={`url(#${clip})`}>
-          {body.map(([points, fill]) => <polygon key={points} points={points} fill={fill} stroke={fill} strokeWidth="0.5" />)}
-          {/* Emblem: a small gold diamond */}
-          <polygon points="60,72 74,88 60,104 46,88" fill={colors.gold} />
-          <polygon points="60,72 74,88 60,88" fill={mix(colors.gold, colors.text, 75)} />
-          {/* Shine stripe */}
-          <polygon className="pack-shine" points="20,22 44,22 4,150 -20,150" fill={mix(colors.text, "transparent", 30)} />
-        </g>
-        <line x1="4" y1="22" x2="116" y2="22" stroke={colors.surface} strokeWidth="1.5" strokeDasharray="4 3" />
-        <g className={reached(phase, "tear") ? "pack-strip-off" : undefined}>
-          <polygon points={stripPoints} fill={mix(colors.gold, colors.surface, 80)} />
-        </g>
-      </svg>
+      <PackIcon
+        tint={colors.accent} emblem="diamond"
+        shineClass="pack-shine" stripClass={reached(phase, "tear") ? "pack-strip-off" : undefined}
+      />
     </div>
   );
 }

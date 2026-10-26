@@ -11,7 +11,7 @@ describe('PackSummaryPanel', () => {
   it('shows how many words were added and lists the ones already owned', () => {
     const html = panel(packSummary(words(5), ['w1', 'w3']));
     expect(html).toContain('+3');
-    expect(html).toContain('3語をマイカードに追加しました！');
+    expect(html).toContain('3語をマイデッキに追加しました！');
     expect(html).toContain('2語はもう持っているので、追加しませんでした。');
     expect(html).toContain('もう持っている単語');
     expect(html).toContain('>word1<');
@@ -21,7 +21,7 @@ describe('PackSummaryPanel', () => {
 
   it('has no owned section when every word is new', () => {
     const html = panel(packSummary(words(4), []));
-    expect(html).toContain('4語をマイカードに追加しました！');
+    expect(html).toContain('4語をマイデッキに追加しました！');
     expect(html).not.toContain('もう持っている');
   });
 
@@ -34,7 +34,7 @@ describe('PackSummaryPanel', () => {
 
   it('shows a plain line when the owned check failed', () => {
     const html = panel(packSummary(words(3), null));
-    expect(html).toContain('マイカードに追加しました！');
+    expect(html).toContain('マイデッキに追加しました！');
     expect(html).not.toContain('data-testid="pack-new-count"');
   });
 });

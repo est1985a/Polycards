@@ -31,7 +31,7 @@ vi.mock('./supabaseClient', () => ({
 const {
   fetchDueRows, fetchReviewRows, fetchDeckWords, restoreMasteredCard, recordAnswer, waitForPendingSaves, holdAnswer, flushHeldAnswer, dropHeldAnswer, checkOtherMeaning, fetchBonusPoints, fetchNextReview, fetchReviewPlanRows,
   fetchCollections, fetchGachaStatus, pullGacha, fetchGachaCollection, equipAvatar, setGachaTheme, gachaErrorMessage, fetchThemeUnlocks,
-  fetchStudyDays, fetchStudyTotals, fetchTroubleWords, addDeckToMyCards,
+  fetchStudyDays, fetchStudyTotals, fetchTroubleWords, addDeckToMyCards, fetchOwnedWordIds,
 } = await import('./api');
 
 beforeEach(() => {
@@ -431,5 +431,38 @@ describe('adding a deck (pack opening)', () => {
     expect(checkAt).toBeLessThan(upsertAt);
     expect(calls).toContainEqual(['in', 'word_id', ['a', 'b']]);
     expect(res).toEqual({ wordIds: ['a', 'b'], ownedWordIds: ['a', 'b'] });
+  });
+});
+
+describe('fetchOwnedWordIds (word list preview and adding a deck)', () => {
+  it("asks only for this student's rows for these words, and removes duplicates (one row per direction)", async () => {
+    result = { data: [{ word_id: 'a' }, { word_id: 'a' }, { word_id: 'c' }], error: null };
+    expect(await fetchOwnedWordIds('user-1', ['a', 'b', 'c'])).toEqual(['a', 'c']);
+    expect(calls).toContainEqual(['from', 'user_cards']);
+    expect(calls).toContainEqual(['select', 'word_id']);
+    expect(calls).toContainEqual(['eq', 'user_id', 'user-1']);
+    expect(calls).toContainEqual(['in', 'word_id', ['a', 'b', 'c']]);
+  });
+
+  it('returns an empty list when nothing is owned', async () => {
+    result = { data: [], error: null };
+    expect(await fetchOwnedWordIds('user-1', ['a'])).toEqual([]);
+  });
+
+  it('returns null without a query when not signed in or there are no words', async () => {
+    expect(await fetchOwnedWordIds(null, ['a'])).toBeNull();
+    expect(await fetchOwnedWordIds('user-1', [])).toBeNull();
+    expect(calls).toEqual([]);
+  });
+
+  it('returns null with only a console warning when the query fails (never throws)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      result = { data: null, error: { message: 'network down' } };
+      expect(await fetchOwnedWordIds('user-1', ['a'])).toBeNull();
+      expect(warn).toHaveBeenCalledTimes(1);
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

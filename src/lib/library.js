@@ -113,6 +113,20 @@ export function isDeckAdded(myDeckIds, deckId) {
   return Array.isArray(myDeckIds) && myDeckIds.includes(deckId);
 }
 
+// The add button's word counts for a deck: counted per word (each word is two cards).
+// ownedWordIds: from fetchOwnedWordIds (null = unknown). Returns null when the check failed or
+// no word is owned (the plain button), else { newCount, ownedCount, allOwned }.
+export function ownedCounts(cards, ownedWordIds) {
+  if (!Array.isArray(ownedWordIds)) return null;
+  const owned = new Set(ownedWordIds);
+  const words = new Set((cards || []).map((c) => c.wordId));
+  let ownedCount = 0;
+  for (const id of words) if (owned.has(id)) ownedCount++;
+  if (ownedCount === 0) return null;
+  const newCount = words.size - ownedCount;
+  return { newCount, ownedCount, allOwned: newCount === 0 };
+}
+
 // Word list reveals: a new Set with id added, or removed if it was already there
 // (the original is not changed).
 export function toggleId(set, id) {

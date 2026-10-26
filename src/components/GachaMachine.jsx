@@ -1,7 +1,5 @@
-import { colors } from '../styles/theme';
+import { colors, mix } from '../styles/theme';
 import { themes, themeVars } from '../themes';
-
-const mix = (a, b, pct) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
 
 // Glass dome: a ring of triangles around the center, lighter on the upper left.
 const DOME = [

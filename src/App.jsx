@@ -597,7 +597,10 @@ function App() {
     try {
       const words = await api.fetchDeckWords(deck.id);
       if (words.length === 0) throw new Error();
-      setActiveSet({ id: deck.id, name: deck.name, cards: buildCards(words) });
+      // Which words the student already has (所持済み tags and the add button's counts).
+      // Checked before the list shows, so the tags never make rows jump; null = unknown.
+      const ownedWordIds = await api.fetchOwnedWordIds(session?.user?.id, words.map((w) => w.id));
+      setActiveSet({ id: deck.id, name: deck.name, cards: buildCards(words), ownedWordIds });
       setView("wordList");
     } catch {
       alert(t("cardSets.deckEmpty"));
@@ -658,8 +661,11 @@ function App() {
     if (!activeSet) return;
     setSavingDeck(true);
     try {
-      const { ownedWordIds } = await api.addDeckToMyCards(session.user.id, activeSet.id);
+      const { wordIds, ownedWordIds } = await api.addDeckToMyCards(session.user.id, activeSet.id);
       setPackResult(packSummary(packWords(activeSet.cards), ownedWordIds));
+      // Every word of the deck is owned now.
+      const deckId = activeSet.id;
+      setActiveSet((set) => (set && set.id === deckId ? { ...set, ownedWordIds: wordIds } : set));
       await loadMyDecks();
     } catch (e) {
       alert(e.message);

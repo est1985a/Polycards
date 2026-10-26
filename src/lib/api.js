@@ -91,6 +91,25 @@ export async function fetchDeckWords(deckId) {
   return (data || []).map((r) => r.words).filter(Boolean);
 }
 
+// Which of these words the student already has (a user_cards row in either direction).
+// Returns the word ids (no duplicates), or null when it can't tell (not signed in, no words,
+// or the query failed: only a console.warn). Never throws.
+export async function fetchOwnedWordIds(userId, wordIds) {
+  if (!userId || !wordIds || wordIds.length === 0) return null;
+  try {
+    const { data, error } = await supabase
+      .from('user_cards')
+      .select('word_id')
+      .eq('user_id', userId)
+      .in('word_id', wordIds);
+    if (error) throw error;
+    return [...new Set((data || []).map((r) => r.word_id))];
+  } catch (e) {
+    console.warn("Could not check which words you already have: " + e.message);
+    return null;
+  }
+}
+
 // Returns { wordIds, ownedWordIds }: the deck's words, and the ones the student already
 // had before adding (for the pack opening's 所持済み cards). ownedWordIds is null when that
 // check fails; adding still goes ahead.
@@ -99,14 +118,7 @@ export async function addDeckToMyCards(userId, deckId) {
   if (wordIds.length === 0) throw new Error("Could not load this deck's words: no words found");
 
   // Must run before the upsert below, which would make every word look owned.
-  let ownedWordIds = null;
-  const { data: ownedRows, error: ownedError } = await supabase
-    .from('user_cards')
-    .select('word_id')
-    .eq('user_id', userId)
-    .in('word_id', wordIds);
-  if (ownedError) console.warn("Could not check which words you already have: " + ownedError.message);
-  else ownedWordIds = [...new Set((ownedRows || []).map((r) => r.word_id))];
+  const ownedWordIds = await fetchOwnedWordIds(userId, wordIds);
 
   // ignoreDuplicates skips words the student already has from another deck,
   // so progress on shared words is kept.

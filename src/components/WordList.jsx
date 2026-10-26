@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { toggleId } from '../lib/library';
+import { toggleId, ownedCounts } from '../lib/library';
 import { colors, fontDisplay, fontBody, gutter, panel, btnPrimary, wideLayout } from '../styles/theme';
 import AddDeckButton from './AddDeckButton';
 import Highlighted from './Highlighted';
@@ -14,7 +14,8 @@ const blurred = { filter: "blur(6px)", userSelect: "none" };
 // revealed: this word was tapped open while the switch is on.
 // word: an English-to-Japanese card from buildCards ({ wordId, en, jp, exampleEn, exampleJa }).
 // speech: { slow } for the 発音を聞く button after the English word, or null (no button).
-export function WordRow({ word, hideJa, revealed, first, onToggle, speech = null }) {
+// owned: the student already has this word (a small muted 所持済み tag after the English word).
+export function WordRow({ word, hideJa, revealed, first, onToggle, speech = null, owned = false }) {
   const hidden = hideJa && !revealed;
   // Props for the Japanese parts: hidden and skipped by screen readers while hidden.
   const jaHidden = hidden || undefined;
@@ -57,6 +58,14 @@ export function WordRow({ word, hideJa, revealed, first, onToggle, speech = null
           <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 18, color: colors.text }}>{word.en}</span>
             {speech && <SpeakerButton text={word.en} audioPath={word.audioPath} slow={speech.slow} style={{ margin: "-4px 0" }} />}
+            {owned && (
+              <span style={{
+                fontSize: 11, fontWeight: 700, lineHeight: 1.4, color: colors.muted, whiteSpace: "nowrap",
+                border: `1px solid ${colors.line}`, borderRadius: 999, padding: "0 7px",
+              }}>
+                {t("wordList.owned")}
+              </span>
+            )}
           </span>
           {jp}
         </span>
@@ -75,12 +84,15 @@ export function WordRow({ word, hideJa, revealed, first, onToggle, speech = null
   );
 }
 
-// Card Sets: every word of a deck, shown before the drill starts.
+// Word Packs (Card Sets in the code): every word of a deck, shown before the drill starts.
+// activeSet.ownedWordIds: words the student already has (fetchOwnedWordIds), or null if unknown.
 // activeSet.cards comes from buildCards (two cards per word, in deck order).
 // wide: the fixed start bar matches the 720 px list instead of 480 px.
 // speech: { slow } for the speaker buttons, or null when the browser can't speak.
 export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStart, wide = false, speech = null }) {
   const words = activeSet.cards.filter((c) => c.direction === "en2jp");
+  // 所持済み tags only while the deck isn't added yet: once it is, every word is owned.
+  const ownedIds = !isAdded && Array.isArray(activeSet.ownedWordIds) ? new Set(activeSet.ownedWordIds) : null;
   const [hideJa, setHideJa] = useState(false);
   // words tapped open while hidden; cleared by the switch, and reset when the deck is left
   // (App gives the list key={activeSet.id}, so another deck always starts fresh)
@@ -100,7 +112,7 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
         </span>
       </div>
 
-      <AddDeckButton isAdded={isAdded} saving={saving} onAdd={onAddDeck} />
+      <AddDeckButton isAdded={isAdded} saving={saving} onAdd={onAddDeck} counts={ownedCounts(activeSet.cards, activeSet.ownedWordIds)} />
 
       {/* The switch stays at the top while the list scrolls under it: frosted glass (surface at 85% plus
           a blur), so a theme's backdrop shows through softly and the text stays readable. */}
@@ -132,6 +144,7 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
             word={w}
             first={i === 0}
             speech={speech}
+            owned={!!ownedIds?.has(w.wordId)}
             hideJa={hideJa}
             revealed={revealed.has(w.wordId)}
             onToggle={() => setRevealed((r) => toggleId(r, w.wordId))}

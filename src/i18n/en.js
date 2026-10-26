@@ -16,10 +16,10 @@ export default {
   "common.cancel": "Cancel",
   "common.close": "Close",
   "common.mastered": "Mastered",
-  "common.backToDashboard": "← Back to My Cards",
+  "common.backToDashboard": "← Back to My Deck",
 
   // Header at the top of every screen: logo button and gacha button (read aloud only)
-  "header.home": "My Cards",
+  "header.home": "My Deck",
   "header.gacha": "Gacha",
   "header.gachaTickets": plural("Gacha ({n} ticket)", "Gacha ({n} tickets)"),
 
@@ -34,8 +34,8 @@ export default {
   "menu.signOutConfirm": "Log out?",
 
   // Bottom tab bar
-  "tabs.myCards": "My Cards",
-  "tabs.cardSets": "Card Sets",
+  "tabs.myCards": "My Deck",
+  "tabs.cardSets": "Word Packs",
   "tabs.training": "Training",
 
   // My Cards dashboard: review button and My Decks list
@@ -46,15 +46,15 @@ export default {
   "myCards.nextReview": plural("Next review: {n} card {when}", "Next review: {n} cards {when}"), // {when} = "in 2 hours" / "on Oct 24"
   "myCards.nothingDueAlert": "Nothing is due right now.",
   "myCards.mastered": "Mastered {n}",
-  "myCards.myDecks": "My Decks",
+  "myCards.myDecks": "My Packs",
   "myCards.deckDue": "{n} to review",
   "myCards.deckNothingDue": "Nothing due",
   "myCards.remove": "Remove",
   "myCards.removing": "Removing…",
-  "myCards.removeConfirm": "Remove \"{name}\" from My Cards? Your review progress for this deck will be lost.",
+  "myCards.removeConfirm": "Remove \"{name}\" from My Deck? Your review progress for this deck will be lost.",
   "myCards.empty.heading": "No decks yet",
-  "myCards.empty.body": "Go to the Card Sets tab, choose a unit from your textbook, and tap \"+ Add to My Cards.\" Then you can review the cards here.",
-  "myCards.empty.button": "Go to Card Sets",
+  "myCards.empty.body": "Go to the Word Packs tab, choose a unit from your textbook, and tap \"+ Add to My Deck.\" Then you can review the cards here.",
+  "myCards.empty.button": "Go to Word Packs",
 
   // Player card and level chart on My Cards
   "stats.rankLabel": "Your rank",
@@ -105,7 +105,7 @@ export default {
   "stats.troubleNote": "Words you missed most in the last 30 days",
   "stats.troubleCount": plural("{n} time", "{n} times"),
   "stats.troubleEmpty": "No trouble words right now. Great job!",
-  "stats.empty": "No stats yet. Review your My Cards and your stats will show up here.",
+  "stats.empty": "No stats yet. Review your My Deck and your stats will show up here.",
 
   // How-to-answer switch (My Cards and settings)
   "answerMode.title": "How to answer (Japanese → English)",
@@ -151,7 +151,7 @@ export default {
   "review.undo": "Undo",
   "review.undoAria": "Undo your answer to the last card",
   "review.allCleared": "All done!",
-  "review.backToDashboard": "Back to My Cards",
+  "review.backToDashboard": "Back to My Deck",
 
   // Handwriting answer mode (Apple Pencil) in reviews
   "handwriting.hint": "Use your Apple Pencil. Write one letter in each box.",
@@ -255,13 +255,13 @@ export default {
   "reviewPlan.runningTotal": "{n} total",
 
   // Card Sets tab
-  "cardSets.title": "Card Sets",
+  "cardSets.title": "Word Packs",
   "cardSets.titleJa": "", // the small Japanese line next to the title: hidden in English mode
-  "cardSets.hubIntro": "Choose a set you want to learn, and add it to My Cards.",
+  "cardSets.hubIntro": "Textbook Packs have the words from your lessons. Select Packs have words by theme. Open a pack to see its words, then add it to My Deck!",
   "cardSets.textbooks": "Textbook Packs",
   "cardSets.textbooksLabel": "Find by textbook",
   "cardSets.textbooksNote": "Word sets organized by textbook and unit",
-  "cardSets.tests": "Word Packs",
+  "cardSets.tests": "Select Packs",
   "cardSets.testsLabel": "Find by test or theme",
   "cardSets.testsNote": "Word sets by theme and goal",
   "cardSets.comingSoon": "Coming soon",
@@ -279,20 +279,22 @@ export default {
   "cardSets.deckCount": plural("{n} deck", "{n} decks"),
   "cardSets.wordCount": plural("{n} word", "{n} words"),
   "cardSets.addedBadge": "Added",
-  "cardSets.add": "+ Add to My Cards",
+  "cardSets.add": "+ Add to My Deck",
+  "cardSets.addCounts": "+ Add to My Deck ({new} new · {owned} owned)",
+  "cardSets.addAllOwned": "+ Add to My Deck (all owned)",
   "cardSets.adding": "Adding…",
-  "cardSets.added": "✓ Added to My Cards",
+  "cardSets.added": "✓ Added to My Deck",
   "cardSets.deckEmpty": "This deck has no cards yet.",
-  "cardSets.signInToAdd": "Please log in to add decks to My Cards.",
+  "cardSets.signInToAdd": "Please log in to add decks to My Deck.",
 
   // Pack opening (DRAFT English, Andre to check)
   "pack.dialog": "Opening the pack",
   "pack.tapToSkip": "Tap to skip",
   "pack.owned": "Owned",
   "pack.more": plural("+{n} more word", "+{n} more words"),
-  "pack.deckLabel": "My Cards",
-  "pack.addedLine": plural("Added {n} word to My Cards!", "Added {n} words to My Cards!"),
-  "pack.addedPlain": "Added to My Cards!",
+  "pack.deckLabel": "My Deck",
+  "pack.addedLine": plural("Added {n} word to My Deck!", "Added {n} words to My Deck!"),
+  "pack.addedPlain": "Added to My Deck!",
   "pack.ownedLine": plural("You already have {n} word, so it was not added again. Your progress stays the same.", "You already have {n} words, so they were not added again. Your progress stays the same."),
   "pack.ownedList": "Words you already have",
   "pack.allOwned": "You already have every word in this pack!",
@@ -305,6 +307,7 @@ export default {
   "wordList.tapToShow": "Tap to show",
   "wordList.showWord": "Show Japanese: {word}",
   "wordList.hideWord": "Hide Japanese: {word}",
+  "wordList.owned": "Owned", // same as pack.owned
   "wordList.startDrill": "Start drill",
 
   // Gacha screen and the pull result

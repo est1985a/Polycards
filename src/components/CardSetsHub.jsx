@@ -1,8 +1,6 @@
-import { colors, fontDisplay } from '../styles/theme';
+import { colors, mix, fontDisplay } from '../styles/theme';
 import { t } from '../i18n';
-
-// Mix of two theme colors, so the shades follow the theme without hard-coded colors.
-const mix = (a, b, pct) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
+import PackIcon from './PackIcon';
 
 // Low-poly decoration on the right of a hub card, on a 140 × 200 grid.
 // tint: the card's accent (accent or gold), mixed with the card's surface.
@@ -27,9 +25,22 @@ function PolyDecoration({ tint }) {
   );
 }
 
+// A foil pack standing on the triangles, tilted a little, so the two read as one picture.
+function HubPack({ tint, strip, emblem }) {
+  return (
+    <span aria-hidden="true" style={{ position: "absolute", top: "50%", right: 34, transform: "translateY(-50%) rotate(-8deg)" }}>
+      <PackIcon
+        tint={tint} strip={strip} emblem={emblem} width={72} height={96}
+        style={{ filter: `drop-shadow(0 6px 6px ${mix(colors.bg, "transparent", 60)})` }}
+      />
+    </span>
+  );
+}
+
 // One big tappable card. tint is a fill color (accent or gold), labelColor the readable
 // text version of it (accent can't be used as text, see CLAUDE.md).
-function HubCard({ title, label, note, tint, labelColor, onClick }) {
+// pack: { strip, emblem } for the pack picture on the right.
+function HubCard({ title, label, note, tint, labelColor, pack, onClick }) {
   return (
     <button
       onClick={onClick}
@@ -41,6 +52,7 @@ function HubCard({ title, label, note, tint, labelColor, onClick }) {
       }}
     >
       <PolyDecoration tint={tint} />
+      <HubPack tint={tint} {...pack} />
       {/* Colored strip on the left edge */}
       <span aria-hidden="true" style={{ position: "absolute", left: 0, top: 24, bottom: 24, width: 6, borderRadius: "0 6px 6px 0", background: tint }} />
       <span style={{ position: "relative", fontFamily: fontDisplay, fontWeight: 700, fontSize: 26, lineHeight: 1.1 }}>{title}</span>
@@ -50,7 +62,7 @@ function HubCard({ title, label, note, tint, labelColor, onClick }) {
   );
 }
 
-// Card Sets start screen: Textbook Packs or Word Packs (Tests & Themes in the code).
+// Word Packs start screen (Card Sets in the code): Textbook Packs or Select Packs (Tests & Themes in the code).
 export default function CardSetsHub({ onOpenTextbooks, onOpenTests }) {
   return (
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
@@ -67,6 +79,7 @@ export default function CardSetsHub({ onOpenTextbooks, onOpenTests }) {
         note={t("cardSets.textbooksNote")}
         tint={colors.accent}
         labelColor={colors.accentText}
+        pack={{ strip: colors.gold, emblem: "book" }}
         onClick={onOpenTextbooks}
       />
       <HubCard
@@ -75,6 +88,7 @@ export default function CardSetsHub({ onOpenTextbooks, onOpenTests }) {
         note={t("cardSets.testsNote")}
         tint={colors.gold}
         labelColor={colors.gold}
+        pack={{ strip: colors.accent, emblem: "none" }}
         onClick={onOpenTests}
       />
     </div>

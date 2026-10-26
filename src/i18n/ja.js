@@ -14,7 +14,7 @@ export default {
   "common.backToDashboard": "← ダッシュボードに戻る (Back to Dashboard)", // link above the Mastered list
 
   // Header at the top of every screen: logo button and gacha button (read aloud only)
-  "header.home": "My Cards", // the Polycards logo, which goes back to My Cards
+  "header.home": "マイデッキ", // the Polycards logo, which goes back to My Cards
   "header.gacha": "ガチャ",
   "header.gachaTickets": "ガチャ (券 {n}枚)", // gacha button when the student has {n} tickets
 
@@ -29,8 +29,8 @@ export default {
   "menu.signOutConfirm": "ログアウトしますか？",
 
   // Bottom tab bar
-  "tabs.myCards": "マイカード",
-  "tabs.cardSets": "カードセット",
+  "tabs.myCards": "マイデッキ",
+  "tabs.cardSets": "単語パック",
   "tabs.training": "トレーニング",
 
   // My Cards dashboard: review button and マイデッキ list
@@ -41,15 +41,15 @@ export default {
   "myCards.nextReview": "次の復習：{when}に {n}枚", // {when} is a time.* text, e.g. 2時間後 / 10月15日
   "myCards.nothingDueAlert": "今は復習するカードがありません。", // browser alert
   "myCards.mastered": "Mastered {n}", // button that opens the Mastered list; {n} = number of Mastered cards
-  "myCards.myDecks": "マイデッキ", // heading of the student's decks
+  "myCards.myDecks": "追加したパック", // heading of the student's decks
   "myCards.deckDue": "復習 {n}枚", // pill on a deck row: due cards in that deck
   "myCards.deckNothingDue": "今は復習なし",
   "myCards.remove": "削除 (Remove)", // the × on a deck row
   "myCards.removing": "削除中...",
-  "myCards.removeConfirm": "「{name}」をマイカードから削除しますか？このデッキの復習の記録は消えます。", // browser confirm; {name} = deck name
+  "myCards.removeConfirm": "「{name}」をマイデッキから削除しますか？このデッキの復習の記録は消えます。", // browser confirm; {name} = deck name
   "myCards.empty.heading": "まだデッキがありません", // shown when no decks are added yet
-  "myCards.empty.body": "「Card Sets」タブで教科書のユニットを選んで、「＋ マイカードに追加」を押しましょう。追加したカードはここで復習できます。",
-  "myCards.empty.button": "Card Setsを見る", // button that opens the Card Sets tab
+  "myCards.empty.body": "「単語パック」タブで教科書のユニットを選んで、「＋ マイデッキに追加」を押しましょう。追加したカードはここで復習できます。",
+  "myCards.empty.button": "単語パックを見る", // button that opens the Card Sets tab
 
   // Player card and level chart on My Cards
   "stats.rankLabel": "ランク", // small label above the big "Rank N"
@@ -99,7 +99,7 @@ export default {
   "stats.troubleNote": "最近30日で「まだ」「わからない」が多かった単語",
   "stats.troubleCount": "{n}回", // how many times the word was missed
   "stats.troubleEmpty": "苦手な単語はありません。すごい！",
-  "stats.empty": "まだ記録がありません。My Cardsで復習すると、ここに記録が出ます。",
+  "stats.empty": "まだ記録がありません。マイデッキで復習すると、ここに記録が出ます。",
 
   // 答え方 switch (My Cards and settings): how Japanese → English cards are answered
   "answerMode.title": "答え方（日本語 → English）",
@@ -250,14 +250,14 @@ export default {
   "reviewPlan.runningTotal": "計{n}枚", // cards waiting by that hour, counted from now
 
   // Card Sets tab: hub, textbook / unit / deck lists, add-to-My-Cards
-  "cardSets.title": "Card Sets",
-  "cardSets.titleJa": "カードセット", // small Japanese line next to the title
-  "cardSets.hubIntro": "学びたいセットをえらんで、マイカードに追加しよう。",
+  "cardSets.title": "Word Packs",
+  "cardSets.titleJa": "単語パック", // small Japanese line next to the title
+  "cardSets.hubIntro": "教科書パックは授業で習う単語、セレクトパックはテーマ別の単語です。パックを開いて単語を見てから、マイデッキに追加しよう！",
   "cardSets.textbooks": "Textbook Packs",
   "cardSets.textbooksLabel": "教科書パック",
   "cardSets.textbooksNote": "教科書のユニットごとにまとめた単語セット",
-  "cardSets.tests": "Word Packs",
-  "cardSets.testsLabel": "単語パック",
+  "cardSets.tests": "Select Packs",
+  "cardSets.testsLabel": "セレクトパック",
   "cardSets.testsNote": "テーマや目的別の単語セット",
   "cardSets.comingSoon": "準備中 — Coming soon",
   "cardSets.comingSoonNote": "英検などのセットは、もうすぐ追加されます。",
@@ -274,20 +274,22 @@ export default {
   "cardSets.deckCount": "{n} デッキ",
   "cardSets.wordCount": "{n}語",
   "cardSets.addedBadge": "追加済み", // pill on a deck already in My Cards
-  "cardSets.add": "＋ マイカードに追加 (Add to My Cards)",
+  "cardSets.add": "＋ マイデッキに追加",
+  "cardSets.addCounts": "＋ マイデッキに追加（新しい単語 {new} · 所持済み {owned}）", // when some words are already owned (words, not cards)
+  "cardSets.addAllOwned": "＋ マイデッキに追加（ぜんぶ所持済み）", // when every word is already owned
   "cardSets.adding": "追加中...",
-  "cardSets.added": "✓ マイカードに追加済み (Added to My Cards)",
+  "cardSets.added": "✓ マイデッキに追加済み",
   "cardSets.deckEmpty": "このデッキにはまだカードがありません。", // browser alert
-  "cardSets.signInToAdd": "マイカードに追加するには、ログインしてください。", // browser alert
+  "cardSets.signInToAdd": "マイデッキに追加するには、ログインしてください。", // browser alert
 
   // Pack opening after Add to My Cards (PackOpening.jsx). Counts are words, not cards.
   "pack.dialog": "パックを開けています", // read aloud for the pop-up
   "pack.tapToSkip": "タップでスキップ",
   "pack.owned": "所持済み", // on a grayed card the student already has
   "pack.more": "ほか {n}語", // under the fan when the pack has more words than are shown
-  "pack.deckLabel": "マイカード", // under the deck the new cards fly into
-  "pack.addedLine": "{n}語をマイカードに追加しました！",
-  "pack.addedPlain": "マイカードに追加しました！", // when the owned check failed
+  "pack.deckLabel": "マイデッキ", // under the deck the new cards fly into
+  "pack.addedLine": "{n}語をマイデッキに追加しました！",
+  "pack.addedPlain": "マイデッキに追加しました！", // when the owned check failed
   "pack.ownedLine": "{n}語はもう持っているので、追加しませんでした。今までの進み具合はそのままです。",
   "pack.ownedList": "もう持っている単語",
   "pack.allOwned": "このパックの単語は、ぜんぶもう持っています！",
@@ -300,6 +302,7 @@ export default {
   "wordList.tapToShow": "タップで表示", // on a covered Japanese word
   "wordList.showWord": "日本語を見る: {word}", // read aloud; {word} = the English word
   "wordList.hideWord": "日本語をかくす: {word}", // read aloud; {word} = the English word
+  "wordList.owned": "所持済み", // small tag on a word the student already has (only before the deck is added)
   "wordList.startDrill": "ドリルを始める (Start drill)",
 
   // Gacha screen and the pull result
