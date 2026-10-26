@@ -97,3 +97,14 @@ describe('alternate answers', () => {
     expect(review.altAnswers).toEqual(['cute']);
   });
 });
+
+describe('parts of speech', () => {
+  it("cards carry the word's pos (null when missing or unknown), in the drill and in reviews", () => {
+    const cards = buildCards([{ id: 'a', english: 'dog', japanese: '犬', pos: 'noun' }]);
+    expect(cards.map((c) => c.pos)).toEqual(['noun', 'noun']);
+    expect(buildCards([{ id: 'b', english: 'herb', japanese: 'ハーブ' }])[0].pos).toBeNull();
+    expect(buildCards([{ id: 'c', english: 'x', japanese: 'x', pos: 'thing' }])[0].pos).toBeNull();
+    const [review] = buildReviewCards([{ word_id: 'a', direction: 'jp2en', level: 1, words: { id: 'a', english: 'dog', japanese: '犬', pos: 'noun' } }]);
+    expect(review.pos).toBe('noun');
+  });
+});

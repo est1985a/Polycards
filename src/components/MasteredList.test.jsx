@@ -54,3 +54,12 @@ describe('MasteredRow (asking before putting a card back)', () => {
     expect(html).not.toContain('>復習に戻す</button>');
   });
 });
+
+describe('品詞 chip in the Mastered list', () => {
+  it('comes after the English word; nothing when pos is null', () => {
+    const html = render([{ ...CARDS[0], pos: 'noun' }, CARDS[1]]);
+    expect(html.match(/aria-label="品詞：名詞（説明を見る）"/g)).toHaveLength(1);
+    expect(html.indexOf('>harvest<')).toBeLessThan(html.indexOf('品詞：名詞'));
+    expect(html.indexOf('品詞：名詞')).toBeLessThan(html.indexOf('収穫'));
+  });
+});

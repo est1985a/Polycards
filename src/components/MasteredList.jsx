@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { colors, fontDisplay, fontBody, panel, btnGhost, btnPrimary } from '../styles/theme';
 import { directionLabel } from '../lib/drill';
 import StarIcon from './StarIcon';
+import PosChip from './PosChip';
 import { t } from '../i18n';
 
 const smallBtn = { minHeight: 44, padding: "8px 14px", fontSize: 14, whiteSpace: "nowrap" };
 
-// One Mastered card: direction (in English), the English word and the Japanese, and a button
+// One Mastered card: direction (in English), the English word (with its 品詞 chip) and the Japanese, and a button
 // that puts it back into reviews. That button first asks 復習に戻しますか？ on the card itself.
 export function MasteredRow({ card, confirming, restoring, onAsk, onCancel, onRestore }) {
   return (
@@ -19,7 +20,10 @@ export function MasteredRow({ card, confirming, restoring, onAsk, onCancel, onRe
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 12, color: colors.muted }}>{directionLabel(card.direction)}</div>
-          <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 18, color: colors.text, overflowWrap: "anywhere" }}>{card.en}</div>
+          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", columnGap: 8 }}>
+            <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 18, color: colors.text, overflowWrap: "anywhere" }}>{card.en}</span>
+            <PosChip pos={card.pos} />
+          </div>
           <div style={{ fontFamily: fontBody, fontSize: 15, color: colors.text, overflowWrap: "anywhere" }}>{card.jp}</div>
         </div>
         {!confirming && (
@@ -54,7 +58,7 @@ export function MasteredRow({ card, confirming, restoring, onAsk, onCancel, onRe
 }
 
 // List of the student's Mastered cards, newest first (fetchMasteredCards in src/lib/api.js).
-// cards: [{ id, wordId, direction, en, jp }]; restoringId: the card being put back, if any.
+// cards: [{ id, wordId, direction, en, jp, pos }]; restoringId: the card being put back, if any.
 export default function MasteredList({ cards, restoringId, onRestore }) {
   const [confirmingId, setConfirmingId] = useState(null); // card showing 復習に戻しますか？
 

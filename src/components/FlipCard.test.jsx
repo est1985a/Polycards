@@ -108,4 +108,63 @@ describe('FlipCard', () => {
       expect(render({ speech: SPEECH, wide: true })).toMatch(/aria-label="発音を聞く"[^>]*width:52px;height:52px/);
     });
   });
+  describe('品詞 chip (part of speech)', () => {
+    const JP2EN = { ...CARD, direction: 'jp2en', front: 'もう、すでに', back: 'already' };
+    const CHIP = 'aria-label="品詞：副詞（説明を見る）"';
+    // The chip layer is its own item after the front button (marked data-front-pos).
+    const layer = (html) => { const at = html.indexOf('data-front-pos'); return at < 0 ? '' : html.slice(at, html.indexOf('</div>', html.indexOf(CHIP))); };
+
+    it('is on the front in both directions, but never inside the front button (a tap can\'t flip)', () => {
+      [CARD, JP2EN].forEach((card) => {
+        const html = render({ card: { ...card, pos: 'adverb' } });
+        const { front } = faces(html);
+        expect(front).not.toContain(CHIP);
+        expect(front).toContain('aria-hidden="true"'); // the front keeps the chip's space
+        expect(layer(html)).toContain(CHIP);
+        expect(html.match(new RegExp(CHIP, 'g'))).toHaveLength(1);
+      });
+    });
+
+    it('the layer copies the top row invisibly, only the chip is visible and tappable', () => {
+      const html = render({ card: { ...CARD, pos: 'adverb' } });
+      expect(html).toMatch(/data-front-pos=""[^>]*visibility:hidden;pointer-events:none/);
+      expect(html).toMatch(/visibility:visible;pointer-events:auto"><button type="button" aria-label="品詞：副詞/);
+    });
+
+    it('turns away with the front: inert once the card is flipped', () => {
+      expect(render({ card: { ...CARD, pos: 'adverb' } })).not.toMatch(/data-front-pos="" inert/);
+      expect(render({ card: { ...CARD, pos: 'adverb' }, revealed: true })).toMatch(/data-front-pos="" inert=""/);
+    });
+
+    it('nothing at all when pos is null', () => {
+      const html = render();
+      expect(html).not.toContain('data-front-pos');
+      expect(html).not.toContain('品詞');
+      expect(render({ card: { ...CARD, pos: null } })).toBe(render());
+    });
+
+    it('sits in the top row right after the direction label, before the word (normal and compact)', () => {
+      const normal = render({ card: { ...CARD, pos: 'adverb' } });
+      const layerHtml = layer(normal);
+      expect(layerHtml).toMatch(/English to Japanese<\/span><span[^>]*visibility:visible[^>]*><button type="button" aria-label="品詞：副詞/);
+      expect(layerHtml).not.toContain('>already<'); // the layer only copies the top row
+      expect(faces(normal).front).toMatch(/English to Japanese<\/span><span aria-hidden="true"/); // placeholder in the same spot
+
+      const compact = render({ compact: true, card: { ...JP2EN, pos: 'adverb' } });
+      expect(compact).not.toContain('data-front-pos');
+      expect(compact).toMatch(/Japanese to English<\/span><button type="button" aria-label="品詞：副詞/);
+      expect(compact.indexOf(CHIP)).toBeLessThan(compact.indexOf('>もう、すでに<'));
+      expect(compact).toContain('min-height:150px');
+    });
+
+    it('the word is always centered on its own, with or without a chip', () => {
+      const word = (html) => html.match(/<span style="flex:1;display:flex;align-items:center;justify-content:center"><span[^>]*>already<\/span><\/span>/);
+      expect(word(render({ card: { ...CARD, pos: 'adverb' } }))).toBeTruthy();
+      expect(word(render())).toBeTruthy();
+    });
+
+    it('a long label wraps under the direction label instead of running into the Lv chip', () => {
+      expect(render({ card: { ...CARD, pos: 'interjection' } })).toMatch(/flex:1;min-width:0;display:flex;flex-wrap:wrap/);
+    });
+  });
 });

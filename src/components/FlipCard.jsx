@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { colors, fontDisplay, fontBody } from '../styles/theme';
 import WordInfo from './WordInfo';
 import SpeakerButton from './SpeakerButton';
+import PosChip from './PosChip';
 import { speakWord, stopSpeaking } from '../lib/speech';
 import { directionLabel } from '../lib/drill';
 import { t } from '../i18n';
@@ -12,10 +13,17 @@ const FLIP = "transform 650ms cubic-bezier(0.34, 1.45, 0.55, 1)";
 const face = {
   gridArea: "1 / 1", boxSizing: "border-box", width: "100%", minHeight: 320, padding: 20, borderRadius: 24,
   backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden",
-  display: "flex", flexDirection: "column", gap: 12, textAlign: "center",
+  display: "flex", flexDirection: "column", alignItems: "stretch", gap: 12, textAlign: "center",
+  // Set here so the front (a button) and its chip layer (a div) lay out exactly alike. Some browsers
+  // give buttons align-items: flex-start, which pushed the word and the hint to the left. Buttons also
+  // don't inherit the page's letter-spacing, so it is set too (normal = how the front always looked).
+  fontSize: 16, lineHeight: 1.45, letterSpacing: "normal",
 };
 
 const topRow = { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, minHeight: 28 };
+// Direction label + 品詞 chip, left in the top row. If both don't fit next to the Lv chip (a long
+// label on a narrow phone), the chip goes onto a second line instead of running into it.
+const topLeft = { flex: 1, minWidth: 0, display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 8, rowGap: 4, textAlign: "left" };
 
 function LevelChip({ level }) {
   return (
@@ -50,6 +58,8 @@ function wordStyle(text, isEnglish, size, jaSize = Math.round(size * 5 / 6)) {
 // compact (typing mode, before answering): a short card so the text box and buttons fit above the
 // on-screen keyboard. The front can't be tapped (that would show the answer) and the back's
 // content isn't drawn until it flips, so it doesn't stretch the card.
+// card.pos: the 品詞 chip (PosChip) in the front's top row, right after the direction label, on
+// every card (normal and compact, both directions); nothing when null.
 // speech: { autoPlay, slow } for the 発音を聞く button, or null when the browser can't speak.
 // The button reads the main English (card.en) and only shows where the English is already visible:
 // the front of an English → Japanese card, and the back of every card (so never before the answer
@@ -84,6 +94,19 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
   const minHeight = compact ? (wide ? 180 : 150) : (wide ? 420 : 320);
   const Front = compact ? "div" : "button";
   const speakerSize = wide ? 52 : 44;
+  const chipSize = wide ? 14 : 12;
+  // The front's top row: direction label, the 品詞 chip slot, and the Lv chip.
+  const frontTopRow = (chipSlot) => (
+    <span style={topRow}>
+      <span style={topLeft}>
+        <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 14, color: colors.accentText }}>
+          {directionLabel(card.direction)}
+        </span>
+        {chipSlot || null}
+      </span>
+      {showLevel && <LevelChip level={card.level} />}
+    </span>
+  );
   // A line of English with the speaker button after it.
   const withSpeaker = (line) => !speech ? line : (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
@@ -107,12 +130,9 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
           inert={revealed}
           style={{ ...face, minHeight, background: colors.surface, border: `2px solid ${colors.line}`, color: colors.text, cursor: compact ? "default" : "pointer" }}
         >
-          <span style={topRow}>
-            <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 14, color: colors.accentText }}>
-              {directionLabel(card.direction)}
-            </span>
-            {showLevel && <LevelChip level={card.level} />}
-          </span>
+          {/* The compact front is a plain box, so the chip can sit in it; the normal front is a button, */}
+          {/* so it only keeps the chip's space (the chip itself is in the layer below). */}
+          {frontTopRow(card.pos && <PosChip pos={card.pos} fontSize={chipSize} placeholder={!compact} />)}
           <span style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={wordStyle(card.front, frontIsEnglish, 48)}>{card.front}</span>
           </span>
@@ -125,6 +145,27 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
             </span>
           )}
         </Front>
+
+        {/* The chip on the button front: a button can't hold a button, so it is in its own item in the */}
+        {/* same grid cell: an invisible copy of the top row (same padding and sizes, so the chip lands */}
+        {/* exactly on the front's placeholder) where only the chip is visible and tappable. It turns */}
+        {/* away with the front. */}
+        {card.pos && !compact && (
+          <div
+            data-front-pos=""
+            inert={revealed}
+            style={{
+              ...face, minHeight: 0, alignSelf: "start", border: "2px solid transparent", paddingBottom: 0,
+              visibility: "hidden", pointerEvents: "none", transform: "translateZ(1px)",
+            }}
+          >
+            {frontTopRow(
+              <span style={{ display: "inline-flex", visibility: "visible", pointerEvents: "auto" }}>
+                <PosChip pos={card.pos} fontSize={chipSize} />
+              </span>,
+            )}
+          </div>
+        )}
 
         {/* Back: the answer */}
         <div

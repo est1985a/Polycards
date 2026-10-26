@@ -5,6 +5,7 @@ import AddDeckButton from './AddDeckButton';
 import Highlighted from './Highlighted';
 import ToggleSwitch from './ToggleSwitch';
 import SpeakerButton from './SpeakerButton';
+import PosChip from './PosChip';
 import { t, tx } from '../i18n';
 
 const blurred = { filter: "blur(6px)", userSelect: "none" };
@@ -12,7 +13,8 @@ const blurred = { filter: "blur(6px)", userSelect: "none" };
 // One word in the list: English, Japanese, and the example sentence (if any).
 // hideJa: the 日本語をかくす switch is on, so the Japanese word becomes a button that shows/hides it.
 // revealed: this word was tapped open while the switch is on.
-// word: an English-to-Japanese card from buildCards ({ wordId, en, jp, exampleEn, exampleJa }).
+// word: an English-to-Japanese card from buildCards ({ wordId, en, jp, exampleEn, exampleJa, pos }).
+// The 品詞 chip (word.pos) comes after the English word and the speaker.
 // speech: { slow } for the 発音を聞く button after the English word, or null (no button).
 // owned: the student already has this word (a small muted 所持済み tag after the English word).
 export function WordRow({ word, hideJa, revealed, first, onToggle, speech = null, owned = false }) {
@@ -58,6 +60,7 @@ export function WordRow({ word, hideJa, revealed, first, onToggle, speech = null
           <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 18, color: colors.text }}>{word.en}</span>
             {speech && <SpeakerButton text={word.en} audioPath={word.audioPath} slow={speech.slow} style={{ margin: "-4px 0" }} />}
+            <PosChip pos={word.pos} />
             {owned && (
               <span style={{
                 fontSize: 11, fontWeight: 700, lineHeight: 1.4, color: colors.muted, whiteSpace: "nowrap",
