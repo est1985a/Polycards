@@ -31,7 +31,7 @@ vi.mock('./supabaseClient', () => ({
 const {
   fetchDueRows, fetchReviewRows, fetchDeckWords, restoreMasteredCard, recordAnswer, waitForPendingSaves, holdAnswer, flushHeldAnswer, dropHeldAnswer, checkOtherMeaning, fetchBonusPoints, fetchNextReview, fetchReviewPlanRows,
   fetchCollections, fetchGachaStatus, pullGacha, fetchGachaCollection, equipAvatar, setGachaTheme, gachaErrorMessage, fetchThemeUnlocks,
-  fetchStudyDays, fetchStudyTotals, fetchTroubleWords,
+  fetchStudyDays, fetchStudyTotals, fetchTroubleWords, addDeckToMyCards,
 } = await import('./api');
 
 beforeEach(() => {
@@ -418,5 +418,18 @@ describe('other meaning check (typing mode)', () => {
     } finally {
       warn.mockRestore();
     }
+  });
+});
+
+describe('adding a deck (pack opening)', () => {
+  it('checks which words the student already has before adding them', async () => {
+    result = { data: [{ word_id: 'a' }, { word_id: 'b' }], error: null };
+    const res = await addDeckToMyCards('user-1', 5);
+    const checkAt = calls.findIndex((c) => c[0] === 'from' && c[1] === 'user_cards');
+    const upsertAt = calls.findIndex((c) => c[0] === 'upsert');
+    expect(checkAt).toBeGreaterThan(-1);
+    expect(checkAt).toBeLessThan(upsertAt);
+    expect(calls).toContainEqual(['in', 'word_id', ['a', 'b']]);
+    expect(res).toEqual({ wordIds: ['a', 'b'], ownedWordIds: ['a', 'b'] });
   });
 });

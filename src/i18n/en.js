@@ -258,12 +258,12 @@ export default {
   "cardSets.title": "Card Sets",
   "cardSets.titleJa": "", // the small Japanese line next to the title: hidden in English mode
   "cardSets.hubIntro": "Choose a set you want to learn, and add it to My Cards.",
-  "cardSets.textbooks": "Textbooks",
+  "cardSets.textbooks": "Textbook Packs",
   "cardSets.textbooksLabel": "Find by textbook",
-  "cardSets.textbooksNote": "Sets for each unit and part of New Horizon and Power On",
-  "cardSets.tests": "Tests & Themes",
+  "cardSets.textbooksNote": "Word sets organized by textbook and unit",
+  "cardSets.tests": "Word Packs",
   "cardSets.testsLabel": "Find by test or theme",
-  "cardSets.testsNote": "Sets for tests like Eiken, and word sets by theme",
+  "cardSets.testsNote": "Word sets by theme and goal",
   "cardSets.comingSoon": "Coming soon",
   "cardSets.comingSoonNote": "Sets for Eiken and more are coming soon.",
   "cardSets.back": "← {label}",
@@ -284,6 +284,20 @@ export default {
   "cardSets.added": "✓ Added to My Cards",
   "cardSets.deckEmpty": "This deck has no cards yet.",
   "cardSets.signInToAdd": "Please log in to add decks to My Cards.",
+
+  // Pack opening (DRAFT English, Andre to check)
+  "pack.dialog": "Opening the pack",
+  "pack.tapToSkip": "Tap to skip",
+  "pack.owned": "Owned",
+  "pack.more": plural("+{n} more word", "+{n} more words"),
+  "pack.deckLabel": "My Cards",
+  "pack.addedLine": plural("Added {n} word to My Cards!", "Added {n} words to My Cards!"),
+  "pack.addedPlain": "Added to My Cards!",
+  "pack.ownedLine": plural("You already have {n} word, so it was not added again. Your progress stays the same.", "You already have {n} words, so they were not added again. Your progress stays the same."),
+  "pack.ownedList": "Words you already have",
+  "pack.allOwned": "You already have every word in this pack!",
+  "pack.allOwnedNote": "The same word is never added twice.",
+  "pack.close": "OK",
 
   // Word list of a Card Sets deck
   "wordList.wordCount": plural("{n} word", "{n} words"),

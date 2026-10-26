@@ -91,9 +91,22 @@ export async function fetchDeckWords(deckId) {
   return (data || []).map((r) => r.words).filter(Boolean);
 }
 
+// Returns { wordIds, ownedWordIds }: the deck's words, and the ones the student already
+// had before adding (for the pack opening's 所持済み cards). ownedWordIds is null when that
+// check fails; adding still goes ahead.
 export async function addDeckToMyCards(userId, deckId) {
   const wordIds = await fetchDeckWordIds(deckId);
   if (wordIds.length === 0) throw new Error("Could not load this deck's words: no words found");
+
+  // Must run before the upsert below, which would make every word look owned.
+  let ownedWordIds = null;
+  const { data: ownedRows, error: ownedError } = await supabase
+    .from('user_cards')
+    .select('word_id')
+    .eq('user_id', userId)
+    .in('word_id', wordIds);
+  if (ownedError) console.warn("Could not check which words you already have: " + ownedError.message);
+  else ownedWordIds = [...new Set((ownedRows || []).map((r) => r.word_id))];
 
   // ignoreDuplicates skips words the student already has from another deck,
   // so progress on shared words is kept.
@@ -110,6 +123,7 @@ export async function addDeckToMyCards(userId, deckId) {
     .from('user_decks')
     .upsert({ user_id: userId, deck_id: deckId }, { onConflict: 'user_id,deck_id', ignoreDuplicates: true });
   if (deckError) throw new Error("Could not save deck: " + deckError.message);
+  return { wordIds, ownedWordIds };
 }
 
 // Removes a deck from My Cards. Progress is only deleted for words that are not

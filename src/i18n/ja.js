@@ -253,12 +253,12 @@ export default {
   "cardSets.title": "Card Sets",
   "cardSets.titleJa": "カードセット", // small Japanese line next to the title
   "cardSets.hubIntro": "学びたいセットをえらんで、マイカードに追加しよう。",
-  "cardSets.textbooks": "Textbooks",
-  "cardSets.textbooksLabel": "教科書から探す",
-  "cardSets.textbooksNote": "New Horizon や Power On の ユニット・パートごとのセット",
-  "cardSets.tests": "Tests & Themes",
-  "cardSets.testsLabel": "テスト・テーマ別",
-  "cardSets.testsNote": "英検などのテスト対策や、テーマ別の単語セット",
+  "cardSets.textbooks": "Textbook Packs",
+  "cardSets.textbooksLabel": "教科書パック",
+  "cardSets.textbooksNote": "教科書のユニットごとにまとめた単語セット",
+  "cardSets.tests": "Word Packs",
+  "cardSets.testsLabel": "単語パック",
+  "cardSets.testsNote": "テーマや目的別の単語セット",
   "cardSets.comingSoon": "準備中 — Coming soon",
   "cardSets.comingSoonNote": "英検などのセットは、もうすぐ追加されます。",
   "cardSets.back": "← {label}", // back button; {label} = the screen it goes back to (Card Sets, Textbooks, or a textbook name)
@@ -279,6 +279,20 @@ export default {
   "cardSets.added": "✓ マイカードに追加済み (Added to My Cards)",
   "cardSets.deckEmpty": "このデッキにはまだカードがありません。", // browser alert
   "cardSets.signInToAdd": "マイカードに追加するには、ログインしてください。", // browser alert
+
+  // Pack opening after Add to My Cards (PackOpening.jsx). Counts are words, not cards.
+  "pack.dialog": "パックを開けています", // read aloud for the pop-up
+  "pack.tapToSkip": "タップでスキップ",
+  "pack.owned": "所持済み", // on a grayed card the student already has
+  "pack.more": "ほか {n}語", // under the fan when the pack has more words than are shown
+  "pack.deckLabel": "マイカード", // under the deck the new cards fly into
+  "pack.addedLine": "{n}語をマイカードに追加しました！",
+  "pack.addedPlain": "マイカードに追加しました！", // when the owned check failed
+  "pack.ownedLine": "{n}語はもう持っているので、追加しませんでした。今までの進み具合はそのままです。",
+  "pack.ownedList": "もう持っている単語",
+  "pack.allOwned": "このパックの単語は、ぜんぶもう持っています！",
+  "pack.allOwnedNote": "同じ単語が2回追加されることはありません。",
+  "pack.close": "OK",
 
   // Word list of a Card Sets deck (before the drill)
   "wordList.wordCount": "{n}語",

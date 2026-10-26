@@ -50,7 +50,7 @@ function HubCard({ title, label, note, tint, labelColor, onClick }) {
   );
 }
 
-// Card Sets start screen: Textbooks or Tests & Themes.
+// Card Sets start screen: Textbook Packs or Word Packs (Tests & Themes in the code).
 export default function CardSetsHub({ onOpenTextbooks, onOpenTests }) {
   return (
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>

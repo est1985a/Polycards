@@ -40,7 +40,7 @@ describe('CardSetsTab', () => {
   it('hub: title, subtitle and the two big cards', () => {
     const t = text(render({ screen: 'hub' }));
     for (const s of ['Card Sets', 'カードセット', '学びたいセットをえらんで、マイカードに追加しよう。',
-      'Textbooks', '教科書から探す', 'Tests &amp; Themes', 'テスト・テーマ別']) expect(t).toContain(s);
+      'Textbook Packs', '教科書パック', 'Word Packs', '単語パック']) expect(t).toContain(s);
     expect(t).not.toContain('← ');
   });
 
@@ -89,9 +89,9 @@ describe('CardSetsTab', () => {
     expect(t).toContain('まだ教科書がありません');
   });
 
-  it('units: in unit_order, back to Textbooks, deck counts', () => {
+  it('units: in unit_order, back to Textbook Packs, deck counts', () => {
     const t = text(render({ screen: 'units', textbookId: 2 }));
-    expect(t).toContain('← Textbooks');
+    expect(t).toContain('← Textbook Packs');
     expect(t.indexOf('Unit 1')).toBeLessThan(t.indexOf('Unit 2'));
     expect(t).toContain('2 デッキ');
     expect(t).toContain('0 デッキ');
@@ -139,8 +139,8 @@ describe('CardSetsTab', () => {
 
   it('tests: top-level collections in sort_order with their deck counts, no Coming soon', () => {
     const t = text(render({ screen: 'tests' }, { collections: COLLECTIONS }));
-    expect(t).toContain('Tests &amp; Themes');
-    expect(t).toContain('テスト・テーマ別');
+    expect(t).toContain('Word Packs');
+    expect(t).toContain('単語パック');
     expect(t.indexOf('小学校の英語')).toBeLessThan(t.indexOf('英検'));
     expect(t).toContain('3 デッキ'); // 英検: 1 of its own + 2 in 5級
     expect(t).not.toContain('Coming soon');
@@ -149,7 +149,7 @@ describe('CardSetsTab', () => {
 
   it('collection: sub-collections first, then decks with word counts, numbers in order', () => {
     const t = text(render({ screen: 'collection', collectionId: 'eiken', level: 'JHS' }, { collections: COLLECTIONS }));
-    expect(t).toContain('← Tests &amp; Themes');
+    expect(t).toContain('← Word Packs');
     expect(t.indexOf('5級')).toBeLessThan(t.indexOf('Mix'));
     expect(t).toContain('2 デッキ');
     const elem = text(render({ screen: 'collection', collectionId: 'elem' }, { collections: COLLECTIONS }));

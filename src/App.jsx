@@ -3,6 +3,7 @@ import { supabase } from './lib/supabaseClient';
 import * as api from './lib/api';
 import { buildCards, buildReviewCards } from './lib/drill';
 import { loadSchoolLevel, saveSchoolLevel } from './lib/library';
+import { packWords, packSummary } from './lib/packOpening';
 import { totalPoints, levelCounts, playerRank, newPeak } from './lib/points';
 import { MASTERED } from './lib/srs';
 import { loadAnswerMode, saveAnswerMode } from './lib/spelling';
@@ -37,6 +38,7 @@ import ReviewPlanSheet from './components/ReviewPlanSheet';
 import AboutSheet from './components/AboutSheet';
 import GachaScreen from './components/GachaScreen';
 import GachaReveal from './components/GachaReveal';
+import PackOpening from './components/PackOpening';
 import GachaCollection from './components/GachaCollection';
 import SettingsScreen from './components/SettingsScreen';
 import StatsScreen from './components/StatsScreen';
@@ -113,6 +115,7 @@ function App() {
   const [planOpen, setPlanOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false); // "What is Polycards?" pop-up
   const [savingDeck, setSavingDeck] = useState(false);
+  const [packResult, setPackResult] = useState(null); // pack opening after Add to My Cards (packSummary)
   const [removingDeckId, setRemovingDeckId] = useState(null);
   const [stats, setStats] = useState(null); // points and rank
   const [masteredCards, setMasteredCards] = useState([]);
@@ -655,13 +658,16 @@ function App() {
     if (!activeSet) return;
     setSavingDeck(true);
     try {
-      await api.addDeckToMyCards(session.user.id, activeSet.id);
+      const { ownedWordIds } = await api.addDeckToMyCards(session.user.id, activeSet.id);
+      setPackResult(packSummary(packWords(activeSet.cards), ownedWordIds));
       await loadMyDecks();
     } catch (e) {
       alert(e.message);
     }
     setSavingDeck(false);
   }
+
+  const closePack = useCallback(() => setPackResult(null), []);
 
   async function removeDeck(deck) {
     if (!session) return;
@@ -889,6 +895,7 @@ function App() {
       </div>
       {/* 使い方 can be opened from the account menu on any screen. */}
       {aboutOpen && <AboutSheet onClose={closeAbout} sessionSize={sessionSize} />}
+      {packResult && <PackOpening summary={packResult} onClose={closePack} />}
     </div>
   );
 }

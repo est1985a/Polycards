@@ -298,3 +298,45 @@ p {
   outline: 3px solid var(--accent);
   outline-offset: 3px;
 }
+
+/* Pack opening after Add to My Cards (PackOpening.jsx). Steps and timing: PACK_STEPS in
+   src/lib/packOpening.js. With reduce motion the component skips straight to the summary. */
+@keyframes polycards-pack-shake {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-6deg); }
+  40% { transform: rotate(6deg); }
+  60% { transform: rotate(-4deg); }
+  80% { transform: rotate(3deg); }
+}
+@keyframes polycards-pack-shine {
+  from { transform: translateX(-60px); }
+  to { transform: translateX(150px); }
+}
+@keyframes polycards-pack-strip-off {
+  to { transform: translate(46px, -70px) rotate(28deg); opacity: 0; }
+}
+@keyframes polycards-pack-fade-out {
+  to { transform: translateY(24px) scale(0.85); opacity: 0; }
+}
+@keyframes polycards-pack-deck-bump {
+  0%, 100% { transform: scale(1); }
+  40% { transform: scale(1.18); }
+}
+@keyframes polycards-pack-plus {
+  0% { transform: translateY(8px); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translateY(-12px); opacity: 1; }
+}
+.pack-shake { animation: polycards-pack-shake 0.45s ease-in-out; transform-origin: 50% 90%; }
+.pack-shine { animation: polycards-pack-shine 0.75s ease-in-out forwards; }
+.pack-strip-off { animation: polycards-pack-strip-off 0.35s ease-in forwards; transform-box: fill-box; transform-origin: left bottom; }
+.pack-fade-out { animation: polycards-pack-fade-out 0.4s ease-in 0.1s forwards; }
+.pack-card { transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.15), opacity 0.45s ease, border-color 0.3s, box-shadow 0.3s, filter 0.3s, background 0.3s; }
+.pack-deck-bump { animation: polycards-pack-deck-bump 0.45s ease-out 0.5s; }
+.pack-plus-float { animation: polycards-pack-plus 0.6s ease-out 0.5s both; }
+@media (prefers-reduced-motion: reduce) {
+  .pack-shake, .pack-shine, .pack-strip-off, .pack-fade-out, .pack-deck-bump, .pack-plus-float { animation: none; }
+  .pack-card { transition: none; }
+}
+:root[data-reduce-motion="true"] :is(.pack-shake, .pack-shine, .pack-strip-off, .pack-fade-out, .pack-deck-bump, .pack-plus-float) { animation: none; }
+:root[data-reduce-motion="true"] .pack-card { transition: none; }
