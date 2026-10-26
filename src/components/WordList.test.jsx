@@ -26,11 +26,11 @@ describe('WordList', () => {
     expect(html).toContain('>2</span>語');
   });
 
-  it('has the hide switch, the Add to My Cards button and the start button', () => {
+  it('has the hide switch, the Add to My Deck button and the start button', () => {
     const html = renderList();
     expect(html).toMatch(/role="switch" aria-checked="false"/);
     expect(html).toContain('日本語をかくす');
-    expect(html).toContain('マイカードに追加');
+    expect(html).toContain('マイデッキに追加');
     expect(html).toContain('ドリルを始める (Start drill)');
   });
 });
@@ -97,5 +97,48 @@ describe('WordRow speaker (発音を聞く)', () => {
   it('shows a speaker after the English word only when the browser can speak', () => {
     expect(renderRow({ speech: { slow: false } })).toMatch(/>already<\/span><button[^>]*aria-label="発音を聞く"/);
     expect(renderRow()).not.toContain('発音を聞く');
+  });
+});
+
+describe('owned words (所持済み) before adding', () => {
+  const owned = (props) => renderToStaticMarkup(
+    <WordList activeSet={{ ...SET, ownedWordIds: [1] }} isAdded={false} saving={false} onAddDeck={() => {}} onStart={() => {}} {...props} />
+  );
+  const tags = (html) => (html.match(/>所持済み<\/span>/g) || []).length;
+
+  it('tags only the owned words, right after the English word', () => {
+    const html = owned();
+    expect(tags(html)).toBe(1);
+    const tagAt = html.indexOf('>所持済み</span>');
+    expect(tagAt).toBeGreaterThan(html.indexOf('>already</span>'));
+    expect(tagAt).toBeLessThan(html.indexOf('>herb</span>'));
+  });
+
+  it('shows the counts on the add button', () => {
+    expect(owned()).toContain('＋ マイデッキに追加（新しい単語 1 · 所持済み 1）');
+    expect(renderToStaticMarkup(
+      <WordList activeSet={{ ...SET, ownedWordIds: [1, 2] }} isAdded={false} saving={false} onAddDeck={() => {}} onStart={() => {}} />
+    )).toContain('＋ マイデッキに追加（ぜんぶ所持済み）');
+  });
+
+  it('hides every tag once the deck is added', () => {
+    const html = owned({ isAdded: true, activeSet: { ...SET, ownedWordIds: [1, 2] } });
+    expect(tags(html)).toBe(0);
+    expect(html).toContain('✓ マイデッキに追加済み');
+  });
+
+  it('shows no tags and the plain button when the check failed or nothing is owned', () => {
+    for (const ownedWordIds of [null, undefined, []]) {
+      const html = owned({ activeSet: { ...SET, ownedWordIds } });
+      expect(tags(html)).toBe(0);
+      expect(html).toContain('>＋ マイデッキに追加</button>');
+    }
+  });
+
+  it('keeps the tap-to-reveal button when the Japanese is hidden', () => {
+    const html = renderRow({ owned: true, hideJa: true });
+    expect(html).toContain('>所持済み</span>');
+    expect(html).toContain('タップで表示');
+    expect(html).toMatch(/<button[^>]*aria-label="日本語を見る: already"/);
   });
 });

@@ -20,6 +20,9 @@ export const colors = {
   level: (n) => v(`lv${n}`), // Lv0 to Lv7 chart colors
 };
 
+// Mix of two colors (usually theme roles), so shades follow the theme without hard-coded colors.
+export const mix = (a, b, pct) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
+
 // Fonts are loaded from Google Fonts in index.html.
 // Chakra Petch has no Japanese letters, so Japanese in headings falls back to Zen Maru Gothic.
 // Plain white and black, only for mixing lighter/darker facet shades (the logo). Not color roles.

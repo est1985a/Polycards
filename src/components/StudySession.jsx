@@ -7,6 +7,7 @@ import { recordAnswer, checkOtherMeaning, holdAnswer, flushHeldAnswer, dropHeldA
 import { takeSnapshot, makeUndo, restoreState, chipLabelKey } from '../lib/undo';
 import Stamp from './Stamp';
 import AddDeckButton from './AddDeckButton';
+import { ownedCounts } from '../lib/library';
 import FlipCard from './FlipCard';
 import HandwritingInput from '../handwriting/HandwritingInput.jsx';
 import { loadModel } from '../handwriting/model.js';
@@ -551,7 +552,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
     </div>
   );
 
-  const addDeckControl = isSrs ? null : <AddDeckButton isAdded={isAdded} saving={saving} onAdd={onAddDeck} />;
+  const addDeckControl = isSrs ? null : <AddDeckButton isAdded={isAdded} saving={saving} onAdd={onAddDeck} counts={ownedCounts(activeSet.cards, activeSet.ownedWordIds)} />;
   const answerSize = wide ? { minHeight: 76, fontSize: 18 } : { minHeight: 52 };
 
   return (

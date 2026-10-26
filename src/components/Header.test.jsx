@@ -6,10 +6,10 @@ import { accountName } from '../lib/login';
 import { themes } from '../themes';
 
 describe('Header', () => {
-  it('the logo is a "My Cards" button at least 44 px tall', () => {
+  it('the logo is a "My Deck" (マイデッキ) button at least 44 px tall', () => {
     for (const variant of ['band', 'compact']) {
       const html = renderToStaticMarkup(<Header variant={variant} user={null} onHome={() => {}} />);
-      expect(html).toMatch(/<h1[^>]*><button[^>]*aria-label="My Cards"/);
+      expect(html).toMatch(/<h1[^>]*><button[^>]*aria-label="マイデッキ"/);
       expect(html).toContain('min-height:44px');
       expect(html).toContain('Polycards');
     }

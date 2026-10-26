@@ -1,12 +1,9 @@
 import { useState } from 'react';
-import { colors, fontDisplay, fontBody, gutter, headerBand, btnGhost, btnDanger, wideLayout } from '../styles/theme';
+import { colors, mix, fontDisplay, fontBody, gutter, headerBand, btnGhost, btnDanger, wideLayout } from '../styles/theme';
 import { CapsuleIcon } from './GachaIcons';
 import LogoMark from './LogoMark';
 import { accountName } from '../lib/login';
 import { t, tx } from '../i18n';
-
-// Mix of two theme colors, so the shades follow the theme without hard-coded colors.
-const mix = (a, b, pct) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
 
 // Low-poly background: 14 triangles on a 390 × 230 grid, stretched to the band's width.
 const TRIANGLES = [

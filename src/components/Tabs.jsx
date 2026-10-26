@@ -1,22 +1,44 @@
 import { colors, fontDisplay, tabBarHeight } from '../styles/theme';
 import { t } from '../i18n';
+import { PACK_BODY, PACK_STRIP } from '../lib/packShape';
+
+// A small foil pack in currentColor (the PackIcon outline, scaled down): a crimped strip on top,
+// a low-poly facet on the body. Outlined in the tab bar's surface color so stacked packs stay apart.
+function MiniPack({ x, y, rotate, opacity = 1 }) {
+  return (
+    <g transform={`translate(${x} ${y}) rotate(${rotate}) scale(0.1) translate(-60 -80)`} opacity={opacity}>
+      <polygon points={PACK_BODY} fill="currentColor" stroke={colors.surface} strokeWidth="14" paintOrder="stroke" />
+      <polygon points="4,22 116,22 60,64" fill={colors.surface} opacity="0.35" />
+      <polygon points="60,64 116,104 60,150" fill={colors.surface} opacity="0.2" />
+      <polygon points={PACK_STRIP} fill="currentColor" stroke={colors.surface} strokeWidth="14" paintOrder="stroke" />
+    </g>
+  );
+}
+
+// One card of the My Deck stack, outlined in the tab bar's surface color.
+function StackCard({ x, y, opacity }) {
+  return <rect x={x} y={y} width="13" height="17" rx="2" fill="currentColor" stroke={colors.surface} strokeWidth="1.2" opacity={opacity} />;
+}
 
 // Small icons drawn with the current text color (currentColor).
 const ICONS = {
-  // two stacked cards
+  // a big stack of cards, the top one with a low-poly facet (My Deck)
   myCards: (
     <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="7" y="3" width="13" height="16" rx="2" fill="currentColor" opacity="0.45" />
-      <rect x="4" y="6" width="13" height="16" rx="2" fill="currentColor" />
+      <StackCard x={9.5} y={1} opacity={0.3} />
+      <StackCard x={7.5} y={2.5} opacity={0.5} />
+      <StackCard x={5.5} y={4} opacity={0.75} />
+      <StackCard x={3.5} y={5.5} opacity={1} />
+      <polygon points="4.5,6.5 15.5,6.5 10,13" fill={colors.surface} opacity="0.3" />
+      <polygon points="4.5,21.5 10,13 15.5,21.5" fill={colors.surface} opacity="0.15" />
     </svg>
   ),
-  // a 2×2 grid of sets
+  // a small pile of foil packs (Word Packs)
   cardSets: (
-    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="3" y="3" width="8" height="8" rx="2" fill="currentColor" />
-      <rect x="13" y="3" width="8" height="8" rx="2" fill="currentColor" />
-      <rect x="3" y="13" width="8" height="8" rx="2" fill="currentColor" />
-      <rect x="13" y="13" width="8" height="8" rx="2" fill="currentColor" />
+    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" style={{ overflow: "visible" }}>
+      <MiniPack x={7} y={12} rotate={-16} opacity={0.5} />
+      <MiniPack x={17} y={12} rotate={16} opacity={0.5} />
+      <MiniPack x={12} y={13} rotate={0} />
     </svg>
   ),
   // a pencil (トレーニング)
