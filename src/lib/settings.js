@@ -12,7 +12,6 @@ const AUTO_PLAY_KEY = "polycards.autoPlay";
 const SLOW_SPEECH_KEY = "polycards.slowSpeech";
 const THEME_KEY = "polycards.theme";
 const LANG_KEY = "polycards.lang";
-const SEEN_THEMES_PREFIX = "polycards.seenThemes.";
 
 function read(storage, key) {
   try {
@@ -80,23 +79,6 @@ export function saveThemeCache(storage, key) {
 
 export function clearThemeCache(storage) {
   write(storage, THEME_KEY, null);
-}
-
-// Unlocked themes this student has already been told about, per user: a list of theme keys.
-// Broken data counts as none seen.
-export function loadSeenThemes(storage, userId) {
-  if (!userId) return [];
-  try {
-    const list = JSON.parse(read(storage, SEEN_THEMES_PREFIX + userId));
-    return Array.isArray(list) ? list.filter((k) => typeof k === "string") : [];
-  } catch {
-    return [];
-  }
-}
-
-export function saveSeenThemes(storage, userId, keys) {
-  if (!userId) return;
-  write(storage, SEEN_THEMES_PREFIX + userId, JSON.stringify(keys));
 }
 
 // 言語 / Language: "ja" or "en". Anything else (or nothing saved) gives Japanese.

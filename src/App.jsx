@@ -15,14 +15,14 @@ import { testLoginEmail, LOGIN_FAILED_MESSAGE } from './lib/login';
 import {
   loadSessionSize, saveSessionSize, loadReduceMotion, saveReduceMotion, applyReduceMotion, saveLang, applyLang,
   loadAutoPlay, saveAutoPlay, loadSlowSpeech, saveSlowSpeech,
-  loadThemeCache, saveThemeCache, clearThemeCache, loadSeenThemes, saveSeenThemes, devThemeOverride,
+  loadThemeCache, saveThemeCache, clearThemeCache, devThemeOverride,
 } from './lib/settings';
 import { themeList, newThemes, featuredUnlock, markSeen } from './lib/themeUnlocks';
 import { themes, applyTheme, getTheme, DEFAULT_THEME } from './themes';
 import { wrap, gutter, headerBand, tabBarHeight, wideLayout } from './styles/theme';
 import { useWide, useSideChip, useShort } from './lib/useWide';
 import BackButton from './components/BackButton';
-import { showTrainingTab, TRAINING_START } from './lib/training';
+import { showTrainingTab, TRAINING_START, letterPracticeId, doneLettersFromProgress } from './lib/training';
 import { speechAvailable } from './lib/speech';
 import { t, getLang } from './i18n';
 import Header from './components/Header';
@@ -78,7 +78,8 @@ function App() {
   // The level starts from the one saved on the last visit.
   const [cardSetsPath, setCardSetsPath] = useState(() => ({ screen: "hub", level: loadSchoolLevel(window.localStorage) }));
   // Training tab: which screen is open (menu / ABC grid / one letter, see src/lib/training.js) and the
-  // letters completed in ABCを書こう during this visit (a ✓ on the grid; never saved).
+  // letters completed in ABCを書こう (a ✓ on the grid): saved on the account and loaded each time
+  // the tab opens, merged with the ones completed in this visit.
   const [trainingPath, setTrainingPath] = useState(TRAINING_START);
   const [trainingDone, setTrainingDone] = useState(() => new Set());
   const [answerMode, setAnswerMode] = useState(() => loadAnswerMode(window.localStorage, HANDWRITING_ENABLED)); // 答え方: off / typing / handwriting
@@ -96,9 +97,10 @@ function App() {
   const [themeRows, setThemeRows] = useState(null); // theme_unlocks rows, read once after sign-in (null while loading)
   const [themesFailed, setThemesFailed] = useState(false);
   const [themeError, setThemeError] = useState(null); // save error shown in settings
-  // Seen themes marked in this visit, also kept in memory so the pop-up closes even when the device
-  // blocks storage: { userId, keys }.
-  const [seenNow, setSeenNow] = useState({ userId: null, keys: [] });
+  // Unlocked themes this student has already been told about: saved on the account
+  // (seen_theme_unlocks), read once after sign-in. null until loaded (or if it can't be read):
+  // then no pop-up and no dot, so a failed load never shows an old pop-up again.
+  const [seenSaved, setSeenSaved] = useState(null); // { userId, keys }
   const themeSaving = useRef(false); // while a choice is being saved, an older gacha_status must not undo it
 
   // Study session
@@ -171,7 +173,7 @@ function App() {
       if (!session) {
         setMyDeckIds([]); setMyDecks([]); setStats(null);
         setGacha(null); setReveal(null); setCollection(null); pulseChecked.current = false;
-        setThemeRows(null); setThemesFailed(false);
+        setThemeRows(null); setThemesFailed(false); setSeenSaved(null);
       }
       // Log-out: forget this account's theme on the device and go back to Midnight.
       if (event === "SIGNED_OUT") {
@@ -193,6 +195,16 @@ function App() {
         setThemeRows([{ theme_key: DEFAULT_THEME, unlock_level: 1 }]);
         setThemesFailed(true);
       });
+  }, [userId]);
+
+  // The seen-themes list, read once after sign-in (a late answer for another account is ignored).
+  useEffect(() => {
+    if (!userId) return;
+    let current = true;
+    api.fetchSeenThemeUnlocks()
+      .then((keys) => { if (current) setSeenSaved({ userId, keys }); })
+      .catch((e) => console.error(e));
+    return () => { current = false; };
   }, [userId]);
 
   // Show the chosen theme (not while trying one with ?theme= in development).
@@ -366,21 +378,21 @@ function App() {
   // Themes: unlocked by rank (the one the player card shows); "new" = unlocked but not yet shown.
   const rank = stats?.playerRank ?? null;
   const themeItems = useMemo(() => (themeRows ? themeList(themeRows, themes) : null), [themeRows]);
-  // Unlocked themes already shown to this student: saved on the device per user (a short list,
-  // read on each render), plus the ones marked in this visit.
-  const seenThemes = [
-    ...loadSeenThemes(window.localStorage, userId),
-    ...(seenNow.userId === userId ? seenNow.keys : []),
-  ];
-  const hasNewTheme = !!themeItems && rank != null && newThemes(themeItems, rank, seenThemes).length > 0;
-  const unlock = themeItems && rank != null ? featuredUnlock(themeItems, rank, seenThemes) : null;
+  // Nothing counts as new until the seen list (saved on the account) has loaded.
+  const seenThemes = seenSaved?.userId === userId ? seenSaved.keys : null;
+  const themesReady = !!themeItems && rank != null && !!seenThemes;
+  const hasNewTheme = themesReady && newThemes(themeItems, rank, seenThemes).length > 0;
+  const unlock = themesReady ? featuredUnlock(themeItems, rank, seenThemes) : null;
 
-  // Every theme unlocked now counts as seen (the dot and the pop-up go away).
+  // Every theme unlocked now counts as seen (the dot and the pop-up go away at once), then the
+  // new keys are saved on the account. If saving fails, they only stay seen for this visit.
   function markThemesSeen() {
-    if (!themeItems || rank == null || !userId) return;
+    if (!themesReady || !userId) return;
     const keys = markSeen(themeItems, rank, seenThemes);
-    saveSeenThemes(window.localStorage, userId, keys);
-    setSeenNow({ userId, keys });
+    const added = keys.filter((k) => !seenThemes.includes(k));
+    if (!added.length) return;
+    setSeenSaved({ userId, keys });
+    api.markThemeUnlocksSeen(added).catch((e) => console.error(e));
   }
 
   // Applies a theme at once, then saves it on the account. If saving fails, the previous theme
@@ -704,10 +716,27 @@ function App() {
     window.scrollTo(0, 0);
   }
 
-  // A letter in ABCを書こう got all 4 boxes green: a ✓ on the grid for this visit.
+  // A letter in ABCを書こう got all 4 boxes green: a ✓ on the grid at once, and saved on the account
+  // (if saving fails, the ✓ only lasts for this visit).
   const completeLetter = useCallback((letter) => {
     setTrainingDone((done) => (done.has(letter) ? done : new Set(done).add(letter)));
+    api.recordTrainingCompletion(letterPracticeId(letter)).catch((e) => console.error(e));
   }, []);
+
+  // Opening the Training tab loads the saved progress and adds it to the ✓ marks (never removes
+  // one, so a letter just completed stays even if its save hasn't finished).
+  useEffect(() => {
+    if (!userId || activeTab !== "training") return;
+    let current = true;
+    api.fetchTrainingProgress()
+      .then((rows) => {
+        if (!current) return;
+        const saved = doneLettersFromProgress(rows);
+        setTrainingDone((done) => (Array.from(saved).every((l) => done.has(l)) ? done : new Set([...done, ...saved])));
+      })
+      .catch((e) => console.error(e));
+    return () => { current = false; };
+  }, [userId, activeTab]);
 
   // Tapping Card Sets (or Training) while already on it goes back to its first screen.
   function changeTab(id) {

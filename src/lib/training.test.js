@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   TRAINING_ACTIVITIES, TRAINING_START, alphabet, showTrainingTab, stepLetter, trainingActivities, trainingParent,
+  letterPracticeId, doneLettersFromProgress,
 } from './training';
 
 describe('activities', () => {
@@ -42,5 +43,25 @@ describe('trainingParent', () => {
   it('letter → ABC grid in the same case, ABC grid → menu', () => {
     expect(trainingParent({ screen: 'letter', lowercase: true, letter: 'g' })).toEqual({ screen: 'abc', lowercase: true, letter: null });
     expect(trainingParent({ screen: 'abc', lowercase: true, letter: null })).toEqual({ ...TRAINING_START, lowercase: true });
+  });
+});
+
+describe('saved progress ids', () => {
+  it('gives one stable id per letter and case', () => {
+    expect(letterPracticeId('B')).toBe('abc-upper-b');
+    expect(letterPracticeId('b')).toBe('abc-lower-b');
+    const ids = [...alphabet(), ...alphabet(true)].map(letterPracticeId);
+    expect(new Set(ids).size).toBe(52);
+    // Same rule as the CHECK in supabase/polycards-training-progress.sql
+    for (const id of ids) expect(id).toMatch(/^[a-z0-9-]{1,64}$/);
+  });
+
+  it('turns saved rows back into letters, ignoring other ids', () => {
+    const rows = [{ practice_id: 'abc-upper-b' }, { practice_id: 'abc-lower-b' }, { practice_id: 'abc-lower-z' }, { practice_id: 'spelling-1' }, { practice_id: 'abc-upper-bb' }, {}];
+    expect(doneLettersFromProgress(rows)).toEqual(new Set(['B', 'b', 'z']));
+    expect(doneLettersFromProgress(null)).toEqual(new Set());
+    for (const l of [...alphabet(), ...alphabet(true)]) {
+      expect(doneLettersFromProgress([{ practice_id: letterPracticeId(l) }])).toEqual(new Set([l]));
+    }
   });
 });

@@ -535,3 +535,34 @@ export async function fetchThemeUnlocks() {
   if (error) throw new Error("Could not load themes: " + error.message);
   return data || [];
 }
+
+// Unlocked themes the student has already been told about (saved on the account,
+// supabase/polycards-seen-theme-unlocks.sql): a list of theme keys.
+export async function fetchSeenThemeUnlocks() {
+  const { data, error } = await supabase.rpc('seen_theme_unlocks');
+  if (error) throw new Error("Could not load seen themes: " + error.message);
+  return Array.isArray(data) ? data : [];
+}
+
+// Adds these theme keys to the seen list; returns the whole saved list.
+export async function markThemeUnlocksSeen(keys) {
+  const { data, error } = await supabase.rpc('mark_theme_unlocks_seen', { p_keys: keys });
+  if (error) throw new Error("Could not save seen themes: " + error.message);
+  return Array.isArray(data) ? data : [];
+}
+
+// Training tab progress (supabase/polycards-training-progress.sql): the student's own rows,
+// [{ practice_id, times_completed, first_completed_at, last_completed_at }].
+export async function fetchTrainingProgress() {
+  const { data, error } = await supabase
+    .from('user_training_progress')
+    .select('practice_id, times_completed, first_completed_at, last_completed_at');
+  if (error) throw new Error("Could not load training progress: " + error.message);
+  return data || [];
+}
+
+// A practice was completed (practice ids: letterPracticeId() in training.js).
+export async function recordTrainingCompletion(practiceId) {
+  const { error } = await supabase.rpc('record_training_completion', { p_practice_id: practiceId });
+  if (error) throw new Error("Could not save training progress: " + error.message);
+}
