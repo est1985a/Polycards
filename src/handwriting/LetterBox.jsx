@@ -1,6 +1,7 @@
 import { useEffect, useImperativeHandle, useLayoutEffect, useRef } from "react";
 import { HW_COLORS, STROKE_RATIO } from "./config.js";
 import { colors } from "../styles/theme.js";
+import { boxPosition, eventDelay, penLog, registerBox } from "./penDebug.js";
 
 // Border and background for a checked box.
 const STATE_STYLE = {
@@ -8,6 +9,8 @@ const STATE_STYLE = {
   lenient: { border: HW_COLORS.lenient, background: HW_COLORS.lenientBg },
   wrong: { border: colors.danger, background: HW_COLORS.paper },
   pass: { border: HW_COLORS.pass, background: HW_COLORS.passBg }, // letter practice: always green
+  checking: { border: colors.muted, background: HW_COLORS.paper }, // letter practice: being read (with …)
+  retry: { border: colors.muted, background: HW_COLORS.paper }, // letter practice: couldn't be read, write again
 };
 
 // Draws one stroke (or a single segment, or a dot for one point): black, round caps and joins.
@@ -44,7 +47,7 @@ export default function LetterBox({
 }) {
   const canvasRef = useRef(null);
   const strokes = useRef([]); // each stroke: [{ x, y }] in CSS pixels
-  const drawing = useRef(null); // { pointerId, stroke }
+  const drawing = useRef(null); // { pointerId, pointerType, stroke }
 
   const lineWidth = inkWidth ?? Math.max(2, size * STROKE_RATIO);
 
@@ -125,9 +128,9 @@ export default function LetterBox({
   }));
 
   // Latest props for the native listeners below (attached once, so they read them from here).
-  const latest = useRef({ size, height, allowAnyPointer, locked, onStroke, onSelect, onPenDown, lineWidth });
+  const latest = useRef({ size, height, allowAnyPointer, locked, onStroke, onSelect, onPenDown, lineWidth, redraw });
   useLayoutEffect(() => {
-    latest.current = { size, height, allowAnyPointer, locked, onStroke, onSelect, onPenDown, lineWidth };
+    latest.current = { size, height, allowAnyPointer, locked, onStroke, onSelect, onPenDown, lineWidth, redraw };
   });
 
   // Pen input. The listeners are attached directly to the canvas with { passive: false } rather
@@ -136,8 +139,12 @@ export default function LetterBox({
   // Stroke data lives in refs and each new segment is drawn straight onto the canvas, so
   // nothing re-renders while the pen is moving. The parent hears about the stroke (onStroke,
   // which selects this box for 消す) only when the pen lifts.
+  // The page's own pointerup / pointercancel (below) are a fallback for a pen-up that never reaches
+  // the canvas (pointer capture failed or was lost): without it the box would wait for the pen
+  // forever, never be checked, and ignore the next strokes.
   useEffect(() => {
     const canvas = canvasRef.current;
+    const unregister = registerBox(canvas);
 
     const point = (e) => {
       const rect = canvas.getBoundingClientRect();
@@ -146,6 +153,25 @@ export default function LetterBox({
     };
     const canDraw = (e) => e.pointerType === "pen" || latest.current.allowAnyPointer;
     const ctx = () => canvas.getContext("2d");
+
+    // pen-down for the debug overlay (?debugpen=1)
+    const logDown = (e, accepted, reason = "") => penLog({
+      down: { pointerType: e.pointerType, ...boxPosition(e, canvas.getBoundingClientRect()), accepted, reason, delay: eventDelay(e) },
+    });
+    const pressed = (e) => Boolean(e.buttons & 1) || e.pressure > 0;
+
+    // Ends the stroke in progress. drop: remove it (a touch, most likely the palm, that a pen took over from).
+    function endStroke(drop = false) {
+      const d = drawing.current;
+      if (!d) return;
+      drawing.current = null;
+      if (drop) {
+        strokes.current = strokes.current.filter((s) => s !== d.stroke);
+        latest.current.redraw();
+        return;
+      }
+      latest.current.onStroke?.();
+    }
 
     function startStroke(e) {
       try {
@@ -157,28 +183,56 @@ export default function LetterBox({
       const p = point(e);
       const stroke = [p];
       strokes.current.push(stroke);
-      drawing.current = { pointerId: e.pointerId, stroke };
+      drawing.current = { pointerId: e.pointerId, pointerType: e.pointerType, stroke, scrollY: window.scrollY };
       drawStroke(ctx(), [p], latest.current.lineWidth); // a dot at the very first contact
     }
 
     function onPointerDown(e) {
-      if (latest.current.locked) return;
+      if (latest.current.locked) {
+        logDown(e, false, "box locked (answered, checked or model not ready)");
+        return;
+      }
       if (!canDraw(e)) {
+        logDown(e, false, "not a pen (selects the box)");
         latest.current.onSelect?.();
         return;
       }
       e.preventDefault();
+      const d = drawing.current;
+      let reason = "";
+      if (d && d.pointerId !== e.pointerId) {
+        // One stroke at a time. A pen always wins: a touch while the pen writes is ignored, and a pen
+        // takes over from a touch (dropped: most likely the palm). A new pen contact means the
+        // previous pen stroke is over (its pen-up was missed).
+        if (d.pointerType === "pen" && e.pointerType !== "pen") {
+          logDown(e, false, "pen is already writing (palm?)");
+          return;
+        }
+        if (d.pointerType !== "pen" && e.pointerType !== "pen") {
+          logDown(e, false, "another finger is already writing");
+          return;
+        }
+        reason = d.pointerType === "pen" ? "previous pen-up was missed" : "pen took over from a touch";
+        endStroke(d.pointerType !== "pen");
+      }
       startStroke(e);
+      logDown(e, true, reason);
     }
 
     function onPointerMove(e) {
       if (!canDraw(e) || (latest.current.locked && !drawing.current)) return;
       let d = drawing.current;
+      // A pen touching with a new pointer id: the old stroke's pen-up was missed, so it is over.
+      if (d && d.pointerId !== e.pointerId && e.pointerType === "pen" && d.pointerType === "pen" && pressed(e) && !latest.current.locked) {
+        endStroke();
+        d = null;
+      }
       if (!d) {
         // The pen is touching but pointerdown never arrived: start the stroke here.
-        if (!(e.buttons & 1) && !(e.pressure > 0)) return;
+        if (!pressed(e) || latest.current.locked) return;
         e.preventDefault();
         startStroke(e);
+        logDown(e, true, "started on pointermove (pointerdown never arrived)");
         return;
       }
       if (d.pointerId !== e.pointerId) return;
@@ -193,12 +247,23 @@ export default function LetterBox({
       }
     }
 
+    // pointerup and pointercancel: the stroke so far is kept (and checked) either way.
     function onPointerUp(e) {
-      if (drawing.current?.pointerId !== e.pointerId) return;
-      e.preventDefault();
-      drawing.current = null;
-      latest.current.onStroke?.();
+      const d = drawing.current;
+      if (d?.pointerId !== e.pointerId) return;
+      if (e.cancelable) e.preventDefault();
+      if (e.type === "pointercancel") {
+        const scrolled = window.scrollY !== d.scrollY ? `, page scrolled ${Math.round(window.scrollY - d.scrollY)} px` : "";
+        penLog((s) => ({
+          cancels: s.cancels + 1,
+          lastCancel: `${e.pointerType}, after ${d.stroke.length} points${scrolled}, ${new Date().toLocaleTimeString()}`,
+        }));
+      }
+      endStroke();
     }
+    const onLostCapture = (e) => {
+      if (drawing.current?.pointerId === e.pointerId) penLog({ lostCapture: `${e.pointerType} mid-stroke, ${new Date().toLocaleTimeString()}` });
+    };
 
     const stopGesture = (e) => e.preventDefault();
 
@@ -210,7 +275,14 @@ export default function LetterBox({
     canvas.addEventListener("touchstart", stopGesture, opts);
     canvas.addEventListener("touchmove", stopGesture, opts);
     canvas.addEventListener("contextmenu", stopGesture);
+    canvas.addEventListener("lostpointercapture", onLostCapture);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
     return () => {
+      unregister();
+      canvas.removeEventListener("lostpointercapture", onLostCapture);
+      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointercancel", onPointerUp);
       canvas.removeEventListener("pointerdown", onPointerDown, opts);
       canvas.removeEventListener("pointermove", onPointerMove, opts);
       canvas.removeEventListener("pointerup", onPointerUp, opts);
@@ -229,6 +301,8 @@ export default function LetterBox({
         position: "relative", flex: "none", borderRadius: 10, overflow: "hidden",
         border: `3px solid ${look.border}`, background: look.background,
         boxShadow: selected && !state ? `0 0 0 2px ${colors.gold}` : "none",
+        // the 3 px border too: a pen landing on it must not start a page scroll
+        touchAction: "none", userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none",
       }}
     >
       {/* Layers, bottom to top: the box background (white, or the tint of a checked box), the four
@@ -248,6 +322,12 @@ export default function LetterBox({
           position: "absolute", top: 4, right: 4, width: 22, height: 22, borderRadius: 999, pointerEvents: "none",
           display: "grid", placeItems: "center", background: HW_COLORS.pass, color: HW_COLORS.passInk, fontSize: 14, fontWeight: 700, lineHeight: 1,
         }}>✓</span>
+      )}
+      {state === "checking" && (
+        <span aria-hidden="true" style={{
+          position: "absolute", top: 4, right: 4, padding: "0 6px", borderRadius: 999, pointerEvents: "none",
+          background: colors.surface2, color: colors.text, fontSize: 14, fontWeight: 700, lineHeight: "20px",
+        }}>…</span>
       )}
     </div>
   );

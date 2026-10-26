@@ -154,6 +154,7 @@ export default {
   "handwriting.undo": "戻す", // undo the last stroke
   "handwriting.submit": "こたえる",
   "handwriting.reading": "読み取り中…", // while the app reads the handwriting
+  "handwriting.loading": "準備中…", // the letter boxes wait until the letter model is ready
   "handwriting.read": "読み取り: {answer}", // what the app read in the boxes
   "handwriting.lenient": "「{target}」が「{read}」に見えるかも。気をつけて書こう！", // e.g. the i looks like an l
   "handwriting.unavailable": "手書きの準備ができませんでした。今回はタイピングで答えてください。",
@@ -194,6 +195,7 @@ export default {
   "practice.hint.capitalI": "大文字の I は上と下に短い横線を書こう",
   "practice.hint.dot": "{letter} の点をわすれずに、2本目の線より上に書こう",
   "practice.hint.erase": "書き直すときは「消す」をおしてね", // under every hint
+  "practice.hint.retry": "もう一度書いてね", // a box that couldn't be read (slow or failed)
   // One line per stroke under the stroke-order guide
   "practice.stroke.down": "上から下へまっすぐ",
   "practice.stroke.across": "左から右へまっすぐ",
