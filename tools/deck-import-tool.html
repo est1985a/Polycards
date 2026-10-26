@@ -46,8 +46,8 @@
   <div class="card">
     <h2>1. Your word list</h2>
     <p class="muted" style="margin-top:0">Paste CSV text, or copy the cells straight from Google Sheets (including the header row). Columns:
-      <code>school_level, textbook, unit_order, unit, deck, collection, english, japanese, example_en, example_ja, source, note</code>.
-      Only <code>english</code>, <code>japanese</code> and <code>deck</code> are always required. <code>example_en</code> and <code>example_ja</code> are an optional example sentence and its Japanese translation (give both or neither). <code>source</code> and <code>note</code> are ignored.</p>
+      <code>school_level, textbook, unit_order, unit, deck, collection, english, japanese, example_en, example_ja, pos, source, note</code>.
+      Only <code>english</code>, <code>japanese</code> and <code>deck</code> are always required. <code>example_en</code> and <code>example_ja</code> are an optional example sentence and its Japanese translation (give both or neither). <code>pos</code> is the optional part of speech: <code>noun, verb, adjective, adverb, preposition, pronoun, conjunction, auxiliary</code> (or <code>auxiliary verb</code>)<code>, article, interjection, number, phrase</code>, or the Japanese 名詞 動詞 形容詞 副詞 前置詞 代名詞 接続詞 助動詞 冠詞 間投詞 数詞 表現. A word that already has a part of speech in the library keeps it. <code>source</code> and <code>note</code> are ignored.</p>
     <textarea id="input" rows="10" placeholder="Paste here..."></textarea>
     <div class="row">
       <input type="file" id="file" accept=".csv,.tsv,.txt,text/csv,text/plain">
@@ -70,6 +70,7 @@
     <div class="card"><h2>Summary</h2><div id="stats" class="stats"></div></div>
     <div class="card"><h2>Things to look at</h2><div id="issues"></div></div>
     <div class="card"><h2>Decks found</h2><div id="decks"></div></div>
+    <div class="card"><h2>Words</h2><div id="words"></div></div>
     <div class="card" id="sqlCard">
       <h2>3. SQL to run</h2>
       <div id="sqlGate"></div>
@@ -102,7 +103,22 @@ const SUPABASE_KEY = 'sb_publishable_vR1WnHVHYOGklkoHAVPzvg_upyke-kS';
 
 const LEVELS = { jhs: 'JHS', hs: 'HS', other: 'Other' };
 const REQUIRED = ['english', 'japanese', 'deck'];
-const KNOWN = ['school_level', 'textbook', 'unit_order', 'unit', 'deck', 'collection', 'english', 'japanese', 'example_en', 'example_ja', 'source', 'note'];
+const KNOWN = ['school_level', 'textbook', 'unit_order', 'unit', 'deck', 'collection', 'english', 'japanese', 'example_en', 'example_ja', 'pos', 'source', 'note'];
+// Parts of speech: the keys allowed by the CHECK constraint on words.pos (supabase/polycards-pos.sql),
+// and the other ways a file may write them (the app's Japanese labels, "auxiliary verb").
+const POS_KEYS = ['noun', 'verb', 'adjective', 'adverb', 'preposition', 'pronoun', 'conjunction', 'auxiliary', 'article', 'interjection', 'number', 'phrase'];
+const POS_ALIASES = {
+  '名詞': 'noun', '動詞': 'verb', '形容詞': 'adjective', '副詞': 'adverb', '前置詞': 'preposition', '代名詞': 'pronoun',
+  '接続詞': 'conjunction', '助動詞': 'auxiliary', '冠詞': 'article', '間投詞': 'interjection', '数詞': 'number', '表現': 'phrase',
+  'auxiliary verb': 'auxiliary',
+};
+// A pos cell -> a key, '' for blank, or null when it is not a part of speech.
+function posKey(raw) {
+  const v = clean(raw).toLowerCase();
+  if (!v) return '';
+  if (POS_KEYS.indexOf(v) !== -1) return v;
+  return POS_ALIASES[v] || null;
+}
 const MAX_EXAMPLE = 300;
 const SEP = '\u0001';
 const BATCH = 200;
@@ -210,18 +226,22 @@ async function fetchAll(path) {
   return out;
 }
 async function loadDb() {
-  // Ask for the example sentence columns too. If the database does not have them yet,
-  // the request is refused, so fall back to the plain list and remember that.
-  let words, exampleCols = true;
-  try { words = await fetchAll('words?select=english,japanese,example_en,example_ja&order=id'); }
-  catch (e) { words = await fetchAll('words?select=english,japanese&order=id'); exampleCols = false; }
+  // Ask for the example sentence and part-of-speech columns too. If the database does not have
+  // them yet, the request is refused, so fall back to a shorter list and remember that.
+  let words, exampleCols = true, posCol = true;
+  try { words = await fetchAll('words?select=english,japanese,example_en,example_ja,pos&order=id'); }
+  catch (e) {
+    posCol = false;
+    try { words = await fetchAll('words?select=english,japanese,example_en,example_ja&order=id'); }
+    catch (e2) { words = await fetchAll('words?select=english,japanese&order=id'); exampleCols = false; }
+  }
   const [textbooks, units, decks, collections] = await Promise.all([
     fetchAll('textbooks?select=id,name,school_level&order=id'),
     fetchAll('units?select=id,name,unit_order,textbook_id&order=id'),
     fetchAll('decks?select=id,name,unit_id,deck_words(count),collection_decks(collection_id)&order=id'),
     fetchAll('collections?select=id,name,parent_id&order=id'),
   ]);
-  return { words, textbooks, units, decks, collections, exampleCols };
+  return { words, textbooks, units, decks, collections, exampleCols, posCol };
 }
 
 // ---- The main analysis ----------------------------------------------------
@@ -259,6 +279,7 @@ function analyze(text, db) {
       unitOrderRaw: o.unit_order || '', levelRaw: o.school_level || '',
       collectionRaw: o.collection || '',
       exEn: o.example_en || '', exJa: o.example_ja || '',
+      posRaw: o.pos || '',
     };
     let bad = false;
     const err = m => { add('error', rec.row, m, rec); bad = true; };
@@ -268,6 +289,8 @@ function analyze(text, db) {
     if (!rec.deck) err('The deck name is blank.');
     if (!!rec.exEn !== !!rec.exJa) err('Give both example_en and example_ja, or leave both blank.');
     if (rec.exEn.length > MAX_EXAMPLE || rec.exJa.length > MAX_EXAMPLE) err('An example sentence is longer than ' + MAX_EXAMPLE + ' characters.');
+    rec.pos = posKey(rec.posRaw);
+    if (rec.pos === null) err('pos "' + rec.posRaw + '" is not a part of speech. Use one of: ' + POS_KEYS.join(', ') + ' (or the Japanese 名詞, 動詞 …), or leave it blank.');
 
     rec.path = rec.collectionRaw ? rec.collectionRaw.split('>').map(clean) : [];
     if (rec.path.some(p => !p)) err('The collection path has an empty part: "' + rec.collectionRaw + '". Use the form Parent > Child.');
@@ -343,6 +366,14 @@ function analyze(text, db) {
       else if (prev.en !== r.exEn || prev.ja !== r.exJa) add('warn', r.row, 'This word already has a different example sentence earlier in the file (row ' + prev.row + '). The first one is used.', r);
     }
   }
+  const posByWord = new Map();   // word key -> { pos, row }  (blank rows don't count)
+  for (const r of recs) {
+    if (!r.pos) continue;
+    const k = r.english.toLowerCase() + SEP + r.japanese;
+    const prev = posByWord.get(k);
+    if (!prev) posByWord.set(k, { pos: r.pos, row: r.row });
+    else if (prev.pos !== r.pos) add('error', r.row, 'This word has pos "' + r.pos + '" here but "' + prev.pos + '" on row ' + prev.row + '. A word can only have one part of speech; use the same one on both rows.', r);
+  }
   for (const r of recs) {
     const key = r.isUnit ? 'U' + SEP + r.textbook + SEP + r.unit + SEP + r.deck : 'C' + SEP + r.path.join(SEP) + SEP + r.deck;
     let d = deckMap.get(key);
@@ -359,7 +390,8 @@ function analyze(text, db) {
     if (d.wordKeys.has(wk)) { add('info', r.row, 'Repeated in the same deck, so it will only be added once.', r); continue; }
     d.wordKeys.add(wk);
     const ex = exByWord.get(wk);
-    d.words.push({ english: r.english, japanese: r.japanese, row: r.row, deck: r.deck, exEn: ex ? ex.en : '', exJa: ex ? ex.ja : '' });
+    const ps = posByWord.get(wk);
+    d.words.push({ english: r.english, japanese: r.japanese, row: r.row, deck: r.deck, exEn: ex ? ex.en : '', exJa: ex ? ex.ja : '', pos: ps ? ps.pos : '' });
   }
   res.decks = [...deckMap.values()];
   // look-alike deck names, only compared inside the same unit (or the same collection)
@@ -372,7 +404,10 @@ function analyze(text, db) {
   for (const [, m] of decksByPlace) variantCheck(m, 'Deck', k => k);
 
   // -- compare with the database
-  const dbWordKeys = new Set(), dbByEng = new Map(), dbIdx = new Map(), fileIdx = new Map(), dbExample = new Map();
+  const dbWordKeys = new Set(), dbByEng = new Map(), dbIdx = new Map(), fileIdx = new Map(), dbExample = new Map(), dbPos = new Map();
+  const firstPosRec = recs.find(r => r.pos);
+  if (firstPosRec && db && !db.posCol) add('error', firstPosRec.row, 'Your file has parts of speech (pos), but the database does not have the words.pos column yet. Run supabase/polycards-pos.sql first, then press "Refresh database info" and check again.');
+  if (firstPosRec && !db) add('info', firstPosRec.row, 'I could not read the database, so I cannot tell whether the words.pos column exists yet. If it does not, the SQL will stop with an error and change nothing.');
   const firstExRec = recs.find(r => r.exEn);
   if (firstExRec && db && !db.exampleCols) add('error', firstExRec.row, 'Your file has example sentences, but the database does not have the example_en and example_ja columns yet. Run the "add example columns" SQL first, then press "Refresh database info" and check again.');
   if (firstExRec && !db) add('info', firstExRec.row, 'I could not read the database, so I cannot tell whether the example sentence columns exist yet. If they do not, the SQL will stop with an error and change nothing.');
@@ -381,6 +416,7 @@ function analyze(text, db) {
       const e = clean(w.english).toLowerCase(), j = clean(w.japanese);
       dbWordKeys.add(e + SEP + j);
       if (w.example_en) dbExample.set(e + SEP + j, w.example_en);
+      if (w.pos) dbPos.set(e + SEP + j, w.pos);
       if (!dbByEng.has(e)) dbByEng.set(e, new Set()); dbByEng.get(e).add(j);
     }
     for (const e of dbByEng.keys()) addToIndex(dbIdx, e);
@@ -471,13 +507,31 @@ function analyze(text, db) {
   const seenFileSet = new Set();
   const uniquePairs = new Set(); let newPairs = 0, reusedPairs = 0;
   const exampleWords = new Set();
+  const wordRows = new Map();    // word key -> one row of the Words preview
   for (const d of res.decks) {
     d.newWords = 0;
+    d.withPos = 0;
     for (const w of d.words) {
       const e = w.english.toLowerCase();
       const pk = e + SEP + w.japanese;
       const inDb = db ? dbWordKeys.has(pk) : false;
-      if (!uniquePairs.has(pk)) { uniquePairs.add(pk); if (inDb) reusedPairs++; else newPairs++; }
+      if (w.pos) d.withPos++;
+      if (!uniquePairs.has(pk)) {
+        uniquePairs.add(pk); if (inDb) reusedPairs++; else newPairs++;
+        // what happens to the part of speech (only ever added, never overwritten)
+        const stored = dbPos.get(pk) || '';
+        let posAction;
+        if (!w.pos) posAction = stored ? 'none in file (database has ' + stored + ')' : '';
+        else if (!db) posAction = 'not checked';
+        else if (!inDb) posAction = 'new word';
+        else if (!stored) posAction = 'will be set';
+        else if (stored === w.pos) posAction = 'already set';
+        else {
+          posAction = 'kept: database has ' + stored;
+          add('warn', w.row, 'This word already has pos "' + stored + '" in the database, but your file says "' + w.pos + '". The existing one is kept (the SQL never overwrites a part of speech).', { deck: d.name, english: w.english, japanese: w.japanese });
+        }
+        wordRows.set(pk, { english: w.english, japanese: w.japanese, decks: [d.name], pos: w.pos, posAction, inDb });
+      } else if (wordRows.get(pk).decks.indexOf(d.name) === -1) wordRows.get(pk).decks.push(d.name);
       if (!inDb) d.newWords++;
       const rec = { deck: d.name, english: w.english, japanese: w.japanese };
 
@@ -521,8 +575,10 @@ function analyze(text, db) {
     uniqueWords: uniquePairs.size,
     newWords: db ? newPairs : null, reusedWords: db ? reusedPairs : null,
     withExamples: exampleWords.size,
+    withPos: [...wordRows.values()].filter(w => w.pos).length,
     errors, warns, dbChecked: !!db,
   };
+  res.words = [...wordRows.values()];
   if (!errors && res.decks.length) { res.sql = generateSql(res.decks); res.checkSql = generateCheckSql(res.decks); }
   return res;
 }
@@ -546,6 +602,7 @@ function generateSql(decks, overwriteExamples) {
   const out = [];
   out.push('-- Generated by the Polycards Deck Import Tool');
   out.push('-- Safe to run more than once: existing items are reused and nothing is deleted.');
+  if (decks.some(d => d.words.some(w => w.pos))) out.push('-- Needs the words.pos column (supabase/polycards-pos.sql). An existing part of speech is never overwritten.');
   if (overwriteExamples) out.push('-- NOTE: this version REPLACES example sentences that already exist for the words below.');
   out.push('begin;', '');
 
@@ -594,10 +651,26 @@ function generateSql(decks, overwriteExamples) {
   const allWords = new Map();
   for (const d of decks) for (const w of d.words) { const k = w.english.toLowerCase() + SEP + w.japanese; if (!allWords.has(k)) allWords.set(k, w); }
   const list = [...allWords.values()];
+  // pos only appears in the SQL when the file uses it, so files without it still work on a
+  // database that has no words.pos column.
+  const usesPos = list.some(w => w.pos);
   for (let i = 0; i < list.length; i += BATCH) {
-    out.push('insert into public.words (english, japanese) values\n' + list.slice(i, i + BATCH).map(w => '  (' + q(w.english) + ', ' + q(w.japanese) + ')').join(',\n') + '\non conflict (lower(btrim(english)), btrim(japanese)) do nothing;');
+    out.push(usesPos
+      ? 'insert into public.words (english, japanese, pos) values\n' + list.slice(i, i + BATCH).map(w => '  (' + q(w.english) + ', ' + q(w.japanese) + ', ' + (w.pos ? q(w.pos) : 'null') + ')').join(',\n') + '\non conflict (lower(btrim(english)), btrim(japanese)) do nothing;'
+      : 'insert into public.words (english, japanese) values\n' + list.slice(i, i + BATCH).map(w => '  (' + q(w.english) + ', ' + q(w.japanese) + ')').join(',\n') + '\non conflict (lower(btrim(english)), btrim(japanese)) do nothing;');
   }
   out.push('');
+
+  const posList = list.filter(w => w.pos);
+  if (posList.length) {
+    out.push('-- Parts of speech for words already in the library (only fills in words that have none yet; never overwrites)');
+    for (let i = 0; i < posList.length; i += BATCH) {
+      out.push('update public.words w\nset pos = v.pos\nfrom (values\n'
+        + posList.slice(i, i + BATCH).map(w => '  (' + q(w.english) + ', ' + q(w.japanese) + ', ' + q(w.pos) + ')').join(',\n')
+        + '\n) as v(english, japanese, pos)\nwhere lower(btrim(w.english)) = lower(btrim(v.english))\n  and btrim(w.japanese) = btrim(v.japanese)\n  and w.pos is null;');
+    }
+    out.push('');
+  }
 
   const exList = list.filter(w => w.exEn);
   if (exList.length) {
@@ -617,7 +690,7 @@ function generateSql(decks, overwriteExamples) {
   for (const d of decks) {
     for (let i = 0; i < d.words.length; i += BATCH) {
       const chunk = d.words.slice(i, i + BATCH);
-      out.push('insert into public.deck_words (deck_id, word_id, position)\nselect ' + deckExpr(d) + ', w.id, v.pos\nfrom (values\n' + chunk.map((w, k) => '  (' + q(w.english) + ', ' + q(w.japanese) + ', ' + (i + k + 1) + ')').join(',\n') + '\n) as v(english, japanese, pos)\njoin public.words w\n  on lower(btrim(w.english)) = lower(btrim(v.english))\n and btrim(w.japanese) = btrim(v.japanese)\non conflict (deck_id, word_id) do nothing;');
+      out.push('insert into public.deck_words (deck_id, word_id, position)\nselect ' + deckExpr(d) + ', w.id, v.position\nfrom (values\n' + chunk.map((w, k) => '  (' + q(w.english) + ', ' + q(w.japanese) + ', ' + (i + k + 1) + ')').join(',\n') + '\n) as v(english, japanese, position)\njoin public.words w\n  on lower(btrim(w.english)) = lower(btrim(v.english))\n and btrim(w.japanese) = btrim(v.japanese)\non conflict (deck_id, word_id) do nothing;');
     }
   }
   out.push('', 'commit;');
@@ -625,6 +698,10 @@ function generateSql(decks, overwriteExamples) {
 }
 function generateCheckSql(decks) {
   const names = [...new Set(decks.map(d => d.name))];
+  const hasEx = decks.some(d => d.words.some(w => w.exEn)), hasPos = decks.some(d => d.words.some(w => w.pos));
+  if (hasPos) {
+    return 'select d.name as deck, count(dw.word_id) as words' + (hasEx ? ', count(w.example_en) as with_example' : '') + ', count(w.pos) as with_pos\nfrom public.decks d\nleft join public.deck_words dw on dw.deck_id = d.id\nleft join public.words w on w.id = dw.word_id\nwhere d.name in (' + names.map(q).join(', ') + ')\ngroup by d.id, d.name\norder by d.name;';
+  }
   if (decks.some(d => d.words.some(w => w.exEn))) {
     return 'select d.name as deck, count(dw.word_id) as words, count(w.example_en) as with_example\nfrom public.decks d\nleft join public.deck_words dw on dw.deck_id = d.id\nleft join public.words w on w.id = dw.word_id\nwhere d.name in (' + names.map(q).join(', ') + ')\ngroup by d.id, d.name\norder by d.name;';
   }
@@ -633,12 +710,12 @@ function generateCheckSql(decks) {
 
 // ---- Example / template ---------------------------------------------------
 const TEMPLATE = [
-  'school_level,textbook,unit_order,unit,deck,collection,english,japanese,example_en,example_ja,source,note',
-  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,apple,りんご,I eat an apple every day.,私は毎日りんごを食べます。,,',
-  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,one of ...,...の1つ,,,,',
-  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-2,,familiar,見慣れた,,,,',
-  ',,,,Grade 3 Set 1,EIKEN > Grade 3,borrow,借りる,"Can I borrow your pen, please?",ペンを借りてもいいですか。,,check meaning',
-  ',,,,Grade 3 Set 1,EIKEN > Grade 3,familiar,見慣れた,,,,',
+  'school_level,textbook,unit_order,unit,deck,collection,english,japanese,example_en,example_ja,pos,source,note',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,apple,りんご,I eat an apple every day.,私は毎日りんごを食べます。,noun,,',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,one of ...,...の1つ,,,phrase,,',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-2,,familiar,見慣れた,,,形容詞,,',
+  ',,,,Grade 3 Set 1,EIKEN > Grade 3,borrow,借りる,"Can I borrow your pen, please?",ペンを借りてもいいですか。,動詞,,check meaning',
+  ',,,,Grade 3 Set 1,EIKEN > Grade 3,familiar,見慣れた,,,,,',
 ].join('\n');
 
 // ---- Page wiring (only runs in a browser) ----------------------------------
@@ -696,6 +773,7 @@ if (typeof document !== 'undefined' && document.getElementById('btnCheck')) {
       stat('unique words', s.uniqueWords),
       stat('new words', s.newWords), stat('already in database', s.reusedWords),
       s.withExamples ? stat('words with example sentences', s.withExamples) : null,
+      s.withPos ? stat('words with pos', s.withPos) : null,
       stat('errors', s.errors, s.errors ? 'bad' : ''), stat('warnings', s.warns, s.warns ? 'warn' : '')
     ].filter(Boolean));
 
@@ -718,8 +796,17 @@ if (typeof document !== 'undefined' && document.getElementById('btnCheck')) {
       el('td', { text: d.kind === 'unit' ? d.level + ' › ' + d.textbook + ' › ' + d.unit : d.collections.map(p => p.join(' › ')).join(' ; ') }),
       el('td', { text: d.words.length }),
       el('td', { text: s.dbChecked ? d.newWords : '?' }),
+      el('td', { text: d.withPos }),
       el('td', {}, el('span', { class: 'badge ' + d.status, text: d.status === 'unknown' ? 'not checked' : d.status }), d.status === 'exists' ? ' (' + d.existingWordCount + ' words there now)' : '')));
-    $('decks').replaceChildren(el('div', { class: 'scroll' }, el('table', {}, el('tr', {}, el('th', { text: 'Deck' }), el('th', { text: 'Where it goes' }), el('th', { text: 'Words' }), el('th', { text: 'New words' }), el('th', { text: 'Status' })), deckRows)));
+    $('decks').replaceChildren(el('div', { class: 'scroll' }, el('table', {}, el('tr', {}, el('th', { text: 'Deck' }), el('th', { text: 'Where it goes' }), el('th', { text: 'Words' }), el('th', { text: 'New words' }), el('th', { text: 'With pos' }), el('th', { text: 'Status' })), deckRows)));
+
+    const wordRows = r.words.map(w => el('tr', {},
+      el('td', { text: w.english }), el('td', { text: w.japanese }), el('td', { text: w.decks.join(', ') }),
+      el('td', { text: w.pos }),
+      el('td', { text: w.posAction })));
+    $('words').replaceChildren(el('details', {},
+      el('summary', { text: 'Show all ' + r.words.length + ' words' + (s.withPos ? ' (' + s.withPos + ' with pos)' : '') }),
+      el('div', { class: 'scroll', style: 'margin-top:10px' }, el('table', {}, el('tr', {}, el('th', { text: 'English' }), el('th', { text: 'Japanese' }), el('th', { text: 'Deck' }), el('th', { text: 'pos' }), el('th', { text: 'What happens to pos' })), wordRows))));
 
     const gate = $('sqlGate'); gate.replaceChildren(); $('sqlBox').classList.add('hidden');
     const ow = $('overwriteBox'); ow.replaceChildren();
