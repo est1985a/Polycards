@@ -42,12 +42,12 @@ describe('CardSetsTab', () => {
     for (const s of ['Word Packs', '単語パック', '教科書パックは授業で習う単語、セレクトパックはテーマ別の単語です。パックを開いて単語を見てから、マイデッキに追加しよう！',
       'Textbook Packs', '教科書パック', 'Select Packs', 'セレクトパック']) expect(t).toContain(s);
     expect(t).not.toContain('Card Sets');
-    expect(t).not.toContain('← ');
+    expect(render({ screen: 'hub' })).not.toContain('back-button');
   });
 
   it('textbooks: back button to the hub, JHS by default, no school-level subtitle', () => {
     const t = text(render({ screen: 'textbooks' }));
-    expect(t).toContain('← Word Packs');
+    expect(t).toContain('Word Packs');
     expect(t).toContain('New Horizon 3');
     expect(t).not.toContain('Power On 1');
     expect(t).toContain('2 ユニット');
@@ -92,7 +92,7 @@ describe('CardSetsTab', () => {
 
   it('units: in unit_order, back to Textbook Packs, deck counts', () => {
     const t = text(render({ screen: 'units', textbookId: 2 }));
-    expect(t).toContain('← Textbook Packs');
+    expect(t).toContain('Textbook Packs');
     expect(t.indexOf('Unit 1')).toBeLessThan(t.indexOf('Unit 2'));
     expect(t).toContain('2 デッキ');
     expect(t).toContain('0 デッキ');
@@ -100,7 +100,7 @@ describe('CardSetsTab', () => {
 
   it('decks: word counts, back to the textbook', () => {
     const t = text(render({ screen: 'decks', textbookId: 2, unitId: 20 }));
-    expect(t).toContain('← New Horizon 3');
+    expect(t).toContain('New Horizon 3');
     expect(t).toContain('Part 1');
     expect(t).toContain('5 語');
     expect(t).toContain('3 語');
@@ -128,7 +128,7 @@ describe('CardSetsTab', () => {
 
   it('tests: coming soon with a back button when there are no collections', () => {
     const t = text(render({ screen: 'tests' }, { collections: [] }));
-    expect(t).toContain('← Word Packs');
+    expect(t).toContain('Word Packs');
     expect(t).toContain('準備中 — Coming soon');
   });
 
@@ -150,7 +150,7 @@ describe('CardSetsTab', () => {
 
   it('collection: sub-collections first, then decks with word counts, numbers in order', () => {
     const t = text(render({ screen: 'collection', collectionId: 'eiken', level: 'JHS' }, { collections: COLLECTIONS }));
-    expect(t).toContain('← Select Packs');
+    expect(t).toContain('Select Packs');
     expect(t.indexOf('5級')).toBeLessThan(t.indexOf('Mix'));
     expect(t).toContain('2 デッキ');
     const elem = text(render({ screen: 'collection', collectionId: 'elem' }, { collections: COLLECTIONS }));
@@ -160,7 +160,7 @@ describe('CardSetsTab', () => {
 
   it('collection: a sub-collection goes back to its parent, and added decks get the badge', () => {
     const t = text(render({ screen: 'collection', collectionId: 'g5' }, { collections: COLLECTIONS, myDeckIds: ['d-g5a'] }));
-    expect(t).toContain('← 英検');
+    expect(t).toContain('英検');
     expect(t).toContain('追加済み');
   });
 
@@ -171,7 +171,7 @@ describe('CardSetsTab', () => {
   it('collection: one that no longer exists falls back to the Tests & Themes list', () => {
     const t = text(render({ screen: 'collection', collectionId: 'gone' }, { collections: COLLECTIONS }));
     expect(t).toContain('小学校の英語');
-    expect(t).toContain('← Word Packs');
+    expect(t).toContain('Word Packs');
   });
 
   it('a textbook that no longer exists falls back to the hub', () => {

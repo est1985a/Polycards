@@ -40,12 +40,15 @@ function LevelChip({ level }) {
 
 // Big word style: Chakra Petch for English, Zen Maru Gothic for Japanese; long text gets smaller.
 // Japanese letters are wider, so Japanese starts at 5/6 of the size (48 → 40 px) unless jaSize is given.
-function wordStyle(text, isEnglish, size, jaSize = Math.round(size * 5 / 6)) {
+// fill (the card shrinks to fit the screen): the size also follows the screen height, full size from
+// 800 px tall and down to 2/3 of it on a short screen (48 px → 39 px at 650 px).
+function wordStyle(text, isEnglish, size, jaSize = Math.round(size * 5 / 6), fill = false) {
   const long = isEnglish ? text.length > 12 : text.length > 7;
   const base = isEnglish ? size : jaSize;
+  const px = long ? Math.round(base * 0.75) : base;
   return {
     fontFamily: isEnglish ? fontDisplay : fontBody, fontWeight: 700, lineHeight: 1.2, overflowWrap: "anywhere",
-    fontSize: long ? Math.round(base * 0.75) : base,
+    fontSize: fill ? `clamp(${Math.round(px * 2 / 3)}px, ${(px / 8).toFixed(2)}vh, ${px}px)` : px,
   };
 }
 
@@ -60,12 +63,16 @@ function wordStyle(text, isEnglish, size, jaSize = Math.round(size * 5 / 6)) {
 // content isn't drawn until it flips, so it doesn't stretch the card.
 // card.pos: the 品詞 chip (PosChip) in the front's top row, right after the direction label, on
 // every card (normal and compact, both directions); nothing when null.
+// fill: the card takes the height its parent gives it (StudySession sizes it to fit the screen with the
+// answer buttons below) instead of a fixed height; big text follows the screen height. short: a short
+// screen (landscape iPad), so less padding and tighter gaps; nothing is hidden. If the back still
+// doesn't fit, it scrolls inside the card.
 // speech: { autoPlay, slow } for the 発音を聞く button, or null when the browser can't speak.
 // The button reads the main English (card.en) and only shows where the English is already visible:
 // the front of an English → Japanese card, and the back of every card (so never before the answer
 // on a Japanese → English card). Auto-play: when the front of an English → Japanese card appears,
 // or when a Japanese → English card flips. A card that appears already flipped (Undo) stays quiet.
-export default function FlipCard({ card, showLevel, revealed, onFlip, compact = false, wide = false, speech = null }) {
+export default function FlipCard({ card, showLevel, revealed, onFlip, compact = false, wide = false, speech = null, fill = false, short = false }) {
   const backRef = useRef(null);
   const frontIsEnglish = card.direction === "en2jp";
   const shownFlipped = useRef(revealed); // flipped from the start (Undo): no auto-play
@@ -91,7 +98,8 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
     if (revealed) backRef.current?.focus({ preventScroll: true });
   }, [revealed]);
 
-  const minHeight = compact ? (wide ? 180 : 150) : (wide ? 420 : 320);
+  const minHeight = compact ? (wide ? 180 : 150) : fill ? 0 : (wide ? 420 : 320);
+  const faceFit = short ? { padding: 14, gap: 8 } : null;
   const Front = compact ? "div" : "button";
   const speakerSize = wide ? 52 : 44;
   const chipSize = wide ? 14 : 12;
@@ -116,11 +124,12 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
   );
 
   return (
-    <div style={{ perspective: 1200 }}>
+    <div style={{ perspective: 1200, ...(fill && { height: "100%" }) }}>
       <div
         className="flip-card-inner"
         style={{
           display: "grid", transformStyle: "preserve-3d", transition: FLIP,
+          ...(fill && { height: "100%", gridTemplateRows: "minmax(0, 1fr)" }),
           transform: revealed ? "rotateY(180deg)" : "rotateY(0deg)",
         }}
       >
@@ -128,13 +137,13 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
         <Front
           onClick={compact ? undefined : onFlip}
           inert={revealed}
-          style={{ ...face, minHeight, background: colors.surface, border: `2px solid ${colors.line}`, color: colors.text, cursor: compact ? "default" : "pointer" }}
+          style={{ ...face, ...faceFit, minHeight, background: colors.surface, border: `2px solid ${colors.line}`, color: colors.text, cursor: compact ? "default" : "pointer" }}
         >
           {/* The compact front is a plain box, so the chip can sit in it; the normal front is a button, */}
           {/* so it only keeps the chip's space (the chip itself is in the layer below). */}
           {frontTopRow(card.pos && <PosChip pos={card.pos} fontSize={chipSize} placeholder={!compact} />)}
           <span style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={wordStyle(card.front, frontIsEnglish, 48)}>{card.front}</span>
+            <span style={wordStyle(card.front, frontIsEnglish, 48, undefined, fill)}>{card.front}</span>
           </span>
           {!compact && (
             <span
@@ -155,7 +164,7 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
             data-front-pos=""
             inert={revealed}
             style={{
-              ...face, minHeight: 0, alignSelf: "start", border: "2px solid transparent", paddingBottom: 0,
+              ...face, ...faceFit, minHeight: 0, alignSelf: "start", border: "2px solid transparent", paddingBottom: 0,
               visibility: "hidden", pointerEvents: "none", transform: "translateZ(1px)",
             }}
           >
@@ -173,7 +182,7 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
           tabIndex={-1}
           inert={!revealed}
           style={{
-            ...face, minHeight, transform: "rotateY(180deg)", outline: "none",
+            ...face, ...faceFit, minHeight, transform: "rotateY(180deg)", outline: "none",
             background: colors.surface2, border: `2px solid ${colors.accent}`,
             boxShadow: `0 0 24px color-mix(in srgb, ${colors.accent} 28%, transparent)`,
           }}
@@ -191,13 +200,17 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
                 </span>
                 {showLevel && <LevelChip level={card.level} />}
               </div>
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 12 }}>
-                {(() => {
-                  const question = <div style={{ ...wordStyle(card.front, frontIsEnglish, wide ? 30 : 22), fontWeight: 500, color: colors.muted }}>{card.front}</div>;
-                  const answer = <div style={{ ...(wide ? wordStyle(card.back, !frontIsEnglish, 48, 48) : wordStyle(card.back, !frontIsEnglish, 32)), color: colors.accentText }}>{card.back}</div>;
-                  return frontIsEnglish ? <>{withSpeaker(question)}{answer}</> : <>{question}{withSpeaker(answer)}</>;
-                })()}
-                <WordInfo english={card.en} exampleEn={card.exampleEn} exampleJa={card.exampleJa} wide={wide} />
+              {/* fill: if the back is taller than the card, this part scrolls inside the card (centered by */}
+              {/* auto margins, so a scrolled back starts at its top instead of being cut off above). */}
+              <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", ...(fill && { overflowY: "auto" }) }}>
+                <div style={{ margin: "auto 0", display: "flex", flexDirection: "column", gap: short ? 8 : 12 }}>
+                  {(() => {
+                    const question = <div style={{ ...wordStyle(card.front, frontIsEnglish, wide ? 30 : 22, undefined, fill), fontWeight: 500, color: colors.muted }}>{card.front}</div>;
+                    const answer = <div style={{ ...(wide ? wordStyle(card.back, !frontIsEnglish, 48, 48, fill) : wordStyle(card.back, !frontIsEnglish, 32, undefined, fill)), color: colors.accentText }}>{card.back}</div>;
+                    return frontIsEnglish ? <>{withSpeaker(question)}{answer}</> : <>{question}{withSpeaker(answer)}</>;
+                  })()}
+                  <WordInfo english={card.en} exampleEn={card.exampleEn} exampleJa={card.exampleJa} wide={wide} dense={short} />
+                </div>
               </div>
             </>
           )}

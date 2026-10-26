@@ -5,24 +5,8 @@ import LetterPractice from '../handwriting/LetterPractice.jsx';
 import LetterGlyph from '../handwriting/LetterGlyph.jsx';
 import { loadModel } from '../handwriting/model.js';
 import { HW_COLORS } from '../handwriting/config.js';
+import BackButton from './BackButton';
 import { t, tx } from '../i18n';
-
-// "← back" (same look as the Card Sets back button). label: the screen it goes back to.
-function BackButton({ label, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        justifySelf: "start", minHeight: 44, padding: "0 16px 0 12px", borderRadius: 999,
-        background: colors.surface2, border: `2px solid ${colors.line}`, color: colors.text,
-        fontFamily: fontDisplay, fontWeight: 700, fontSize: 15, cursor: "pointer",
-      }}
-    >
-      {t("cardSets.back", { label })}
-    </button>
-  );
-}
 
 // 大文字 (A–Z) | 小文字 (a–z), the same look as LevelSwitch.
 function CaseSwitch({ lowercase, onChange }) {

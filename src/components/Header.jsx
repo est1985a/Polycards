@@ -186,15 +186,16 @@ export function GachaButton({ tickets = 0, pulse = false, onOpen }) {
 // onHome: called when the logo is tapped. wide: wide-screen side padding.
 // gacha: the gacha status (null while loading); pulseGacha / onOpenGacha: for the gacha button.
 // rank, newTheme (the dot), onOpenStats, onOpenSettings, onOpenHelp: for the account menu.
+// tight: the review on a short screen (landscape iPad): less space above and below the row.
 export default function Header({
   variant = "compact", user, onSignOut, onHome, wide = false, gacha = null, pulseGacha = false, onOpenGacha,
-  rank = null, newTheme = false, onOpenStats, onOpenSettings, onOpenHelp,
+  rank = null, newTheme = false, onOpenStats, onOpenSettings, onOpenHelp, tight = false,
 }) {
   const side = wide ? wideLayout.gutter : gutter;
   // zIndex 25: above everything sticky or fixed on the page (word list bar 5, drill button and tabs 10),
   // so the account menu and its close-on-tap-outside layer cover them; below the pop-ups (30, 40).
   const row = (
-    <div style={{ position: "relative", zIndex: 25, display: "flex", alignItems: "center", justifyContent: "space-between", padding: `16px ${side}px` }}>
+    <div style={{ position: "relative", zIndex: 25, display: "flex", alignItems: "center", justifyContent: "space-between", padding: `${tight ? 6 : 16}px ${side}px` }}>
       <Logo onHome={onHome} />
       {user && (
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -205,7 +206,7 @@ export default function Header({
     </div>
   );
 
-  if (variant !== "band") return <div style={{ marginBottom: 8 }}>{row}</div>;
+  if (variant !== "band") return <div style={{ marginBottom: tight ? 0 : 8 }}>{row}</div>;
 
   return (
     <div style={{ position: "relative", height: headerBand.height }}>

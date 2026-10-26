@@ -19,8 +19,9 @@ import {
 } from './lib/settings';
 import { themeList, newThemes, featuredUnlock, markSeen } from './lib/themeUnlocks';
 import { themes, applyTheme, getTheme, DEFAULT_THEME } from './themes';
-import { wrap, gutter, headerBand, tabBarHeight, btnLink, wideLayout } from './styles/theme';
-import { useWide, useSideChip } from './lib/useWide';
+import { wrap, gutter, headerBand, tabBarHeight, wideLayout } from './styles/theme';
+import { useWide, useSideChip, useShort } from './lib/useWide';
+import BackButton from './components/BackButton';
 import { showTrainingTab, TRAINING_START } from './lib/training';
 import { speechAvailable } from './lib/speech';
 import { t, getLang } from './i18n';
@@ -160,6 +161,8 @@ function App() {
 
   const wide = useWide(); // landscape iPad or bigger: wider layout
   const sideChip = useSideChip(); // room for the review's "previous card" chip beside the card
+  const short = useShort(); // short screen (landscape iPad with browser bars): the review tightens up
+  const [studyTyping, setStudyTyping] = useState(false); // the review's typing box is open
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
@@ -721,24 +724,38 @@ function App() {
   const tabbedView = gachaView || view === "settings" || view === "stats"; // full screens that keep the bottom tabs
   // Settings or stats opened during a review: the review is kept (hidden) underneath and comes back on 戻る.
   const reviewBehind = tabbedView && !gachaView && reviewKept(screens, !!activeSet);
+  // The review fills exactly one screen (.study-page in index.css), so its buttons always fit; while
+  // the typing box is open the page may grow, for the on-screen keyboard.
+  const studyFit = !!session && view === "study";
+  const fill = studyFit ? "study-fill" : undefined;
   const contentWidth = !wide || bandHeader ? "none"
     : view === "stats" ? wideLayout.readWidth
     : tabbedView ? "none"
     : view === "study" ? wideLayout.studyWidth : wideLayout.readWidth;
 
   return (
-    <div style={{ minHeight: "100vh" }}>
+    <div
+      className={studyFit ? `study-page${studyTyping ? " study-typing" : ""}` : undefined}
+      style={studyFit ? undefined : { minHeight: "100vh" }}
+    >
       {/* The theme's background (and backdrop) behind everything; see .app-backdrop in index.css. */}
       <div className="app-backdrop" aria-hidden="true" />
-      <div style={wide ? { ...wrap, maxWidth: wideLayout.maxWidth } : wrap}>
+      <div className={fill} style={wide ? { ...wrap, maxWidth: wideLayout.maxWidth } : wrap}>
         <Header
           variant={bandHeader ? "band" : "compact"} user={session?.user} onSignOut={handleLogout} onHome={goHome} wide={wide}
           gacha={gacha} pulseGacha={gachaPulse} onOpenGacha={openGacha}
           rank={rank} newTheme={hasNewTheme} onOpenStats={openStats} onOpenSettings={openSettings} onOpenHelp={() => setAboutOpen(true)}
+          tight={studyFit && short}
         />
 
-        <div style={{ position: "relative", padding: `0 ${wide ? wideLayout.gutter : gutter}px 60px`, marginTop: bandHeader ? -headerBand.overlap : 0 }}>
-          <div style={{ maxWidth: contentWidth, margin: "0 auto" }}>
+        <div
+          className={fill}
+          style={{
+            position: "relative", marginTop: bandHeader ? -headerBand.overlap : 0,
+            padding: `0 ${wide ? wideLayout.gutter : gutter}px ${studyFit ? "calc(12px + env(safe-area-inset-bottom))" : "60px"}`,
+          }}
+        >
+          <div className={fill} style={{ maxWidth: contentWidth, width: "100%", margin: "0 auto" }}>
             {!session ? (
               <LoginScreen error={authError} onGoogleLogin={handleGoogleLogin} onPasswordLogin={handlePasswordLogin} />
             ) : view === "dashboard" ? (
@@ -859,12 +876,13 @@ function App() {
               </div>
             )}
             {session && (!tabbedView || reviewBehind) && view !== "dashboard" && (
-              <div style={reviewBehind ? { display: "none" } : undefined}>
-                <div style={{ marginBottom: 14 }}>
-                  <button onClick={() => setView("dashboard")} style={btnLink}>
-                    {t("common.backToDashboard")}
-                  </button>
-                </div>
+              <div className={fill} style={reviewBehind ? { display: "none" } : undefined}>
+                {/* The review has its back button in its own top row. */}
+                {view !== "study" && (
+                  <div style={{ marginBottom: 14, textAlign: "left" }}>
+                    <BackButton label={t("common.backToDashboard")} onClick={() => setView("dashboard")} />
+                  </div>
+                )}
                 {view === "mastered" && (
                   <MasteredList cards={masteredCards} restoringId={restoringCardId} onRestore={restoreCard} />
                 )}
@@ -889,9 +907,13 @@ function App() {
                     onAddDeck={addDeck}
                     onBack={() => setView("dashboard")}
                     answerMode={answerMode}
+                    onAnswerModeChange={changeAnswerMode}
                     wide={wide}
                     sideChip={sideChip}
                     speech={speech}
+                    fit={studyFit}
+                    short={short}
+                    onTypingOpen={setStudyTyping}
                   />
                 )}
               </div>

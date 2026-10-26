@@ -16,7 +16,7 @@ export default {
   "common.cancel": "Cancel",
   "common.close": "Close",
   "common.mastered": "Mastered",
-  "common.backToDashboard": "← Back to My Deck",
+  "common.backToDashboard": "Back to My Deck",
 
   // Header at the top of every screen: logo button and gacha button (read aloud only)
   "header.home": "My Deck",
@@ -110,8 +110,8 @@ export default {
   // How-to-answer switch (My Cards and settings)
   "answerMode.title": "How to answer (Japanese → English)",
   "answerMode.label": "How to answer",
-  "answerMode.off": "Buttons",
-  "answerMode.off.note": "Look at the answer, then tap I knew it or Still learning.",
+  "answerMode.tap": "Tap",
+  "answerMode.tap.note": "Look at the answer, then tap I knew it or Still learning.",
   "answerMode.typing": "Typing",
   "answerMode.typing.note": "Type the English word. Correct spelling = +1 EXP.",
   "answerMode.handwriting": "Handwriting",
@@ -266,7 +266,6 @@ export default {
   "cardSets.testsNote": "Word sets by theme and goal",
   "cardSets.comingSoon": "Coming soon",
   "cardSets.comingSoonNote": "Sets for Eiken and more are coming soon.",
-  "cardSets.back": "← {label}",
   "cardSets.loading": "Loading the library…",
   "cardSets.levelSwitchLabel": "School level",
   "cardSets.levelJHS": "Junior High",
@@ -340,8 +339,8 @@ export default {
   "gacha.close": "Close",
 
   // Avatar collection
-  "collection.back": "← Gacha",
-  "collection.backToDashboard": "← Back",
+  "collection.back": "Gacha",
+  "collection.backToDashboard": "Back",
   "collection.title": "Polyavatar Collection",
   "collection.wornAvatar": "Your Polyavatar",
   "collection.notOwned": "A Polyavatar you don't have yet",
@@ -356,7 +355,7 @@ export default {
   "rarity.secret": "Secret",
 
   // Settings screen
-  "settings.back": "← Back",
+  "settings.back": "Back",
   "settings.title": "Settings",
   "settings.themes": "Themes",
   "settings.themesFailed": "Couldn't load the themes",

@@ -61,9 +61,9 @@ export function ReviewButton({ dueCount, loading, onReview, nextReview = null, o
 }
 
 // 答え方 switch: how Japanese → English cards are answered in reviews (saved on the device).
-// なし (buttons) / タイピング / 手書き (Apple Pencil, only when handwritingEnabled). label / note are i18n keys.
+// タップ (buttons) / タイピング / 手書き (Apple Pencil, only when handwritingEnabled). label / note are i18n keys.
 const ANSWER_MODE_OPTIONS = [
-  { mode: "off", label: "answerMode.off", note: "answerMode.off.note" },
+  { mode: "off", label: "answerMode.tap", note: "answerMode.tap.note" },
   { mode: "typing", label: "answerMode.typing", note: "answerMode.typing.note" },
   { mode: "handwriting", label: "answerMode.handwriting", note: "answerMode.handwriting.note" },
 ];

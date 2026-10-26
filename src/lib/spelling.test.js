@@ -4,6 +4,7 @@ import { describe, it, expect } from 'vitest';
 import {
   normalizeSpelling, spellingDistance, checkSpelling, loadAnswerMode, saveAnswerMode,
   ignoreNextKey, NEXT_KEY_GUARD_MS, needsOtherMeaningCheck, spellingAnswers, isAlternateAnswer,
+  cardAnswerMode,
 } from './spelling';
 
 describe('checkSpelling: exact', () => {
@@ -71,7 +72,7 @@ describe('clean-up and distance', () => {
   });
 });
 
-describe('answer mode なし / タイピング / 手書き (saved on the device)', () => {
+describe('answer mode タップ / タイピング / 手書き (saved on the device)', () => {
   const memory = () => {
     const data = {};
     return { getItem: (k) => data[k] ?? null, setItem: (k, v) => { data[k] = v; } };
@@ -196,5 +197,22 @@ describe('alternate answers (alt_answers)', () => {
 
   it('an exact alternate never asks for the other-meaning retry', () => {
     expect(needsOtherMeaningCheck(checkSpelling('cute', 'pretty', ['cute']), false)).toBe(false);
+  });
+});
+
+describe('cardAnswerMode: switching the mode during a review', () => {
+  it('follows the setting until the card is answered', () => {
+    expect(cardAnswerMode(null, "typing")).toBe("typing");
+    expect(cardAnswerMode(null, "off")).toBe("off");
+  });
+
+  it('keeps the mode the card was answered in', () => {
+    expect(cardAnswerMode("off", "handwriting")).toBe("off");
+    expect(cardAnswerMode("handwriting", "typing")).toBe("handwriting");
+  });
+
+  it('ignores a lock that is not a mode', () => {
+    expect(cardAnswerMode(undefined, "typing")).toBe("typing");
+    expect(cardAnswerMode("pencil", "off")).toBe("off");
   });
 });

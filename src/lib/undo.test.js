@@ -13,6 +13,7 @@ const before = {
   typed: "dgo",
   typedResult: { spelling: "close", next: false, again: false },
   retryUsed: true,
+  mode: "typing",
   revealed: true,
 };
 
@@ -62,5 +63,12 @@ describe('undo snapshot', () => {
     expect(undo).toMatchObject({ cardId: "w1-j2e", front: "犬", knew: true });
     expect(chipLabelKey(true)).toBe("review.gotIt");
     expect(chipLabelKey(false)).toBe("review.notYet");
+  });
+});
+
+describe('undo keeps the answer mode', () => {
+  it('brings back the mode the card was answered in', () => {
+    const restored = restoreState(makeUndo(takeSnapshot(before), card, false));
+    expect(restored.mode).toBe("typing");
   });
 });

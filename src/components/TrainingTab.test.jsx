@@ -36,10 +36,10 @@ describe('TrainingTab', () => {
 });
 
 describe('AbcPractice grid', () => {
-  it('26 capital letters (drawn as pictures, named for screen readers), the switch and ← トレーニング', () => {
+  it('26 capital letters (drawn as pictures, named for screen readers), the switch and the トレーニング back button', () => {
     const h = abc({});
     expect(h.match(/<button type="button" aria-label="[A-Z]"/g)).toHaveLength(26);
-    expect(h).toContain('← トレーニング');
+    expect(h).toContain('>トレーニング</span>');
     expect(h).toMatch(/aria-pressed="true"[^>]*>大文字</);
     expect(h).toContain('<svg'); // letters come from the stroke data, not a font
   });
@@ -60,9 +60,9 @@ describe('AbcPractice grid', () => {
 });
 
 describe('AbcPractice letter page', () => {
-  it('← ABCを書こう, the practice for that letter, and both arrows', () => {
+  it('back to ABCを書こう, the practice for that letter, and both arrows', () => {
     const h = abc({ screen: 'letter', letter: 'B' });
-    expect(h).toContain('← ABCを書こう');
+    expect(h).toContain('>ABCを書こう</span>');
     expect(h).toContain('「B」をれんしゅうしよう');
     expect(h).toContain('‹ A');
     expect(h).toContain('C ›');

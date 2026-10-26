@@ -2,13 +2,16 @@ import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { colors, fontDisplay, fontBody, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
 import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
 import { srsAnswer, newSessionId, saveErrorReporter } from '../lib/srs';
-import { checkSpelling, ignoreNextKey, isAlternateAnswer, needsOtherMeaningCheck } from '../lib/spelling';
+import { checkSpelling, ignoreNextKey, isAlternateAnswer, needsOtherMeaningCheck, cardAnswerMode } from '../lib/spelling';
+import { reduceMotionOn } from '../lib/settings';
 import { recordAnswer, checkOtherMeaning, holdAnswer, flushHeldAnswer, dropHeldAnswer } from '../lib/api';
 import { takeSnapshot, makeUndo, restoreState, chipLabelKey } from '../lib/undo';
 import Stamp from './Stamp';
 import AddDeckButton from './AddDeckButton';
 import { ownedCounts } from '../lib/library';
 import FlipCard from './FlipCard';
+import BackButton from './BackButton';
+import ReviewModeToggle from './ReviewModeToggle';
 import HandwritingInput from '../handwriting/HandwritingInput.jsx';
 import { loadModel } from '../handwriting/model.js';
 import { fittingAlternates, writtenAnswer } from '../handwriting/answerLayout.js';
@@ -219,12 +222,21 @@ export function TypingArea({
 // answerMode: how Japanese → English cards in an SRS review are answered: "off" (buttons), "typing"
 // or "handwriting" (Apple Pencil, src/handwriting/). The drill always uses the buttons.
 // sideChip: there is room for the "previous card" chip beside the card (else it goes above it).
+// onAnswerModeChange: the 答え方 toggle in the top row (SRS only) changes App's answerMode, the same
+// setting as My Cards and settings. A card not answered yet switches at once; an answered card keeps
+// its mode (modeLock) and the next card uses the new one. Nothing else in the session changes.
+// fit: the review fills the screen height (App's .study-page): the card shrinks so the answer buttons
+// always fit. short: a short screen (landscape iPad), so tighter spacing, buttons and handwriting boxes.
+// onTypingOpen(open): the typing box is open (App then lets the page grow, for the on-screen keyboard).
 //
 // Undo: the last まだ / わかった answer is held (holdAnswer in api.js), not sent, so 元に戻す can throw
 // it away and put the session back as it was (src/lib/undo.js). It is sent when the next answer is
 // given, when this screen closes, and when the app goes to the background. A correct spelling and
 // わからない are not undoable: they are sent at once, after the held answer.
-export default function StudySession({ activeSet, isAdded, saving, onAddDeck, onBack, answerMode = "off", wide = false, sideChip = false, speech = null }) {
+export default function StudySession({
+  activeSet, isAdded, saving, onAddDeck, onBack, answerMode = "off", onAnswerModeChange = null,
+  wide = false, sideChip = false, speech = null, fit = false, short = false, onTypingOpen = null,
+}) {
   const isSrs = activeSet.mode === 'srs';
   const [pile, setPile] = useState(() => shuffle(activeSet.cards.map((c) => c.id)));
   const [counts, setCounts] = useState({});           // drill: correct answers per card
@@ -243,7 +255,9 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
   const [handwritingFailed, setHandwritingFailed] = useState(false); // the letter model couldn't run: typing instead
   const [undo, setUndo] = useState(null); // the held まだ / わかった answer that can be undone (makeUndo)
   const [answeredOnce, setAnsweredOnce] = useState(false); // keeps the chip's row reserved after the first answer
+  const [modeLock, setModeLock] = useState(null); // the answer mode of the card on screen once it is answered
   const promptRef = useRef(null);
+  const actionsRef = useRef(null); // the input and answer buttons under the card
   const turnRef = useRef(turn); // the current turn, for answers that arrive after a wait
   useEffect(() => { turnRef.current = turn; }, [turn]);
 
@@ -268,9 +282,11 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
 
   const done = pile.length === 0;
   const card = done ? null : activeSet.cards.find((c) => c.id === pile[0]) || null;
-  const typingCard = Boolean(card) && isSrs && answerMode !== "off" && card.direction === "jp2en";
+  const mode = cardAnswerMode(modeLock, answerMode); // the mode for the card on screen
+  const typingCard = Boolean(card) && isSrs && mode !== "off" && card.direction === "jp2en";
   // Handwriting goes through the same typing-mode answers, only the input differs.
-  const handwritingSession = HANDWRITING_ENABLED && isSrs && answerMode === "handwriting"
+  // The model loads as soon as 手書き is chosen (at the start or during the review).
+  const handwritingSession = HANDWRITING_ENABLED && isSrs && (answerMode === "handwriting" || mode === "handwriting")
     && activeSet.cards.some((c) => c.direction === "jp2en");
   const handwritingCard = typingCard && handwritingSession && !handwritingFailed;
 
@@ -284,6 +300,34 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
     });
   }, [handwritingSession]);
   const typingPhase = !typingCard ? null : !typedResult ? "typing" : typedResult.next ? "next" : "choose";
+
+  // The card is answered (flipped, 答える / こたえる pressed, or わからない): it keeps the mode it has now.
+  function lockMode() {
+    setModeLock(mode);
+  }
+
+  // Tell App while the typing box is open (and that it closed when the review ends).
+  useEffect(() => {
+    onTypingOpen?.(typingPhase === "typing");
+  }, [typingPhase, onTypingOpen]);
+  useEffect(() => () => onTypingOpen?.(false), [onTypingOpen]);
+
+  // Safety net: after a flip, an answer or a mode change, if the input / answer buttons aren't fully on
+  // screen (a very short screen or a long handwriting answer), scroll just enough to show them. Not
+  // while typing: the keyboard handler below takes care of that.
+  useEffect(() => {
+    if (!fit || typingPhase === "typing") return;
+    const frame = requestAnimationFrame(() => {
+      const el = actionsRef.current;
+      if (!el || !el.getClientRects().length) return; // hidden while settings is open
+      const box = el.getBoundingClientRect();
+      const height = window.visualViewport?.height ?? window.innerHeight;
+      if (box.bottom > height || box.top < 0) {
+        el.scrollIntoView({ block: "nearest", behavior: reduceMotionOn() ? "auto" : "smooth" });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [fit, turn, revealed, typingPhase, typedResult, mode]);
 
   // While typing, keep the question, the card, the box and the buttons above the on-screen keyboard
   // (on a landscape iPad it covers about half the screen): when the visible area changes size,
@@ -309,13 +353,14 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
     setTypedResult(null);
     setChecking(false);
     setRetryUsed(false); // a card that comes back later gets a fresh retry
+    setModeLock(null); // the next card follows the setting
     setTurn((t) => t + 1);
     setAnsweredOnce(true);
   }
 
   // The session as it is now, before an answer changes it (for Undo).
   function snapshotNow() {
-    return takeSnapshot({ pile, counts, wrongCounts, clearedCount, typed, typedResult, retryUsed });
+    return takeSnapshot({ pile, counts, wrongCounts, clearedCount, typed, typedResult, retryUsed, mode });
   }
 
   // A まだ / わかった answer: held (sent later, see the top of StudySession) so it can be undone.
@@ -346,6 +391,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
     setRetryUsed(state.retryUsed);
     setChecking(state.checking);
     setRevealed(state.revealed);
+    setModeLock(state.mode ?? null); // back in the mode it was answered in
     setLevelUp(null);
     setSpellBonus(null);
     setUndo(null);
@@ -400,9 +446,11 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
     // An alternate answer (card.altAnswers) spelled right is exact, so it never gets the retry.
     const spelling = checkSpelling(typed, card.en, card.altAnswers);
     if (!needsOtherMeaningCheck(spelling, retryUsed)) {
+      lockMode();
       showTypedResult(spelling);
       return;
     }
+    lockMode();
     const askedTurn = turn;
     setChecking(true);
     checkOtherMeaning(card.wordId, typed).then((otherMeaning) => {
@@ -456,6 +504,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
   // Typing mode: わからない. Saved straight away as a miss (the card comes back, like まだ).
   function handleDontKnow() {
     if (!card || typedResult || checking) return;
+    lockMode();
     const answer = srsAnswer(card.level, "dont_know", wrongCounts[card.id] || 0);
     sendHeld();
     send(answer.result);
@@ -553,13 +602,35 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
   );
 
   const addDeckControl = isSrs ? null : <AddDeckButton isAdded={isAdded} saving={saving} onAdd={onAddDeck} counts={ownedCounts(activeSet.cards, activeSet.ownedWordIds)} />;
-  const answerSize = wide ? { minHeight: 76, fontSize: 18 } : { minHeight: 52 };
+  const answerSize = wide ? { minHeight: short ? 60 : 76, fontSize: 18 } : { minHeight: 52 };
+  const reveal = () => { lockMode(); setRevealed(true); };
+  const compactCard = typingPhase === "typing";
+  // fit: the card takes the room left between the question and the buttons, between these heights.
+  // After a handwriting answer (boxes, result lines and buttons under it) it may get smaller still.
+  const cardSlot = !fit || compactCard ? null : {
+    flex: "1 1 0", maxHeight: wide ? 420 : 320,
+    minHeight: !short ? 240 : handwritingCard && typedResult ? 140 : 200,
+  };
+  const gap = fit && short ? 10 : 20;
 
   return (
-    <div style={{ display: "grid", gap: 20 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: colors.text }}>
-        <span>{activeSet.name}</span>
-        <span>{t("review.progress", { cleared: clearedCount, left: pile.length })}</span>
+    <div style={fit ? { flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column", gap } : { display: "grid", gap }}>
+      {/* Top row: back, the session name and progress, and (SRS) the 答え方 toggle. On phones the */}
+      {/* name and progress go onto their own line under the other two (.review-top-name). */}
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+        <BackButton label={t("common.backToDashboard")} onClick={onBack} />
+        <div
+          className="review-top-name"
+          style={{ flex: "1 1 140px", minWidth: 0, display: "grid", gap: 2, fontSize: 13, color: colors.text, textAlign: "left" }}
+        >
+          <span style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeSet.name}</span>
+          <span style={{ color: colors.muted }}>{t("review.progress", { cleared: clearedCount, left: pile.length })}</span>
+        </div>
+        {isSrs && onAnswerModeChange && (
+          <div style={{ marginLeft: "auto" }}>
+            <ReviewModeToggle mode={answerMode} onChange={onAnswerModeChange} handwritingEnabled={HANDWRITING_ENABLED} />
+          </div>
+        )}
       </div>
 
       {addDeckControl}
@@ -579,7 +650,7 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
           <p ref={promptRef} style={{ fontSize: wide ? 17 : 14, color: colors.text, margin: 0, textAlign: "center" }}>
             {card.direction === "en2jp" ? t("review.questionEn2jp") : t("review.questionJp2en")}
           </p>
-          <div style={{ position: "relative" }}>
+          <div style={{ position: "relative", ...cardSlot }}>
             {/* Room beside the card: the chip is centered in the space between the screen edge and the */}
             {/* card, vertically centered on the card. The column is centered, so that space is */}
             {/* 50vw - half the card's width (% here = the card's width). */}
@@ -595,8 +666,8 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
             {/* the same turn would otherwise have the same key as the card, leaving the old card on screen. */}
             {/* compact while typing: a short card, so the box and buttons fit above the keyboard. */}
             <FlipCard
-              key={`card-${turn}`} card={card} showLevel={isSrs} revealed={revealed} onFlip={() => setRevealed(true)}
-              compact={typingPhase === "typing"} wide={wide} speech={speech}
+              key={`card-${turn}`} card={card} showLevel={isSrs} revealed={revealed} onFlip={reveal}
+              compact={compactCard} wide={wide} speech={speech} fill={Boolean(cardSlot)} short={fit && short}
             />
             {levelUpFloat}
             {spellBonusFloat}
@@ -606,67 +677,72 @@ export default function StudySession({ activeSet, isAdded, saving, onAddDeck, on
               {stampFill(counts[card.id] || 0).map((f, i) => <Stamp key={i} filled={f} />)}
             </div>
           )}
-          {handwritingCard ? (
-            <>
-              <HandwritingInput
-                key={`hw-${turn}`}
-                answer={writtenAnswer(card.en)}
-                alternates={fittingAlternates(card.en, card.altAnswers)}
-                result={typedResult?.handwriting ?? null}
-                answered={Boolean(typedResult)}
-                onResult={(read) => handleHandwritingResult(read, turn)}
-                onDontKnow={handleDontKnow}
-                onError={() => setHandwritingFailed(true)}
-                answerSize={answerSize}
-                wide={wide}
-              />
-              {typingPhase === "next" && (
-                <TypingArea
-                  key={turn} phase="next" typed="" spelling={typedResult.spelling} answer={card.back}
-                  textbookAnswer={typedResult.alternate ? card.en : null}
-                  alternateAnswer={typedResult.alternate}
-                  onNext={handleNext} answerSize={answerSize} wide={wide}
+          <div ref={actionsRef} style={{ display: "grid", gap }}>
+            {handwritingCard ? (
+              <>
+                <HandwritingInput
+                  key={`hw-${turn}`}
+                  answer={writtenAnswer(card.en)}
+                  alternates={fittingAlternates(card.en, card.altAnswers)}
+                  result={typedResult?.handwriting ?? null}
+                  answered={Boolean(typedResult)}
+                  onResult={(read) => handleHandwritingResult(read, turn)}
+                  onDontKnow={handleDontKnow}
+                  onError={() => setHandwritingFailed(true)}
+                  onReadingStart={lockMode}
+                  answerSize={answerSize}
+                  wide={wide}
+                  boxMax={fit && short ? 72 : 96}
+                  short={fit && short}
                 />
-              )}
-              {typingPhase === "choose" && (
-                <AnswerArea revealed onReveal={() => {}} onAnswer={handleAnswer} answerSize={answerSize} wide={wide} />
-              )}
-            </>
-          ) : typingPhase ? (
-            <>
-              {handwritingSession && handwritingFailed && (
-                <p role="status" style={{ margin: 0, textAlign: "center", fontSize: wide ? 15 : 13, color: colors.gold }}>
-                  {t("handwriting.unavailable")}
-                </p>
-              )}
-              <TypingArea
-                key={turn}
-                phase={typingPhase}
-                typed={typed}
-                spelling={typedResult?.spelling ?? null}
-                answer={card.back}
-                onTypedChange={(text) => { if (!checking) setTyped(text); }}
-                onSubmit={handleTypedAnswer}
-                onDontKnow={handleDontKnow}
-                onNext={handleNext}
+                {typingPhase === "next" && (
+                  <TypingArea
+                    key={turn} phase="next" typed="" spelling={typedResult.spelling} answer={card.back}
+                    textbookAnswer={typedResult.alternate ? card.en : null}
+                    alternateAnswer={typedResult.alternate}
+                    onNext={handleNext} answerSize={answerSize} wide={wide}
+                  />
+                )}
+                {typingPhase === "choose" && (
+                  <AnswerArea revealed onReveal={() => {}} onAnswer={handleAnswer} answerSize={answerSize} wide={wide} />
+                )}
+              </>
+            ) : typingPhase ? (
+              <>
+                {handwritingSession && handwritingFailed && (
+                  <p role="status" style={{ margin: 0, textAlign: "center", fontSize: wide ? 15 : 13, color: colors.gold }}>
+                    {t("handwriting.unavailable")}
+                  </p>
+                )}
+                <TypingArea
+                  key={turn}
+                  phase={typingPhase}
+                  typed={typed}
+                  spelling={typedResult?.spelling ?? null}
+                  answer={card.back}
+                  onTypedChange={(text) => { if (!checking) setTyped(text); }}
+                  onSubmit={handleTypedAnswer}
+                  onDontKnow={handleDontKnow}
+                  onNext={handleNext}
+                  onAnswer={handleAnswer}
+                  answerSize={answerSize}
+                  checking={checking}
+                  retryNote={retryUsed}
+                  textbookAnswer={typedResult?.alternate ? card.en : null}
+                  alternateAnswer={typedResult?.alternate ?? null}
+                  wide={wide}
+                />
+              </>
+            ) : (
+              <AnswerArea
+                revealed={revealed}
+                onReveal={reveal}
                 onAnswer={handleAnswer}
                 answerSize={answerSize}
-                checking={checking}
-                retryNote={retryUsed}
-                textbookAnswer={typedResult?.alternate ? card.en : null}
-                alternateAnswer={typedResult?.alternate ?? null}
                 wide={wide}
               />
-            </>
-          ) : (
-            <AnswerArea
-              revealed={revealed}
-              onReveal={() => setRevealed(true)}
-              onAnswer={handleAnswer}
-              answerSize={answerSize}
-              wide={wide}
-            />
-          )}
+            )}
+          </div>
         </>
       )}
 
