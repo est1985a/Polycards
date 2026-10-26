@@ -32,6 +32,43 @@ body {
   background: var(--backdrop), var(--bg);
 }
 
+/* Back button (BackButton.jsx): a little lighter on hover, darker while pressed, a ring on keyboard focus.
+   Color changes only (no motion), so nothing for reduce motion. */
+.back-button:hover { background: color-mix(in srgb, var(--surface2) 82%, var(--text)); }
+.back-button:active { background: color-mix(in srgb, var(--surface2) 85%, var(--bg)); border-color: var(--accent); }
+.back-button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Answer-mode toggle in the review header (ReviewModeToggle.jsx): icons only on narrow screens. */
+@media (max-width: 599px) {
+  .mode-toggle-label { display: none; }
+  /* Review top row (StudySession.jsx): back and the toggle on the first line, name and progress under them. */
+  .review-top-name { order: 3; flex-basis: 100% !important; }
+}
+
+/* Review screen (App.jsx, view "study"): the page is exactly one screen tall, so the card shrinks and
+   the answer buttons always fit (landscape iPads with the browser bars showing). dvh follows the
+   browser bars; vh is the fallback for older browsers. Below 560 px tall the page scrolls instead of
+   squashing the card. Each .study-fill level passes the height down. While the typing box is open
+   (.study-typing) the page may grow, so iPadOS can scroll the box above the on-screen keyboard. */
+.study-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 560px;
+}
+.study-page.study-typing {
+  height: auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+.study-fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* My Cards header band (Header.jsx): the low-poly triangles fade out at the bottom, so the
    backdrop shows through instead of a solid bg. */
 .header-band-art {

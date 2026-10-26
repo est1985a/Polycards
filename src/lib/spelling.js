@@ -107,6 +107,15 @@ export function saveAnswerMode(storage, mode) {
   }
 }
 
+// The answer mode for the card on screen in a review. The student can switch the mode during a review
+// (ReviewModeToggle): until the card is answered it follows the setting at once; from the moment it is
+// answered (flipped, 答える / こたえる pressed, or わからない) the review keeps it in the mode it was
+// answered in (lock, set by StudySession), and the next card follows the setting again.
+// lock: the mode the card was answered in, or null while it isn't answered yet.
+export function cardAnswerMode(lock, setting) {
+  return ANSWER_MODES.includes(lock) ? lock : setting;
+}
+
 // 次へ appears right after 答える / わからない. The same Enter press, or a held-down Enter, must not
 // also press 次へ and skip the result: ignore repeated keys, and Enter for a moment after it appears.
 export const NEXT_KEY_GUARD_MS = 300;

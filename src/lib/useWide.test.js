@@ -1,6 +1,6 @@
 // Tests for the wide-screen switch. Run with: npm test
 import { describe, it, expect } from 'vitest';
-import { isWide, matches, WIDE_QUERY, SIDE_CHIP_QUERY } from './useWide';
+import { isWide, matches, WIDE_QUERY, SIDE_CHIP_QUERY, SHORT_QUERY } from './useWide';
 
 // A pretend browser window whose screen is (or isn't) wide.
 const fakeWindow = (matches) => {
@@ -38,5 +38,14 @@ describe('side chip breakpoint', () => {
     expect(matches(SIDE_CHIP_QUERY, win)).toBe(true);
     expect(win.asked).toEqual(['(min-width: 1150px)']);
     expect(matches(SIDE_CHIP_QUERY, {})).toBe(false);
+  });
+});
+
+describe('short screen query', () => {
+  it('covers landscape iPads with the browser bars showing (650–800 px tall) but not a portrait iPad', () => {
+    expect(SHORT_QUERY).toBe('(max-height: 820px)');
+    const win = fakeWindow(true);
+    expect(matches(SHORT_QUERY, win)).toBe(true);
+    expect(win.asked).toEqual(['(max-height: 820px)']);
   });
 });

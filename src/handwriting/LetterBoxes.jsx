@@ -19,7 +19,7 @@ function PracticeChip({ size, letter, onClick }) {
       }}
     >
       <span style={{
-        padding: "3px 8px", borderRadius: 999, whiteSpace: "nowrap", fontWeight: 700, fontSize: size < 72 ? 10 : 12,
+        padding: "3px 8px", borderRadius: 999, whiteSpace: "nowrap", fontWeight: 700, fontSize: size < 80 ? 10 : 12,
         background: colors.surface2, color: colors.text, border: `1px solid ${colors.line}`,
       }}>
         {t("practice.chip")}
@@ -34,8 +34,10 @@ function PracticeChip({ size, letter, onClick }) {
 // scores: per box index, "correct" | "lenient" | "wrong" | null (colors the boxes after checking)
 // locked: answered: the ink stays, nothing draws, and 消す / 戻す are hidden.
 // onPractice(index): when given, a locked red or orange box gets a れんしゅう？ chip under it.
+// maxSize: the largest box (px, border included); the review passes a smaller one on short screens so
+// the boxes and buttons fit under the card. Boxes still shrink to fit the width as before.
 // ref → { getBoxes(): [{ gray, width, height } | null] (null = empty box), hasInk(), clearAll() }
-export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer = false, locked = false, onChange, onPractice }) {
+export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer = false, locked = false, onChange, onPractice, maxSize = 96 }) {
   const slots = useMemo(() => answerSlots(answer), [answer]);
   const boxCount = slots.filter((s) => s.type === "box").length;
   const containerRef = useRef(null);
@@ -54,7 +56,7 @@ export default function LetterBoxes({ ref, answer, scores = [], allowAnyPointer 
     return () => observer.disconnect();
   }, []);
 
-  const { rows, size } = boxLayout(slots, width, { spacing: SPACING });
+  const { rows, size } = boxLayout(slots, width, { spacing: SPACING, max: maxSize });
   const practiceAt = (index) => Boolean(onPractice) && locked && needsPractice(scores[index]);
   const anyChip = slots.some((s) => s.type === "box" && practiceAt(s.index));
 

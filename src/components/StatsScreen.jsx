@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { colors, fontDisplay, panel, btnLink } from '../styles/theme';
+import { colors, fontDisplay, panel } from '../styles/theme';
+import BackButton from './BackButton';
 import {
   currentStreak, bestStreak, daysStudied, shade, monthOf, addMonths, compareMonths, monthRange, monthDays, monthGrid, monthTotals,
 } from '../lib/studyStats';
@@ -280,7 +281,7 @@ export default function StatsScreen({ data, error = null, today, onBack, mastere
   return (
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
       <div>
-        <button onClick={onBack} style={{ ...btnLink, minHeight: 44 }}>{t("settings.back")}</button>
+        <BackButton label={t("settings.back")} onClick={onBack} />
       </div>
       <h2 style={{ margin: 0, fontWeight: 700, fontSize: 30 }}>{t("stats.pageTitle")}</h2>
 

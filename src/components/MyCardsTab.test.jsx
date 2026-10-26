@@ -108,20 +108,20 @@ describe('next review line (nothing due)', () => {
   });
 });
 
-describe('answer mode switch なし / タイピング / 手書き', () => {
+describe('answer mode switch タップ / タイピング / 手書き', () => {
   const html = (mode, handwritingEnabled = true) =>
     renderToStaticMarkup(<AnswerModeSwitch mode={mode} onChange={() => {}} handwritingEnabled={handwritingEnabled} />);
 
   it('shows the label and the three choices', () => {
     const h = html('off');
     expect(h).toContain('答え方（日本語 → English）');
-    expect(h).toContain('>なし</button>');
+    expect(h).toContain('>タップ</button>');
     expect(h).toContain('>タイピング</button>');
     expect(h).toContain('>手書き</button>');
   });
 
   it('marks the chosen one and shows its note', () => {
-    expect(html('off')).toMatch(/aria-pressed="true"[^>]*>なし</);
+    expect(html('off')).toMatch(/aria-pressed="true"[^>]*>タップ</);
     expect(html('typing')).toMatch(/aria-pressed="true"[^>]*>タイピング</);
     expect(html('typing')).toContain('英語をタイプして答えます。正しいスペルで +1 EXP');
     expect(html('handwriting')).toMatch(/aria-pressed="true"[^>]*>手書き</);
@@ -130,7 +130,7 @@ describe('answer mode switch なし / タイピング / 手書き', () => {
 
   it('hides 手書き when handwriting is switched off', () => {
     expect(html('off', false)).not.toContain('手書き');
-    expect(html('handwriting', false)).toMatch(/aria-pressed="true"[^>]*>なし</);
+    expect(html('handwriting', false)).toMatch(/aria-pressed="true"[^>]*>タップ</);
   });
 
   it('is on My Cards', () => {

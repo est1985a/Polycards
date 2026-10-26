@@ -1,4 +1,5 @@
-import { colors, fontDisplay, panel, btnLink } from '../styles/theme';
+import { colors, fontDisplay, panel } from '../styles/theme';
+import BackButton from './BackButton';
 import { rarityInfo, rarityGlow, groupCollection, rarityCounts, tileState } from '../lib/gacha';
 import AvatarPicture from './AvatarPicture';
 import { t } from '../i18n';
@@ -139,7 +140,7 @@ export default function GachaCollection({ rows, equippingId, onEquip, onBack, fr
   return (
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
       <div>
-        <button onClick={onBack} style={{ ...btnLink, minHeight: 44 }}>{t(from === "dashboard" ? "collection.backToDashboard" : "collection.back")}</button>
+        <BackButton label={t(from === "dashboard" ? "collection.backToDashboard" : "collection.back")} onClick={onBack} />
       </div>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
         <h2 style={{ margin: 0, fontWeight: 700, fontSize: 28 }}>{t("collection.title")}</h2>

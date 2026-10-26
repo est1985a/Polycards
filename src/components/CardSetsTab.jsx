@@ -6,24 +6,8 @@ import {
 import CardSetsHub from './CardSetsHub';
 import NavRow from './NavRow';
 import LevelSwitch from './LevelSwitch';
+import BackButton from './BackButton';
 import { t, tx } from '../i18n';
-
-// "← back" button above every Card Sets list. label: the name of the screen it goes back to.
-function BackButton({ label, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        alignSelf: "start", justifySelf: "start", minHeight: 44, padding: "0 16px 0 12px", borderRadius: 999,
-        background: colors.surface2, border: `2px solid ${colors.line}`, color: colors.text,
-        fontFamily: fontDisplay, fontWeight: 700, fontSize: 15, cursor: "pointer", maxWidth: "100%",
-        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-      }}
-    >
-      {t("cardSets.back", { label })}
-    </button>
-  );
-}
 
 // Title of a list screen, with an optional small line above it (e.g. the textbook name).
 function ScreenTitle({ kicker, title }) {

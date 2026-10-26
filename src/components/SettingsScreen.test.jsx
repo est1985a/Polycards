@@ -31,7 +31,8 @@ const tile = (html, key) => html.match(new RegExp(`<button[^>]*data-theme-key="$
 describe('SettingsScreen', () => {
   it('has a back button, the title and three sections', () => {
     const html = render();
-    expect(html).toContain('← 戻る');
+    expect(html).toContain('class="back-button"');
+    expect(html).toContain('>戻る</span>');
     expect(html).toMatch(/<h2[^>]*>設定<\/h2>/);
     for (const title of ['テーマ', '学習', '表示']) expect(html).toMatch(new RegExp(`<h3[^>]*>${title}</h3>`));
   });

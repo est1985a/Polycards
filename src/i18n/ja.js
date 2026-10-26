@@ -11,7 +11,7 @@ export default {
   "common.cancel": "キャンセル",
   "common.close": "閉じる (Close)", // read aloud for the × button of a pop-up
   "common.mastered": "Mastered", // a card that was learned for good (after Lv7)
-  "common.backToDashboard": "← ダッシュボードに戻る (Back to Dashboard)", // link above the Mastered list
+  "common.backToDashboard": "マイデッキにもどる", // back button above the Mastered list, the word list and the review
 
   // Header at the top of every screen: logo button and gacha button (read aloud only)
   "header.home": "マイデッキ", // the Polycards logo, which goes back to My Cards
@@ -104,8 +104,8 @@ export default {
   // 答え方 switch (My Cards and settings): how Japanese → English cards are answered
   "answerMode.title": "答え方（日本語 → English）",
   "answerMode.label": "答え方", // read aloud for the switch
-  "answerMode.off": "なし", // answer with the buttons (no typing)
-  "answerMode.off.note": "答えを見て、わかった / まだ で答えます",
+  "answerMode.tap": "タップ", // answer with the buttons (tap 答えを見る, then まだ / わかった)
+  "answerMode.tap.note": "答えを見て、わかった / まだ で答えます",
   "answerMode.typing": "タイピング",
   "answerMode.typing.note": "英語をタイプして答えます。正しいスペルで +1 EXP",
   "answerMode.handwriting": "手書き",
@@ -115,7 +115,7 @@ export default {
   "review.questionEn2jp": "この単語は日本語で何と言いますか？",
   "review.questionJp2en": "この単語は英語で何と言いますか？",
   "review.progress": "覚えた: {cleared} ・ 残り: {left}", // top right: cards done and cards left
-  "review.defaultName": "復習 (Review)", // review title when it isn't one deck
+  "review.defaultName": "復習", // review title when it isn't one deck
   "review.tapToFlip": "タップしてめくる", // pulsing hint on the front of the card
   "speech.listen": "発音を聞く", // aria-label of the speaker button (cards and word list)
   "review.answerPill": "答え", // small label on the back of the card
@@ -145,7 +145,7 @@ export default {
   "review.undo": "元に戻す", // button on that chip: takes back the last まだ / わかった
   "review.undoAria": "前のカードの答えを元に戻す", // aria-label of that button
   "review.allCleared": "全部クリアしました！", // end of a review or drill
-  "review.backToDashboard": "ダッシュボードに戻る",
+  "review.backToDashboard": "マイデッキにもどる",
 
   // 手書き answer mode (Apple Pencil) in reviews
   "handwriting.hint": "Apple Pencil で、1マスに1文字ずつ書いてください",
@@ -261,7 +261,6 @@ export default {
   "cardSets.testsNote": "テーマや目的別の単語セット",
   "cardSets.comingSoon": "準備中 — Coming soon",
   "cardSets.comingSoonNote": "英検などのセットは、もうすぐ追加されます。",
-  "cardSets.back": "← {label}", // back button; {label} = the screen it goes back to (Card Sets, Textbooks, or a textbook name)
   "cardSets.loading": "ライブラリを読み込み中…",
   "cardSets.levelSwitchLabel": "School level", // read aloud for the 中学 / 高校 switch
   "cardSets.levelJHS": "中学 · JHS",
@@ -335,8 +334,8 @@ export default {
   "gacha.close": "とじる",
 
   // Avatar collection (ポリアバター図鑑)
-  "collection.back": "← ガチャ",
-  "collection.backToDashboard": "← 戻る", // back button when the collection was opened from the player card
+  "collection.back": "ガチャ",
+  "collection.backToDashboard": "戻る", // back button when the collection was opened from the player card
   "collection.title": "ポリアバター図鑑",
   "collection.wornAvatar": "つけ中のポリアバター", // heading of the summary panel
   "collection.notOwned": "まだ持っていないポリアバター", // read aloud for a dark silhouette tile
@@ -351,7 +350,7 @@ export default {
   "rarity.secret": "シークレット",
 
   // Settings screen (設定)
-  "settings.back": "← 戻る",
+  "settings.back": "戻る",
   "settings.title": "設定",
   "settings.themes": "テーマ",
   "settings.themesFailed": "テーマを読み込めませんでした",

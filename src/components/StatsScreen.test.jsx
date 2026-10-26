@@ -26,7 +26,8 @@ describe('StatsScreen', () => {
     const html = render();
     const plain = text(html);
     expect(plain).toContain('学習の記録');
-    expect(plain).toContain('← 戻る');
+    expect(html).toContain('class="back-button"');
+    expect(html).toContain('>戻る</span>');
     // Mon 19 + Tue 20, today not done yet: the streak is still alive.
     expect(plain).toContain('2日連続');
     expect(plain).toContain('ベスト 2日');

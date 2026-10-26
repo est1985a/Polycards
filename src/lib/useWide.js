@@ -7,6 +7,10 @@ export const WIDE_QUERY = '(min-width: 900px)';
 // wide + a 16 px gap + 16 px from the screen edge on each side = 780 + 2 × 182 = 1144, rounded up.
 export const SIDE_CHIP_QUERY = '(min-width: 1150px)';
 
+// A short screen (a landscape iPad with the browser bars showing is about 650–700 px tall): the review
+// tightens its spacing, buttons and handwriting boxes so the card and its buttons fit without scrolling.
+export const SHORT_QUERY = '(max-height: 820px)';
+
 // Does the screen match a media query? False when there is no browser window or no matchMedia
 // (tests, server rendering).
 export function matches(query, win = typeof window === 'undefined' ? undefined : window) {
@@ -43,4 +47,9 @@ export function useWide() {
 // true when the "previous card" chip fits beside the study card.
 export function useSideChip() {
   return useMedia(SIDE_CHIP_QUERY);
+}
+
+// true on short screens (see SHORT_QUERY).
+export function useShort() {
+  return useMedia(SHORT_QUERY);
 }

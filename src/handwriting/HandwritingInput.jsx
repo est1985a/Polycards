@@ -30,10 +30,12 @@ async function readAnswer(boxes, slots, alternates) {
 // answer: what to write (writtenAnswer(card.en)). result: what onResult reported, once read.
 // alternates: other answers that fit the same boxes (fittingAlternates); a correct one is accepted too.
 // answered: after こたえる or わからない. onError: the model couldn't run (fall back to typing).
+// onReadingStart: こたえる was pressed (the card now counts as answered, so a mode switch waits for the
+// next card). boxMax: the largest box size (smaller on short screens). short: tighter gaps.
 // After a result, each red / orange box has a れんしゅう？ chip that opens letter practice for that
 // box's letter (from the main answer, same case) in a pop-up; the review waits behind it.
 // Give it a new `key` per card.
-export default function HandwritingInput({ answer, alternates = [], result = null, answered = false, onResult, onDontKnow, onError, answerSize, wide = false, practiceEnabled = PRACTICE_ENABLED }) {
+export default function HandwritingInput({ answer, alternates = [], result = null, answered = false, onResult, onDontKnow, onError, onReadingStart, answerSize, wide = false, practiceEnabled = PRACTICE_ENABLED, boxMax = 96, short = false }) {
   const slots = useMemo(() => answerSlots(answer), [answer]);
   const boxesRef = useRef(null);
   const [hasInk, setHasInk] = useState(false);
@@ -45,6 +47,7 @@ export default function HandwritingInput({ answer, alternates = [], result = nul
   async function handleAnswer() {
     if (reading || answered || !hasInk) return;
     setReading(true);
+    onReadingStart?.();
     try {
       onResult(await readAnswer(boxesRef.current, slots, alternates));
     } catch (error) {
@@ -56,7 +59,7 @@ export default function HandwritingInput({ answer, alternates = [], result = nul
   }
 
   return (
-    <div style={{ display: "grid", gap: 12 }}>
+    <div style={{ display: "grid", gap: short ? 8 : 12 }}>
       {!answered && (
         <p style={{ margin: 0, textAlign: "center", fontSize: wide ? 15 : 13, color: colors.muted }}>
           {t("handwriting.hint")}
@@ -69,11 +72,16 @@ export default function HandwritingInput({ answer, alternates = [], result = nul
         locked={reading || Boolean(result)} // after わからない (answered, no result) the boxes stay open to practice in; nothing is read
         onChange={() => setHasInk(boxesRef.current?.hasInk() ?? false)}
         onPractice={practiceEnabled && result ? (index) => setPracticeLetter(letterAt(index)) : undefined}
+        maxSize={boxMax}
       />
       {practiceLetter && <PracticeSheet letter={practiceLetter} onClose={() => setPracticeLetter(null)} />}
 
       {result && !result.allCorrect && (
-        <div style={{ display: "grid", gap: 4, textAlign: "center", fontSize: wide ? 17 : 15, color: colors.text }}>
+        // short: the two lines side by side (they wrap onto two lines when there isn't room)
+        <div style={{
+          ...(short ? { display: "flex", flexWrap: "wrap", justifyContent: "center", columnGap: 20, rowGap: 2 } : { display: "grid", gap: 4 }),
+          textAlign: "center", fontSize: wide ? 17 : 15, color: colors.text,
+        }}>
           <div>
             {tx("handwriting.read", { answer: (
               <span lang="en" style={{ fontWeight: 700 }}>

@@ -50,7 +50,7 @@ describe('GachaCollection', () => {
     const cat = { ...owned, id: 1, slug: 'cat', name_ja: 'ネコ', name_en: 'Cat', equipped: true };
     for (const wide of [false, true]) {
       const html = renderToStaticMarkup(<GachaCollection rows={[cat, owned, unowned, secret]} onEquip={() => {}} onBack={() => {}} wide={wide} />);
-      expect(html).toContain('← ガチャ');
+      expect(html).toContain('>ガチャ</span>');
       expect(html).toContain('ポリアバター図鑑');
       expect(html).toContain('2 / 4');
       expect(html).toContain('0 / ?');
@@ -61,9 +61,9 @@ describe('GachaCollection', () => {
 
   it('the back button follows where the collection was opened from', () => {
     const at = (from) => renderToStaticMarkup(<GachaCollection rows={[]} onEquip={() => {}} onBack={() => {}} from={from} />);
-    expect(at(undefined)).toContain('← ガチャ');
-    expect(at('gacha')).toContain('← ガチャ');
-    expect(at('dashboard')).toContain('← 戻る');
-    expect(at('dashboard')).not.toContain('← ガチャ');
+    expect(at(undefined)).toContain('>ガチャ</span>');
+    expect(at('gacha')).toContain('>ガチャ</span>');
+    expect(at('dashboard')).toContain('>戻る</span>');
+    expect(at('dashboard')).not.toContain('>ガチャ</span>');
   });
 });

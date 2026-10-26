@@ -1,7 +1,7 @@
 // Tests for the answer area under the study card and what each review answer sends. Run with: npm test
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { AnswerArea, TypingArea, PreviousCardChip } from './StudySession';
+import StudySession, { AnswerArea, TypingArea, PreviousCardChip } from './StudySession';
 import { makeUndo, takeSnapshot } from '../lib/undo';
 import { setLang } from '../i18n';
 import { srsAnswer, newSessionId, saveErrorReporter } from '../lib/srs';
@@ -250,5 +250,48 @@ describe('previous card chip (PreviousCardChip)', () => {
     expect(html).toContain('✓ I knew it');
     expect(html).toContain('>Undo<');
     expect(html).toContain('aria-label="Undo your answer to the last card"');
+  });
+});
+
+describe('review top row', () => {
+  const cards = [
+    { id: 'w1-jp2en', wordId: 'w1', direction: 'jp2en', front: '犬', back: 'dog', en: 'dog', level: 1, altAnswers: [] },
+    { id: 'w1-en2jp', wordId: 'w1', direction: 'en2jp', front: 'dog', back: '犬', en: 'dog', level: 1, altAnswers: [] },
+  ];
+  const session = (props) => renderToStaticMarkup(
+    <StudySession activeSet={{ id: 'review', name: '復習', cards, mode: 'srs' }} onBack={() => {}} onAnswerModeChange={() => {}} {...props} />
+  );
+
+  it('SRS: back button, name, progress and the 答え方 toggle', () => {
+    const html = session();
+    expect(html).toContain('class="back-button"');
+    expect(html).toContain('>マイデッキにもどる</span>');
+    expect(html).toContain('復習');
+    expect(html).toContain('覚えた: 0 ・ 残り: 2');
+    expect(html).toContain('aria-label="答え方"');
+  });
+
+  it('the toggle shows even when every card is English → Japanese', () => {
+    const html = renderToStaticMarkup(
+      <StudySession activeSet={{ id: 'review', name: '復習', cards: [cards[1]], mode: 'srs' }} onBack={() => {}} onAnswerModeChange={() => {}} />
+    );
+    expect(html).toContain('aria-label="答え方"');
+  });
+
+  it('the Card Sets drill has the back button but no toggle', () => {
+    const html = renderToStaticMarkup(
+      <StudySession activeSet={{ id: 'd1', name: 'Unit 1', cards, ownedWordIds: null }} onBack={() => {}} onAnswerModeChange={() => {}} />
+    );
+    expect(html).toContain('class="back-button"');
+    expect(html).not.toContain('aria-label="答え方"');
+  });
+
+  it('fit: a flex column; the card slot shrinks between its limits', () => {
+    const html = session({ fit: true, wide: true });
+    expect(html).toContain('flex-direction:column');
+    expect(html).toContain('max-height:420px');
+    expect(html).toContain('min-height:240px');
+    expect(session({ fit: true, wide: true, short: true })).toContain('min-height:200px');
+    expect(session()).not.toContain('max-height:420px'); // not fitted: unchanged
   });
 });
