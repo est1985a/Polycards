@@ -201,6 +201,17 @@ function strayLatin(reading, japanese) {
   const ja = japanese.toLowerCase();
   return (reading.match(/[A-Za-zＡ-Ｚａ-ｚ]+/g) || []).filter(w => ja.indexOf(w.toLowerCase()) === -1);
 }
+// Every run of hiragana in the meaning must be in the reading, in the same order
+// (食べる -> the reading must contain べる; 読んだ（readの過去形） -> んだ, then の).
+function readingFits(reading, japanese) {
+  let from = 0;
+  for (const run of (japanese.match(/[ぁ-ゖ]+/g) || [])) {
+    const at = reading.indexOf(run, from);
+    if (at === -1) return false;
+    from = at + run.length;
+  }
+  return true;
+}
 
 // ---- CSV / TSV parsing ----------------------------------------------------
 function parseDelimited(text) {
@@ -346,6 +357,7 @@ function analyze(text, db) {
   if (dupHeaders.length) { res.fatal = 'These column names appear twice in the header: ' + [...new Set(dupHeaders)].join(', ') + '.'; return res; }
   const unknown = header.filter(h => h && KNOWN.indexOf(h) === -1);
   if (unknown.length) add('info', 1, 'Ignoring unknown column(s): ' + unknown.join(', ') + '.');
+  const autoReading = !db || !!db.readingCol;
 
   // -- read rows
   const recs = [];
@@ -386,6 +398,8 @@ function analyze(text, db) {
     if (KANJI.test(rec.reading)) err('The reading "' + rec.reading + '" contains kanji. Write the reading in hiragana (for example かりる for 借りる).');
     const latin = strayLatin(rec.reading, rec.japanese);
     if (latin.length) err('The reading "' + rec.reading + '" contains English letters (' + latin.join(', ') + '). Write the reading in hiragana.');
+    // an all-hiragana meaning (ほほえむ) is its own reading; not when the database has no reading column
+    if (!rec.reading && autoReading && rec.japanese && !KANJI_OR_KATAKANA.test(rec.japanese)) { rec.reading = hiraganaReading(rec.japanese); rec.readingAuto = true; }
     if (rec.pos === null) err('pos "' + rec.posRaw + '" is not a part of speech. Use one of: ' + POS_KEYS.join(', ') + ' (or the Japanese 名詞, 動詞 …), or leave it blank.');
 
     rec.path = rec.collectionRaw ? rec.collectionRaw.split('>').map(clean) : [];
@@ -480,13 +494,18 @@ function analyze(text, db) {
     if (!prev) speakByWord.set(k, { speakAs: r.speakAs, row: r.row });
     else if (prev.speakAs !== r.speakAs) add('error', r.row, 'This word has speak_as "' + r.speakAs + '" here but "' + prev.speakAs + '" on row ' + prev.row + '. Use the same one on both rows.', r);
   }
-  const readingByWord = new Map(); // word key -> { reading, row }  (blank rows don't count)
+  const readingByWord = new Map(); // word key -> { reading, row, auto }  (blank rows don't count)
   for (const r of recs) {
-    if (!r.reading) continue;
+    if (!r.reading || r.readingAuto) continue;
     const k = r.english.toLowerCase() + SEP + r.japanese;
     const prev = readingByWord.get(k);
-    if (!prev) readingByWord.set(k, { reading: r.reading, row: r.row });
+    if (!prev) readingByWord.set(k, { reading: r.reading, row: r.row, auto: false });
     else if (prev.reading !== r.reading) add('error', r.row, 'This word has the reading "' + r.reading + '" here but "' + prev.reading + '" on row ' + prev.row + '. Use the same one on both rows.', r);
+  }
+  // readings taken from an all-hiragana meaning only fill in words with no reading typed on any row
+  for (const r of recs) {
+    const k = r.english.toLowerCase() + SEP + r.japanese;
+    if (r.readingAuto && !readingByWord.has(k)) readingByWord.set(k, { reading: r.reading, row: r.row, auto: true });
   }
   for (const r of recs) {
     const key = r.isUnit ? 'U' + SEP + r.textbook + SEP + r.unit + SEP + r.deck : 'C' + SEP + r.path.join(SEP) + SEP + r.deck;
@@ -507,7 +526,7 @@ function analyze(text, db) {
     const ps = posByWord.get(wk);
     const sp = speakByWord.get(wk);
     const rd = readingByWord.get(wk);
-    d.words.push({ english: r.english, japanese: r.japanese, row: r.row, deck: r.deck, exEn: ex ? ex.en : '', exJa: ex ? ex.ja : '', alts: altByWord.get(wk) || [], pos: ps ? ps.pos : '', speakAs: sp ? sp.speakAs : '', reading: rd ? rd.reading : '' });
+    d.words.push({ english: r.english, japanese: r.japanese, row: r.row, deck: r.deck, exEn: ex ? ex.en : '', exJa: ex ? ex.ja : '', alts: altByWord.get(wk) || [], pos: ps ? ps.pos : '', speakAs: sp ? sp.speakAs : '', reading: rd ? rd.reading : '', readingAuto: rd ? rd.auto : false });
   }
   res.decks = [...deckMap.values()];
   // look-alike deck names, only compared inside the same unit (or the same collection)
@@ -664,7 +683,8 @@ function analyze(text, db) {
         if (w.speakAs && storedSpeak && storedSpeak !== w.speakAs) add('warn', w.row, 'This word already has speak_as "' + storedSpeak + '" in the database, but your file says "' + w.speakAs + '". The existing one is kept (the SQL never overwrites speak_as).', wrec);
         // reading (only ever filled in, never overwritten)
         const storedReading = dbReading.get(pk) || '';
-        if (w.reading && storedReading && storedReading !== w.reading) add('info', w.row, 'This word already has a reading (' + storedReading + '). It is kept.', wrec);
+        if (w.reading && !w.readingAuto && storedReading && storedReading !== w.reading) add('info', w.row, 'This word already has a reading (' + storedReading + '). It is kept.', wrec);
+        if (w.reading && !w.readingAuto && !readingFits(w.reading, w.japanese)) add('warn', w.row, 'The reading “' + w.reading + '” doesn’t seem to match the meaning “' + w.japanese + '”. Check it.', wrec);
         if (!w.reading && !storedReading && KANJI_OR_KATAKANA.test(w.japanese)) add('warn', w.row, 'No reading given. Kana search will not find this word until a reading is added.', wrec);
         const note = heteronymNote(w.english);
         if (note && !w.speakAs && !storedSpeak) {

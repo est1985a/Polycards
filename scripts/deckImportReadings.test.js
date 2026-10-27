@@ -80,6 +80,33 @@ describe('import tool: readings', () => {
   it('the example data checks without errors', () => {
     const r = tool.analyze(tool.TEMPLATE, null);
     expect(bySev(r, 'error')).toHaveLength(0);
-    expect(r.stats.withReading).toBe(5);
+    expect(r.stats.withReading).toBe(6); // 5 typed + "...の1つ" from its own meaning
+  });
+
+  it('uses an all-hiragana meaning as its own reading', () => {
+    const r = tool.analyze(csv(',,,,D1,Test,smile,ほほえむ,', ',,,,D1,Test,one of ...,...の1つ,', ',,,,D1,Test,dog,犬,'), null);
+    expect(r.sql).toContain("('smile', 'ほほえむ', 'ほほえむ')");
+    expect(r.sql).toContain("('one of ...', '...の1つ', '...の1つ')");
+    expect(r.stats.withReading).toBe(2);
+    // a reading typed on another row of the same word wins
+    const typed = tool.analyze(csv(',,,,D1,Test,smile,ほほえむ,ほほえむ', ',,,,D2,Test,smile,ほほえむ,'), null);
+    expect(bySev(typed, 'error')).toHaveLength(0);
+    // not when the database has no reading column (so old databases still get working SQL)
+    const old = db([], { readingCol: false, readingRows: [] });
+    const r2 = tool.analyze(csv(',,,,D1,Test,smile,ほほえむ,'), old);
+    expect(bySev(r2, 'error')).toHaveLength(0);
+    expect(r2.sql).not.toContain('reading');
+  });
+
+  it('warns when a reading does not fit its meaning', () => {
+    const fit = (row) => bySev(tool.analyze(csv(row), null), 'warn').filter((m) => m.startsWith('The reading'));
+    const bad = fit(',,,,D1,Test,eat,食べる,のむ');
+    expect(bad).toEqual(['The reading “のむ” doesn’t seem to match the meaning “食べる”. Check it.']);
+    expect(fit(',,,,D1,Test,eat,食べる,たべる')).toHaveLength(0);
+    expect(fit(',,,,D1,Test,read,読んだ（readの過去形）,よんだ（readのかこけい）')).toHaveLength(0);
+    expect(fit(',,,,D1,Test,pretty,かわいい、きれいな,かわいい、きれいな')).toHaveLength(0);
+    // the hiragana runs must come in the same order
+    expect(fit(',,,,D1,Test,read,読んだ（readの過去形）,のよんだ（readかこけい）')).toHaveLength(1);
+    expect(fit(',,,,D1,Test,card,カード,かーど')).toHaveLength(0);
   });
 });
