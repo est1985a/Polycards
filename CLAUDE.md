@@ -255,7 +255,24 @@ Letter practice (branch `handwriting-practice`; also used full page by the Train
 - Never push to `main` (or merge into it) unless I say so, because that deploys to students. Don't push other branches unless I ask.
 
 ## Planned features (not built yet)
-- Word game for cleared sets
-- Vocabulary categories and test-prep sets (e.g. EIKEN)
-- Verb form cards (irregular past tense and past participle)
-- Low-poly visual style (inspired by Poly Pizza): retro poly avatar that levels up and unlocks new poly models as a student's decks grow
+Roughly in order. Ask me before starting any of these.
+
+### Words and packs
+- Core vocabulary levels after Beginner (CEFR-J A1): 標準の単語 / Intermediate (A2), 発展の単語 / Advanced (B1), 応用の単語 / Expert (B2), in packs of 20 under コア単語 / Core.
+- Fill in `pos` for the older words that don't have one yet (before students get access).
+- More Word Packs: parts-of-speech sets (verbs, adjectives, adverbs) and test-prep sets (e.g. EIKEN).
+- Verb form cards (irregular past tense and past participle, e.g. go → went → gone).
+
+### Dictionary
+- Hiragana readings: add a `reading` column (hiragana) to `words` so kana input like たべる matches 食べる. Do this before the dictionary. Also add it to the deck import tool.
+- Dictionary / word search: a search box (probably in the header) where typing English or Japanese (kanji or kana) shows matching cards. Search the main word, alternate answers and readings, and forgive small English spelling mistakes. Each result shows its part-of-speech chip, audio and dictionary link, every pack the word is in (tap to open the pack), and, if the student owns the card, 所持済み and its SRS level. Adding single words to My Deck is not part of the first version. Long term, Polycards should cover most English words used up to the end of Japanese high school.
+
+### Practice and rewards
+- Training tab: word-writing lessons after the ABC practice, later other activities such as pronunciation.
+- Word game for packs a student has finished.
+- Polyavatar pictures (uploads to replace the placeholders), including the Secret ones (school mascot, and teachers with their permission).
+- A teacher check on honesty (students marking わかった for words they don't know).
+
+### Tech clean-up
+- Move some settings from the device to the student's account.
+- Compute peak points on the server.
