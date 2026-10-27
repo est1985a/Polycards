@@ -8,8 +8,10 @@
 //   npm run audio                                 record every new or changed word (keeps old Chirp clips)
 //   npm run audio -- --overwrite-chirp            also replace the old Chirp clips
 //   npm run audio -- --limit 5 --delay 2000       only 5 words, 2 s between Google requests (default 1000 ms)
+//   npm run audio -- --heteronyms                 list heteronyms (read, live, lead…) that have no speak_as yet
 //
 // A word is recorded when it has no file yet, or its text (speak_as, or the cleaned English) changed.
+// Heteronyms recorded without speak_as are listed at the end so their clips get a listen (scripts/heteronyms.js).
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createClient } from '@supabase/supabase-js';
@@ -20,6 +22,7 @@ import {
   parseOptions, googleErrorHint, stopsTheRun,
 } from './audioPlan.js';
 import { AUDIO_BUCKET } from '../src/lib/speech.js';
+import { heteronymNote, heteronymsToCheck } from './heteronyms.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -37,7 +40,7 @@ try {
 
 const { GOOGLE_APPLICATION_CREDENTIALS, GOOGLE_CLOUD_PROJECT, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL } = process.env;
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) fail("Fill in SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.audio first.");
-if (!options.dryRun && (!GOOGLE_APPLICATION_CREDENTIALS || !GOOGLE_CLOUD_PROJECT)) {
+if (!options.dryRun && !options.heteronyms && (!GOOGLE_APPLICATION_CREDENTIALS || !GOOGLE_CLOUD_PROJECT)) {
   fail("Fill in GOOGLE_APPLICATION_CREDENTIALS (full path to the service account JSON file) and GOOGLE_CLOUD_PROJECT (the project ID) in .env.audio first (or use --dry-run).");
 }
 
@@ -50,7 +53,7 @@ async function fetchAllWords() {
   for (let from = 0; ; from += 1000) {
     const { data, error } = await supabase
       .from('words')
-      .select('id, english, speak_as, audio_path, audio_text, audio_voice')
+      .select('id, english, japanese, speak_as, audio_path, audio_text, audio_voice')
       .order('id')
       .range(from, from + 999);
     if (error) {
@@ -136,7 +139,24 @@ async function record(word, text) {
   return { bytes: mp3.length, ...tokens };
 }
 
+// One line per heteronym card: English, Japanese, id, and what the two pronunciations are.
+function printHeteronyms(list) {
+  for (const w of list) console.log(`  - ${w.english}  ${w.japanese ?? ''}  (${w.id})\n      ${heteronymNote(w.english)}`);
+}
+
 const words = await fetchAllWords();
+
+if (options.heteronyms) {
+  const list = heteronymsToCheck(words);
+  console.log(`${words.length} words: ${list.length} heteronym card(s) with no speak_as.\n`);
+  printHeteronyms(list);
+  if (list.length) {
+    console.log('\nIf a card needs the less common pronunciation, set its speak_as, then re-record it, e.g.:');
+    console.log(`  update words set speak_as = 'red' where id = '<id>';`);
+    console.log('  npm run audio -- --word "red"');
+  }
+  process.exit(0);
+}
 const summary = {
   read: words.length, skippedGemini: 0, skippedChirp: 0, empty: [], todo: [], notFound: [],
   recorded: 0, failed: [], bytes: 0, inputTokens: 0, audioTokens: 0,
@@ -223,5 +243,12 @@ if (summary.todo.length > batch.length) console.log(`Left for later:        ${su
 if (summary.empty.length) {
   console.log(`Skipped (no text):     ${summary.empty.length}`);
   for (const w of summary.empty) console.log(`  - "${w.english}" (${w.id}): set speak_as to record it`);
+}
+// Heteronyms in this run without speak_as: TTS picked one pronunciation, so listen to them.
+const toCheck = heteronymsToCheck(batch.map((b) => b.word));
+if (toCheck.length) {
+  console.log(`\nCheck these pronunciations (${toCheck.length}): same spelling, different sound by meaning, no speak_as set.`);
+  printHeteronyms(toCheck);
+  console.log('  If one is wrong, set its speak_as (e.g. read 読んだ → red) and re-record it with --word.');
 }
 if (summary.failed.length || summary.notFound.length) process.exitCode = 1;

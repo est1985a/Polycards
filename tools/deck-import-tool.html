@@ -46,8 +46,8 @@
   <div class="card">
     <h2>1. Your word list</h2>
     <p class="muted" style="margin-top:0">Paste CSV text, or copy the cells straight from Google Sheets (including the header row). Columns:
-      <code>school_level, textbook, unit_order, unit, deck, collection, english, japanese, alt_answers, example_en, example_ja, pos, source, note</code>.
-      Only <code>english</code>, <code>japanese</code> and <code>deck</code> are always required. <code>alt_answers</code> is optional: other English answers that typing and handwriting mode should also accept, separated by <code>;</code> (for example <code>cute; beautiful</code>). Alternates are only ever added to a word, never removed. <code>example_en</code> and <code>example_ja</code> are an optional example sentence and its Japanese translation (give both or neither). <code>pos</code> is the optional part of speech: <code>noun, verb, adjective, adverb, preposition, pronoun, conjunction, auxiliary</code> (or <code>auxiliary verb</code>)<code>, article, interjection, number, phrase</code>, or the Japanese 名詞 動詞 形容詞 副詞 前置詞 代名詞 接続詞 助動詞 冠詞 間投詞 数詞 表現. A word that already has a part of speech in the library keeps it. <code>source</code> and <code>note</code> are ignored.</p>
+      <code>school_level, textbook, unit_order, unit, deck, collection, english, japanese, alt_answers, example_en, example_ja, pos, speak_as, source, note</code>.
+      Only <code>english</code>, <code>japanese</code> and <code>deck</code> are always required. <code>alt_answers</code> is optional: other English answers that typing and handwriting mode should also accept, separated by <code>;</code> (for example <code>cute; beautiful</code>). Alternates are only ever added to a word, never removed. <code>example_en</code> and <code>example_ja</code> are an optional example sentence and its Japanese translation (give both or neither). <code>pos</code> is the optional part of speech: <code>noun, verb, adjective, adverb, preposition, pronoun, conjunction, auxiliary</code> (or <code>auxiliary verb</code>)<code>, article, interjection, number, phrase</code>, or the Japanese 名詞 動詞 形容詞 副詞 前置詞 代名詞 接続詞 助動詞 冠詞 間投詞 数詞 表現. A word that already has a part of speech in the library keeps it. <code>speak_as</code> is optional: what the recorded pronunciation should say instead of the English, for words spelled the same but said differently (for example <code>red</code> for read 読んだ). It is only filled in for words that don't have one yet. <code>source</code> and <code>note</code> are ignored.</p>
     <textarea id="input" rows="10" placeholder="Paste here..."></textarea>
     <div class="row">
       <input type="file" id="file" accept=".csv,.tsv,.txt,text/csv,text/plain">
@@ -103,7 +103,7 @@ const SUPABASE_KEY = 'sb_publishable_vR1WnHVHYOGklkoHAVPzvg_upyke-kS';
 
 const LEVELS = { jhs: 'JHS', hs: 'HS', other: 'Other' };
 const REQUIRED = ['english', 'japanese', 'deck'];
-const KNOWN = ['school_level', 'textbook', 'unit_order', 'unit', 'deck', 'collection', 'english', 'japanese', 'alt_answers', 'example_en', 'example_ja', 'pos', 'source', 'note'];
+const KNOWN = ['school_level', 'textbook', 'unit_order', 'unit', 'deck', 'collection', 'english', 'japanese', 'alt_answers', 'example_en', 'example_ja', 'pos', 'speak_as', 'source', 'note'];
 // Parts of speech: the keys allowed by the CHECK constraint on words.pos (supabase/polycards-pos.sql),
 // and the other ways a file may write them (the app's Japanese labels, "auxiliary verb").
 const POS_KEYS = ['noun', 'verb', 'adjective', 'adverb', 'preposition', 'pronoun', 'conjunction', 'auxiliary', 'article', 'interjection', 'number', 'phrase'];
@@ -119,6 +119,51 @@ function posKey(raw) {
   if (POS_KEYS.indexOf(v) !== -1) return v;
   return POS_ALIASES[v] || null;
 }
+// Heteronyms: same spelling, different pronunciation by meaning. A card that needs the less common one
+// gets speak_as, so the recorded audio is right. KEEP IN SYNC with scripts/heteronyms.js (a test checks).
+const HETERONYMS = {
+  read: 'reed (present) / red (past): past tense → speak_as "red"',
+  lead: 'leed (to guide) / led (the metal): metal → speak_as "led"',
+  live: 'liv (to live) / lyve (live music): adjective → speak_as "lyve"',
+  wind: 'wind (moving air) / wynd (wind a clock): verb → try speak_as "wined"',
+  tear: 'teer (from your eye) / tair (to rip): rip → try speak_as "tare"',
+  wound: 'woond (an injury) / wownd (past of wind): listen',
+  bow: 'bow like "cow" (to bend) / boh (ribbon, arrow): ribbon → try speak_as "beau"',
+  row: 'roh (a line) / row like "cow" (an argument): listen',
+  close: 'kloze (to shut) / klohss (near): listen',
+  use: 'yooz (to use) / yooss (a use): listen',
+  does: 'duz (he does) / dohz (female deer): listen',
+  dove: 'duv (the bird) / dohv (past of dive): listen',
+  bass: 'base (music) / bass (the fish): music → try speak_as "base"',
+  sow: 'soh (to plant) / sow like "cow" (a pig): listen',
+  minute: 'MIN-it (60 seconds) / my-NOOT (tiny): listen',
+  excuse: 'ex-KYOOSS (an excuse) / ex-KYOOZ (to excuse): listen',
+  house: 'howss (a house) / howz (to house): listen',
+  desert: 'DEZ-ert (sandy place) / de-ZERT (to leave): listen (stress)',
+  present: 'PREZ-ent (a gift, now) / pre-ZENT (to present): listen (stress)',
+  record: 'REK-ord (a record) / re-KORD (to record): listen (stress)',
+  object: 'OB-ject (a thing) / ob-JECT (to object): listen (stress)',
+  project: 'PROJ-ect (a project) / pro-JECT (to project): listen (stress)',
+  produce: 'PROH-duce (vegetables) / pro-DUCE (to make): listen (stress)',
+  permit: 'PER-mit (a permit) / per-MIT (to allow): listen (stress)',
+  content: 'KON-tent (contents) / kon-TENT (happy): listen (stress)',
+  contract: 'KON-tract (an agreement) / kon-TRACT (to shrink): listen (stress)',
+  conduct: 'KON-duct (behavior) / kon-DUCT (to lead): listen (stress)',
+  increase: 'IN-crease (a rise) / in-CREASE (to rise): listen (stress)',
+  decrease: 'DE-crease (a fall) / de-CREASE (to fall): listen (stress)',
+  refuse: 'REF-yooss (trash) / re-FYOOZ (to say no): listen',
+  export: 'EX-port (an export) / ex-PORT (to export): listen (stress)',
+  import: 'IM-port (an import) / im-PORT (to import): listen (stress)',
+  subject: 'SUB-ject (a school subject) / sub-JECT (to subject): listen (stress)',
+  perfect: 'PER-fect (perfect) / per-FECT (to perfect): listen (stress)',
+  rebel: 'REB-el (a rebel) / re-BEL (to rebel): listen (stress)',
+  conflict: 'KON-flict (a conflict) / kon-FLICT (to conflict): listen (stress)',
+  separate: 'SEP-rit (separate) / SEP-a-rate (to separate): listen',
+  estimate: 'ES-ti-mit (an estimate) / ES-ti-mate (to estimate): listen',
+  graduate: 'GRAD-joo-it (a graduate) / GRAD-joo-ate (to graduate): listen',
+};
+function heteronymNote(english) { const k = clean(english).toLowerCase(); return Object.prototype.hasOwnProperty.call(HETERONYMS, k) ? HETERONYMS[k] : ''; }
+const MAX_SPEAK = 80;
 const MAX_EXAMPLE = 300;
 const MAX_ALT = 80;
 const SEP = '\u0001';
@@ -257,7 +302,10 @@ async function loadDb() {
     fetchAll('decks?select=id,name,unit_id,deck_words(count),collection_decks(collection_id)&order=id'),
     fetchAll('collections?select=id,name,parent_id&order=id'),
   ]);
-  return { words, textbooks, units, decks, collections, exampleCols, altCols, posCol };
+  // speak_as (supabase/polycards-word-audio.sql) is read on its own, so an older database still works.
+  let speakRows = null;
+  try { speakRows = await fetchAll('words?select=english,japanese,speak_as&order=id'); } catch (e) { speakRows = null; }
+  return { words, textbooks, units, decks, collections, exampleCols, altCols, posCol, speakCol: !!speakRows, speakRows: speakRows || [] };
 }
 
 // ---- The main analysis ----------------------------------------------------
@@ -297,6 +345,7 @@ function analyze(text, db) {
       exEn: o.example_en || '', exJa: o.example_ja || '',
       alts: [],
       posRaw: o.pos || '',
+      speakAs: o.speak_as || '',
     };
     let bad = false;
     const err = m => { add('error', rec.row, m, rec); bad = true; };
@@ -315,6 +364,8 @@ function analyze(text, db) {
     if (rawAlts.some(a => a.indexOf('/') !== -1)) add('warn', rec.row, 'An alternate contains "/". If you meant two alternates, separate them with ; instead.', rec);
     rec.alts = mergeAlts([], rawAlts, rec.english);
     rec.pos = posKey(rec.posRaw);
+    if (rec.speakAs.length > MAX_SPEAK) err('speak_as is longer than ' + MAX_SPEAK + ' characters.');
+    if (/[぀-ヿ㐀-鿿]/.test(rec.speakAs)) err('speak_as contains Japanese. It is what the English recording should say, e.g. red.');
     if (rec.pos === null) err('pos "' + rec.posRaw + '" is not a part of speech. Use one of: ' + POS_KEYS.join(', ') + ' (or the Japanese 名詞, 動詞 …), or leave it blank.');
 
     rec.path = rec.collectionRaw ? rec.collectionRaw.split('>').map(clean) : [];
@@ -401,6 +452,14 @@ function analyze(text, db) {
     if (!prev) posByWord.set(k, { pos: r.pos, row: r.row });
     else if (prev.pos !== r.pos) add('error', r.row, 'This word has pos "' + r.pos + '" here but "' + prev.pos + '" on row ' + prev.row + '. A word can only have one part of speech; use the same one on both rows.', r);
   }
+  const speakByWord = new Map(); // word key -> { speakAs, row }  (blank rows don't count)
+  for (const r of recs) {
+    if (!r.speakAs) continue;
+    const k = r.english.toLowerCase() + SEP + r.japanese;
+    const prev = speakByWord.get(k);
+    if (!prev) speakByWord.set(k, { speakAs: r.speakAs, row: r.row });
+    else if (prev.speakAs !== r.speakAs) add('error', r.row, 'This word has speak_as "' + r.speakAs + '" here but "' + prev.speakAs + '" on row ' + prev.row + '. Use the same one on both rows.', r);
+  }
   for (const r of recs) {
     const key = r.isUnit ? 'U' + SEP + r.textbook + SEP + r.unit + SEP + r.deck : 'C' + SEP + r.path.join(SEP) + SEP + r.deck;
     let d = deckMap.get(key);
@@ -418,7 +477,8 @@ function analyze(text, db) {
     d.wordKeys.add(wk);
     const ex = exByWord.get(wk);
     const ps = posByWord.get(wk);
-    d.words.push({ english: r.english, japanese: r.japanese, row: r.row, deck: r.deck, exEn: ex ? ex.en : '', exJa: ex ? ex.ja : '', alts: altByWord.get(wk) || [], pos: ps ? ps.pos : '' });
+    const sp = speakByWord.get(wk);
+    d.words.push({ english: r.english, japanese: r.japanese, row: r.row, deck: r.deck, exEn: ex ? ex.en : '', exJa: ex ? ex.ja : '', alts: altByWord.get(wk) || [], pos: ps ? ps.pos : '', speakAs: sp ? sp.speakAs : '' });
   }
   res.decks = [...deckMap.values()];
   // look-alike deck names, only compared inside the same unit (or the same collection)
@@ -431,10 +491,12 @@ function analyze(text, db) {
   for (const [, m] of decksByPlace) variantCheck(m, 'Deck', k => k);
 
   // -- compare with the database
-  const dbWordKeys = new Set(), dbByEng = new Map(), dbIdx = new Map(), fileIdx = new Map(), dbExample = new Map(), dbAlts = new Map(), dbPos = new Map();
+  const dbWordKeys = new Set(), dbByEng = new Map(), dbIdx = new Map(), fileIdx = new Map(), dbExample = new Map(), dbAlts = new Map(), dbPos = new Map(), dbSpeak = new Map();
   const firstPosRec = recs.find(r => r.pos);
   if (firstPosRec && db && !db.posCol) add('error', firstPosRec.row, 'Your file has parts of speech (pos), but the database does not have the words.pos column yet. Run supabase/polycards-pos.sql first, then press "Refresh database info" and check again.');
   if (firstPosRec && !db) add('info', firstPosRec.row, 'I could not read the database, so I cannot tell whether the words.pos column exists yet. If it does not, the SQL will stop with an error and change nothing.');
+  const firstSpeakRec = recs.find(r => r.speakAs);
+  if (firstSpeakRec && db && !db.speakCol) add('error', firstSpeakRec.row, 'Your file has speak_as, but the database does not have the words.speak_as column yet. Run supabase/polycards-word-audio.sql first, then press "Refresh database info" and check again.');
   const firstExRec = recs.find(r => r.exEn);
   if (firstExRec && db && !db.exampleCols) add('error', firstExRec.row, 'Your file has example sentences, but the database does not have the example_en and example_ja columns yet. Run the "add example columns" SQL first, then press "Refresh database info" and check again.');
   if (firstExRec && !db) add('info', firstExRec.row, 'I could not read the database, so I cannot tell whether the example sentence columns exist yet. If they do not, the SQL will stop with an error and change nothing.');
@@ -450,6 +512,7 @@ function analyze(text, db) {
       if (w.pos) dbPos.set(e + SEP + j, w.pos);
       if (!dbByEng.has(e)) dbByEng.set(e, new Set()); dbByEng.get(e).add(j);
     }
+    for (const w of db.speakRows) if (clean(w.speak_as)) dbSpeak.set(clean(w.english).toLowerCase() + SEP + clean(w.japanese), clean(w.speak_as));
     for (const e of dbByEng.keys()) addToIndex(dbIdx, e);
 
     const tbById = new Map(db.textbooks.map(t => [t.id, t]));
@@ -562,6 +625,15 @@ function analyze(text, db) {
           add('warn', w.row, 'This word already has pos "' + stored + '" in the database, but your file says "' + w.pos + '". The existing one is kept (the SQL never overwrites a part of speech).', { deck: d.name, english: w.english, japanese: w.japanese });
         }
         wordRows.set(pk, { english: w.english, japanese: w.japanese, decks: [d.name], pos: w.pos, posAction, inDb });
+        // heteronyms: the recording can only guess which pronunciation this card means
+        const storedSpeak = dbSpeak.get(pk) || '';
+        const wrec = { deck: d.name, english: w.english, japanese: w.japanese };
+        if (w.speakAs && storedSpeak && storedSpeak !== w.speakAs) add('warn', w.row, 'This word already has speak_as "' + storedSpeak + '" in the database, but your file says "' + w.speakAs + '". The existing one is kept (the SQL never overwrites speak_as).', wrec);
+        const note = heteronymNote(w.english);
+        if (note && !w.speakAs && !storedSpeak) {
+          const past = e === 'read' && /過去|んだ/.test(w.japanese) ? ' This looks like the past tense: set speak_as to red.' : '';
+          add('warn', w.row, 'Heteronym: "' + w.english + '" is said differently depending on the meaning (' + note + '). If this card needs the less common pronunciation, set speak_as so the recording is right.' + past, wrec);
+        }
       } else if (wordRows.get(pk).decks.indexOf(d.name) === -1) wordRows.get(pk).decks.push(d.name);
       if (!inDb) d.newWords++;
       const rec = { deck: d.name, english: w.english, japanese: w.japanese };
@@ -720,6 +792,17 @@ function generateSql(decks, overwriteExamples) {
     out.push('');
   }
 
+  const speakList = list.filter(w => w.speakAs);
+  if (speakList.length) {
+    out.push('-- Pronunciation text for the recordings (speak_as; only fills in words that have none yet; never overwrites)');
+    for (let i = 0; i < speakList.length; i += BATCH) {
+      out.push('update public.words w\nset speak_as = v.speak_as\nfrom (values\n'
+        + speakList.slice(i, i + BATCH).map(w => '  (' + q(w.english) + ', ' + q(w.japanese) + ', ' + q(w.speakAs) + ')').join(',\n')
+        + "\n) as v(english, japanese, speak_as)\nwhere lower(btrim(w.english)) = lower(btrim(v.english))\n  and btrim(w.japanese) = btrim(v.japanese)\n  and coalesce(btrim(w.speak_as), '') = '';");
+    }
+    out.push('');
+  }
+
   const exList = list.filter(w => w.exEn);
   if (exList.length) {
     out.push(overwriteExamples
@@ -769,13 +852,14 @@ function generateCheckSql(decks) {
 
 // ---- Example / template ---------------------------------------------------
 const TEMPLATE = [
-  'school_level,textbook,unit_order,unit,deck,collection,english,japanese,alt_answers,example_en,example_ja,pos,source,note',
-  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,apple,りんご,,I eat an apple every day.,私は毎日りんごを食べます。,noun,,',
-  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,pretty,かわいい、きれいな,cute; beautiful,,,形容詞,,',
-  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,one of ...,...の1つ,,,,phrase,,',
-  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-2,,familiar,見慣れた,,,,形容詞,,',
-  ',,,,Grade 3 Set 1,EIKEN > Grade 3,borrow,借りる,,"Can I borrow your pen, please?",ペンを借りてもいいですか。,動詞,,check meaning',
-  ',,,,Grade 3 Set 1,EIKEN > Grade 3,familiar,見慣れた,,,,,,',
+  'school_level,textbook,unit_order,unit,deck,collection,english,japanese,alt_answers,example_en,example_ja,pos,speak_as,source,note',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,apple,りんご,,I eat an apple every day.,私は毎日りんごを食べます。,noun,,,',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,pretty,かわいい、きれいな,cute; beautiful,,,形容詞,,,',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,one of ...,...の1つ,,,,phrase,,,',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,read,読んだ（readの過去形）,,,,動詞,red,,',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-2,,familiar,見慣れた,,,,形容詞,,,',
+  ',,,,Grade 3 Set 1,EIKEN > Grade 3,borrow,借りる,,"Can I borrow your pen, please?",ペンを借りてもいいですか。,動詞,,,check meaning',
+  ',,,,Grade 3 Set 1,EIKEN > Grade 3,familiar,見慣れた,,,,,,,',
 ].join('\n');
 
 // ---- Page wiring (only runs in a browser) ----------------------------------

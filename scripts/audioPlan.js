@@ -151,12 +151,13 @@ export function retryDelay(attempt, retryAfter) {
 // Command line. Throws on anything unknown.
 //   --dry-run  --limit N  --delay ms  --preview [dir]  --word "<text>" (repeatable)  --overwrite-chirp
 export function parseOptions(argv) {
-  const options = { dryRun: false, limit: Infinity, delayMs: DEFAULT_DELAY_MS, preview: null, words: [], overwriteChirp: false };
+  const options = { dryRun: false, limit: Infinity, delayMs: DEFAULT_DELAY_MS, preview: null, words: [], overwriteChirp: false, heteronyms: false };
   let limitGiven = false;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--dry-run") options.dryRun = true;
     else if (arg === "--overwrite-chirp") options.overwriteChirp = true;
+    else if (arg === "--heteronyms") options.heteronyms = true;
     else if (arg === "--preview") {
       const next = argv[i + 1];
       options.preview = next && !next.startsWith("--") ? argv[++i] : PREVIEW_DIR;
@@ -172,7 +173,7 @@ export function parseOptions(argv) {
         limitGiven = true;
       } else options.delayMs = n;
     } else {
-      throw new Error(`Unknown option "${arg}". Use --dry-run, --limit N, --delay ms, --preview [folder], --word "<text>" or --overwrite-chirp.`);
+      throw new Error(`Unknown option "${arg}". Use --dry-run, --limit N, --delay ms, --preview [folder], --word "<text>", --overwrite-chirp or --heteronyms.`);
     }
   }
   // A preview is a small listening test unless you say otherwise.
