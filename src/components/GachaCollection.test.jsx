@@ -67,3 +67,21 @@ describe('GachaCollection', () => {
     expect(at('dashboard')).not.toContain('>ガチャ</span>');
   });
 });
+
+describe('worn Polyavatar in the summary panel', () => {
+  const cat = { ...owned, id: 1, slug: 'cat', name_ja: 'ネコ', name_en: 'Cat', equipped: true };
+
+  it('is a button with the tap-to-enlarge hint; grid tiles stay the same', () => {
+    const html = renderToStaticMarkup(<GachaCollection rows={[cat, owned]} onEquip={() => {}} onBack={() => {}} />);
+    expect(html).toContain('aria-label="ネコ (Cat) を大きく見る"');
+    expect(html).toContain('タップで大きく');
+    expect(html).toContain('aria-label="柴犬 (Shiba Inu) をつける"');
+    expect(html).not.toContain('role="dialog"');
+  });
+
+  it('no worn Polyavatar: nothing to tap', () => {
+    const html = renderToStaticMarkup(<GachaCollection rows={[{ ...owned }]} onEquip={() => {}} onBack={() => {}} />);
+    expect(html).not.toContain('大きく見る');
+    expect(html).not.toContain('タップで大きく');
+  });
+});

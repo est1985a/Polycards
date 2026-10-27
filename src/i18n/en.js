@@ -349,6 +349,10 @@ export default {
   "collection.silhouetteLabel": "?",
   "collection.wornLabel": "{nameEn}, wearing now",
   "collection.equipLabel": "Wear {nameEn}",
+  "collection.tapToEnlarge": "Tap to enlarge",
+  "collection.viewLarge": "View {nameEn} large", // DRAFT
+  "collection.viewerLabel": "Polyavatar", // DRAFT
+  "collection.obtainedOn": ({ year, month, day } = {}) => `Unlocked: ${MONTHS[Number(month) - 1] ?? month} ${day}, ${year}`,
 
   // Rarity names
   "rarity.normal": "Normal",

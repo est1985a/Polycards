@@ -1,6 +1,6 @@
 // Tests for the gacha helpers. Run with: npm test
 import { describe, it, expect, vi } from 'vitest';
-import { ticketProgress, spellingProgress, groupCollection, rarityCounts, tileState, singleFlight, sparkleLayout } from './gacha';
+import { ticketProgress, spellingProgress, groupCollection, rarityCounts, tileState, singleFlight, sparkleLayout, obtainedDate } from './gacha';
 
 describe('ticketProgress', () => {
   it('measures progress to the next ticket from the status', () => {
@@ -99,5 +99,21 @@ describe('sparkleLayout', () => {
     expect(sparkleLayout('secret')[5]).toEqual([70, 98, 0.14, 1.0]);
     expect(sparkleLayout('mystery')).toEqual([]);
     expect(sparkleLayout(undefined)).toEqual([]);
+  });
+});
+
+describe('obtainedDate (入手日, Japan time)', () => {
+  it('turns a UTC time into the Japan date', () => {
+    expect(obtainedDate('2026-10-27T03:00:00+00:00')).toEqual({ year: 2026, month: 10, day: 27 });
+    // 15:30 UTC on the 26th is already 00:30 on the 27th in Japan.
+    expect(obtainedDate('2026-10-26T15:30:00Z')).toEqual({ year: 2026, month: 10, day: 27 });
+    expect(obtainedDate('2026-12-31T14:59:59Z')).toEqual({ year: 2026, month: 12, day: 31 });
+    expect(obtainedDate('2026-12-31T15:00:00Z')).toEqual({ year: 2027, month: 1, day: 1 });
+  });
+
+  it('is null when there is no real time', () => {
+    expect(obtainedDate(null)).toBeNull();
+    expect(obtainedDate(undefined)).toBeNull();
+    expect(obtainedDate('not a date')).toBeNull();
   });
 });
