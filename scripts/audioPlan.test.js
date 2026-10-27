@@ -180,7 +180,7 @@ describe('retries', () => {
 });
 
 describe('parseOptions', () => {
-  const base = { dryRun: false, limit: Infinity, delayMs: DEFAULT_DELAY_MS, preview: null, words: [], overwriteChirp: false };
+  const base = { dryRun: false, limit: Infinity, delayMs: DEFAULT_DELAY_MS, preview: null, words: [], overwriteChirp: false, heteronyms: false };
   it('reads --dry-run, --limit and --delay', () => {
     expect(parseOptions([])).toEqual(base);
     expect(parseOptions(['--dry-run', '--limit', '5', '--delay', '500'])).toEqual({ ...base, dryRun: true, limit: 5, delayMs: 500 });
