@@ -28,3 +28,8 @@ polycards_hw_model/
 
 # Keys for the audio recording script (scripts/generate-audio.mjs). Never commit.
 .env.audio
+# Listening tests from npm run audio -- --preview
+audio-preview/
+# Google service account key files (keep them outside the repo anyway)
+*service-account*.json
+polycards-audio*.json
