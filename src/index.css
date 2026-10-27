@@ -324,7 +324,7 @@ p {
 }
 :root[data-reduce-motion="true"] .spell-bonus-float { animation-name: polycards-level-up-fade; }
 
-/* The avatar on the player card is a button (opens the ポリアバター図鑑): a clear keyboard focus ring. */
+/* The avatar on the player card (opens the ポリアバター図鑑) and the worn one in the 図鑑 (large view) are buttons: a clear keyboard focus ring. */
 .avatar-button:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 3px;

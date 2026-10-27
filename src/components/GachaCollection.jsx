@@ -1,7 +1,9 @@
+import { useRef, useState } from 'react';
 import { colors, fontDisplay, panel } from '../styles/theme';
 import BackButton from './BackButton';
 import { rarityInfo, rarityGlow, groupCollection, rarityCounts, tileState } from '../lib/gacha';
 import AvatarPicture from './AvatarPicture';
+import AvatarViewer from './AvatarViewer';
 import { t } from '../i18n';
 
 const tileBase = {
@@ -62,21 +64,55 @@ export function CollectionTile({ avatar, equipping = false, onEquip }) {
   );
 }
 
-// Left panel: the avatar being worn, then owned / total per rarity (Secret total is "?").
-function SummaryPanel({ rows, equipped }) {
+const avatarBox = {
+  justifySelf: "center", boxSizing: "content-box", width: 150, height: 150, borderRadius: 24, background: colors.surface2,
+  display: "flex", alignItems: "center", justifyContent: "center", border: `2px solid ${colors.line}`,
+};
+
+// Small magnifier in the corner of the worn Polyavatar: "tap to see it large".
+function MagnifierBadge() {
+  return (
+    <span
+      aria-hidden="true"
+      style={{
+        position: "absolute", right: -8, bottom: -8, width: 32, height: 32, borderRadius: "50%",
+        background: colors.surface, border: `2px solid ${colors.line}`, color: colors.text,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <line x1="15.5" y1="15.5" x2="21" y2="21" />
+      </svg>
+    </span>
+  );
+}
+
+// Left panel: the avatar being worn (tap it to see it large), then owned / total per rarity (Secret total is "?").
+function SummaryPanel({ rows, equipped, onView, avatarRef }) {
   const info = equipped ? rarityInfo(equipped.rarity) : null;
   return (
     <div style={{ ...panel, display: "grid", gap: 14, textAlign: "center" }}>
       <div style={{ fontSize: 12, color: colors.muted }}>{t("collection.wornAvatar")}</div>
-      <div
-        style={{
-          justifySelf: "center", width: 150, height: 150, borderRadius: 24, background: colors.surface2,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          border: `2px solid ${info ? info.color : colors.line}`,
-        }}
-      >
-        <AvatarPicture avatar={equipped} size={120} />
-      </div>
+      {equipped ? (
+        <div style={{ display: "grid", justifyItems: "center", gap: 6 }}>
+          <button
+            ref={avatarRef}
+            onClick={onView}
+            aria-label={t("collection.viewLarge", { nameJa: equipped.name_ja, nameEn: equipped.name_en })}
+            className="avatar-button"
+            style={{ ...avatarBox, borderColor: info.color, position: "relative", padding: 0, cursor: "pointer", fontFamily: "inherit" }}
+          >
+            <AvatarPicture avatar={equipped} size={120} />
+            <MagnifierBadge />
+          </button>
+          <div aria-hidden="true" style={{ fontSize: 12, color: colors.muted }}>{t("collection.tapToEnlarge")}</div>
+        </div>
+      ) : (
+        <div style={avatarBox}>
+          <AvatarPicture avatar={null} size={120} />
+        </div>
+      )}
       {equipped && (
         <div>
           <div style={{ fontWeight: 700, fontSize: 20 }}>{equipped.name_en}</div>
@@ -110,6 +146,10 @@ function SummaryPanel({ rows, equipped }) {
 export default function GachaCollection({ rows, equippingId, onEquip, onBack, from = "gacha", wide = false }) {
   const owned = (rows || []).filter((r) => r.owned).length;
   const equipped = (rows || []).find((r) => r.equipped) || null;
+  const [viewing, setViewing] = useState(false);
+  const avatarRef = useRef(null);
+  const closeViewer = () => { setViewing(false); avatarRef.current?.focus({ preventScroll: true }); };
+  const summary = <SummaryPanel rows={rows} equipped={equipped} onView={() => setViewing(true)} avatarRef={avatarRef} />;
 
   const groups = (
     <div style={{ display: "grid", gap: 20, textAlign: "left" }}>
@@ -154,15 +194,16 @@ export default function GachaCollection({ rows, equippingId, onEquip, onBack, fr
         <div style={{ ...panel, color: colors.muted }}>{t("common.loading")}</div>
       ) : wide ? (
         <div style={{ display: "grid", gridTemplateColumns: "300px minmax(0, 1fr)", gap: 32, alignItems: "start" }}>
-          <div style={{ position: "sticky", top: 16 }}><SummaryPanel rows={rows} equipped={equipped} /></div>
+          <div style={{ position: "sticky", top: 16 }}>{summary}</div>
           {groups}
         </div>
       ) : (
         <>
-          <SummaryPanel rows={rows} equipped={equipped} />
+          {summary}
           {groups}
         </>
       )}
+      {viewing && equipped && <AvatarViewer avatar={equipped} onClose={closeViewer} />}
     </div>
   );
 }

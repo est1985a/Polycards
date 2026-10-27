@@ -1,6 +1,7 @@
 // Gacha helpers for the screens (pure functions, no database calls).
 import { colors } from '../styles/theme';
 import { t } from '../i18n';
+import { jstDateKey } from './schedule';
 
 // Rarities in display order. color: the theme color used for that rarity; labelKey: its name (i18n).
 export const RARITY_ORDER = ['normal', 'rare', 'super_rare', 'secret'];
@@ -95,4 +96,13 @@ export function singleFlight(fn) {
       .finally(() => { running = null; });
     return running;
   };
+}
+
+// The Japan date a Polyavatar was obtained (obtained_at from gacha_collection, stored in UTC),
+// as { year, month (1–12), day }, for 入手日. null when missing or not a real time.
+export function obtainedDate(obtainedAt) {
+  const time = obtainedAt ? Date.parse(obtainedAt) : NaN;
+  if (Number.isNaN(time)) return null;
+  const [year, month, day] = jstDateKey(time).split('-').map(Number);
+  return { year, month, day };
 }

@@ -344,6 +344,10 @@ export default {
   "collection.silhouetteLabel": "？", // read aloud for a silhouette picture
   "collection.wornLabel": "{nameJa} ({nameEn}) つけ中", // read aloud for the avatar being worn
   "collection.equipLabel": "{nameJa} ({nameEn}) をつける", // read aloud for an owned avatar: tap to wear it
+  "collection.tapToEnlarge": "タップで大きく", // hint under the worn Polyavatar in the summary panel
+  "collection.viewLarge": "{nameJa} ({nameEn}) を大きく見る", // read aloud for the worn Polyavatar: tap to see it large
+  "collection.viewerLabel": "ポリアバターを大きく見る", // read aloud for the large-view pop-up
+  "collection.obtainedOn": "入手日：{year}年{month}月{day}日", // date the Polyavatar was obtained (Japan time); {month} is 1–12
 
   // Rarity names (gacha screen, result, collection)
   "rarity.normal": "ノーマル",
