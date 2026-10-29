@@ -285,6 +285,7 @@ export default {
   "cardSets.addAllOwned": "+ Add to My Deck (all owned)",
   "cardSets.adding": "Adding…",
   "cardSets.added": "✓ Added to My Deck",
+  "cardSets.goToMyDeck": "Go to My Deck ›", // DRAFT
   "cardSets.deckEmpty": "This deck has no cards yet.",
   "cardSets.signInToAdd": "Please log in to add decks to My Deck.",
 
@@ -300,7 +301,9 @@ export default {
   "pack.ownedList": "Words you already have",
   "pack.allOwned": "You already have every word in this pack!",
   "pack.allOwnedNote": "The same word is never added twice.",
-  "pack.close": "OK",
+  "pack.reviewNow": "Review now",
+  "pack.goToMyDeck": "Go to My Deck",
+  "pack.later": "Later",
 
   // Word list of a Card Sets deck
   "wordList.wordCount": plural("{n} word", "{n} words"),
@@ -309,7 +312,7 @@ export default {
   "wordList.showWord": "Show Japanese: {word}",
   "wordList.hideWord": "Hide Japanese: {word}",
   "wordList.owned": "Owned", // same as pack.owned
-  "wordList.startDrill": "Start drill",
+  "wordList.startDrill": "Practice Drill",
 
   // Gacha screen and the pull result
   "gacha.title": "Gacha",

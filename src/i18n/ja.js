@@ -280,6 +280,7 @@ export default {
   "cardSets.addAllOwned": "＋ マイデッキに追加（ぜんぶ所持済み）", // when every word is already owned
   "cardSets.adding": "追加中...",
   "cardSets.added": "✓ マイデッキに追加済み",
+  "cardSets.goToMyDeck": "マイデッキへ ›", // word list's main button once the deck is added
   "cardSets.deckEmpty": "このデッキにはまだカードがありません。", // browser alert
   "cardSets.signInToAdd": "マイデッキに追加するには、ログインしてください。", // browser alert
 
@@ -295,7 +296,9 @@ export default {
   "pack.ownedList": "もう持っている単語",
   "pack.allOwned": "このパックの単語は、ぜんぶもう持っています！",
   "pack.allOwnedNote": "同じ単語が2回追加されることはありません。",
-  "pack.close": "OK",
+  "pack.reviewNow": "今すぐ復習する", // main button: review this pack's new words now
+  "pack.goToMyDeck": "マイデッキへ", // main button when every word was already owned
+  "pack.later": "あとで", // closes the pop-up and stays on the pack
 
   // Word list of a Card Sets deck (before the drill)
   "wordList.wordCount": "{n}語",
@@ -304,7 +307,7 @@ export default {
   "wordList.showWord": "日本語を見る: {word}", // read aloud; {word} = the English word
   "wordList.hideWord": "日本語をかくす: {word}", // read aloud; {word} = the English word
   "wordList.owned": "所持済み", // small tag on a word the student already has (only before the deck is added)
-  "wordList.startDrill": "ドリルを始める (Start drill)",
+  "wordList.startDrill": "おためしドリル", // small button: the drill saves nothing, so it is only a try
 
   // Gacha screen and the pull result
   "gacha.title": "ガチャ",

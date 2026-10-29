@@ -31,7 +31,34 @@ describe('WordList', () => {
     expect(html).toMatch(/role="switch" aria-checked="false"/);
     expect(html).toContain('日本語をかくす');
     expect(html).toContain('マイデッキに追加');
-    expect(html).toContain('ドリルを始める (Start drill)');
+    expect(html).toContain('>おためしドリル</button>');
+  });
+
+  it('puts Add to My Deck in the bottom bar as the big main button, before the small drill button', () => {
+    const html = renderList();
+    // nothing above the list any more: the add button comes after the last word
+    expect(html.indexOf('>＋ マイデッキに追加</button>')).toBeGreaterThan(html.indexOf('>herb</span>'));
+    expect(html).toMatch(/<button style="[^"]*background:var\(--accent\)[^"]*min-height:56px[^"]*">＋ マイデッキに追加<\/button>/);
+    expect(html).toMatch(/<button style="[^"]*background:transparent[^"]*">おためしドリル<\/button>/);
+    expect(html.indexOf('マイデッキに追加')).toBeLessThan(html.indexOf('おためしドリル'));
+  });
+
+  it('once added, shows ✓ added and a マイデッキへ button (not disabled)', () => {
+    const html = renderToStaticMarkup(
+      <WordList activeSet={SET} isAdded saving={false} onAddDeck={() => {}} onStart={() => {}} onGoToMyDeck={() => {}} />
+    );
+    expect(html).toContain('✓ マイデッキに追加済み');
+    expect(html).toMatch(/<button style="[^"]*background:var\(--accent\)[^"]*">マイデッキへ ›<\/button>/);
+    expect(html).not.toContain('disabled');
+    expect(html).toContain('>おためしドリル</button>');
+  });
+
+  it('puts both buttons in one row on wide screens', () => {
+    const html = renderToStaticMarkup(
+      <WordList activeSet={SET} isAdded={false} saving={false} onAddDeck={() => {}} onStart={() => {}} wide />
+    );
+    expect(html).toContain('flex-direction:row-reverse');
+    expect(renderList()).toContain('flex-direction:column');
   });
 });
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { toggleId, ownedCounts } from '../lib/library';
-import { colors, fontDisplay, fontBody, gutter, panel, btnPrimary, wideLayout } from '../styles/theme';
+import { colors, fontDisplay, fontBody, gutter, panel, btnGhost, wideLayout } from '../styles/theme';
 import AddDeckButton from './AddDeckButton';
 import Highlighted from './Highlighted';
 import ToggleSwitch from './ToggleSwitch';
@@ -90,9 +90,11 @@ export function WordRow({ word, hideJa, revealed, first, onToggle, speech = null
 // Word Packs (Card Sets in the code): every word of a deck, shown before the drill starts.
 // activeSet.ownedWordIds: words the student already has (fetchOwnedWordIds), or null if unknown.
 // activeSet.cards comes from buildCards (two cards per word, in deck order).
-// wide: the fixed start bar matches the 720 px list instead of 480 px.
+// wide: the fixed bottom bar matches the 720 px list instead of 480 px, with both buttons in one row.
 // speech: { slow } for the speaker buttons, or null when the browser can't speak.
-export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStart, wide = false, speech = null }) {
+// The bottom bar's main button is ＋ マイデッキに追加 (or ✓ added + マイデッキへ, onGoToMyDeck);
+// the drill (onStart) is the small おためしドリル button, because it saves nothing.
+export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStart, onGoToMyDeck = null, wide = false, speech = null }) {
   const words = activeSet.cards.filter((c) => c.direction === "en2jp");
   // 所持済み tags only while the deck isn't added yet: once it is, every word is owned.
   const ownedIds = !isAdded && Array.isArray(activeSet.ownedWordIds) ? new Set(activeSet.ownedWordIds) : null;
@@ -107,15 +109,14 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
   }
 
   return (
-    <div style={{ display: "grid", gap: 16, textAlign: "left", paddingBottom: 48 }}>
+    // Bottom padding = about the bar's height, so the last word never hides behind it.
+    <div style={{ display: "grid", gap: 16, textAlign: "left", paddingBottom: `calc(${wide ? 120 : 170}px + env(safe-area-inset-bottom))` }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12 }}>
         <h2 style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, margin: 0, color: colors.text }}>{activeSet.name}</h2>
         <span style={{ fontSize: 14, color: colors.muted, whiteSpace: "nowrap" }}>
           {tx("wordList.wordCount", { n: <span style={{ fontFamily: fontDisplay, fontWeight: 700 }}>{words.length}</span>, count: words.length })}
         </span>
       </div>
-
-      <AddDeckButton isAdded={isAdded} saving={saving} onAdd={onAddDeck} counts={ownedCounts(activeSet.cards, activeSet.ownedWordIds)} />
 
       {/* The switch stays at the top while the list scrolls under it: frosted glass (surface at 85% plus
           a blur), so a theme's backdrop shows through softly and the text stays readable. */}
@@ -155,16 +156,27 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
         ))}
       </ol>
 
-      {/* Start button, fixed to the bottom of the screen. */}
+      {/* Bottom bar, fixed to the bottom of the screen: Add to My Deck (main) and the drill (small).
+          Phones: the drill under the main button; wide: one row, drill on the left. */}
       <div
         style={{
           position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", zIndex: 10,
           width: "100%", maxWidth: wide ? wideLayout.readWidth + 2 * gutter : 480, boxSizing: "border-box",
           padding: `12px ${gutter}px calc(12px + env(safe-area-inset-bottom))`,
           background: colors.surface, borderTop: `2px solid ${colors.line}`,
+          display: "flex", flexDirection: wide ? "row-reverse" : "column", alignItems: wide ? "flex-end" : "stretch", gap: wide ? 12 : 8,
         }}
       >
-        <button onClick={onStart} style={{ ...btnPrimary, width: "100%", minHeight: 56, fontSize: 17 }}>
+        <div style={{ flex: "1 1 auto", minWidth: 0 }}>
+          <AddDeckButton
+            primary isAdded={isAdded} saving={saving} onAdd={onAddDeck} onGoToMyDeck={onGoToMyDeck}
+            counts={ownedCounts(activeSet.cards, activeSet.ownedWordIds)}
+          />
+        </div>
+        <button
+          onClick={onStart}
+          style={{ ...btnGhost, flex: "0 0 auto", minHeight: wide ? 56 : 44, padding: "8px 18px", fontSize: 14, alignSelf: wide ? "auto" : "center" }}
+        >
           {t("wordList.startDrill")}
         </button>
       </div>

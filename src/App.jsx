@@ -690,6 +690,24 @@ function App() {
 
   const closePack = useCallback(() => setPackResult(null), []);
 
+  // Word list / pack opening: to the My Cards dashboard. cardSetsPath is kept, so the Card Sets
+  // tab still comes back to the same deck list.
+  function goToMyDeck() {
+    setPackResult(null);
+    setView("dashboard");
+    setActiveTab("myCards");
+    window.scrollTo(0, 0);
+  }
+
+  // Pack opening: 今すぐ復習する reviews this pack's due cards (its new words are due at once).
+  // The tab switches first, so leaving the review lands on My Cards (EXP, tickets).
+  function reviewPack() {
+    if (!activeSet) return;
+    setPackResult(null);
+    setActiveTab("myCards");
+    startReview({ id: activeSet.id, name: activeSet.name });
+  }
+
   async function removeDeck(deck) {
     if (!session) return;
     if (!window.confirm(t("myCards.removeConfirm", { name: deck.name }))) return;
@@ -923,6 +941,7 @@ function App() {
                     saving={savingDeck}
                     onAddDeck={addDeck}
                     onStart={() => beginSession(activeSet)}
+                    onGoToMyDeck={goToMyDeck}
                     wide={wide}
                     speech={speech}
                   />
@@ -952,7 +971,7 @@ function App() {
       </div>
       {/* 使い方 can be opened from the account menu on any screen. */}
       {aboutOpen && <AboutSheet onClose={closeAbout} sessionSize={sessionSize} />}
-      {packResult && <PackOpening summary={packResult} onClose={closePack} />}
+      {packResult && <PackOpening summary={packResult} onClose={closePack} onReview={reviewPack} onGoToMyDeck={goToMyDeck} />}
     </div>
   );
 }
