@@ -48,6 +48,15 @@ const ICONS = {
       <path d="M4 20l4.6-1.2-3.4-3.4z" fill="currentColor" opacity="0.45" />
     </svg>
   ),
+  // a classroom board on an easel, with a low-poly facet and a rising line (先生)
+  teacher: (
+    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M8 16.5l-2.5 5M16 16.5l2.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <rect x="2" y="3" width="20" height="14" rx="1.5" fill="currentColor" />
+      <polygon points="2,3 22,3 10,11" fill={colors.surface} opacity="0.25" />
+      <path d="M5.5 13.5l4-4 3 2.5 6-5.5" stroke={colors.surface} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
 };
 
 // Bottom tab bar, fixed to the bottom of the screen.

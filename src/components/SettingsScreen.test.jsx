@@ -195,3 +195,17 @@ describe('発音 settings (自動再生, ゆっくり)', () => {
     expect(render()).not.toContain('自動再生');
   });
 });
+
+describe('SettingsScreen: クラス', () => {
+  it('lists the class names and offers クラスに参加', () => {
+    const h = render({ classes: [{ id: 'c1', name: '1年A組' }, { id: 'c2', name: '英語クラブ' }] });
+    expect(h).toContain('1年A組');
+    expect(h).toContain('英語クラブ');
+    expect(h).toContain('クラスに参加');
+  });
+
+  it('loading, none and a failed load', () => {
+    expect(render({ classes: [] })).toContain('まだクラスに入っていません');
+    expect(render({ classes: 'failed' })).toContain('クラスを読み込めませんでした');
+  });
+});

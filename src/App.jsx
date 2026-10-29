@@ -44,6 +44,9 @@ import GachaCollection from './components/GachaCollection';
 import SettingsScreen from './components/SettingsScreen';
 import StatsScreen from './components/StatsScreen';
 import ThemeUnlockSheet from './components/ThemeUnlockSheet';
+import TeacherArea from './components/TeacherArea';
+import { TEACHER_START } from './lib/classes';
+import JoinClassSheet from './components/JoinClassSheet';
 
 // A theme key from the account or the device; unknown keys become the default theme.
 const knownTheme = (key) => (themes[key] ? key : DEFAULT_THEME);
@@ -54,6 +57,9 @@ const TABS = [
   // トレーニング: only when switched on and it has an activity (src/lib/training.js)
   ...(showTrainingTab() ? [{ id: 'training', label: 'tabs.training' }] : []),
 ];
+// 先生: only for teacher accounts (is_teacher()). Hiding it is only convenience: the database
+// checks every teacher action itself.
+const TEACHER_TABS = [...TABS, { id: 'teacher', label: 'tabs.teacher' }];
 
 function App() {
   const [session, setSession] = useState(null);
@@ -82,6 +88,13 @@ function App() {
   // the tab opens, merged with the ones completed in this visit.
   const [trainingPath, setTrainingPath] = useState(TRAINING_START);
   const [trainingDone, setTrainingDone] = useState(() => new Set());
+  // Teacher area (supabase/polycards-teachers.sql): is this a teacher account (read once after
+  // sign-in), which 先生 screen is open, the クラスに参加 pop-up, and the classes the student is in
+  // (shown in settings; null while loading, "failed" if they couldn't be read).
+  const [isTeacher, setIsTeacher] = useState(false);
+  const [teacherPath, setTeacherPath] = useState(TEACHER_START);
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [myClasses, setMyClasses] = useState(null);
   const [answerMode, setAnswerMode] = useState(() => loadAnswerMode(window.localStorage, HANDWRITING_ENABLED)); // 答え方: off / typing / handwriting
   // Settings saved on this device (src/lib/settings.js)
   const [sessionSize, setSessionSize] = useState(() => loadSessionSize(window.localStorage)); // 1回の枚数
@@ -174,6 +187,7 @@ function App() {
         setMyDeckIds([]); setMyDecks([]); setStats(null);
         setGacha(null); setReveal(null); setCollection(null); pulseChecked.current = false;
         setThemeRows(null); setThemesFailed(false); setSeenSaved(null);
+        setIsTeacher(false); setMyClasses(null); setJoinOpen(false);
       }
       // Log-out: forget this account's theme on the device and go back to Midnight.
       if (event === "SIGNED_OUT") {
@@ -196,6 +210,25 @@ function App() {
         setThemesFailed(true);
       });
   }, [userId]);
+
+  // Teacher account? Read once after sign-in (an error counts as no; a late answer for another
+  // account is ignored).
+  useEffect(() => {
+    if (!userId) return;
+    let current = true;
+    api.fetchIsTeacher().then((yes) => { if (current) setIsTeacher(yes); });
+    return () => { current = false; };
+  }, [userId]);
+
+  // The classes the student is in, loaded each time settings opens (and after joining one).
+  const loadMyClasses = useCallback(() => {
+    api.fetchMyClasses()
+      .then(setMyClasses)
+      .catch((e) => { console.error(e); setMyClasses("failed"); });
+  }, []);
+  useEffect(() => {
+    if (userId && view === "settings") loadMyClasses();
+  }, [userId, view, loadMyClasses]);
 
   // The seen-themes list, read once after sign-in (a late answer for another account is ignored).
   useEffect(() => {
@@ -597,6 +630,8 @@ function App() {
     setActiveTab("myCards");
     setCardSetsPath((p) => ({ screen: "hub", level: p.level }));
     setTrainingPath(TRAINING_START);
+    setTeacherPath(TEACHER_START);
+    setJoinOpen(false);
     window.scrollTo(0, 0);
   }
 
@@ -728,6 +763,12 @@ function App() {
     window.scrollTo(0, 0);
   }
 
+  // Each 先生 screen starts at the top of the page.
+  function navigateTeacher(path) {
+    setTeacherPath(path);
+    window.scrollTo(0, 0);
+  }
+
   // Each Training screen starts at the top of the page.
   function navigateTraining(path) {
     setTrainingPath(path);
@@ -756,10 +797,11 @@ function App() {
     return () => { current = false; };
   }, [userId, activeTab]);
 
-  // Tapping Card Sets (or Training) while already on it goes back to its first screen.
+  // Tapping Card Sets (or Training, or 先生) while already on it goes back to its first screen.
   function changeTab(id) {
     if (id === "cardSets" && activeTab === "cardSets") setCardSetsPath((p) => ({ screen: "hub", level: p.level }));
     if (id === "training" && activeTab === "training") setTrainingPath(TRAINING_START);
+    if (id === "teacher" && activeTab === "teacher") setTeacherPath((p) => ({ ...TEACHER_START, archived: p.archived }));
     setActiveTab(id);
   }
 
@@ -775,7 +817,9 @@ function App() {
   // the typing box is open the page may grow, for the on-screen keyboard.
   const studyFit = !!session && view === "study";
   const fill = studyFit ? "study-fill" : undefined;
-  const contentWidth = !wide || bandHeader ? "none"
+  const tabs = isTeacher ? TEACHER_TABS : TABS;
+  const teacherTab = view === "dashboard" && activeTab === "teacher";
+  const contentWidth = !wide || bandHeader || teacherTab ? "none"
     : view === "stats" ? wideLayout.readWidth
     : tabbedView ? "none"
     : view === "study" ? wideLayout.studyWidth : wideLayout.readWidth;
@@ -792,6 +836,7 @@ function App() {
           variant={bandHeader ? "band" : "compact"} user={session?.user} onSignOut={handleLogout} onHome={goHome} wide={wide}
           gacha={gacha} pulseGacha={gachaPulse} onOpenGacha={openGacha}
           rank={rank} newTheme={hasNewTheme} onOpenStats={openStats} onOpenSettings={openSettings} onOpenHelp={() => setAboutOpen(true)}
+          onOpenJoinClass={() => setJoinOpen(true)}
           tight={studyFit && short}
         />
 
@@ -850,7 +895,10 @@ function App() {
                     <AbcPractice path={trainingPath} onNavigate={navigateTraining} done={trainingDone} onComplete={completeLetter} />
                   )
                 )}
-                <Tabs tabs={TABS} active={activeTab} onChange={changeTab} wide={wide} />
+                {activeTab === "teacher" && isTeacher && (
+                  <TeacherArea path={teacherPath} onNavigate={navigateTeacher} wide={wide} />
+                )}
+                <Tabs tabs={tabs} active={activeTab} onChange={changeTab} wide={wide} />
                 {planOpen && <ReviewPlanSheet rows={planRows} now={now} onClose={closePlan} />}
                 {/* New theme unlocked: only on My Cards, never during a review. */}
                 {unlock && activeTab === "myCards" && !planOpen && !aboutOpen && (
@@ -884,6 +932,8 @@ function App() {
                     onSlowSpeechChange={changeSlowSpeech}
                     lang={lang}
                     onLangChange={changeLang}
+                    classes={myClasses}
+                    onJoinClass={() => setJoinOpen(true)}
                     onBack={leaveScreenNow}
                     wide={wide}
                   />
@@ -907,7 +957,7 @@ function App() {
                   />
                 )}
                 {/* Neither tab is highlighted on the gacha, settings and stats screens. */}
-                <Tabs tabs={TABS} active={null} onChange={leaveGachaTo} wide={wide} />
+                <Tabs tabs={tabs} active={null} onChange={leaveGachaTo} wide={wide} />
                 {reveal && (
                   <GachaReveal
                     key={revealKey}
@@ -971,6 +1021,9 @@ function App() {
       </div>
       {/* 使い方 can be opened from the account menu on any screen. */}
       {aboutOpen && <AboutSheet onClose={closeAbout} sessionSize={sessionSize} />}
+      {session && joinOpen && (
+        <JoinClassSheet onClose={() => setJoinOpen(false)} onJoined={() => { if (view === "settings") loadMyClasses(); }} />
+      )}
       {packResult && <PackOpening summary={packResult} onClose={closePack} onReview={reviewPack} onGoToMyDeck={goToMyDeck} />}
     </div>
   );

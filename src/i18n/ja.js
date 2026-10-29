@@ -23,6 +23,7 @@ export default {
   "menu.accountNewTheme": "アカウント (Account) 新しいテーマがあります", // read aloud when the dot shows (a new theme is unlocked)
   "menu.rank": "ランク {n}",
   "menu.stats": "学習の記録", // opens the stats page
+  "menu.joinClass": "クラスに参加", // opens the join-a-class pop-up
   "menu.settings": "設定",
   "menu.help": "使い方", // opens the "What is Polycards?" pop-up
   "menu.signOut": "ログアウト",
@@ -32,6 +33,7 @@ export default {
   "tabs.myCards": "マイデッキ",
   "tabs.cardSets": "単語パック",
   "tabs.training": "トレーニング",
+  "tabs.teacher": "先生", // only for teacher accounts
 
   // My Cards dashboard: review button and マイデッキ list
   "myCards.startReview": "復習を始める",
@@ -369,6 +371,9 @@ export default {
   "settings.sessionSizeOption": "{n}枚", // the 10 / 20 / 30 choices
   "settings.sessionSizeNote": "1回の復習で出てくるカードの数",
   "settings.display": "表示", // section with reduce motion
+  "settings.classes": "クラス", // section listing the classes the student is in
+  "settings.noClasses": "まだクラスに入っていません",
+  "settings.classesFailed": "クラスを読み込めませんでした",
   "settings.reduceMotion": "カードの動きを減らす",
   "settings.reduceMotionNote": "カードをめくる動きやキラキラを止めます",
   "settings.speech": "発音", // section with auto-play and slow speech
@@ -444,6 +449,97 @@ export default {
   "time.waitTwoWeeks": "2週間",
   "time.waitMonths": "{n}か月", // {n} months
 
+  // 先生 tab (teacher accounts only): class list
+  "teacher.title": "クラス",
+  "teacher.createClass": "＋ クラスを作る",
+  "teacher.className": "クラス名",
+  "teacher.classNamePlaceholder": "例：1年A組",
+  "teacher.schoolYear": "年度",
+  "teacher.schoolYearValue": "{n}年度", // e.g. 2026年度
+  "teacher.create": "作る",
+  "teacher.creating": "作成中…",
+  "teacher.showArchived": "アーカイブしたクラスを表示",
+  "teacher.noClasses": "まだクラスがありません。「＋ クラスを作る」から始めましょう。",
+  "teacher.noArchived": "アーカイブしたクラスはありません",
+  "teacher.studentCount": "{n}人", // number of students in a class
+  "teacher.archivedBadge": "アーカイブ",
+  "teacher.backToClasses": "クラス一覧", // back button on a class page
+
+  // 先生 tab: one class
+  "teacher.roster": "生徒",
+  "teacher.addStudent": "＋ 生徒を追加",
+  "teacher.noStudents": "まだ生徒がいません。参加コードを生徒に伝えるか、「＋ 生徒を追加」で追加してください。",
+  "teacher.colNumber": "番号",
+  "teacher.colName": "名前",
+  "teacher.colAccount": "アカウント",
+  "teacher.edit": "編集",
+  "teacher.editStudent": "{name}さんを編集", // read aloud
+  "teacher.save": "保存",
+  "teacher.saving": "保存中…",
+  "teacher.remove": "外す",
+  "teacher.removeConfirm": "{name}さんをこのクラスから外しますか？",
+  "teacher.realName": "本名",
+  "teacher.studentNumber": "出席番号",
+  "teacher.studentNumberHint": "1〜99（なくてもOK）",
+  "teacher.joinCode": "参加コード",
+  "teacher.joinCodeHelp": "生徒はメニューの「クラスに参加」で、このコードを入力します。",
+  "teacher.copy": "コピー",
+  "teacher.copied": "コピーしました",
+  "teacher.copyFailed": "コピーできませんでした",
+  "teacher.showLarge": "大きく表示",
+  "teacher.newCode": "新しいコードにする",
+  "teacher.newCodeConfirm": "新しいコードにしますか？今のコードは使えなくなります。",
+  "teacher.newCodeYes": "新しくする",
+  "teacher.joinCodeFor": "{name} の参加コード", // title of the big join-code screen
+  "teacher.joinSteps": "メニュー → クラスに参加 → コードを入力", // under the big code
+  "teacher.close": "とじる",
+  "teacher.teachers": "先生",
+  "teacher.you": "（あなた）",
+  "teacher.addTeacher": "＋ 先生を追加",
+  "teacher.editClass": "クラス名・年度を変更",
+  "teacher.archive": "このクラスをアーカイブ",
+  "teacher.archiveConfirm": "アーカイブしますか？生徒はこのクラスに参加できなくなり、クラス一覧から消えます。あとで元に戻せます。",
+  "teacher.archiveYes": "アーカイブする",
+  "teacher.unarchive": "アーカイブを解除",
+  "teacher.archivedNote": "このクラスはアーカイブ中です。生徒は参加できません。",
+
+  // 先生 tab: the search pop-up (add a student / a co-teacher)
+  "teacher.searchStudentTitle": "生徒を追加",
+  "teacher.searchTeacherTitle": "先生を追加",
+  "teacher.searchLabel": "ユーザー名・名前・メールで検索",
+  "teacher.searchHint": "2文字以上入力してください",
+  "teacher.searching": "検索中…",
+  "teacher.noResults": "見つかりませんでした",
+  "teacher.resultsLimited": "20件まで表示しています。もっと詳しく入力してください。",
+  "teacher.inClass": "追加済み",
+  "teacher.teacherBadge": "先生",
+  "teacher.choose": "選ぶ",
+  "teacher.add": "追加",
+  "teacher.adding": "追加中…",
+  "teacher.addingStudent": "{name} を追加", // heading of the real name / number form
+  "teacher.backToSearch": "検索にもどる",
+
+  // Join a class (students, from the account menu)
+  "joinClass.title": "クラスに参加",
+  "joinClass.codeLabel": "参加コード（6文字）",
+  "joinClass.codeHint": "先生から聞いたコードを入力してください。",
+  "joinClass.next": "次へ",
+  "joinClass.checking": "確認中…",
+  "joinClass.classFound": "クラス：{name}",
+  "joinClass.realName": "本名",
+  "joinClass.realNamePlaceholder": "例：山田 太郎",
+  "joinClass.studentNumber": "出席番号",
+  "joinClass.privacyNote": "本名と出席番号は、このクラスの先生だけが見られます。ほかの生徒には見えません。",
+  "joinClass.back": "もどる",
+  "joinClass.confirm": "「{name}」に参加しますか？",
+  "joinClass.confirmName": "名前：{name}",
+  "joinClass.confirmNumber": "出席番号：{n}",
+  "joinClass.confirmNoNumber": "出席番号：なし",
+  "joinClass.join": "参加する",
+  "joinClass.joining": "参加中…",
+  "joinClass.done": "「{name}」に参加しました！",
+  "joinClass.ok": "OK",
+
   // Error messages (pop-ups and red text)
   "errors.saveFailed": "保存できませんでした", // a review answer couldn't be saved
   "errors.cardNotFound": "このカードは見つかりませんでした",
@@ -453,6 +549,21 @@ export default {
   "errors.notOwned": "このポリアバターはまだ持っていません",
   "errors.themeLocked": "このテーマはまだ使えません",
   "errors.gachaFailed": "ガチャを読み込めませんでした ({detail})", // {detail} = the technical error, in English
+  "errors.notTeacher": "先生のアカウントだけが使えます",
+  "errors.notClassTeacher": "このクラスの先生ではありません",
+  "errors.badJoinCode": "コードが見つかりません。もう一度確認してください",
+  "errors.classArchived": "このクラスにはもう参加できません",
+  "errors.alreadyMember": "もうこのクラスに入っています",
+  "errors.notMember": "この生徒はクラスにいません",
+  "errors.badClassName": "クラス名を入力してください（40文字まで）",
+  "errors.badSchoolYear": "年度は4けたの数字で入力してください（例：2026）",
+  "errors.badRealName": "名前を入力してください（40文字まで）",
+  "errors.badStudentNumber": "出席番号は1〜99の数字で入力してください",
+  "errors.queryTooShort": "2文字以上入力してください",
+  "errors.userNotFound": "アカウントが見つかりません",
+  "errors.targetNotTeacher": "この人は先生のアカウントではありません",
+  "errors.alreadyTeacher": "もうこのクラスの先生です",
+  "errors.classFailed": "うまくいきませんでした ({detail})", // {detail} = the technical error, in English
 
   // Parts of speech (品詞): the chip on cards / word list / Mastered list and its pop-up (PosSheet.jsx).
   // label = the chip and the pop-up heading; other = the name in the other language, small after it.
