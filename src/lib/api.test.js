@@ -34,6 +34,7 @@ const {
   fetchSeenThemeUnlocks, markThemeUnlocksSeen, fetchTrainingProgress, recordTrainingCompletion,
   fetchStudyDays, fetchStudyTotals, fetchTroubleWords, addDeckToMyCards, fetchOwnedWordIds,
 } = await import('./api');
+const api = await import('./api');
 
 beforeEach(() => {
   calls.length = 0;
@@ -527,5 +528,66 @@ describe('fetchOwnedWordIds (word list preview and adding a deck)', () => {
     } finally {
       warn.mockRestore();
     }
+  });
+});
+
+describe('teachers and classes', () => {
+  it('calls each database function with the right arguments', async () => {
+    result = { data: [], error: null };
+    await api.fetchTeacherClasses(true);
+    await api.createClass('1年A組', 2026);
+    await api.updateClass('c1', '1年B組', 2027);
+    await api.setClassArchived('c1', true);
+    await api.regenerateJoinCode('c1');
+    await api.searchUsers('aid', true);
+    await api.addStudentToClass('c1', 's1', '山田', 7);
+    await api.updateClassMember('c1', 's1', '山田', null);
+    await api.removeStudentFromClass('c1', 's1');
+    await api.addCoTeacher('c1', 't2');
+    await api.checkJoinCode('ABC234');
+    await api.joinClass('ABC234', '山田', 7);
+    await api.fetchMyClasses();
+    expect(calls).toEqual([
+      ['rpc', 'teacher_classes', { p_archived: true }],
+      ['rpc', 'create_class', { p_name: '1年A組', p_school_year: 2026 }],
+      ['rpc', 'update_class', { p_class_id: 'c1', p_name: '1年B組', p_school_year: 2027 }],
+      ['rpc', 'set_class_archived', { p_class_id: 'c1', p_archived: true }],
+      ['rpc', 'regenerate_join_code', { p_class_id: 'c1' }],
+      ['rpc', 'search_users', { p_query: 'aid', p_teachers_only: true }],
+      ['rpc', 'add_student_to_class', { p_class_id: 'c1', p_student_id: 's1', p_real_name: '山田', p_student_number: 7 }],
+      ['rpc', 'update_class_member', { p_class_id: 'c1', p_student_id: 's1', p_real_name: '山田', p_student_number: null }],
+      ['rpc', 'remove_student_from_class', { p_class_id: 'c1', p_student_id: 's1' }],
+      ['rpc', 'add_co_teacher', { p_class_id: 'c1', p_teacher_user_id: 't2' }],
+      ['rpc', 'check_join_code', { p_code: 'ABC234' }],
+      ['rpc', 'join_class', { p_code: 'ABC234', p_real_name: '山田', p_student_number: 7 }],
+      ['rpc', 'my_classes', undefined],
+    ]);
+  });
+
+  it('never reads or writes the class tables directly', async () => {
+    await api.fetchClassDetail('c1');
+    expect(calls.filter((c) => c[0] === 'from')).toEqual([]);
+  });
+
+  it('fills in an empty class detail', async () => {
+    result = { data: null, error: null };
+    expect(await api.fetchClassDetail('c1')).toEqual({ class: null, students: [], teachers: [] });
+  });
+
+  it('turns database errors into friendly messages', async () => {
+    rpcImpl = async () => ({ data: null, error: { message: 'bad_code' } });
+    await expect(api.checkJoinCode('XXXXXX')).rejects.toThrow('コードが見つかりません');
+    rpcImpl = async () => ({ data: null, error: { message: 'not_class_teacher' } });
+    await expect(api.fetchClassDetail('c1')).rejects.toThrow('このクラスの先生ではありません');
+    rpcImpl = async () => ({ data: null, error: { message: 'not_teacher' } });
+    await expect(api.searchUsers('ai')).rejects.toThrow('先生のアカウントだけが使えます');
+    expect(api.classErrorMessage({ message: 'boom' })).toContain('boom');
+  });
+
+  it('is_teacher: true only for a real true; an error counts as no', async () => {
+    result = { data: true, error: null };
+    expect(await api.fetchIsTeacher()).toBe(true);
+    result = { data: null, error: { message: 'x' } };
+    expect(await api.fetchIsTeacher()).toBe(false);
   });
 });

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { colors, fontDisplay, fontBody, panel } from '../styles/theme';
+import { colors, fontDisplay, fontBody, panel, btnGhost } from '../styles/theme';
 import BackButton from './BackButton';
 import { SESSION_SIZES } from '../lib/srs';
 import { isUnlocked, unlockLabel } from '../lib/themeUnlocks';
@@ -165,6 +165,33 @@ function SwitchRow({ label, note, on, onChange }) {
   );
 }
 
+// クラス: the classes the student is in (names only, from my_classes()) and クラスに参加.
+// classes: null while loading, "failed" if they couldn't be read, else [{ id, name }].
+function ClassesSection({ classes, onJoinClass }) {
+  return (
+    <Section title={t("settings.classes")}>
+      {classes === null ? (
+        <div style={{ fontSize: 14, color: colors.muted }}>{t("common.loading")}</div>
+      ) : classes === "failed" ? (
+        <div role="alert" style={{ fontSize: 14, color: colors.danger }}>{t("settings.classesFailed")}</div>
+      ) : classes.length === 0 ? (
+        <div style={{ fontSize: 14, color: colors.muted }}>{t("settings.noClasses")}</div>
+      ) : (
+        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {classes.map((c) => (
+            <li key={c.id} style={{ fontSize: 15, fontWeight: 700, padding: "6px 14px", borderRadius: 999, background: colors.surface2, color: colors.text, overflowWrap: "anywhere" }}>
+              {c.name}
+            </li>
+          ))}
+        </ul>
+      )}
+      <div>
+        <button onClick={onJoinClass} style={{ ...btnGhost, minHeight: 44 }}>{t("menu.joinClass")}</button>
+      </div>
+    </Section>
+  );
+}
+
 // 設定 screen (view "settings" in App.jsx).
 // themes: themeList() rows (null while loading); themesFailed: theme_unlocks couldn't be read (then
 // themes holds only Midnight). currentTheme: the key in use; rank: the student's rank (null while
@@ -172,6 +199,7 @@ function SwitchRow({ label, note, on, onChange }) {
 // themeError: the save error to show. The 答え方 switch shares App's state with the one on My Cards.
 // lang / onLangChange: the 言語 / Language switch (saved on the device by App).
 // canSpeak: the browser can read words aloud; only then the 発音 section (自動再生, ゆっくり) shows.
+// classes / onJoinClass: the クラス section (see ClassesSection).
 export default function SettingsScreen({
   themes, themesFailed = false, currentTheme, rank, onChooseTheme, themeError = null,
   sessionSize, onSessionSizeChange,
@@ -179,6 +207,7 @@ export default function SettingsScreen({
   reduceMotion, onReduceMotionChange,
   canSpeak = false, autoPlay = false, onAutoPlayChange = () => {}, slowSpeech = false, onSlowSpeechChange = () => {},
   lang = "ja", onLangChange = () => {},
+  classes = null, onJoinClass = () => {},
   onBack, wide = false,
 }) {
   const [lockedNote, setLockedNote] = useState(null);
@@ -235,6 +264,8 @@ export default function SettingsScreen({
         <SwitchRow label={t("settings.reduceMotion")} note={t("settings.reduceMotionNote")} on={reduceMotion} onChange={onReduceMotionChange} />
         <LanguageSwitch lang={lang} onChange={onLangChange} />
       </Section>
+
+      <ClassesSection classes={classes} onJoinClass={onJoinClass} />
     </div>
   );
 }

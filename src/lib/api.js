@@ -566,3 +566,122 @@ export async function recordTrainingCompletion(practiceId) {
   const { error } = await supabase.rpc('record_training_completion', { p_practice_id: practiceId });
   if (error) throw new Error("Could not save training progress: " + error.message);
 }
+
+// ---- Teachers and classes (supabase/polycards-teachers.sql) ----
+// Every call goes through a database function that checks who is calling; hiding the 先生 tab is
+// only for convenience.
+
+// Database error code → i18n key of the message. Codes that contain another code come first
+// (not_class_teacher before not_teacher), because the message is matched by "includes".
+const CLASS_ERRORS = {
+  not_class_teacher: "errors.notClassTeacher",
+  not_teacher: "errors.notTeacher",
+  not_signed_in: "errors.notSignedIn",
+  bad_code: "errors.badJoinCode",
+  class_archived: "errors.classArchived",
+  already_member: "errors.alreadyMember",
+  not_member: "errors.notMember",
+  bad_class_name: "errors.badClassName",
+  bad_school_year: "errors.badSchoolYear",
+  bad_name: "errors.badRealName",
+  bad_number: "errors.badStudentNumber",
+  query_too_short: "errors.queryTooShort",
+  user_not_found: "errors.userNotFound",
+  target_not_teacher: "errors.targetNotTeacher",
+  already_teacher: "errors.alreadyTeacher",
+};
+
+// Turns a database error (e.g. "bad_code") into a friendly message.
+export function classErrorMessage(error) {
+  const text = error?.message || "";
+  const code = Object.keys(CLASS_ERRORS).find((c) => text.includes(c));
+  return code ? t(CLASS_ERRORS[code]) : t("errors.classFailed", { detail: text || "unknown error" });
+}
+
+async function callClass(name, args) {
+  const { data, error } = await supabase.rpc(name, args);
+  if (error) throw new Error(classErrorMessage(error));
+  return data;
+}
+
+// Am I a teacher? (shows the 先生 tab). Never throws: an error counts as "no".
+export async function fetchIsTeacher() {
+  const { data, error } = await supabase.rpc('is_teacher');
+  if (error) {
+    console.warn("Could not check teacher status: " + error.message);
+    return false;
+  }
+  return data === true;
+}
+
+// My classes as a teacher: [{ id, name, school_year, join_code, archived, student_count, created_at }].
+export async function fetchTeacherClasses(archived = false) {
+  return (await callClass('teacher_classes', { p_archived: archived })) || [];
+}
+
+// A new class (the caller becomes its teacher): { id, join_code }.
+export function createClass(name, schoolYear) {
+  return callClass('create_class', { p_name: name, p_school_year: schoolYear });
+}
+
+export function updateClass(classId, name, schoolYear) {
+  return callClass('update_class', { p_class_id: classId, p_name: name, p_school_year: schoolYear });
+}
+
+export function setClassArchived(classId, archived) {
+  return callClass('set_class_archived', { p_class_id: classId, p_archived: archived });
+}
+
+// A new join code (the old one stops working). Returns the new code.
+export function regenerateJoinCode(classId) {
+  return callClass('regenerate_join_code', { p_class_id: classId });
+}
+
+// One class: { class: { id, name, school_year, join_code, archived },
+//   students: [{ student_id, real_name, student_number, display_name, email, joined_at }],
+//   teachers: [{ teacher_id, display_name, is_me }] }
+export async function fetchClassDetail(classId) {
+  const data = await callClass('class_detail', { p_class_id: classId });
+  return { class: data?.class ?? null, students: data?.students ?? [], teachers: data?.teachers ?? [] };
+}
+
+// Teachers only: accounts whose username, Google name or email contains the text (max 20):
+// [{ id, display_name, username, email, is_teacher }]. teachersOnly: for adding a co-teacher.
+export async function searchUsers(query, teachersOnly = false) {
+  return (await callClass('search_users', { p_query: query, p_teachers_only: teachersOnly })) || [];
+}
+
+export function addStudentToClass(classId, studentId, realName, studentNumber) {
+  return callClass('add_student_to_class', {
+    p_class_id: classId, p_student_id: studentId, p_real_name: realName, p_student_number: studentNumber,
+  });
+}
+
+export function updateClassMember(classId, studentId, realName, studentNumber) {
+  return callClass('update_class_member', {
+    p_class_id: classId, p_student_id: studentId, p_real_name: realName, p_student_number: studentNumber,
+  });
+}
+
+export function removeStudentFromClass(classId, studentId) {
+  return callClass('remove_student_from_class', { p_class_id: classId, p_student_id: studentId });
+}
+
+export function addCoTeacher(classId, teacherUserId) {
+  return callClass('add_co_teacher', { p_class_id: classId, p_teacher_user_id: teacherUserId });
+}
+
+// Student: is this code a class I can join? { id, name } (else bad_code / class_archived / already_member).
+export function checkJoinCode(code) {
+  return callClass('check_join_code', { p_code: code });
+}
+
+// Student: join the class with this code. { id, name }
+export function joinClass(code, realName, studentNumber) {
+  return callClass('join_class', { p_code: code, p_real_name: realName, p_student_number: studentNumber });
+}
+
+// Student: the classes I'm in (names only): [{ id, name, joined_at }].
+export async function fetchMyClasses() {
+  return (await callClass('my_classes')) || [];
+}
