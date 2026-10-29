@@ -27,3 +27,18 @@ describe('AddDeckButton', () => {
     expect(added).not.toContain('<button');
   });
 });
+
+describe('AddDeckButton primary (word list bottom bar)', () => {
+  it('is a big filled button with the same labels', () => {
+    const html = render({ primary: true, counts: { newCount: 14, ownedCount: 6, allOwned: false } });
+    expect(html).toMatch(/<button style="[^"]*background:var\(--accent\)[^"]*min-height:56px[^"]*">＋ マイデッキに追加（新しい単語 14 · 所持済み 6）<\/button>/);
+    expect(render({ primary: true, saving: true })).toContain('追加中...');
+  });
+
+  it('once added, shows the ✓ line and a マイデッキへ button', () => {
+    const html = render({ primary: true, isAdded: true, onGoToMyDeck: () => {} });
+    expect(html).toContain('✓ マイデッキに追加済み');
+    expect(html).toContain('>マイデッキへ ›</button>');
+    expect(html).not.toContain('disabled');
+  });
+});

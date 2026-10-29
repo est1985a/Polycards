@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { colors, mix, fontDisplay, fontBody, btnPrimary } from '../styles/theme';
+import { colors, mix, fontDisplay, fontBody, btnPrimary, btnGhost } from '../styles/theme';
 import { reduceMotionOn } from '../lib/settings';
 import { PACK_STEPS, PACK_STEP_ORDER, reached, fanLayout, packFit, packShown, cardFontSize, closeTooSoon } from '../lib/packOpening';
 import { t } from '../i18n';
@@ -91,13 +91,18 @@ function FanCard({ item, index, pos, phase, known, card }) {
 
 // The result after the animation (also shown straight away with reduce motion).
 // summary: from packSummary() in src/lib/packOpening.js.
-export function PackSummaryPanel({ summary, onClose, closeRef }) {
+// Buttons: 今すぐ復習する (onReview: review this pack now), or マイデッキへ (onGoToMyDeck) when every
+// word was already owned, plus あとで (onClose: stay on the pack). The main one gets focus (closeRef).
+export function PackSummaryPanel({ summary, onClose, onReview, onGoToMyDeck, closeRef }) {
   const { newCount, ownedCount, known, allOwned, items } = summary;
   const owned = items.filter((w) => w.owned);
-  // Ignore taps on OK for a moment, so the second tap of a double tap (skip) can't close it.
+  // Ignore taps on the buttons for a moment, so the second tap of a double tap (skip) can't press one.
   const shownAt = useRef(0);
   useEffect(() => { shownAt.current = Date.now(); }, []);
-  const close = () => { if (!closeTooSoon(shownAt.current)) onClose(); };
+  const guarded = (fn) => () => { if (fn && !closeTooSoon(shownAt.current)) fn(); };
+  const main = allOwned
+    ? { label: t("pack.goToMyDeck"), onClick: onGoToMyDeck }
+    : { label: t("pack.reviewNow"), onClick: onReview };
   return (
     <div
       className="gacha-reveal-in"
@@ -142,9 +147,19 @@ export function PackSummaryPanel({ summary, onClose, closeRef }) {
         </div>
       )}
 
-      <button ref={closeRef} onClick={close} style={{ ...btnPrimary, minWidth: 140, minHeight: 44, borderRadius: 999 }}>
-        {t("pack.close")}
-      </button>
+      <div style={{ display: "grid", gap: 8, width: "100%", maxWidth: 280 }}>
+        {main.onClick && (
+          <button ref={closeRef} onClick={guarded(main.onClick)} style={{ ...btnPrimary, minHeight: 48, fontSize: 16, borderRadius: 999 }}>
+            {main.label}
+          </button>
+        )}
+        <button
+          ref={main.onClick ? undefined : closeRef} onClick={guarded(onClose)}
+          style={{ ...btnGhost, minHeight: 44, borderRadius: 999 }}
+        >
+          {t("pack.later")}
+        </button>
+      </div>
     </div>
   );
 }
@@ -152,7 +167,7 @@ export function PackSummaryPanel({ summary, onClose, closeRef }) {
 // Full-screen pack opening after Add to My Cards: the pack shakes and tears open, the deck's
 // cards fan out, owned ones turn gray (所持済み), new ones fly into the deck, then the summary.
 // About 2.7 s; tap to skip. Reduce motion goes straight to the summary.
-export default function PackOpening({ summary, onClose }) {
+export default function PackOpening({ summary, onClose, onReview = null, onGoToMyDeck = null }) {
   const [skipAnimation] = useState(() => reduceMotionOn());
   const [fit] = useState(() => packFit(typeof window !== "undefined" ? window.innerWidth : 1024));
   const [phase, setPhase] = useState(skipAnimation ? "done" : "shake");
@@ -190,7 +205,7 @@ export default function PackOpening({ summary, onClose }) {
       }}
     >
       {done ? (
-        <PackSummaryPanel summary={summary} onClose={onClose} closeRef={closeRef} />
+        <PackSummaryPanel summary={summary} onClose={onClose} onReview={onReview} onGoToMyDeck={onGoToMyDeck} closeRef={closeRef} />
       ) : (
         <div style={{ width: "100%", display: "grid", justifyItems: "center", gap: 12, cursor: "pointer" }}>
           {/* Full width up to STAGE.width, so the fan stays centered on narrow phones. */}
