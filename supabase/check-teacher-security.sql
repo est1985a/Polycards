@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Polycards: check that a STUDENT can't use the teacher functions (2026-10-30)
--- Run AFTER polycards-teachers.sql (and polycards-teacher-phase2.sql). Read-only: every check that could write
+-- Run AFTER polycards-teachers.sql (and polycards-teacher-phase2.sql, polycards-teacher-phase3.sql). Read-only: every check that could write
 -- something is undone straight away, so nothing in the database changes.
 --
 -- 1. Put a student's username (or full email) on the line marked  <-- STUDENT
@@ -54,6 +54,11 @@ begin
       ('student_detail',             format('select public.student_detail(%L, %L)', v_class, v_student),                                'not_teacher'),
       ('award_tickets',              format('select public.award_tickets(%L, array[%L]::uuid[], 10, %L)', v_class, v_student, 'free'), 'not_teacher'),
       ('class_awards',               format('select * from public.class_awards(%L)', v_class),                                          'not_teacher'),
+      ('class_overview',             format('select * from public.class_overview(%L)', v_class),                                        'not_teacher'),
+      ('class_trouble_words',        format('select * from public.class_trouble_words(%L)', v_class),                                   'not_teacher'),
+      ('student_honesty',            format('select public.student_honesty(%L, %L)', v_class, v_student),                               'not_teacher'),
+      ('call internal honesty_counts_for', format('select public.honesty_counts_for(%L)', v_student),                                   'permission denied'),
+      ('call internal study_streak_for', format('select public.study_streak_for(%L)', v_student),                                       'permission denied'),
       ('insert into ticket_awards',  format('insert into public.ticket_awards (batch_id, student_id, amount) values (gen_random_uuid(), %L, 10)', v_student), 'permission denied'),
       ('call internal trouble_words_for', format('select * from public.trouble_words_for(%L)', v_student),                               'permission denied'),
       ('read teachers table',        'select count(*) from public.teachers',                                                            'permission denied'),

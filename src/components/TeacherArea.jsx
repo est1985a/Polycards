@@ -8,6 +8,8 @@ import JoinCodeDisplay from './JoinCodeDisplay';
 import StudentPage from './StudentPage';
 import AwardSheet from './AwardSheet';
 import { jstDateKey } from '../lib/schedule';
+import { HONESTY } from '../lib/honesty';
+import { TEACHER_START } from '../lib/classes';
 
 // The 先生 tab (teacher accounts only): loads the class list or one class and runs every teacher
 // action through the database functions in api.js (which check that the caller teaches the class).
@@ -23,10 +25,15 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
   const [awards, setAwards] = useState(null); // { classId, rows }: the class's recent awards
   const [student, setStudent] = useState(null); // { key, detail, error }: one student's page
   const [giveTo, setGiveTo] = useState(null); // students the award pop-up is open for
+  const [overview, setOverview] = useState(null); // { key, rows, error }: class_overview() for classId|days
+  const [trouble, setTrouble] = useState(null); // { key, rows }: class_trouble_words() for classId|days
+  const [honesty, setHonesty] = useState(null); // { key, counts, error }: student_honesty() for one student
   const [defaultYear] = useState(() => defaultSchoolYear(Date.now()));
   const classId = path.screen === "class" || path.screen === "student" ? path.classId : null;
   const studentId = path.screen === "student" ? path.studentId : null;
   const studentKey = studentId ? `${classId}|${studentId}` : null;
+  const days = path.days ?? TEACHER_START.days;
+  const periodKey = classId ? `${classId}|${days}` : null;
 
   const loadClasses = useCallback(async (archived) => {
     try {
@@ -67,6 +74,37 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
     }
   }, []);
 
+  // 一覧: the overview table and the class trouble words for this class and period.
+  const loadOverview = useCallback(async (cls, n) => {
+    const key = `${cls}|${n}`;
+    try {
+      setOverview({ key, rows: await api.fetchClassOverview(cls, n, HONESTY.fastMs, HONESTY.days), error: null });
+    } catch (e) {
+      console.error(e);
+      setOverview((old) => ({ key, rows: old?.key === key ? old.rows : null, error: e.message }));
+    }
+  }, []);
+
+  const loadTrouble = useCallback(async (cls, n) => {
+    const key = `${cls}|${n}`;
+    try {
+      setTrouble({ key, rows: await api.fetchClassTroubleWords(cls, n) });
+    } catch (e) {
+      console.error(e);
+      setTrouble({ key, rows: [] });
+    }
+  }, []);
+
+  const loadHonesty = useCallback(async (cls, id) => {
+    const key = `${cls}|${id}`;
+    try {
+      setHonesty({ key, counts: await api.fetchStudentHonesty(cls, id, HONESTY.days, HONESTY.fastMs), error: null });
+    } catch (e) {
+      console.error(e);
+      setHonesty({ key, counts: null, error: e.message });
+    }
+  }, []);
+
   useEffect(() => {
     if (path.screen === "classes") loadClasses(path.archived);
   }, [path.screen, path.archived, loadClasses]);
@@ -78,6 +116,18 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
   useEffect(() => {
     if (studentKey) loadStudent(classId, studentId);
   }, [studentKey, classId, studentId, loadStudent]);
+
+  useEffect(() => {
+    if (studentKey) loadHonesty(classId, studentId);
+  }, [studentKey, classId, studentId, loadHonesty]);
+
+  const onOverview = path.screen === "class" && (path.classView ?? "overview") === "overview";
+  useEffect(() => {
+    if (periodKey && onOverview) {
+      loadOverview(classId, days);
+      loadTrouble(classId, days);
+    }
+  }, [periodKey, onOverview, classId, days, loadOverview, loadTrouble]);
 
   useEffect(() => {
     if (classId) loadDetail(classId);
@@ -92,15 +142,23 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
 
   const classAwards = awards?.classId === classId ? awards.rows : null;
   const shown = student?.key === studentKey ? student : null;
+  const shownHonesty = honesty?.key === studentKey ? honesty : null;
+  const shownOverview = overview?.key === periodKey ? overview : null;
+  const shownTrouble = trouble?.key === periodKey ? trouble.rows : null;
 
-  // After a change: reload the class (its errors are shown by the button that made the change).
-  const reload = () => loadDetail(classId);
+  // After a change: reload the class (its errors are shown by the button that made the change),
+  // and the overview (a new or removed student, a new name or number).
+  const reload = async () => {
+    await loadDetail(classId);
+    if (onOverview) loadOverview(classId, days);
+  };
 
   // チケットを贈る: from the roster (checked students) or a student page (one student).
   const award = async (amount, message) => {
     await api.awardTickets(classId, giveTo.map((s) => s.student_id), amount, message);
     loadAwards(classId);
     if (studentId) loadStudent(classId, studentId);
+    else loadOverview(classId, days); // the ガチャ券 column
   };
   const awardSheet = giveTo && (
     <AwardSheet students={giveTo} onAward={award} onClose={() => setGiveTo(null)} />
@@ -118,6 +176,8 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
           wide={wide}
           onBack={() => onNavigate({ ...path, screen: "class", studentId: null })}
           onGive={detail?.class && !detail.class.archived ? () => setGiveTo([member ?? { student_id: studentId, real_name: shown?.detail?.student?.real_name ?? "" }]) : null}
+          honesty={shownHonesty?.counts ?? null}
+          honestyError={shownHonesty?.error ?? null}
         />
         {awardSheet}
       </>
@@ -146,6 +206,15 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
           awards={classAwards}
           onOpenStudent={(id) => onNavigate({ ...path, screen: "student", studentId: id })}
           onGive={setGiveTo}
+          view={path.classView ?? "overview"}
+          onView={(classView) => onNavigate({ ...path, classView })}
+          days={days}
+          onDays={(n) => onNavigate({ ...path, days: n })}
+          sort={path.sort ?? TEACHER_START.sort}
+          onSort={(sort) => onNavigate({ ...path, sort })}
+          overview={shownOverview?.rows ?? null}
+          overviewError={shownOverview?.error ?? null}
+          troubleWords={shownTrouble}
         />
         {awardSheet}
         {searchMode && (
@@ -176,10 +245,10 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
       wide={wide}
       defaultYear={defaultYear}
       onToggleArchived={(archived) => onNavigate({ ...path, archived })}
-      onOpen={(id) => onNavigate({ ...path, screen: "class", classId: id })}
+      onOpen={(id) => onNavigate({ ...path, screen: "class", classId: id, classView: TEACHER_START.classView, sort: TEACHER_START.sort })}
       onCreate={async (name, year) => {
         const created = await api.createClass(name, year);
-        onNavigate({ ...path, screen: "class", classId: created.id });
+        onNavigate({ ...path, screen: "class", classId: created.id, classView: TEACHER_START.classView, sort: TEACHER_START.sort });
       }}
     />
   );

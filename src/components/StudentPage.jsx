@@ -4,22 +4,11 @@ import BackButton from './BackButton';
 import PlayerStats from './PlayerStats';
 import LevelChart from './LevelChart';
 import { StatsBody } from './StatsScreen';
-import { ErrorText } from './ClassFields';
+import { ErrorText, Panel } from './ClassFields';
+import HonestyPanel from './HonestyPanel';
 import { dateText, dateTimeText, lastActiveText } from '../lib/classes';
 import { TicketIcon } from './GachaIcons';
 import { t } from '../i18n';
-
-function Panel({ title, action, children }) {
-  return (
-    <section style={{ ...panel, display: "grid", gap: 12, alignContent: "start" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-        <h3 style={{ margin: 0, fontFamily: fontDisplay, fontSize: 18, fontWeight: 700, color: colors.text }}>{title}</h3>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
 
 function TicketsPanel({ tickets, onGive }) {
   return (
@@ -89,8 +78,9 @@ function AwardsPanel({ awards }) {
 // One student's page in the 先生 tab (teacher view, read-only apart from チケットを贈る).
 // detail: student_detail() (null while loading). classTitle: the back button's label (the class name).
 // today: today's Japan date for the stats cards. onGive(): open the award pop-up for this student
-// (null when the class is archived).
-export default function StudentPage({ detail, error = null, classTitle, today, onBack, onGive = null, wide = false }) {
+// (null when the class is archived). honesty / honestyError: student_honesty() counts for 答え方のようす
+// (null while loading).
+export default function StudentPage({ detail, error = null, classTitle, today, onBack, onGive = null, wide = false, honesty = null, honestyError = null }) {
   const back = <div><BackButton label={classTitle} onClick={onBack} /></div>;
   if (!detail) {
     return (
@@ -113,8 +103,7 @@ export default function StudentPage({ detail, error = null, classTitle, today, o
       <LevelChart counts={counts} />
       <PacksPanel packs={detail.packs} />
       <AwardsPanel awards={detail.awards} />
-      {/* PHASE 3: the honesty check (tap-mode わかった rate vs typing / handwriting accuracy,
-          teacher-only) goes here, under the award history. Not built yet. */}
+      <HonestyPanel counts={honesty} error={honestyError} />
     </div>
   );
 

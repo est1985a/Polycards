@@ -108,7 +108,7 @@ describe('ClassPage: giving tickets', () => {
   const classPage = (props = {}) => renderToStaticMarkup(
     <ClassPage
       detail={CLASS} awards={[]} onBack={noop} onUpdateClass={noop} onSetArchived={noop} onRegenerate={noop}
-      onUpdateMember={noop} onRemoveMember={noop} onOpenSearch={noop} onShowLarge={noop} {...props}
+      onUpdateMember={noop} onRemoveMember={noop} onOpenSearch={noop} onShowLarge={noop} view="roster" {...props}
     />,
   );
 

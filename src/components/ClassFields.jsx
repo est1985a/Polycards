@@ -1,4 +1,4 @@
-import { colors } from '../styles/theme';
+import { colors, fontDisplay, panel } from '../styles/theme';
 import { inputStyle, noAutoFix } from '../styles/forms';
 
 // Form parts shared by the teacher screens and the join-a-class pop-up.
@@ -37,5 +37,39 @@ export function StudentFields({ name, number, onName, onNumber, nameLabel, numbe
         />
       </Field>
     </div>
+  );
+}
+
+// A teacher-page panel: a title row (with an optional button on the right) and its contents.
+export function Panel({ title, action, children }) {
+  return (
+    <section style={{ ...panel, display: "grid", gap: 12, alignContent: "start" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+        <h3 style={{ margin: 0, fontFamily: fontDisplay, fontSize: 18, fontWeight: 700, color: colors.text }}>{title}</h3>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+// A 44 px checkbox (role="checkbox") for choosing students to give tickets to.
+export function SelectBox({ checked, label, onToggle }) {
+  return (
+    <button
+      type="button" role="checkbox" aria-checked={checked} aria-label={label} onClick={onToggle}
+      style={{ width: 44, height: 44, flexShrink: 0, display: "grid", placeItems: "center", background: "transparent", border: "none", padding: 0, cursor: "pointer" }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          width: 24, height: 24, borderRadius: 6, boxSizing: "border-box", display: "grid", placeItems: "center",
+          border: `2px solid ${checked ? colors.accent : colors.line}`, background: checked ? colors.accent : colors.surface,
+          color: colors.accentInk, fontSize: 16, fontWeight: 700, lineHeight: 1,
+        }}
+      >
+        {checked ? "✓" : ""}
+      </span>
+    </button>
   );
 }
