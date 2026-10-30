@@ -407,38 +407,102 @@ export default {
   "about.buttonLabel": "Polycardsとは？", // read aloud for the button
   "about.title": "Polycardsとは？",
   "about.subtitle": "ポリカードのしくみ",
-  "about.forgetting.heading": "忘れるのはふつうのこと",
-  "about.forgetting.p1": "新しく覚えた単語は、何もしないと数日でほとんど忘れてしまいます。これは「忘却曲線」と言って、だれにでも起こることです。でも、忘れそうになったときにもう一度思い出すと、記憶は前よりずっと長く残ります。",
-  "about.ladder.heading": "レベルのしくみ",
-  "about.ladder.before": "「わかった」を押すと、カードは1段上がり、次に出てくるまでの時間がのびます。", // above the level chips
-  "about.ladder.after": "「まだ」を押すと、カードは少し下がって、早めにまた出てきます。まちがえても大丈夫。思い出そうとすること自体が勉強です。", // below the level chips
+  "about.intro.p1": "英単語をカードで覚えるアプリです。パックを集めて、自分だけのデッキを育てよう！",
+  "about.packs.heading": "パックを選ぶ",
+  "about.packs.p1": "「単語パック」タブで単語のパックを選びます。教科書パックは教科書の単元ごと、セレクトパックはテーマや目的別の単語です。",
+  "about.packs.p2": "パックを開いて「＋ マイデッキに追加」をタップ。もう持っている単語は「所持済み」になり、二重には入りません。",
+  "about.review.heading": "マイデッキで復習",
+  "about.review.before": "毎日「マイデッキ」で復習しよう。「わかった」を押すとカードのレベルが上がり、次に出てくるまでの時間がのびます。", // above the level chips
+  "about.review.after": "「まだ」を押すとレベルが少し下がって、早めにまた出てきます。まちがえても大丈夫。思い出そうとすること自体が勉強です。", // below the level chips
   "about.ladderLabel": "レベルと次の復習まで", // read aloud for the row of level chips
   "about.ladderLevel": "Lv{n}", // one level chip (followed by its wait, a time.wait* text)
   "about.ladderMastered": "Mastered!", // last chip
+  "about.honest.heading": "正直に答えよう",
+  "about.honest.p1": "「わかった」「まだ」は正直に押そう。うそをついても得はしません。ガチャ券は、正解の数ではなく復習した回数でもらえます。",
+  "about.modes.heading": "答え方を選ぶ",
+  "about.modes.p1": "日本語 → English のカードは、答え方を選べます。マイデッキ、設定、復習の画面で切り替えられます（復習中もOK）。",
+  "about.modes.tap": "タップ：答えを見て「わかった」「まだ」を押す",
+  "about.modes.typing": "タイピング：英語をタイプして答える",
+  "about.modes.handwriting": "手書き：Apple Pencil で英語を書いて答える（「れんしゅう？」で文字の練習もできます）",
+  "about.modes.p2": "スペルが正しいとボーナス +1 EXP！🔊 をタップすると発音が聞けます。",
+  "about.exp.heading": "EXPとランク",
+  "about.exp.p1": "復習してカードのレベルが上がると、EXPがたまってランクが上がります。ランクは下がりません。",
+  "about.exp.p2": "ランクが上がると、新しいテーマが使えるようになります（設定 → テーマで変更）。",
+  // The numbers in about.tickets.p1 (100レビュー, 1日1枚, 150 EXP, ランク10ごと) are typed by hand.
+  // Update them here and in en.js if gacha_setting('reviews_per_ticket') (or the daily cap),
+  // gacha_setting('spelling_points_per_ticket') or the rank tickets change in Supabase.
+  "about.tickets.heading": "ガチャ券とポリアバター",
+  "about.tickets.p1": "ガチャ券は、100レビューごと（1日1枚まで）、スペルボーナス150 EXPごと、ランクが10上がるごとにもらえます。先生からもらえることもあります。ガチャを回して、ポリアバターを集めよう！",
+  "about.training.heading": "トレーニング",
+  "about.training.p1": "「トレーニング」タブで、アルファベットの書き方を練習できます。",
+  "about.class.heading": "クラス",
+  "about.class.p1": "メニューの「クラスに参加」で、先生から聞いた参加コードを入力すると、先生のクラスに入れます。",
+  "about.class.p2": "「クラス」タブで、今週のクラスランキング（ニックネームで表示、月曜日にリセット）や、先生からの課題が見られます。",
+  "about.stats.heading": "自分の記録",
+  "about.stats.p1": "マイデッキの上にある、ランクとEXPのカードをタップすると、学習カレンダーや記録が見られます（メニューの「学習の記録」からも）。",
+  "about.tips.heading": "上手に使うコツ",
+  "about.tips.1": "毎日少しずつやろう。1回は{sessionSize}枚まで（設定で変えられます）", // {sessionSize} = the student's 1回の枚数 (10, 20 or 30)
+  "about.tips.2": "答えを見る前に、本気で思い出そう",
+  "about.tips.3": "English → 日本語 と 日本語 → English は別のカードです",
+  "about.more.summary": "もっと詳しく", // the closed part at the bottom (forgetting curve, research)
+  "about.forgetting.heading": "忘れるのはふつうのこと",
+  "about.forgetting.p1": "新しく覚えた単語は、何もしないと数日でほとんど忘れてしまいます。これは「忘却曲線」と言って、だれにでも起こることです。でも、忘れそうになったときにもう一度思い出すと、記憶は前よりずっと長く残ります。",
   "about.science.heading": "研究でわかっていること",
   "about.science.p1": "Polycardsは、研究で効果が確かめられている2つの方法を使っています。",
   "about.science.spaced": "時間をあけて復習する（Spaced repetition）：時間をあけて何回か復習する。一度にたくさんやるより、よく覚えられます。",
   "about.science.retrieval": "思い出す練習（Retrieval practice）：答えを見る前に、頭の中で思い出す。ただ読むだけより、記憶に残ります。",
-  "about.why.heading": "どうして役に立つの？",
-  "about.why.1": "覚えている単語には時間を使わず、忘れそうな単語だけ復習できる",
-  "about.why.2": "1回は{sessionSize}枚まで。毎日少しずつでOK", // {sessionSize} = the student's 1回の枚数 (10, 20 or 30)
-  "about.why.3": "テストのあとも、ずっと覚えていられる",
-  // The numbers in about.write.1 (150 EXP) and about.gacha.p1 (100レビュー, 1日1枚) are typed by hand.
-  // Update them here and in en.js if gacha_setting('spelling_points_per_ticket') or
-  // gacha_setting('reviews_per_ticket') (or the daily cap) changes in Supabase.
-  "about.write.heading": "書いて答えよう",
-  "about.write.p1": "設定で「手書き」にすると、Apple Pencil で英語を書いて答えられます。",
-  "about.write.1": "正しく書けたら +1 EXP！150 EXP ごとにガチャ券が1枚もらえます", // 150 = spelling_points_per_ticket
-  "about.write.2": "「れんしゅう？」を押すと、その文字を練習できます",
-  "about.training.heading": "トレーニング",
-  "about.training.p1": "「トレーニング」タブで、アルファベットの書き方を練習できます。練習はこれから増えていきます。",
-  "about.gacha.heading": "ガチャとポリアバター",
-  "about.gacha.p1": "100レビューごとにガチャ券が1枚もらえます（1日1枚まで）。ガチャを回して、ポリアバターを集めよう！「わかった」でも「まだ」でも同じなので、正直に答えよう。", // 100 = reviews_per_ticket
-  "about.tips.heading": "上手に使うコツ",
-  "about.tips.1": "毎日少しずつやろう（まとめてやるより効果的）",
-  "about.tips.2": "答えを見る前に、本気で思い出そう",
-  "about.tips.3": "正直に「わかった」「まだ」を押そう。うそをつくと、自分が覚えられなくなるだけです",
-  "about.tips.4": "English → 日本語 と 日本語 → English は別のカードです",
+
+  // 先生用ガイド: below the student part of the pop-up, only for teacher accounts (src/content/teacherGuide.js).
+  // Button names are quoted exactly as the teacher screens show them; update both if a label changes.
+  "teacherGuide.title": "先生用ガイド",
+  "teacherGuide.subtitle": "先生のアカウントだけに表示されます",
+  "teacherGuide.open": "先生用ガイド", // pill on the teacher class list
+  "teacherGuide.create.heading": "クラスを作って、生徒に参加してもらう",
+  "teacherGuide.create.1": "「先生」タブ →「＋ クラスを作る」→ クラス名と年度を入れて「作る」。",
+  "teacherGuide.create.2": "クラスを開くと参加コード（6文字）が出ます。「コピー」で配るか、「大きく表示」でプロジェクターに映します。",
+  "teacherGuide.create.3": "生徒は、メニュー →「クラスに参加」→ コードを入力 → 本名・出席番号 → クラスでのニックネーム →「参加する」。（「クラス」タブの「＋ クラスに参加」からも参加できます。）",
+  "teacherGuide.search.heading": "生徒を検索して追加する",
+  "teacherGuide.search.1": "クラスを開いて「名簿」→「＋ 生徒を追加」。",
+  "teacherGuide.search.2": "ユーザー名・名前・メールで検索します（2文字以上）。一度もログインしていない生徒は見つかりません。",
+  "teacherGuide.search.3": "「選ぶ」→ 本名と出席番号を入れて「追加」。",
+  "teacherGuide.roster.heading": "名簿：本名と出席番号",
+  "teacherGuide.roster.p1": "「名簿」で生徒の「編集」をタップすると、本名・出席番号・ニックネームを直せます。「外す」でクラスから外せます。",
+  "teacherGuide.roster.p2": "本名と出席番号は、そのクラスの先生だけが見られます。クラスメイトに見えるのはニックネームだけです。",
+  "teacherGuide.roster.p3": "出席番号が同じ生徒がいると、番号の横に金色の「!」が出ます。",
+  "teacherGuide.student.heading": "生徒の記録と「答え方のようす」",
+  "teacherGuide.student.p1": "「名簿」か「一覧」で生徒の名前をタップすると、その生徒のページが開きます。ランク、レベル別のカード数、学習カレンダーなど、生徒本人の「学習の記録」と同じ内容です（学習量だけで、正答率は出ません）。",
+  "teacherGuide.student.p2": "下の「答え方のようす」は、日本語 → English のカードの答え方を見るヒントです（30日間）。",
+  "teacherGuide.honesty.gap": "タップで「わかった」を押した割合と、スペル正解の割合をくらべます。差が30ポイント以上だと「確認したほうがいいかも」と出ます。",
+  "teacherGuide.honesty.speed": "めくってから1秒未満の「わかった」が50%以上でも、「確認したほうがいいかも」と出ます。",
+  "teacherGuide.honesty.data": "それぞれ30回分の答えがたまるまでは「データ不足」です。",
+  "teacherGuide.honesty.note": "これはヒントで、証拠ではありません。スペルは「わかる」より難しいので、少しの差はふつうです。気になるときは本人と話してみてください。",
+  "teacherGuide.overview.heading": "一覧と、よく間違えた単語",
+  "teacherGuide.overview.p1": "クラスを開いて「一覧」：生徒ごとの最終学習、レビュー数、学習日数、連続日数、ランクなどが見られます。7日間・30日間を切り替えられ、見出しをタップすると並べ替えられます。",
+  "teacherGuide.overview.p2": "その期間に復習していない生徒には「未学習」、答え方を確認したほうがいい生徒には金色の旗が付きます。",
+  "teacherGuide.overview.p3": "「よく間違えた単語」は、クラスで初めての答えが「まだ」「わからない」だった単語です。単語をタップすると間違えた生徒が見られ、「コピー」で単語リストをコピーできます（小テストの準備に）。",
+  "teacherGuide.assign.heading": "課題（パックを出す）",
+  "teacherGuide.assign.1": "クラスを開いて「課題」→「＋ 課題を出す」→ 単語パックを選ぶ。先生のマイデッキには追加されません。",
+  "teacherGuide.assign.2": "期限とメモ（どちらもなくてもOK）を決めて「課題を出す」。",
+  "teacherGuide.assign.3": "課題をタップすると、生徒ごとの状態が見られます：未追加・学習中（%）・完了。",
+  "teacherGuide.assign.p1": "生徒の「クラス」タブに課題が出て、タブに点が付きます。生徒は ① マイデッキに追加 → ② マイデッキで復習 → ③ 完了 と進みます。「完了」は、すべてのカードに1回以上正解したという意味で、「覚えた」という意味ではありません。",
+  "teacherGuide.award.heading": "ガチャ券を贈る",
+  "teacherGuide.award.1": "「名簿」で生徒のチェックボックスを選ぶ（「全員を選ぶ」もあります）→「チケットを贈る」。生徒のページからも贈れます。",
+  "teacherGuide.award.2": "枚数（1〜10枚）とメッセージ（60文字まで、なくてもOK）を決めて「次へ」→「贈る」。",
+  "teacherGuide.award.3": "生徒が次にアプリを開くと、メッセージ付きでお知らせが出ます。贈った記録はクラスの「最近のチケット」に残ります。",
+  "teacherGuide.ranking.heading": "クラスのランキング",
+  "teacherGuide.ranking.p1": "クラスを開いて「ランキング」→「生徒にランキングを表示」のスイッチでオン・オフします。オフでも先生には見えます。",
+  "teacherGuide.ranking.p2": "今週（月曜〜日曜）の復習回数で順位をつけます。表示はニックネームだけです。ニックネームがない生徒と、0回の生徒は出ません。",
+  "teacherGuide.csv.heading": "CSVで保存",
+  "teacherGuide.csv.p1": "「CSVで保存」は3か所にあります。",
+  "teacherGuide.csv.overview": "一覧：番号、名前、ニックネーム、最終学習、レビュー数、学習日数、連続、ランク、カード、ガチャ券、要確認",
+  "teacherGuide.csv.assignment": "課題のページ：生徒ごとの状態、進み具合（%）、Lv1以上のカード、全カード、マイデッキに追加したか",
+  "teacherGuide.csv.awards": "最近のチケット：日時、先生、枚数、人数、生徒、メッセージ",
+  "teacherGuide.csv.p2": "ExcelやNumbersで開けます。",
+  "teacherGuide.tips.heading": "先生へのヒント",
+  "teacherGuide.tips.1": "今の単元の教科書パックを、マイデッキに追加するよう声をかけましょう。課題にすると、だれが追加したか見られます。",
+  "teacherGuide.tips.2": "「わかった」「まだ」を正直に押すと復習がうまく働く、と生徒に伝えましょう。ガチャ券は正解の数ではなく、復習した回数でもらえます。",
+  "teacherGuide.tips.3": "参加コードは「大きく表示」でプロジェクターに映すと便利です。",
+  "teacherGuide.tips.4": "年度が終わったら、クラスをアーカイブしましょう（あとで元に戻せます）。",
 
   // Times and dates (Japan time): the 次の復習 line and the level ladder
   "time.minutesLater": "{n}分後", // in {n} minutes

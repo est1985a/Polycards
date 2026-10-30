@@ -22,7 +22,7 @@ import { TEACHER_START } from '../lib/classes';
 // assignmentId, archived } (kept in App, so tapping the tab again can go back to the list).
 // onNavigate(path): move to another screen. library / collections / libraryLoading: the Word Packs
 // data App already loaded (for choosing a pack to assign).
-export default function TeacherArea({ path, onNavigate, wide = false, library = [], collections = null, libraryLoading = false }) {
+export default function TeacherArea({ path, onNavigate, wide = false, library = [], collections = null, libraryLoading = false, onOpenGuide }) {
   // What was loaded, and for which list / class: a screen only shows data that matches it
   // (so another list or class never flashes up while the new one loads).
   const [list, setList] = useState(null); // { archived, rows, error }
@@ -353,6 +353,7 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
       archived={path.archived}
       wide={wide}
       defaultYear={defaultYear}
+      onOpenGuide={onOpenGuide}
       onToggleArchived={(archived) => onNavigate({ ...path, archived })}
       onOpen={(id) => onNavigate({ ...path, screen: "class", classId: id, classView: TEACHER_START.classView, sort: TEACHER_START.sort })}
       onCreate={async (name, year) => {
