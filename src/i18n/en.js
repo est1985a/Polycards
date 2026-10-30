@@ -239,9 +239,8 @@ export default {
   "practice.stroke.downCurveRight": "Down, then curve to the right",
   "practice.stroke.uThenDown": "Down, curve up, then straight down",
 
-  // Back of the card: example sentence and dictionary link
+  // Back of the card: example sentence
   "wordInfo.example": "Example",
-  "wordInfo.dictionary": "Look it up",
 
   // Mastered list
   "mastered.restore": "Review again",

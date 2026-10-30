@@ -44,7 +44,14 @@ describe('FlipCard', () => {
     expect(back).toContain('答え');
     expect(back).toContain('もう、すでに');
     expect(back).toContain('例文');
-    expect(back).toContain('辞書で調べる');
+    expect(back).toContain('彼女はもう昼ご飯を食べました。');
+    expect(back).not.toContain('辞書で調べる');
+  });
+
+  it('shows nothing under the answer when the word has no example', () => {
+    const { back } = faces(render({ revealed: true, card: { ...CARD, exampleEn: null, exampleJa: null } }));
+    expect(back).toContain('もう、すでに');
+    expect(back).not.toContain('例文');
   });
 
   it('uses bigger text on wide screens', () => {
