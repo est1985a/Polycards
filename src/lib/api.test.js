@@ -591,3 +591,45 @@ describe('teachers and classes', () => {
     expect(await api.fetchIsTeacher()).toBe(false);
   });
 });
+
+describe('teacher area phase 2', () => {
+  it('calls each database function with the right arguments', async () => {
+    result = { data: [], error: null };
+    await api.fetchStudentDetail('c1', 's1');
+    await api.awardTickets('c1', ['s1', 's2'], 3, 'Nice');
+    await api.fetchClassAwards('c1');
+    await api.fetchUnseenAwards();
+    await api.markAwardsSeen([4, 5]);
+    expect(calls).toEqual([
+      ['rpc', 'student_detail', { p_class_id: 'c1', p_student_id: 's1' }],
+      ['rpc', 'award_tickets', { p_class_id: 'c1', p_student_ids: ['s1', 's2'], p_amount: 3, p_message: 'Nice' }],
+      ['rpc', 'class_awards', { p_class_id: 'c1' }],
+      ['rpc', 'my_unseen_awards', undefined],
+      ['rpc', 'mark_awards_seen', { p_ids: [4, 5] }],
+    ]);
+  });
+
+  it('fills in a sparse student detail', async () => {
+    result = { data: { player_level: 2 }, error: null };
+    const d = await api.fetchStudentDetail('c1', 's1');
+    expect(d.days).toEqual([]);
+    expect(d.level_counts).toHaveLength(9);
+    expect(d.totals).toEqual({ reviews: 0, spelled_correctly: 0, bonus_points: 0 });
+  });
+
+  it('the student side never throws, and marks nothing when there is nothing', async () => {
+    rpcImpl = async (name) => { calls.push(['rpc', name]); return { data: null, error: { message: 'boom' } }; };
+    expect(await api.fetchUnseenAwards()).toEqual([]);
+    await api.markAwardsSeen([1]);
+    calls.length = 0;
+    await api.markAwardsSeen([]);
+    expect(calls).toEqual([]);
+  });
+
+  it('turns award errors into friendly messages', async () => {
+    rpcImpl = async () => ({ data: null, error: { message: 'bad_amount' } });
+    await expect(api.awardTickets('c1', ['s1'], 11, null)).rejects.toThrow('チケットは1〜10枚');
+    rpcImpl = async () => ({ data: null, error: { message: 'not_member' } });
+    await expect(api.fetchStudentDetail('c1', 'x')).rejects.toThrow('この生徒はクラスにいません');
+  });
+});

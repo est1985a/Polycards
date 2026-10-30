@@ -5,12 +5,18 @@ import { t, tx } from '../i18n';
 
 const fmt = (n) => n.toLocaleString('en-US');
 
+const avatarBox = (wide) => ({
+  width: wide ? 128 : 104, height: wide ? 128 : 104, flexShrink: 0, borderRadius: 16, background: colors.surface2,
+  display: "flex", alignItems: "center", justifyContent: "center",
+});
+
 // Player card: avatar, rank, points, and progress to the next rank.
 // stats: { playerRank, currentPoints, peakPoints, bonusPoints, levelCounts } (from src/lib/points.js).
 // The big EXP number, the rank and the next-rank bar all use peak + spelling bonus (bonusPoints,
 // from typing mode), so EXP never goes down when cards lose levels (currentPoints is not shown).
 // avatar: the equipped avatar from gacha_status (null = the starter cat). wide: a bigger avatar.
-// onOpenCollection: tapping the avatar opens the ポリアバター図鑑.
+// onOpenCollection: tapping the avatar opens the ポリアバター図鑑 (without it the avatar is just a picture,
+// as on a teacher's view of a student).
 // onOpenStats: tapping anywhere else on the card opens the stats page (学習の記録). The card is a
 // div with role="button" (not a <button>), so the avatar button isn't a button inside a button.
 export default function PlayerStats({ stats, avatar = null, wide = false, onOpenCollection, onOpenStats }) {
@@ -39,18 +45,21 @@ export default function PlayerStats({ stats, avatar = null, wide = false, onOpen
   return (
     <div {...cardProps} style={{ ...panel, display: "grid", gap: 14, cursor: onOpenStats ? "pointer" : undefined }}>
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); onOpenCollection?.(); }}
-          aria-label={t("stats.openCollection")}
-          className="avatar-button"
-          style={{
-            width: wide ? 128 : 104, height: wide ? 128 : 104, flexShrink: 0, borderRadius: 16, background: colors.surface2,
-            display: "flex", alignItems: "center", justifyContent: "center", border: "none", padding: 0, cursor: "pointer",
-          }}
-        >
-          <AvatarPicture avatar={avatar} size={wide ? 104 : 84} />
-        </button>
+        {onOpenCollection ? (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onOpenCollection(); }}
+            aria-label={t("stats.openCollection")}
+            className="avatar-button"
+            style={{ ...avatarBox(wide), border: "none", padding: 0, cursor: "pointer" }}
+          >
+            <AvatarPicture avatar={avatar} size={wide ? 104 : 84} />
+          </button>
+        ) : (
+          <div style={avatarBox(wide)}>
+            <AvatarPicture avatar={avatar} size={wide ? 104 : 84} />
+          </div>
+        )}
         <div style={{ minWidth: 0 }}>
           <div style={{ fontSize: 12, color: colors.muted }}>{t("stats.rankLabel")}</div>
           <div style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 46, lineHeight: 1.05, color: colors.accentText }}>{t("stats.rank", { n: rank })}</div>

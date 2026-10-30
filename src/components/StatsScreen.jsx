@@ -40,10 +40,11 @@ function Card({ title, children }) {
   );
 }
 
-function StreakCard({ days, today }) {
+// showHint: the encouragement line spoken to the student (not on a teacher's view of a student).
+function StreakCard({ days, today, showHint = true }) {
   const { count, todayDone } = currentStreak(days, today);
   const best = bestStreak(days);
-  const hint = count === 0 ? t("stats.streakStart") : !todayDone ? t("stats.streakKeep") : null;
+  const hint = !showHint ? null : count === 0 ? t("stats.streakStart") : !todayDone ? t("stats.streakKeep") : null;
   return (
     <Card>
       <div data-streak="" style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 22, color: colors.text, lineHeight: 1.1 }}>
@@ -268,16 +269,33 @@ function TroubleCard({ trouble }) {
   );
 }
 
+// The stats cards (streak, month calendar + chart, totals, trouble words), shared by the student's own
+// stats page and a teacher's view of one student (StudentPage.jsx). Effort only.
+// data: { days, totals, trouble }; viewer: "self" or "teacher" (no streak hint spoken to the student).
+// The month shown by the calendar and the chart (starts on this month) and the tapped day live here.
+export function StatsBody({ data, today, masteredCount = 0, wide = false, viewer = "self" }) {
+  const [month, setMonth] = useState(() => monthOf(today));
+  const [selectedDay, setSelectedDay] = useState(null);
+  const changeMonth = (next) => { setMonth(next); setSelectedDay(null); };
+  if (daysStudied(data.days) === 0) {
+    return <div style={{ ...panel, fontSize: 15, color: colors.text }}>{t(viewer === "teacher" ? "studentPage.noStudy" : "stats.empty")}</div>;
+  }
+  return (
+    <>
+      <StreakCard days={data.days} today={today} showHint={viewer !== "teacher"} />
+      <MonthCalendar days={data.days} today={today} month={month} selectedDay={selectedDay} onMonth={changeMonth} onSelect={setSelectedDay} />
+      <MonthChart days={data.days} today={today} month={month} selectedDay={selectedDay} onSelect={setSelectedDay} />
+      <TotalsCard days={data.days} totals={data.totals} masteredCount={masteredCount} wide={wide} />
+      <TroubleCard trouble={data.trouble} />
+    </>
+  );
+}
+
 // 学習の記録 / My Stats (view "stats" in App.jsx). Effort only: never got_it / not_yet or accuracy.
 // data: { days, totals, trouble } from fetchStudyDays / fetchStudyTotals / fetchTroubleWords, null while
 // loading. error: the load error message. today: today's Japan date ('YYYY-MM-DD', jstDateKey()).
 // masteredCount: Mastered cards, from App's stats.levelCounts (no extra query; 0 until stats load).
 export default function StatsScreen({ data, error = null, today, onBack, masteredCount = 0, wide = false }) {
-  // The month shown by both the calendar and the chart (starts on this month), and the tapped day.
-  const [month, setMonth] = useState(() => monthOf(today));
-  const [selectedDay, setSelectedDay] = useState(null);
-  const changeMonth = (next) => { setMonth(next); setSelectedDay(null); };
-  const noStudy = data && daysStudied(data.days) === 0;
   return (
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
       <div>
@@ -289,16 +307,8 @@ export default function StatsScreen({ data, error = null, today, onBack, mastere
         <div role="alert" style={{ ...panel, fontSize: 14, color: colors.danger }}>{error}</div>
       ) : !data ? (
         <div style={{ ...panel, color: colors.muted }}>{t("common.loading")}</div>
-      ) : noStudy ? (
-        <div style={{ ...panel, fontSize: 15, color: colors.text }}>{t("stats.empty")}</div>
       ) : (
-        <>
-          <StreakCard days={data.days} today={today} />
-          <MonthCalendar days={data.days} today={today} month={month} selectedDay={selectedDay} onMonth={changeMonth} onSelect={setSelectedDay} />
-          <MonthChart days={data.days} today={today} month={month} selectedDay={selectedDay} onSelect={setSelectedDay} />
-          <TotalsCard days={data.days} totals={data.totals} masteredCount={masteredCount} wide={wide} />
-          <TroubleCard trouble={data.trouble} />
-        </>
+        <StatsBody data={data} today={today} masteredCount={masteredCount} wide={wide} />
       )}
     </div>
   );

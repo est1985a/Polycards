@@ -540,6 +540,58 @@ export default {
   "joinClass.done": "「{name}」に参加しました！",
   "joinClass.ok": "OK",
 
+  // 先生 tab: one student's page (teacher view)
+  "studentPage.open": "{name}さんのページを開く", // read aloud: the name on a roster row
+  "studentPage.number": "出席番号 {n}",
+  "studentPage.lastStudied": "最後の学習：{when}",
+  "studentPage.lastSignIn": "最後のログイン：{when}", // when there is no study yet
+  "studentPage.neverActive": "まだ学習していません",
+  "studentPage.dateTime": "{date} {time}", // e.g. 10月30日 18:05 (Japan time)
+  "studentPage.tickets": "ガチャ券",
+  "studentPage.ticketCount": "{n}枚",
+  "studentPage.packsTitle": "追加したパック",
+  "studentPage.noPacks": "まだパックを追加していません",
+  "studentPage.awardsTitle": "もらったチケット",
+  "studentPage.noAwards": "まだありません",
+  "studentPage.statsTitle": "学習の記録",
+  "studentPage.noStudy": "まだ学習の記録がありません",
+
+  // 先生 tab: giving tickets
+  "award.give": "チケットを贈る",
+  "award.giveCount": "チケットを贈る（{n}人）", // roster button with {n} students selected
+  "award.selectAll": "全員を選ぶ",
+  "award.clearSelection": "選択を解除",
+  "award.select": "{name}さんを選ぶ", // read aloud: a roster checkbox
+  "award.to": "贈る相手：{names}",
+  "award.nameSeparator": "、", // between two names in award.to
+  "award.toMany": "贈る相手：{n}人",
+  "award.amount": "枚数",
+  "award.less": "1枚へらす", // read aloud: the − button
+  "award.more": "1枚ふやす", // read aloud: the ＋ button
+  "award.message": "メッセージ（なくてもOK）",
+  "award.messagePlaceholder": "例：よくがんばったね！",
+  "award.messageCount": "{n}/60",
+  "award.next": "次へ",
+  "award.confirm": "{students}人 × {amount}枚（合計 {total}枚）を贈りますか？",
+  "award.back": "もどる",
+  "award.send": "贈る",
+  "award.sending": "贈っています…",
+  "award.done": "チケットを贈りました！",
+  "award.ok": "OK",
+  "award.historyTitle": "最近のチケット",
+  "award.historyEmpty": "まだチケットを贈っていません",
+  "award.amountBadge": "×{n}",
+  "award.studentCount": "{n}人",
+  "award.andMore": "ほか{n}人",
+
+  // Pop-up for the student when a teacher gave tickets ({name} already includes 先生, e.g. アンドレ先生)
+  "awardPopup.label": "先生からのチケット", // read aloud
+  "awardPopup.title": "{name}からチケット×{n}！",
+  "awardPopup.titleMany": "先生からチケット×{n}！", // tickets from more than one teacher
+  "awardPopup.message": "{name}：{text}",
+  "awardPopup.toGacha": "ガチャへ",
+  "awardPopup.close": "とじる",
+
   // Error messages (pop-ups and red text)
   "errors.saveFailed": "保存できませんでした", // a review answer couldn't be saved
   "errors.cardNotFound": "このカードは見つかりませんでした",
@@ -563,6 +615,9 @@ export default {
   "errors.userNotFound": "アカウントが見つかりません",
   "errors.targetNotTeacher": "この人は先生のアカウントではありません",
   "errors.alreadyTeacher": "もうこのクラスの先生です",
+  "errors.badAmount": "チケットは1〜10枚で選んでください",
+  "errors.messageTooLong": "メッセージは60文字までです",
+  "errors.noStudents": "生徒を選んでください",
   "errors.classFailed": "うまくいきませんでした ({detail})", // {detail} = the technical error, in English
 
   // Parts of speech (品詞): the chip on cards / word list / Mastered list and its pop-up (PosSheet.jsx).

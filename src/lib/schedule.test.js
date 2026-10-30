@@ -175,3 +175,11 @@ describe('waitLabel and levelLadder', () => {
     expect(ladder.map((s) => s.label)).toEqual(LEVEL_HOURS.slice(1).map(waitLabel));
   });
 });
+describe('jstDateTime', () => {
+  it('gives the Japan date and time of a saved timestamp', async () => {
+    const { jstDateTime } = await import('./schedule');
+    expect(jstDateTime('2026-10-30T09:05:00Z')).toEqual({ month: 10, day: 30, time: '18:05' });
+    expect(jstDateTime('2026-10-30T15:30:00Z')).toEqual({ month: 10, day: 31, time: '00:30' });
+    expect(jstDateTime(null)).toBe(null);
+  });
+});

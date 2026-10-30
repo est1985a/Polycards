@@ -47,6 +47,7 @@ import ThemeUnlockSheet from './components/ThemeUnlockSheet';
 import TeacherArea from './components/TeacherArea';
 import { TEACHER_START } from './lib/classes';
 import JoinClassSheet from './components/JoinClassSheet';
+import AwardPopup from './components/AwardPopup';
 
 // A theme key from the account or the device; unknown keys become the default theme.
 const knownTheme = (key) => (themes[key] ? key : DEFAULT_THEME);
@@ -95,6 +96,8 @@ function App() {
   const [teacherPath, setTeacherPath] = useState(TEACHER_START);
   const [joinOpen, setJoinOpen] = useState(false);
   const [myClasses, setMyClasses] = useState(null);
+  // Tickets from teachers the student hasn't seen yet (my_unseen_awards()): a pop-up on the dashboard.
+  const [awardRows, setAwardRows] = useState([]);
   const [answerMode, setAnswerMode] = useState(() => loadAnswerMode(window.localStorage, HANDWRITING_ENABLED)); // 答え方: off / typing / handwriting
   // Settings saved on this device (src/lib/settings.js)
   const [sessionSize, setSessionSize] = useState(() => loadSessionSize(window.localStorage)); // 1回の枚数
@@ -187,7 +190,7 @@ function App() {
         setMyDeckIds([]); setMyDecks([]); setStats(null);
         setGacha(null); setReveal(null); setCollection(null); pulseChecked.current = false;
         setThemeRows(null); setThemesFailed(false); setSeenSaved(null);
-        setIsTeacher(false); setMyClasses(null); setJoinOpen(false);
+        setIsTeacher(false); setMyClasses(null); setJoinOpen(false); setAwardRows([]);
       }
       // Log-out: forget this account's theme on the device and go back to Midnight.
       if (event === "SIGNED_OUT") {
@@ -289,12 +292,30 @@ function App() {
     if (session && (view === "dashboard" || view === "gacha")) loadGacha();
   }, [session, view]);
 
+  // Tickets from teachers: checked at the same moments as the gacha status (never throws).
+  const loadAwards = useCallback(() => {
+    api.fetchUnseenAwards().then(setAwardRows);
+  }, []);
+  useEffect(() => {
+    if (session && view === "dashboard") loadAwards();
+  }, [session, view, loadAwards]);
+
   useEffect(() => {
     if (!session) return;
-    const onVisible = () => { if (document.visibilityState === "visible") loadGacha(); };
+    const onVisible = () => { if (document.visibilityState === "visible") { loadGacha(); loadAwards(); } };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [session]);
+  }, [session, loadAwards]);
+
+  // The award pop-up was closed (とじる) or ガチャへ was pressed: exactly the awards it showed are
+  // marked seen, and the gacha status reloads so the ticket badge shows them.
+  function closeAwards(toGacha) {
+    const ids = awardRows.map((a) => a.id);
+    setAwardRows([]);
+    api.markAwardsSeen(ids).then(loadGacha);
+    if (toGacha) openGacha();
+  }
+  const showAwards = !!session && view === "dashboard" && awardRows.length > 0 && !planOpen && !aboutOpen && !packResult && !joinOpen;
 
   // The header pulse plays once; switch it off so it doesn't replay when the header changes.
   useEffect(() => {
@@ -901,7 +922,7 @@ function App() {
                 <Tabs tabs={tabs} active={activeTab} onChange={changeTab} wide={wide} />
                 {planOpen && <ReviewPlanSheet rows={planRows} now={now} onClose={closePlan} />}
                 {/* New theme unlocked: only on My Cards, never during a review. */}
-                {unlock && activeTab === "myCards" && !planOpen && !aboutOpen && (
+                {unlock && activeTab === "myCards" && !planOpen && !aboutOpen && !showAwards && (
                   <ThemeUnlockSheet item={unlock.theme} others={unlock.others} rank={rank} onUse={applyUnlockedTheme} onLater={markThemesSeen} />
                 )}
               </div>
@@ -1024,6 +1045,7 @@ function App() {
       {session && joinOpen && (
         <JoinClassSheet onClose={() => setJoinOpen(false)} onJoined={() => { if (view === "settings") loadMyClasses(); }} />
       )}
+      {showAwards && <AwardPopup awards={awardRows} onGacha={() => closeAwards(true)} onClose={() => closeAwards(false)} />}
       {packResult && <PackOpening summary={packResult} onClose={closePack} onReview={reviewPack} onGoToMyDeck={goToMyDeck} />}
     </div>
   );

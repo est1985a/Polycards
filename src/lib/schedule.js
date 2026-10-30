@@ -100,3 +100,14 @@ export function waitLabel(hours) {
 export function levelLadder() {
   return LEVEL_HOURS.slice(1).map((hours, i) => ({ level: i + 1, label: waitLabel(hours) }));
 }
+
+// A saved timestamp as Japan-time parts for "10月30日 18:05": { month, day, time } (null if missing).
+export function jstDateTime(at) {
+  const time = at ? Date.parse(at) : NaN;
+  if (Number.isNaN(time)) return null;
+  const [, month, day] = jstDateKey(time).split('-').map(Number);
+  const clock = new Date(time + JST);
+  const hh = String(clock.getUTCHours()).padStart(2, '0');
+  const mm = String(clock.getUTCMinutes()).padStart(2, '0');
+  return { month, day, time: `${hh}:${mm}` };
+}

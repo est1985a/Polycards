@@ -543,6 +543,58 @@ export default {
   "joinClass.done": "You joined \"{name}\"!",
   "joinClass.ok": "OK",
 
+  // Teacher tab: one student's page. DRAFT
+  "studentPage.open": "Open {name}'s page",
+  "studentPage.number": "No. {n}",
+  "studentPage.lastStudied": "Last studied: {when}",
+  "studentPage.lastSignIn": "Last signed in: {when}",
+  "studentPage.neverActive": "Hasn't studied yet",
+  "studentPage.dateTime": "{date} {time}",
+  "studentPage.tickets": "Gacha tickets",
+  "studentPage.ticketCount": plural("{n} ticket", "{n} tickets"),
+  "studentPage.packsTitle": "Packs added",
+  "studentPage.noPacks": "No packs added yet",
+  "studentPage.awardsTitle": "Tickets received",
+  "studentPage.noAwards": "None yet",
+  "studentPage.statsTitle": "Study record",
+  "studentPage.noStudy": "No study record yet",
+
+  // Teacher tab: giving tickets. DRAFT
+  "award.give": "Give tickets",
+  "award.giveCount": "Give tickets ({n})",
+  "award.selectAll": "Select all",
+  "award.clearSelection": "Clear",
+  "award.select": "Select {name}",
+  "award.to": "To: {names}",
+  "award.nameSeparator": ", ", // between two names in award.to
+  "award.toMany": plural("To: {n} student", "To: {n} students"),
+  "award.amount": "Tickets",
+  "award.less": "One less",
+  "award.more": "One more",
+  "award.message": "Message (optional)",
+  "award.messagePlaceholder": "e.g. Great job!",
+  "award.messageCount": "{n}/60",
+  "award.next": "Next",
+  "award.confirm": "Students: {students} × Tickets each: {amount} (total {total}). Give them?",
+  "award.back": "Back",
+  "award.send": "Give",
+  "award.sending": "Giving…",
+  "award.done": "Tickets sent!",
+  "award.ok": "OK",
+  "award.historyTitle": "Recent tickets",
+  "award.historyEmpty": "No tickets given yet",
+  "award.amountBadge": "×{n}",
+  "award.studentCount": plural("{n} student", "{n} students"),
+  "award.andMore": "+{n} more",
+
+  // Pop-up for the student when a teacher gave tickets. DRAFT
+  "awardPopup.label": "Tickets from your teacher",
+  "awardPopup.title": plural("{name} gave you {n} ticket!", "{name} gave you {n} tickets!"),
+  "awardPopup.titleMany": plural("Your teachers gave you {n} ticket!", "Your teachers gave you {n} tickets!"),
+  "awardPopup.message": "{name}: {text}",
+  "awardPopup.toGacha": "Go to Gacha",
+  "awardPopup.close": "Close",
+
   // Error messages
   "errors.saveFailed": "Couldn't save",
   "errors.cardNotFound": "Couldn't find this card",
@@ -566,6 +618,9 @@ export default {
   "errors.userNotFound": "No account found.",
   "errors.targetNotTeacher": "This person doesn't have a teacher account.",
   "errors.alreadyTeacher": "Already a teacher of this class.",
+  "errors.badAmount": "Choose 1 to 10 tickets.",
+  "errors.messageTooLong": "The message can be up to 60 characters.",
+  "errors.noStudents": "Choose at least one student.",
   "errors.classFailed": "Something went wrong ({detail})",
 
   // Parts of speech
