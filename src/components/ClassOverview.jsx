@@ -126,15 +126,16 @@ function OverviewRow({ row, columns, now, wide, selectable, selected, onToggle, 
 // 一覧: the whole class in one table (class_overview()). rows: null while loading. sort / onSort: the
 // chosen column (kept in App's teacherPath). toolbar: 全員を選ぶ / チケットを贈る above the table.
 // selectable / selected / onToggle: the Phase 2 checkboxes. onOpenStudent(id). now: a fixed time for tests.
+// action: a button in the panel's title row (CSVで保存).
 export default function ClassOverview({
-  rows, error = null, days, sort, onSort, wide = false, toolbar = null,
+  rows, error = null, days, sort, onSort, wide = false, toolbar = null, action = null,
   selectable = false, selected = new Set(), onToggle = () => {}, onOpenStudent = () => {}, now = null,
 }) {
   const [openedAt] = useState(() => Date.now()); // for 今日 / 昨日 (now: tests)
   const columns = COLUMNS.filter((c) => wide || !c.wideOnly);
   const shown = rows ? sortOverview(overviewRows(rows), sort) : null;
   return (
-    <Panel title={t("overview.title")}>
+    <Panel title={t("overview.title")} action={action}>
       {toolbar}
       <ErrorText>{error}</ErrorText>
       {shown === null ? (

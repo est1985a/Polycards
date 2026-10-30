@@ -5,6 +5,7 @@ import { pickClass } from '../lib/classTab';
 import SegmentedSwitch from './SegmentedSwitch';
 import ClassLeaderboard from './ClassLeaderboard';
 import NicknameSheet, { NicknameForm } from './NicknameSheet';
+import ClassAssignmentsSection from './ClassAssignmentsSection';
 import { ErrorText } from './ClassFields';
 import { ghostSmall, inputStyle } from '../styles/forms';
 import { t } from '../i18n';
@@ -54,9 +55,12 @@ function ClassHeader({ info, onChangeNickname }) {
 
 // The クラス tab as plain markup (tests render it). classes: my_classes() (null while loading,
 // "failed"). info / board: my_class_info() / class_leaderboard() for selectedId (null while loading).
+// assignments: my_class_assignments() (Phase 4, null while loading); dueFor / busyDeckId /
+// onAddAssignment / onReviewAssignment: see ClassAssignmentsSection. now: a fixed time for tests.
 export function ClassTabView({
   classes, selectedId, onSelect = () => {}, info = null, board = null, error = null, wide = false,
   onJoin = () => {}, onChangeNickname = () => {}, onSaveNickname = async () => {},
+  assignments = null, dueFor = () => 0, busyDeckId = null, onAddAssignment = () => {}, onReviewAssignment = () => {}, now = null,
 }) {
   const frame = (children) => (
     <div style={{ display: "grid", gap: 16, paddingTop: 8, textAlign: "left", maxWidth: wide ? 900 : undefined, margin: wide ? "0 auto" : undefined, width: "100%" }}>
@@ -102,20 +106,30 @@ export function ClassTabView({
     <>
       {picker}
       <ClassHeader info={info} onChangeNickname={onChangeNickname} />
-      {/* Phase 4: the class's assigned packs will appear here (not built yet). */}
+      {/* Phase 4: the class's assigned packs (課題), my own progress only. */}
+      <ClassAssignmentsSection
+        key={info.id} assignments={assignments} dueFor={dueFor} busyDeckId={busyDeckId}
+        onAdd={onAddAssignment} onReview={onReviewAssignment} now={now}
+      />
       {main}
     </>,
   );
 }
 
-// The クラス tab (every signed-in user). Loads my_class_info() and class_leaderboard() for the chosen
-// class each time it changes or the tab opens. classes / selectedId / onSelect come from App, which
-// remembers the last class per account (src/lib/classTab.js). onJoin(): opens the join pop-up.
-export default function ClassTab({ classes, selectedId, onSelect, onJoin, wide = false }) {
+// The クラス tab (every signed-in user). Loads my_class_info(), class_leaderboard() and
+// my_class_assignments() for the chosen class each time it changes or the tab opens. classes /
+// selectedId / onSelect come from App, which remembers the last class per account (src/lib/classTab.js).
+// onJoin(): opens the join pop-up. assignmentsVersion: App bumps it after adding an assigned pack, so
+// the progress reloads. dueFor / busyDeckId / onAddAssignment / onReviewAssignment: from App.
+export default function ClassTab({
+  classes, selectedId, onSelect, onJoin, wide = false,
+  assignmentsVersion = 0, dueFor, busyDeckId = null, onAddAssignment, onReviewAssignment,
+}) {
   const list = Array.isArray(classes) ? classes : null;
   const classId = pickClass(list, selectedId);
   const [info, setInfo] = useState(null); // { classId, data, error }
   const [board, setBoard] = useState(null); // { classId, data, error }
+  const [assigned, setAssigned] = useState(null); // { classId, rows }: my_class_assignments()
   const [editing, setEditing] = useState(false);
 
   const load = useCallback(async (id) => {
@@ -138,6 +152,16 @@ export default function ClassTab({ classes, selectedId, onSelect, onJoin, wide =
     if (classId) load(classId);
   }, [classId, load]);
 
+  // Assignments load on their own: a problem there never hides the leaderboard (only console.error).
+  useEffect(() => {
+    if (!classId) return;
+    let current = true;
+    api.fetchMyClassAssignments(classId)
+      .then((rows) => { if (current) setAssigned({ classId, rows }); })
+      .catch((e) => console.error(e));
+    return () => { current = false; };
+  }, [classId, assignmentsVersion]);
+
   const shownInfo = info?.classId === classId ? info : null;
   const shownBoard = board?.classId === classId ? board : null;
   const saveNickname = async (nickname) => {
@@ -158,6 +182,11 @@ export default function ClassTab({ classes, selectedId, onSelect, onJoin, wide =
         onJoin={onJoin}
         onChangeNickname={() => setEditing(true)}
         onSaveNickname={saveNickname}
+        assignments={assigned?.classId === classId ? assigned.rows : null}
+        dueFor={dueFor}
+        busyDeckId={busyDeckId}
+        onAddAssignment={onAddAssignment}
+        onReviewAssignment={onReviewAssignment}
       />
       {editing && shownInfo?.data && (
         <NicknameSheet initial={shownInfo.data.nickname ?? ""} onSave={saveNickname} onClose={() => setEditing(false)} />

@@ -598,6 +598,11 @@ const CLASS_ERRORS = {
   no_students: "errors.noStudents",
   nickname_taken: "errors.nicknameTaken",
   bad_nickname: "errors.badNickname",
+  already_assigned: "errors.alreadyAssigned",
+  assignment_not_found: "errors.assignmentNotFound",
+  deck_not_found: "errors.deckNotFound",
+  note_too_long: "errors.noteTooLong",
+  bad_due_date: "errors.badDueDate",
 };
 
 // Turns a database error (e.g. "bad_code") into a friendly message.
@@ -720,8 +725,10 @@ export function awardTickets(classId, studentIds, amount, message) {
 
 // Teacher: recent awards in a class, one row per give:
 // [{ batch_id, created_at, teacher_name, amount, message, student_count, student_names }].
-export async function fetchClassAwards(classId) {
-  return (await callClass('class_awards', { p_class_id: classId })) || [];
+// limit: how many gives (the database allows up to 100; default 20). The CSV asks for 100.
+export async function fetchClassAwards(classId, limit = null) {
+  const args = limit ? { p_class_id: classId, p_limit: limit } : { p_class_id: classId };
+  return (await callClass('class_awards', args)) || [];
 }
 
 // ---- Teacher area, Phase 3 (supabase/polycards-teacher-phase3.sql) ----
@@ -796,4 +803,45 @@ export function setClassLeaderboard(classId, enabled) {
 // Teacher: a student's nickname ('' clears it, so the student is asked to choose again).
 export function setMemberNickname(classId, studentId, nickname) {
   return callClass('set_member_nickname', { p_class_id: classId, p_student_id: studentId, p_nickname: nickname });
+}
+
+// ---- Teacher area, Phase 4: assigned packs (supabase/polycards-teacher-phase4.sql) ----
+
+// Teacher: the class's assignments with every member's progress, in one call:
+// [{ id, deck_id, deck_name, source, word_count, due_date ('YYYY-MM-DD' or null), note, created_at,
+//    teacher_name, students: [{ student_id, added, owned, learned, total }] }].
+export async function fetchClassAssignments(classId) {
+  const rows = (await callClass('assignments_for_class', { p_class_id: classId })) || [];
+  return rows.map((r) => ({ ...r, students: r.students ?? [] }));
+}
+
+// Teacher: assign a pack (dueDate 'YYYY-MM-DD' or null, note or null). Returns the new id.
+export function createAssignment(classId, deckId, dueDate, note) {
+  return callClass('create_assignment', { p_class_id: classId, p_deck_id: deckId, p_due_date: dueDate || null, p_note: note || null });
+}
+
+export function updateAssignment(assignmentId, dueDate, note) {
+  return callClass('update_assignment', { p_assignment_id: assignmentId, p_due_date: dueDate || null, p_note: note || null });
+}
+
+// Only the assignment goes; students' My Decks are never touched.
+export function deleteAssignment(assignmentId) {
+  return callClass('delete_assignment', { p_assignment_id: assignmentId });
+}
+
+// Student: my own progress on one of my classes' assignments:
+// [{ id, deck_id, deck_name, source, word_count, due_date, note, created_at, added, owned, learned, total }].
+export async function fetchMyClassAssignments(classId) {
+  return (await callClass('my_class_assignments', { p_class_id: classId })) || [];
+}
+
+// Student: assignments not in My Deck yet and not done (all my classes), for the dot on the
+// クラス tab. Never throws: an error → console.warn and 0.
+export async function fetchPendingAssignments() {
+  const { data, error } = await supabase.rpc('my_pending_assignments');
+  if (error) {
+    console.warn("Could not check assignments: " + error.message);
+    return 0;
+  }
+  return typeof data === 'number' ? data : 0;
 }

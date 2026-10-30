@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Polycards: check that a STUDENT can't use the teacher functions (2026-10-30)
--- Run AFTER polycards-teachers.sql (and polycards-teacher-phase2.sql, polycards-teacher-phase3.sql, polycards-class-tab.sql). Read-only: every check that could write
+-- Run AFTER polycards-teachers.sql (and polycards-teacher-phase2.sql, polycards-teacher-phase3.sql, polycards-class-tab.sql, polycards-teacher-phase4.sql). Read-only: every check that could write
 -- something is undone straight away, so nothing in the database changes.
 --
 -- 1. Put a student's username (or full email) on the line marked  <-- STUDENT
@@ -107,7 +107,22 @@ begin
       ('call internal clean_nickname', format('select public.clean_nickname(%L)', 'X'),                                                 'permission denied'),
       ('call internal clean_join_code', format('select public.clean_join_code(%L)', 'X'),                                               'permission denied'),
       ('call internal class_week_ranks', format('select * from public.class_week_ranks(%L, current_date)', v_class),                    'permission denied'),
-      ('call internal leaderboard_avatar', format('select public.leaderboard_avatar(%L)', v_student),                                    'permission denied')
+      ('call internal leaderboard_avatar', format('select public.leaderboard_avatar(%L)', v_student),                                    'permission denied'),
+      -- Phase 4: assigned packs
+      ('create_assignment',          format('select public.create_assignment(%L, gen_random_uuid())', v_class),                         'not_teacher'),
+      ('update_assignment',          'select public.update_assignment(gen_random_uuid(), null, null)',                                  'not_teacher'),
+      ('delete_assignment',          'select public.delete_assignment(gen_random_uuid())',                                              'not_teacher'),
+      ('assignments_for_class',      format('select * from public.assignments_for_class(%L)', v_class),                                 'not_teacher'),
+      ('my_class_assignments: made-up class', format('select * from public.my_class_assignments(%L)', v_fake),                         'not_member'),
+      ('my_class_assignments: another class', format('select * from public.my_class_assignments(%L)', coalesce(v_foreign, v_fake)),   'not_member'),
+      ('read class_assignments',     'select count(*) from public.class_assignments',                                                   'permission denied'),
+      ('insert into class_assignments', format('insert into public.class_assignments (class_id, deck_id) values (%L, gen_random_uuid())', v_class), 'permission denied'),
+      ('update class_assignments',   'update public.class_assignments set note = ''X''',                                                'permission denied'),
+      ('delete class_assignments',   'delete from public.class_assignments',                                                            'permission denied'),
+      ('call internal assignment_progress_for', format('select * from public.assignment_progress_for(%L)', v_class),                    'permission denied'),
+      ('call internal assignment_class_for_teacher', 'select public.assignment_class_for_teacher(gen_random_uuid())',                  'permission denied'),
+      ('call internal deck_source',  'select public.deck_source(gen_random_uuid())',                                                    'permission denied'),
+      ('call internal clean_assignment_note', format('select public.clean_assignment_note(%L)', 'X'),                                   'permission denied')
     ) as c(label, stmt, expected)
   loop
     begin
@@ -145,6 +160,12 @@ begin
     v_out := v_out || (case when position('@' in v_json) = 0 then 'PASS' else 'FAIL' end) || '  no email address (@) in class_leaderboard / my_class_info' || E'\n';
     v_out := v_out || (case when position('student_id' in v_json) = 0 and position('real_name' in v_json) = 0 and position('name_en' in v_json) = 0
                             then 'PASS' else 'FAIL' end) || '  no student_id / real_name / avatar name fields' || E'\n';
+
+    -- Phase 4: my_class_assignments gives only the student's own progress (no classmates' ids, no student_id field)
+    select coalesce(jsonb_agg(to_jsonb(x)), '[]'::jsonb)::text into v_json from public.my_class_assignments(v_myclass) x;
+    select count(*) into v_hits from unnest(coalesce(v_ids, '{}')) as i where position(i in v_json) > 0;
+    v_out := v_out || (case when v_hits = 0 and position('student_id' in v_json) = 0 and position('real_name' in v_json) = 0
+                            then 'PASS' else 'FAIL' end) || '  my_class_assignments: no classmate ids, student_id or real_name (' || v_hits || ')' || E'\n';
 
     -- Nickname uniqueness (any case): a classmate's nickname in capitals must be refused
     if v_taken is null then

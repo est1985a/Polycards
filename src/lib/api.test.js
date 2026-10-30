@@ -709,3 +709,53 @@ describe('class tab', () => {
     await expect(api.joinClass('ABC234', '山田', null, '')).rejects.toThrow('ニックネームは1〜12文字');
   });
 });
+
+describe('teacher area phase 4: assigned packs', () => {
+  it('calls each database function with the right arguments', async () => {
+    result = { data: null, error: null };
+    await api.fetchClassAssignments('c1');
+    await api.createAssignment('c1', 'd1', '2026-11-02', 'Quiz');
+    await api.createAssignment('c1', 'd2', '', '');
+    await api.updateAssignment('a1', null, 'New note');
+    await api.deleteAssignment('a1');
+    await api.fetchMyClassAssignments('c1');
+    await api.fetchPendingAssignments();
+    await api.fetchClassAwards('c1', 100);
+    expect(calls).toEqual([
+      ['rpc', 'assignments_for_class', { p_class_id: 'c1' }],
+      ['rpc', 'create_assignment', { p_class_id: 'c1', p_deck_id: 'd1', p_due_date: '2026-11-02', p_note: 'Quiz' }],
+      ['rpc', 'create_assignment', { p_class_id: 'c1', p_deck_id: 'd2', p_due_date: null, p_note: null }],
+      ['rpc', 'update_assignment', { p_assignment_id: 'a1', p_due_date: null, p_note: 'New note' }],
+      ['rpc', 'delete_assignment', { p_assignment_id: 'a1' }],
+      ['rpc', 'my_class_assignments', { p_class_id: 'c1' }],
+      ['rpc', 'my_pending_assignments', undefined],
+      ['rpc', 'class_awards', { p_class_id: 'c1', p_limit: 100 }],
+    ]);
+  });
+
+  it('fills in empty answers', async () => {
+    result = { data: [{ id: 'a1', students: null }], error: null };
+    expect(await api.fetchClassAssignments('c1')).toEqual([{ id: 'a1', students: [] }]);
+    result = { data: null, error: null };
+    expect(await api.fetchMyClassAssignments('c1')).toEqual([]);
+    expect(await api.fetchPendingAssignments()).toBe(0);
+    result = { data: 3, error: null };
+    expect(await api.fetchPendingAssignments()).toBe(3);
+  });
+
+  it('the pending count never throws', async () => {
+    rpcImpl = async () => ({ data: null, error: { message: 'boom' } });
+    expect(await api.fetchPendingAssignments()).toBe(0);
+  });
+
+  it('turns assignment errors into friendly messages', async () => {
+    rpcImpl = async () => ({ data: null, error: { message: 'already_assigned' } });
+    await expect(api.createAssignment('c1', 'd1', null, null)).rejects.toThrow('このパックはもうこのクラスの課題になっています');
+    rpcImpl = async () => ({ data: null, error: { message: 'note_too_long' } });
+    await expect(api.updateAssignment('a1', null, 'x')).rejects.toThrow('メモは60文字までです');
+    rpcImpl = async () => ({ data: null, error: { message: 'assignment_not_found' } });
+    await expect(api.deleteAssignment('a1')).rejects.toThrow('この課題は見つかりませんでした');
+    rpcImpl = async () => ({ data: null, error: { message: 'not_class_teacher' } });
+    await expect(api.fetchClassAssignments('c9')).rejects.toThrow();
+  });
+});

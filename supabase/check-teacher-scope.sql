@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Polycards: check that a TEACHER only reaches students in their own classes (2026-10-30)
--- Run AFTER polycards-teacher-phase2.sql (and polycards-teacher-phase3.sql, polycards-class-tab.sql). Read-only: every check that could write
+-- Run AFTER polycards-teacher-phase2.sql (and polycards-teacher-phase3.sql, polycards-class-tab.sql, polycards-teacher-phase4.sql). Read-only: every check that could write
 -- something is undone straight away, so nothing in the database changes.
 --
 -- 1. Put a teacher's username (or full email) on the line marked  <-- TEACHER
@@ -20,6 +20,8 @@ declare
   v_class    uuid;   -- a class the teacher teaches
   v_other    uuid;   -- a class the teacher does NOT teach (or a made-up id)
   v_outsider uuid;   -- an account in none of the teacher's classes
+  v_assign   uuid;   -- Phase 4: an assignment of a class the teacher does NOT teach (if any)
+  v_assign_expect text;
   v_out      text := '';
   v_n        int;
   v_check    record;
@@ -46,6 +48,13 @@ begin
   limit 1;
   if v_outsider is null then raise exception 'Every account is in one of "%"''s classes; no outsider to test with.', v_who; end if;
 
+  -- Phase 4: an assignment in a class the teacher doesn't teach; with none yet, a made-up id
+  select ca.id into v_assign from public.class_assignments ca
+  where not exists (select 1 from public.class_teachers ct where ct.class_id = ca.class_id and ct.teacher_id = v_teacher)
+  limit 1;
+  v_assign_expect := case when v_assign is null then 'assignment_not_found' else 'not_class_teacher' end;
+  v_assign := coalesce(v_assign, gen_random_uuid());
+
   -- From here on: signed in as the teacher
   perform set_config('request.jwt.claims', json_build_object('sub', v_teacher, 'role', 'authenticated')::text, true);
   set local role authenticated;
@@ -66,6 +75,12 @@ begin
       ('set_member_nickname: outsider in my class', format('select public.set_member_nickname(%L, %L, %L)', v_class, v_outsider, 'X'),            'not_member'),
       ('set_class_leaderboard: class I don''t teach', format('select public.set_class_leaderboard(%L, false)', v_other),                           'not_class_teacher'),
       ('class_leaderboard: class I don''t teach',  format('select public.class_leaderboard(%L)', v_other),                                          'not_member'),
+      ('assignments_for_class: class I don''t teach', format('select * from public.assignments_for_class(%L)', v_other),                  'not_class_teacher'),
+      ('create_assignment: class I don''t teach', format('select public.create_assignment(%L, gen_random_uuid())', v_other),              'not_class_teacher'),
+      ('update_assignment: another class''s (' || v_assign_expect || ')', format('select public.update_assignment(%L, null, %L)', v_assign, 'X'), v_assign_expect),
+      ('delete_assignment: another class''s (' || v_assign_expect || ')', format('select public.delete_assignment(%L)', v_assign),        v_assign_expect),
+      ('my_class_assignments: a class I teach but am not in', format('select * from public.my_class_assignments(%L)', v_class),          'not_member'),
+      ('read class_assignments table',             'select count(*) from public.class_assignments',                                  'permission denied'),
       ('award_tickets: 11 tickets',                format('select public.award_tickets(%L, array[%L]::uuid[], 11, null)', v_class, v_outsider),    'bad_amount'),
       ('change a student''s cards directly',       format('update public.user_cards set level = 7 where user_id = %L', v_outsider),                 'no_error'),
       ('read teachers table',                      'select count(*) from public.teachers',                                                          'permission denied')

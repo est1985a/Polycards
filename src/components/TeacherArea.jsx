@@ -7,15 +7,22 @@ import UserSearchSheet from './UserSearchSheet';
 import JoinCodeDisplay from './JoinCodeDisplay';
 import StudentPage from './StudentPage';
 import AwardSheet from './AwardSheet';
+import AssignPackPage from './AssignPackPage';
+import AssignmentPage from './AssignmentPage';
+import { downloadCsv } from '../lib/csv';
+import { overviewCsv, assignmentCsv, awardsCsv, classCsvName } from '../lib/classCsv';
+import { t } from '../i18n';
 import { jstDateKey } from '../lib/schedule';
 import { HONESTY } from '../lib/honesty';
 import { TEACHER_START } from '../lib/classes';
 
 // The 先生 tab (teacher accounts only): loads the class list or one class and runs every teacher
 // action through the database functions in api.js (which check that the caller teaches the class).
-// path: { screen: 'classes' | 'class' | 'student', classId, studentId, archived } (kept in App, so tapping
-// the tab again can go back to the list). onNavigate(path): move to another screen.
-export default function TeacherArea({ path, onNavigate, wide = false }) {
+// path: { screen: 'classes' | 'class' | 'student' | 'assignNew' | 'assignment', classId, studentId,
+// assignmentId, archived } (kept in App, so tapping the tab again can go back to the list).
+// onNavigate(path): move to another screen. library / collections / libraryLoading: the Word Packs
+// data App already loaded (for choosing a pack to assign).
+export default function TeacherArea({ path, onNavigate, wide = false, library = [], collections = null, libraryLoading = false }) {
   // What was loaded, and for which list / class: a screen only shows data that matches it
   // (so another list or class never flashes up while the new one loads).
   const [list, setList] = useState(null); // { archived, rows, error }
@@ -29,8 +36,9 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
   const [trouble, setTrouble] = useState(null); // { key, rows }: class_trouble_words() for classId|days
   const [honesty, setHonesty] = useState(null); // { key, counts, error }: student_honesty() for one student
   const [board, setBoard] = useState(null); // { classId, data, error }: class_leaderboard() (ランキング view)
+  const [assign, setAssign] = useState(null); // { classId, rows, error }: assignments_for_class() (課題)
   const [defaultYear] = useState(() => defaultSchoolYear(Date.now()));
-  const classId = path.screen === "class" || path.screen === "student" ? path.classId : null;
+  const classId = ["class", "student", "assignNew", "assignment"].includes(path.screen) ? path.classId : null;
   const studentId = path.screen === "student" ? path.studentId : null;
   const studentKey = studentId ? `${classId}|${studentId}` : null;
   const days = path.days ?? TEACHER_START.days;
@@ -115,6 +123,15 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
     }
   }, []);
 
+  const loadAssignments = useCallback(async (cls) => {
+    try {
+      setAssign({ classId: cls, rows: await api.fetchClassAssignments(cls), error: null });
+    } catch (e) {
+      console.error(e);
+      setAssign((old) => ({ classId: cls, rows: old?.classId === cls ? old.rows : null, error: e.message }));
+    }
+  }, []);
+
   useEffect(() => {
     if (path.screen === "classes") loadClasses(path.archived);
   }, [path.screen, path.archived, loadClasses]);
@@ -148,6 +165,12 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
     if (classId && onBoard) loadBoard(classId);
   }, [classId, onBoard, loadBoard]);
 
+  // 課題: the list, the pack picker (which packs are already assigned) and one assignment's page.
+  const onAssign = (path.screen === "class" && path.classView === "assignments") || path.screen === "assignNew" || path.screen === "assignment";
+  useEffect(() => {
+    if (classId && onAssign) loadAssignments(classId);
+  }, [classId, onAssign, loadAssignments]);
+
   const current = list?.archived === path.archived ? list : null;
   const classes = current ? current.rows : null;
   const listError = current?.error ?? null;
@@ -161,6 +184,21 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
   const shownOverview = overview?.key === periodKey ? overview : null;
   const shownTrouble = trouble?.key === periodKey ? trouble.rows : null;
   const shownBoard = board?.classId === classId ? board : null;
+  const shownAssign = assign?.classId === classId ? assign : null;
+  const className = detail?.class?.name ?? "";
+  const toAssignments = { ...path, screen: "class", classView: "assignments", assignmentId: null, studentId: null };
+
+  // CSV files are built here from data already on screen (the awards: up to 100 gives).
+  const saveOverviewCsv = (rows) => downloadCsv(classCsvName(className, "overview", Date.now()), overviewCsv(rows, days));
+  const saveAwardsCsv = async () => {
+    try {
+      const rows = await api.fetchClassAwards(classId, 100);
+      downloadCsv(classCsvName(className, "awards", Date.now()), awardsCsv(rows));
+    } catch (e) {
+      console.error(e);
+      window.alert(`${t("csv.failed")}\n${e.message}`);
+    }
+  };
 
   // After a change: reload the class (its errors are shown by the button that made the change),
   // and the overview (a new or removed student, a new name or number).
@@ -168,6 +206,7 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
     await loadDetail(classId);
     if (onOverview) loadOverview(classId, days);
     if (onBoard) loadBoard(classId);
+    if (onAssign) loadAssignments(classId); // a new or removed student
   };
 
   // チケットを贈る: from the roster (checked students) or a student page (one student).
@@ -191,13 +230,50 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
           classTitle={detail?.class?.name ?? ""}
           today={jstDateKey(Date.now())}
           wide={wide}
-          onBack={() => onNavigate({ ...path, screen: "class", studentId: null })}
+          onBack={() => onNavigate(path.assignmentId ? { ...path, screen: "assignment", studentId: null } : { ...path, screen: "class", studentId: null })}
           onGive={detail?.class && !detail.class.archived ? () => setGiveTo([member ?? { student_id: studentId, real_name: shown?.detail?.student?.real_name ?? "" }]) : null}
           honesty={shownHonesty?.counts ?? null}
           honestyError={shownHonesty?.error ?? null}
         />
         {awardSheet}
       </>
+    );
+  }
+
+  if (path.screen === "assignNew") {
+    return (
+      <AssignPackPage
+        className={className}
+        library={library}
+        collections={collections}
+        libraryLoading={libraryLoading}
+        assignedDeckIds={(shownAssign?.rows ?? []).map((a) => a.deck_id)}
+        onBack={() => onNavigate(toAssignments)}
+        onCreate={async (deckId, dueDate, note) => { await api.createAssignment(classId, deckId, dueDate, note); }}
+        onDone={() => { loadAssignments(classId); onNavigate(toAssignments); }}
+      />
+    );
+  }
+
+  if (path.screen === "assignment") {
+    const rows = shownAssign?.rows ?? null;
+    const assignment = rows?.find((a) => a.id === path.assignmentId) ?? null;
+    const missing = rows !== null && !assignment ? t("errors.assignmentNotFound") : null;
+    return (
+      <AssignmentPage
+        key={path.assignmentId}
+        assignment={assignment}
+        roster={detail?.students ?? []}
+        className={className}
+        archived={!!detail?.class?.archived}
+        error={shownAssign?.error ?? missing}
+        wide={wide}
+        onBack={() => onNavigate(toAssignments)}
+        onOpenStudent={(id) => onNavigate({ ...path, screen: "student", studentId: id })}
+        onUpdate={async (dueDate, note) => { await api.updateAssignment(path.assignmentId, dueDate, note); await loadAssignments(classId); }}
+        onDelete={async () => { await api.deleteAssignment(path.assignmentId); await loadAssignments(classId); onNavigate(toAssignments); }}
+        onCsv={(shown) => downloadCsv(classCsvName(className, "assignment", Date.now(), assignment?.deck_name), assignmentCsv(shown))}
+      />
     );
   }
 
@@ -221,7 +297,7 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
           onOpenSearch={setSearchMode}
           onShowLarge={() => setShowLarge(true)}
           awards={classAwards}
-          onOpenStudent={(id) => onNavigate({ ...path, screen: "student", studentId: id })}
+          onOpenStudent={(id) => onNavigate({ ...path, screen: "student", studentId: id, assignmentId: null })}
           onGive={setGiveTo}
           view={path.classView ?? "overview"}
           onView={(classView) => onNavigate({ ...path, classView })}
@@ -236,6 +312,12 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
           leaderboard={shownBoard?.data ?? null}
           leaderboardError={shownBoard?.error ?? null}
           onSetLeaderboard={async (enabled) => { await api.setClassLeaderboard(classId, enabled); await reload(); }}
+          assignments={shownAssign?.rows ?? null}
+          assignmentsError={shownAssign?.error ?? null}
+          onNewAssignment={() => onNavigate({ ...path, screen: "assignNew", assignmentId: null })}
+          onOpenAssignment={(id) => onNavigate({ ...path, screen: "assignment", assignmentId: id })}
+          onOverviewCsv={saveOverviewCsv}
+          onAwardsCsv={saveAwardsCsv}
         />
         {awardSheet}
         {searchMode && (

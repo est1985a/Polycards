@@ -189,3 +189,14 @@ export function collectionParentPath(collection, level) {
     ? { screen: "collection", collectionId: collection.parentId, level }
     : { screen: "tests", level };
 }
+
+// Where the chosen pack comes from, from the screen it was picked on: "textbook · unit", or the
+// collection's name ('' if unknown).
+export function deckSource(path, textbooks, collections) {
+  if (path?.screen === "decks") {
+    const { textbook, unit } = resolvePath(textbooks, path);
+    return [textbook?.name, unit?.name].filter(Boolean).join(" · ");
+  }
+  if (path?.screen === "collection") return findCollection(collections, path.collectionId)?.name ?? '';
+  return '';
+}

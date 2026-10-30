@@ -2,7 +2,8 @@ import { colors, fontBody } from '../styles/theme';
 
 // A pill-shaped segmented switch, the same look as LevelSwitch (used by the teacher's class page:
 // 一覧 / 名簿 and 7日間 / 30日間). options: [{ value, label }]; label: read aloud for the group.
-export default function SegmentedSwitch({ options, value, onChange, label }) {
+// fit: each button as wide as its label needs, with less padding (the class page's four views on a phone).
+export default function SegmentedSwitch({ options, value, onChange, label, fit = false }) {
   return (
     <div
       role="group"
@@ -20,7 +21,7 @@ export default function SegmentedSwitch({ options, value, onChange, label }) {
             onClick={() => onChange(o.value)}
             aria-pressed={selected}
             style={{
-              flex: 1, minWidth: 0, minHeight: 44, padding: "0 14px", borderRadius: 999, border: "none",
+              flex: fit ? "1 1 auto" : 1, minWidth: 0, minHeight: 44, padding: fit ? "0 8px" : "0 14px", borderRadius: 999, border: "none",
               background: selected ? colors.accent : "transparent", color: selected ? colors.accentInk : colors.muted,
               fontFamily: fontBody, fontWeight: 700, fontSize: 15, whiteSpace: "nowrap", cursor: "pointer",
             }}
