@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAction } from '../lib/useAction';
 import { colors, fontDisplay, panel as panelStyle } from '../styles/theme';
 import {
   sortRoster, splitJoinCode, cleanRealName, realNameValid, parseStudentNumber, studentNumberValid,
@@ -9,6 +10,7 @@ import SegmentedSwitch from './SegmentedSwitch';
 import ClassOverview from './ClassOverview';
 import ClassTroubleWords from './ClassTroubleWords';
 import ClassLeaderboard from './ClassLeaderboard';
+import ClassAssignments from './ClassAssignments';
 import ToggleSwitch from './ToggleSwitch';
 import { OVERVIEW_PERIODS, DEFAULT_PERIOD, DEFAULT_SORT } from '../lib/classOverview';
 import { toggleId } from '../lib/library';
@@ -17,27 +19,9 @@ import { Field, ErrorText, StudentFields, Panel, SelectBox, NicknameField } from
 import { inputStyle, ghostSmall, primarySmall, dangerSmall, noAutoFix } from '../styles/forms';
 import { t } from '../i18n';
 
-// Runs an action that returns a promise, with a busy flag and an error message.
-function useAction() {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(null);
-  async function run(fn) {
-    setBusy(true); setError(null);
-    try {
-      await fn();
-      setBusy(false);
-      return true;
-    } catch (e) {
-      setError(e.message);
-      setBusy(false);
-      return false;
-    }
-  }
-  return { busy, error, run, clearError: () => setError(null) };
-}
 
 // An inline "are you sure?" line with キャンセル and a confirm button (like 復習に戻す in Mastered).
-function ConfirmLine({ text, yesLabel, danger = false, busy, onYes, onCancel }) {
+export function ConfirmLine({ text, yesLabel, danger = false, busy, onYes, onCancel }) {
   return (
     <div role="group" aria-label={text} style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end", gap: 8, paddingTop: 10, borderTop: `1px solid ${colors.line}` }}>
       <span style={{ flex: "1 1 160px", fontSize: 15, fontWeight: 700, color: colors.text }}>{text}</span>
@@ -214,9 +198,10 @@ export function JoinCodePanel({ code, archived, onShowLarge, onRegenerate }) {
 }
 
 // 最近のチケット: recent awards in this class (class_awards()), one row per give. null = loading.
-export function ClassAwardsPanel({ awards }) {
+// onCsv(): CSVで保存 (loads up to 100 gives, then saves them); shown once there are awards.
+export function ClassAwardsPanel({ awards, onCsv = null }) {
   return (
-    <Panel title={t("award.historyTitle")}>
+    <Panel title={t("award.historyTitle")} action={onCsv && awards?.length > 0 && <button onClick={onCsv} style={ghostSmall}>{t("csv.save")}</button>}>
       {awards === null ? (
         <div style={{ fontSize: 14, color: colors.muted }}>{t("common.loading")}</div>
       ) : awards.length === 0 ? (
@@ -319,7 +304,8 @@ function ClassSettingsPanel({ cls, onUpdateClass, onSetArchived }) {
   );
 }
 
-// One class (先生 tab). Two views (一覧 / 名簿, `view`, kept in App's teacherPath):
+// One class (先生 tab). Views (`view`, kept in App's teacherPath): 一覧 / 名簿 / ランキング / 課題 (Phase 4,
+// ClassAssignments: the class's assigned packs). Older notes on the first two:
 //   一覧 (default): the class overview table (class_overview()) at full width, then the class trouble
 //     words beside the join code / awards / teachers / class settings (one column on phones).
 //   名簿: the Phase 2 roster (編集 / 外す / ＋ 生徒を追加) on the left, the same panels on the right.
@@ -376,6 +362,8 @@ export default function ClassPage({
   view = "overview", onView = () => {}, days = DEFAULT_PERIOD, onDays = () => {}, sort = DEFAULT_SORT, onSort = () => {},
   overview = null, overviewError = null, troubleWords = null,
   onUpdateNickname = async () => {}, leaderboard = null, leaderboardError = null, onSetLeaderboard = async () => {},
+  assignments = null, assignmentsError = null, onNewAssignment = () => {}, onOpenAssignment = () => {},
+  onOverviewCsv = null, onAwardsCsv = null,
 }) {
   const [selected, setSelected] = useState(() => new Set(initialSelected));
   const back = <div><BackButton label={t("teacher.backToClasses")} onClick={onBack} /></div>;
@@ -415,7 +403,7 @@ export default function ClassPage({
   const side = (
     <div style={{ display: "grid", gap: 16, alignContent: "start" }}>
       <JoinCodePanel code={cls.join_code} archived={cls.archived} onShowLarge={onShowLarge} onRegenerate={onRegenerate} />
-      <ClassAwardsPanel awards={awards} />
+      <ClassAwardsPanel awards={awards} onCsv={onAwardsCsv} />
       <TeachersPanel teachers={detail.teachers} onAddTeacher={() => onOpenSearch("teacher")} />
       <ClassSettingsPanel key={`${cls.name}|${cls.school_year}`} cls={cls} onUpdateClass={onUpdateClass} onSetArchived={onSetArchived} />
     </div>
@@ -457,13 +445,14 @@ export default function ClassPage({
       <ErrorText>{error}</ErrorText>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ flex: wide ? "0 1 380px" : "1 1 100%" }}>
+        <div style={{ flex: wide ? "0 1 480px" : "1 1 100%" }}>
           <SegmentedSwitch
-            label={t("classView.label")} value={view} onChange={onView}
+            label={t("classView.label")} value={view} onChange={onView} fit={!wide}
             options={[
               { value: "overview", label: t("classView.overview") },
               { value: "roster", label: t("classView.roster") },
               { value: "leaderboard", label: t("classView.leaderboard") },
+              { value: "assignments", label: t("classView.assignments") },
             ]}
           />
         </div>
@@ -477,7 +466,15 @@ export default function ClassPage({
         )}
       </div>
 
-      {view === "leaderboard" ? (
+      {view === "assignments" ? (
+        <div style={columns}>
+          <ClassAssignments
+            assignments={assignments} error={assignmentsError} archived={cls.archived}
+            onNew={onNewAssignment} onOpen={onOpenAssignment}
+          />
+          {side}
+        </div>
+      ) : view === "leaderboard" ? (
         <div style={columns}>
           <LeaderboardView cls={cls} board={leaderboard} error={leaderboardError} onSetEnabled={onSetLeaderboard} wide={wide} />
           {side}
@@ -486,6 +483,9 @@ export default function ClassPage({
         <>
           <ClassOverview
             rows={withNicknames(overview, detail.students)} error={overviewError} days={days} sort={sort} onSort={onSort} wide={wide} toolbar={giveBar}
+            action={onOverviewCsv && overview?.length > 0 && (
+              <button onClick={() => onOverviewCsv(withNicknames(overview, detail.students))} style={ghostSmall}>{t("csv.save")}</button>
+            )}
             selectable={canGive} selected={selected} onToggle={toggle} onOpenStudent={onOpenStudent}
           />
           <div style={columns}>

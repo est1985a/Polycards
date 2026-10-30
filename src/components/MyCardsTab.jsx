@@ -1,5 +1,5 @@
 import { colors, fontBody, fontDisplay, panel, wideLayout, btnPrimary } from '../styles/theme';
-import { DEFAULT_SESSION_SIZE, MASTERED, extraDueTotal } from '../lib/srs';
+import { DEFAULT_SESSION_SIZE, MASTERED, extraDueTotal, dueByDeck as countDueByDeck } from '../lib/srs';
 import PlayerStats from './PlayerStats';
 import LevelChart from './LevelChart';
 import StarIcon from './StarIcon';
@@ -194,12 +194,7 @@ function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
 // wide: two columns (player card, review button, chart, Mastered | マイデッキ in a 2-column grid).
 export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, answerMode = "off", onAnswerModeChange = () => {}, handwritingEnabled = false, sessionSize = DEFAULT_SESSION_SIZE, onReview, onOpenPlan, onOpenAbout = () => {}, onOpenCardSets = () => {}, onRemove, onOpenMastered, onOpenCollection, onOpenStats, loading, removingDeckId, wide = false }) {
   // A word can be in several decks, so a due card counts toward each of them.
-  const dueByDeck = {};
-  dueRows.forEach((r) => {
-    r.words?.deck_words?.forEach(({ deck_id: d }) => {
-      dueByDeck[d] = (dueByDeck[d] || 0) + 1;
-    });
-  });
+  const dueByDeck = countDueByDeck(dueRows);
 
   const overview = (
     <>

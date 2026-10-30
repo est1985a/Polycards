@@ -77,7 +77,9 @@ const ICONS = {
 // because accent is not readable as text in every theme.
 // wide: the bar spans the whole screen and the tabs stay centered (240 px each).
 // Five tabs on a phone (teachers) get 12 px labels, so トレーニング fits in a fifth of 390 px.
-export default function Tabs({ tabs, active, onChange, wide = false }) {
+// dots: { [tabId]: true } puts a small accent dot on that tab's icon (クラス: an assigned pack not in
+// My Deck yet), with a hidden label for screen readers (tabs.<id>Dot).
+export default function Tabs({ tabs, active, onChange, wide = false, dots = {} }) {
   const labelSize = !wide && tabs.length >= 5 ? 12 : 14;
   return (
     <nav
@@ -103,10 +105,27 @@ export default function Tabs({ tabs, active, onChange, wide = false }) {
               cursor: "pointer", padding: 0,
             }}
           >
-            <span style={{ color: isActive ? colors.accent : colors.muted, display: "flex" }}>{ICONS[tab.id]}</span>
+            <span style={{ position: "relative", color: isActive ? colors.accent : colors.muted, display: "flex" }}>
+              {ICONS[tab.id]}
+              {dots[tab.id] && (
+                <span
+                  data-tab-dot={tab.id}
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute", top: -3, right: -6, width: 10, height: 10, borderRadius: 999,
+                    background: colors.accent, border: `2px solid ${colors.surface}`,
+                  }}
+                />
+              )}
+            </span>
             <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: labelSize, whiteSpace: "nowrap", color: isActive ? colors.text : colors.muted }}>
               {t(tab.label)}
             </span>
+            {dots[tab.id] && (
+              <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap" }}>
+                {t(`tabs.${tab.id}Dot`)}
+              </span>
+            )}
           </button>
         );
       })}

@@ -46,6 +46,16 @@ export function t(key, vars) {
   return text.replace(PLACEHOLDER, (whole, name) => (name in vars ? String(vars[name]) : whole));
 }
 
+// Like t(), but always the Japanese text, whatever the setting: for CSV files (headers and file
+// names stay Japanese so the school's spreadsheets match).
+export function tJa(key, vars) {
+  const entry = DICTIONARIES[DEFAULT_LANG][key];
+  if (entry === undefined) return key;
+  const text = typeof entry === 'function' ? entry(vars || {}) : entry;
+  if (!vars) return text;
+  return text.replace(PLACEHOLDER, (whole, name) => (name in vars ? String(vars[name]) : whole));
+}
+
 // Like t(), but a placeholder may be a React element (e.g. a number in a styled <span>).
 // Returns an array of strings and elements to put inside JSX. When {n} is an element, also pass
 // the plain number as `count`, so plural entries can pick "1 word" / "3 words".

@@ -26,8 +26,9 @@ function EmptyPanel({ children }) {
 // Number in a pill (e.g. 6 ユニット, 12語), in Chakra Petch.
 const count = (n) => <span style={{ fontFamily: fontDisplay }}>{n}</span>;
 
-// Small accent pill on a deck that is already in My Cards: a check mark and 追加済み.
-function AddedBadge() {
+// Small accent pill on a deck that is already in My Cards: a check mark and 追加済み
+// (or another label, e.g. 出題済み in the teacher's assignment picker).
+function AddedBadge({ label }) {
   return (
     <span
       style={{
@@ -38,7 +39,7 @@ function AddedBadge() {
       <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
         <polyline points="2,6.5 5,9.5 10,3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
-      {t("cardSets.addedBadge")}
+      {label}
     </span>
   );
 }
@@ -48,7 +49,9 @@ function AddedBadge() {
 // path: which screen to show, plus the chosen school level (kept in App so it survives opening a deck);
 // onNavigate(path) changes it. myDeckIds: decks already in My Cards (they get a 追加済み badge).
 // collections: the Tests & Themes tree from shapeCollections, null until it first loads.
-export default function CardSetsTab({ textbooks, loading, collections = null, path, onNavigate, onOpenDeck, myDeckIds, disabled }) {
+// addedLabel: the badge text for decks in myDeckIds (default 追加済み; the assignment picker passes
+// 出題済み and the class's assigned deck ids instead). hubIntro: false hides the hub's intro line.
+export default function CardSetsTab({ textbooks, loading, collections = null, path, onNavigate, onOpenDeck, myDeckIds, disabled, addedLabel = null, hubIntro = true }) {
   const resolved = resolvePath(textbooks, path);
   let current = resolved.path;
   const { textbook, unit } = resolved;
@@ -63,6 +66,7 @@ export default function CardSetsTab({ textbooks, loading, collections = null, pa
       <CardSetsHub
         onOpenTextbooks={() => onNavigate({ screen: "textbooks", level })}
         onOpenTests={() => onNavigate({ screen: "tests", level })}
+        intro={hubIntro}
       />
     );
   }
@@ -83,7 +87,7 @@ export default function CardSetsTab({ textbooks, loading, collections = null, pa
       key={deck.id}
       title={deck.name}
       pill={tx("cardSets.wordCount", { n: count(deck.wordCount), count: deck.wordCount })}
-      badge={isDeckAdded(myDeckIds, deck.id) && <AddedBadge />}
+      badge={isDeckAdded(myDeckIds, deck.id) && <AddedBadge label={addedLabel ?? t("cardSets.addedBadge")} />}
       onClick={() => onOpenDeck(deck)}
       disabled={disabled}
     />

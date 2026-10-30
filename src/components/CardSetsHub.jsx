@@ -63,7 +63,7 @@ function HubCard({ title, label, note, tint, labelColor, pack, onClick }) {
 }
 
 // Word Packs start screen (Card Sets in the code): Textbook Packs or Select Packs (Tests & Themes in the code).
-export default function CardSetsHub({ onOpenTextbooks, onOpenTests }) {
+export default function CardSetsHub({ onOpenTextbooks, onOpenTests, intro = true }) {
   return (
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
       <div>
@@ -71,7 +71,8 @@ export default function CardSetsHub({ onOpenTextbooks, onOpenTests }) {
           <h2 style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 28, margin: 0, color: colors.text }}>{t("cardSets.title")}</h2>
           {t("cardSets.titleJa") && <span style={{ fontSize: 14, fontWeight: 700, color: colors.muted }}>{t("cardSets.titleJa")}</span>}
         </div>
-        <p style={{ margin: "6px 0 0", fontSize: 14, color: colors.muted }}>{t("cardSets.hubIntro")}</p>
+        {/* intro: false on the teacher's assignment picker (it talks about adding to My Deck) */}
+        {intro && <p style={{ margin: "6px 0 0", fontSize: 14, color: colors.muted }}>{t("cardSets.hubIntro")}</p>}
       </div>
       <HubCard
         title={t("cardSets.textbooks")}

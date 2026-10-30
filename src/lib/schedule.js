@@ -111,3 +111,10 @@ export function jstDateTime(at) {
   const mm = String(clock.getUTCMinutes()).padStart(2, '0');
   return { month, day, time: `${hh}:${mm}` };
 }
+
+// A saved timestamp as "2026-10-30 18:05" in Japan time, for CSV files ('' if missing).
+export function jstDateTimeKey(at) {
+  const time = at ? Date.parse(at) : NaN;
+  if (Number.isNaN(time)) return '';
+  return new Date(time + JST).toISOString().slice(0, 16).replace('T', ' ');
+}

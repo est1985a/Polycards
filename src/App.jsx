@@ -5,7 +5,7 @@ import { buildCards, buildReviewCards } from './lib/drill';
 import { loadSchoolLevel, saveSchoolLevel } from './lib/library';
 import { packWords, packSummary } from './lib/packOpening';
 import { totalPoints, levelCounts, playerRank, newPeak } from './lib/points';
-import { MASTERED } from './lib/srs';
+import { MASTERED, dueByDeck } from './lib/srs';
 import { loadAnswerMode, saveAnswerMode } from './lib/spelling';
 import { HANDWRITING_ENABLED } from './handwriting/config';
 import { nextReviewSummary, jstDateKey } from './lib/schedule';
@@ -104,6 +104,11 @@ function App() {
   const [classChoice, setClassChoice] = useState(null);
   // Tickets from teachers the student hasn't seen yet (my_unseen_awards()): a pop-up on the dashboard.
   const [awardRows, setAwardRows] = useState([]);
+  // Assigned packs (Phase 4): how many aren't in My Deck yet (a dot on the クラス tab), the pack being
+  // added from the クラス tab, and a counter that makes the クラス tab reload its progress.
+  const [pendingAssignments, setPendingAssignments] = useState(0);
+  const [addingAssignedDeckId, setAddingAssignedDeckId] = useState(null);
+  const [assignmentsVersion, setAssignmentsVersion] = useState(0);
   const [answerMode, setAnswerMode] = useState(() => loadAnswerMode(window.localStorage, HANDWRITING_ENABLED)); // 答え方: off / typing / handwriting
   // Settings saved on this device (src/lib/settings.js)
   const [sessionSize, setSessionSize] = useState(() => loadSessionSize(window.localStorage)); // 1回の枚数
@@ -141,6 +146,10 @@ function App() {
   const [aboutOpen, setAboutOpen] = useState(false); // "What is Polycards?" pop-up
   const [savingDeck, setSavingDeck] = useState(false);
   const [packResult, setPackResult] = useState(null); // pack opening after Add to My Cards (packSummary)
+  const [packFromClass, setPackFromClass] = useState(false); // the pack was added from the クラス tab (課題)
+  // Where the open word list came from: 'cardSets' (Word Packs) or 'class' (課題's 単語を見る: no drill,
+  // and its back button says クラスにもどる).
+  const [wordListFrom, setWordListFrom] = useState("cardSets");
   const [removingDeckId, setRemovingDeckId] = useState(null);
   const [stats, setStats] = useState(null); // points and rank
   const [masteredCards, setMasteredCards] = useState([]);
@@ -196,7 +205,7 @@ function App() {
         setMyDeckIds([]); setMyDecks([]); setStats(null);
         setGacha(null); setReveal(null); setCollection(null); pulseChecked.current = false;
         setThemeRows(null); setThemesFailed(false); setSeenSaved(null);
-        setIsTeacher(false); setMyClasses(null); setJoinOpen(false); setAwardRows([]);
+        setIsTeacher(false); setMyClasses(null); setJoinOpen(false); setAwardRows([]); setPendingAssignments(0);
       }
       // Log-out: forget this account's theme on the device and go back to Midnight.
       if (event === "SIGNED_OUT") {
@@ -305,9 +314,11 @@ function App() {
     if (session && (view === "dashboard" || view === "gacha")) loadGacha();
   }, [session, view]);
 
-  // Tickets from teachers: checked at the same moments as the gacha status (never throws).
+  // Tickets from teachers: checked at the same moments as the gacha status (never throws). The
+  // assigned packs not added yet (the クラス tab's dot) are checked at the same moments.
   const loadAwards = useCallback(() => {
     api.fetchUnseenAwards().then(setAwardRows);
+    api.fetchPendingAssignments().then(setPendingAssignments);
   }, []);
   useEffect(() => {
     if (session && view === "dashboard") loadAwards();
@@ -675,8 +686,9 @@ function App() {
     setView("study");
   }
 
-  // Card Sets: open a deck's word list; the "try it" drill starts from there
-  async function startDeck(deck) {
+  // Card Sets: open a deck's word list; the "try it" drill starts from there.
+  // from: 'class' when opened with 単語を見る on a 課題 card.
+  async function startDeck(deck, from = "cardSets") {
     setLoadingDeck(true);
     try {
       const words = await api.fetchDeckWords(deck.id);
@@ -685,7 +697,9 @@ function App() {
       // Checked before the list shows, so the tags never make rows jump; null = unknown.
       const ownedWordIds = await api.fetchOwnedWordIds(session?.user?.id, words.map((w) => w.id));
       setActiveSet({ id: deck.id, name: deck.name, cards: buildCards(words), ownedWordIds });
+      setWordListFrom(from);
       setView("wordList");
+      window.scrollTo(0, 0);
     } catch {
       alert(t("cardSets.deckEmpty"));
     }
@@ -737,24 +751,72 @@ function App() {
     setRestoringCardId(null);
   }
 
-  async function addDeck() {
+  // Adds a pack to My Cards and plays the pack opening. set: { id, name, cards } (the word list's
+  // activeSet, or one built for an assigned pack). Returns true when it was added.
+  async function addPack(set) {
     if (!session) {
       alert(t("cardSets.signInToAdd"));
-      return;
+      return false;
     }
-    if (!activeSet) return;
+    if (!set) return false;
     setSavingDeck(true);
+    let added = false;
     try {
-      const { wordIds, ownedWordIds } = await api.addDeckToMyCards(session.user.id, activeSet.id);
-      setPackResult(packSummary(packWords(activeSet.cards), ownedWordIds));
+      const { wordIds, ownedWordIds } = await api.addDeckToMyCards(session.user.id, set.id);
+      setPackResult(packSummary(packWords(set.cards), ownedWordIds));
       // Every word of the deck is owned now.
-      const deckId = activeSet.id;
-      setActiveSet((set) => (set && set.id === deckId ? { ...set, ownedWordIds: wordIds } : set));
+      setActiveSet((current) => (current && current.id === set.id ? { ...current, ownedWordIds: wordIds } : current));
       await loadMyDecks();
+      added = true;
     } catch (e) {
       alert(e.message);
     }
     setSavingDeck(false);
+    return added;
+  }
+
+  // The word list's (and drill's) ＋ マイデッキに追加. From a 課題's 単語を見る, the クラス tab's progress and
+  // dot reload afterwards, and the pack opening's 今すぐ復習する comes back to クラス.
+  async function addDeck() {
+    const fromClass = view === "wordList" && wordListFrom === "class";
+    setPackFromClass(fromClass);
+    const added = await addPack(activeSet);
+    if (added && fromClass) {
+      setAssignmentsVersion((v) => v + 1);
+      api.fetchPendingAssignments().then(setPendingAssignments);
+    }
+    return added;
+  }
+
+  // クラス tab, 課題: ＋ マイデッキに追加 runs the same add (with the pack opening) for an assigned pack,
+  // then the クラス tab reloads its progress and the dot is checked again. The tab stays on クラス.
+  async function addAssignedPack(assignment) {
+    if (addingAssignedDeckId) return;
+    setAddingAssignedDeckId(assignment.deck_id);
+    try {
+      const words = await api.fetchDeckWords(assignment.deck_id);
+      if (words.length === 0) throw new Error(t("cardSets.deckEmpty"));
+      const set = { id: assignment.deck_id, name: assignment.deck_name, cards: buildCards(words), ownedWordIds: null };
+      setActiveSet(set);
+      setPackFromClass(true);
+      if (await addPack(set)) {
+        setAssignmentsVersion((v) => v + 1);
+        api.fetchPendingAssignments().then(setPendingAssignments);
+      }
+    } catch (e) {
+      alert(e.message);
+    }
+    setAddingAssignedDeckId(null);
+  }
+
+  // クラス tab, 課題: 単語を見る opens the pack's word list (no drill; back = クラスにもどる).
+  function viewAssignedWords(assignment) {
+    startDeck({ id: assignment.deck_id, name: assignment.deck_name }, "class");
+  }
+
+  // クラス tab, 課題: 復習する reviews this pack's due cards; leaving the review comes back to クラス.
+  function reviewAssigned(assignment) {
+    startReview({ id: assignment.deck_id, name: assignment.deck_name });
   }
 
   const closePack = useCallback(() => setPackResult(null), []);
@@ -769,11 +831,12 @@ function App() {
   }
 
   // Pack opening: 今すぐ復習する reviews this pack's due cards (its new words are due at once).
-  // The tab switches first, so leaving the review lands on My Cards (EXP, tickets).
+  // The tab switches first, so leaving the review lands on My Cards (EXP, tickets); a pack added
+  // from the クラス tab (課題) comes back to the クラス tab instead.
   function reviewPack() {
     if (!activeSet) return;
     setPackResult(null);
-    setActiveTab("myCards");
+    if (!packFromClass) setActiveTab("myCards");
     startReview({ id: activeSet.id, name: activeSet.name });
   }
 
@@ -852,6 +915,8 @@ function App() {
   const studyFit = !!session && view === "study";
   const fill = studyFit ? "study-fill" : undefined;
   const tabs = isTeacher ? TEACHER_TABS : TABS;
+  const tabDots = { class: pendingAssignments > 0 }; // an assigned pack not in My Deck yet
+  const dueCounts = dueByDeck(dueRows); // due cards per pack (課題's 復習する)
   const teacherTab = view === "dashboard" && activeTab === "teacher";
   const contentWidth = !wide || bandHeader || teacherTab ? "none"
     : view === "stats" ? wideLayout.readWidth
@@ -930,12 +995,23 @@ function App() {
                   )
                 )}
                 {activeTab === "class" && (
-                  <ClassTab classes={myClasses} selectedId={chosenClassId} onSelect={chooseClass} onJoin={() => setJoinOpen(true)} wide={wide} />
+                  <ClassTab
+                    classes={myClasses} selectedId={chosenClassId} onSelect={chooseClass} onJoin={() => setJoinOpen(true)} wide={wide}
+                    assignmentsVersion={assignmentsVersion}
+                    dueFor={(deckId) => dueCounts[deckId] || 0}
+                    busyDeckId={addingAssignedDeckId}
+                    onAddAssignment={addAssignedPack}
+                    onReviewAssignment={reviewAssigned}
+                    onViewAssignmentWords={viewAssignedWords}
+                  />
                 )}
                 {activeTab === "teacher" && isTeacher && (
-                  <TeacherArea path={teacherPath} onNavigate={navigateTeacher} wide={wide} />
+                  <TeacherArea
+                    path={teacherPath} onNavigate={navigateTeacher} wide={wide}
+                    library={libraryData} collections={collectionsData} libraryLoading={loadingLibrary}
+                  />
                 )}
-                <Tabs tabs={tabs} active={activeTab} onChange={changeTab} wide={wide} />
+                <Tabs tabs={tabs} active={activeTab} onChange={changeTab} wide={wide} dots={tabDots} />
                 {planOpen && <ReviewPlanSheet rows={planRows} now={now} onClose={closePlan} />}
                 {/* New theme unlocked: only on My Cards, never during a review. */}
                 {unlock && activeTab === "myCards" && !planOpen && !aboutOpen && !showAwards && (
@@ -994,7 +1070,7 @@ function App() {
                   />
                 )}
                 {/* Neither tab is highlighted on the gacha, settings and stats screens. */}
-                <Tabs tabs={tabs} active={null} onChange={leaveGachaTo} wide={wide} />
+                <Tabs tabs={tabs} active={null} onChange={leaveGachaTo} wide={wide} dots={tabDots} />
                 {reveal && (
                   <GachaReveal
                     key={revealKey}
@@ -1014,7 +1090,10 @@ function App() {
                 {/* The review has its back button in its own top row. */}
                 {view !== "study" && (
                   <div style={{ marginBottom: 14, textAlign: "left" }}>
-                    <BackButton label={t("common.backToDashboard")} onClick={() => setView("dashboard")} />
+                    <BackButton
+                      label={t(view === "wordList" && wordListFrom === "class" ? "common.backToClass" : "common.backToDashboard")}
+                      onClick={() => setView("dashboard")}
+                    />
                   </div>
                 )}
                 {view === "mastered" && (
@@ -1031,6 +1110,7 @@ function App() {
                     onGoToMyDeck={goToMyDeck}
                     wide={wide}
                     speech={speech}
+                    showDrill={wordListFrom !== "class"}
                   />
                 )}
                 {activeSet && (view === "study" || reviewBehind) && (

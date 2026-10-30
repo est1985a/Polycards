@@ -21,6 +21,18 @@ export const DEFAULT_SESSION_SIZE = 20;
 export function extraDueTotal(dueCount, sessionSize = DEFAULT_SESSION_SIZE) {
   return dueCount > sessionSize ? dueCount : null;
 }
+// Due cards per deck, from fetchDueRows() rows ({ words: { deck_words: [{ deck_id }] } }):
+// { [deckId]: n }. A word can be in several decks, so a due card counts toward each of them.
+export function dueByDeck(dueRows) {
+  const counts = {};
+  (dueRows || []).forEach((r) => {
+    r.words?.deck_words?.forEach(({ deck_id: d }) => {
+      counts[d] = (counts[d] || 0) + 1;
+    });
+  });
+  return counts;
+}
+
 // A mastered card put back into reviews starts again at this level, due right away.
 export const RESTORED_LEVEL = 1;
 

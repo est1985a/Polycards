@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   LEVEL_HOURS, MAX_LEVEL, MASTERED, DEFAULT_SESSION_SIZE, SESSION_SIZES, RESTORED_LEVEL, isMastered,
-  levelAfterCorrect, levelAfterWrong, nextReviewDate, restoreUpdate, levelUpLabel, answerTiming,
+  levelAfterCorrect, levelAfterWrong, nextReviewDate, restoreUpdate, levelUpLabel, answerTiming, dueByDeck,
 } from './srs';
 
 describe('settings', () => {
@@ -153,5 +153,17 @@ describe('answerTiming (times for the teachers\' honesty hint)', () => {
   });
   it('never gives a negative time', () => {
     expect(answerTiming({ shownAt: 5000, revealAt: 4000 }, 4500)).toEqual({ revealMs: 0, answerMs: 0 });
+  });
+});
+
+describe('dueByDeck', () => {
+  it('counts a due card under every deck its word is in (shared words)', () => {
+    const rows = [
+      { words: { deck_words: [{ deck_id: 'a' }, { deck_id: 'b' }] } },
+      { words: { deck_words: [{ deck_id: 'a' }] } },
+      { words: null },
+    ];
+    expect(dueByDeck(rows)).toEqual({ a: 2, b: 1 });
+    expect(dueByDeck(null)).toEqual({});
   });
 });
