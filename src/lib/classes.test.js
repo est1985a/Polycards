@@ -3,7 +3,9 @@ import { describe, it, expect } from 'vitest';
 import {
   JOIN_CODE_CHARS, normalizeJoinCode, isJoinCodeShaped, splitJoinCode, cleanRealName, realNameValid,
   parseStudentNumber, studentNumberValid, sortRoster, defaultSchoolYear, parseSchoolYear, classNameValid,
+  cleanNickname, nicknameValid, NICKNAME_MAX,
 } from './classes';
+import { readFileSync } from 'node:fs';
 
 describe('join codes', () => {
   it('has no look-alike characters', () => {
@@ -85,5 +87,42 @@ describe('school year (年度)', () => {
   it('checks a class name', () => {
     expect(classNameValid(' 1年A組 ')).toBe(true);
     expect(classNameValid('  ')).toBe(false);
+  });
+});
+
+describe('full-width join codes (the same in the app and the database)', () => {
+  it('cleans full-width letters, digits, spaces, hyphens and ー', () => {
+    expect(normalizeJoinCode('ＡＢＣ２３４')).toBe('ABC234');
+    expect(normalizeJoinCode('ａｂｃ－２３４')).toBe('ABC234');
+    expect(normalizeJoinCode('ABC ー 234')).toBe('ABC234');
+    expect(normalizeJoinCode('ABC\u2010234')).toBe('ABC234');
+    expect(isJoinCodeShaped('ＡＢＣ　２３４')).toBe(true);
+  });
+
+  it('join_class and check_join_code share one clean-up (NFKC, the same characters as normalizeJoinCode)', () => {
+    const sql = readFileSync(new URL('../../supabase/polycards-class-tab.sql', import.meta.url), 'utf8');
+    expect(sql).toMatch(/clean_join_code[^]*normalize\(coalesce\(p_code, ''\), NFKC\)/);
+    expect(sql).toContain("'[-\\s\u30FC\u2010-\u2015]'"); // the real characters ー ‐ ― in the SQL
+    const uses = sql.match(/v_code text := public\.clean_join_code\(p_code\);/g) || [];
+    expect(uses).toHaveLength(2); // join_class and check_join_code
+  });
+});
+
+describe('class nicknames', () => {
+  it('cleans like clean_nickname() in the SQL: NFKC, spaces collapsed, trimmed', () => {
+    expect(cleanNickname('  Ｔａｒｏ　 ２ ')).toBe('Taro 2');
+    expect(cleanNickname('ﾀﾛｳ')).toBe('タロウ'); // half-width katakana → full-width
+    expect(cleanNickname(null)).toBe('');
+  });
+
+  it('allows 1–12 characters (code points), no control characters', () => {
+    expect(NICKNAME_MAX).toBe(12);
+    expect(nicknameValid('a')).toBe(true);
+    expect(nicknameValid('abcdefghijkl')).toBe(true);
+    expect(nicknameValid('abcdefghijklm')).toBe(false);
+    expect(nicknameValid('　 ')).toBe(false);
+    expect(nicknameValid('😀'.repeat(12))).toBe(true); // 12 code points, like char_length
+    expect(nicknameValid('😀'.repeat(13))).toBe(false);
+    expect(nicknameValid('a\u0007b')).toBe(false);
   });
 });

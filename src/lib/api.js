@@ -596,6 +596,8 @@ const CLASS_ERRORS = {
   bad_amount: "errors.badAmount",
   message_too_long: "errors.messageTooLong",
   no_students: "errors.noStudents",
+  nickname_taken: "errors.nicknameTaken",
+  bad_nickname: "errors.badNickname",
 };
 
 // Turns a database error (e.g. "bad_code") into a friendly message.
@@ -683,9 +685,9 @@ export function checkJoinCode(code) {
   return callClass('check_join_code', { p_code: code });
 }
 
-// Student: join the class with this code. { id, name }
-export function joinClass(code, realName, studentNumber) {
-  return callClass('join_class', { p_code: code, p_real_name: realName, p_student_number: studentNumber });
+// Student: join the class with this code, with the nickname classmates will see. { id, name }
+export function joinClass(code, realName, studentNumber, nickname) {
+  return callClass('join_class', { p_code: code, p_real_name: realName, p_student_number: studentNumber, p_nickname: nickname });
 }
 
 // Student: the classes I'm in (names only): [{ id, name, joined_at }].
@@ -762,4 +764,36 @@ export async function markAwardsSeen(ids) {
   if (!ids?.length) return;
   const { error } = await supabase.rpc('mark_awards_seen', { p_ids: ids });
   if (error) console.error("Could not mark awards seen: " + error.message);
+}
+
+// ---- クラス tab (supabase/polycards-class-tab.sql) ----
+
+// Student: one of my classes: { id, name, school_year, leaderboard_enabled, nickname (null = not chosen yet),
+// teachers: [display names] }.
+export async function fetchMyClassInfo(classId) {
+  const d = (await callClass('my_class_info', { p_class_id: classId })) || {};
+  return { ...d, teachers: d.teachers ?? [], nickname: d.nickname ?? null };
+}
+
+// Student: my nickname in a class. Returns it as saved (cleaned).
+export function setMyNickname(classId, nickname) {
+  return callClass('set_my_nickname', { p_class_id: classId, p_nickname: nickname });
+}
+
+// Student or teacher of the class: this week's leaderboard: { enabled, archived, week_start,
+// top: [{ rank, nickname, reviews, is_me, avatar }], me: { nickname, rank, reviews } | null,
+// last_week: [same as top] }. Switched off (students) or archived: { enabled: false } and nothing else.
+export async function fetchClassLeaderboard(classId) {
+  const d = (await callClass('class_leaderboard', { p_class_id: classId })) || {};
+  return { ...d, enabled: d.enabled === true, top: d.top ?? [], last_week: d.last_week ?? [], me: d.me ?? null };
+}
+
+// Teacher: the class's ランキング switch.
+export function setClassLeaderboard(classId, enabled) {
+  return callClass('set_class_leaderboard', { p_class_id: classId, p_enabled: enabled });
+}
+
+// Teacher: a student's nickname ('' clears it, so the student is asked to choose again).
+export function setMemberNickname(classId, studentId, nickname) {
+  return callClass('set_member_nickname', { p_class_id: classId, p_student_id: studentId, p_nickname: nickname });
 }

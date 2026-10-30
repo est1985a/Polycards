@@ -1,5 +1,7 @@
 import { colors, fontDisplay, panel } from '../styles/theme';
 import { inputStyle, noAutoFix } from '../styles/forms';
+import { cleanNickname, NICKNAME_MAX } from '../lib/classes';
+import { t } from '../i18n';
 
 // Form parts shared by the teacher screens and the join-a-class pop-up.
 
@@ -71,5 +73,31 @@ export function SelectBox({ checked, label, onToggle }) {
         {checked ? "✓" : ""}
       </span>
     </button>
+  );
+}
+
+// A class nickname (1–12 characters) with a counter and the note that classmates will see it.
+// note: false hides the note (the teacher's roster form).
+export function NicknameField({ value, onChange, label, hint, note = true, autoFocus = false }) {
+  const n = Array.from(cleanNickname(value)).length;
+  return (
+    <Field label={label ?? t("nickname.label")} hint={hint ?? (note ? t("nickname.note") : null)}>
+      <span style={{ position: "relative", display: "block" }}>
+        <input
+          type="text" value={value} onChange={(e) => onChange(e.target.value)} maxLength={NICKNAME_MAX + 8}
+          placeholder={t("nickname.placeholder")} autoFocus={autoFocus} {...noAutoFix}
+          style={{ ...inputStyle, width: "100%", boxSizing: "border-box", paddingRight: 56 }}
+        />
+        <span
+          aria-hidden="true"
+          style={{
+            position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", fontSize: 12, fontWeight: 400,
+            color: n > NICKNAME_MAX ? colors.danger : colors.muted, fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {t("nickname.count", { n })}
+        </span>
+      </span>
+    </Field>
   );
 }

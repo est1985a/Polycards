@@ -83,6 +83,11 @@ function OverviewRow({ row, columns, now, wide, selectable, selected, onToggle, 
         }}
       >
         {row.real_name}
+        {row.nickname !== undefined && (
+          <span style={{ display: "block", fontSize: 12, fontWeight: 400, color: colors.muted, overflowWrap: "anywhere" }}>
+            {row.nickname ?? t("teacher.noNickname")}
+          </span>
+        )}
       </button>
     ),
     lastStudied: <span style={{ fontSize: 14, color: muted ? colors.muted : colors.text, whiteSpace: "nowrap" }}>{lastStudiedText(row.last_studied_at, now)}</span>,

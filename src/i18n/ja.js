@@ -33,6 +33,7 @@ export default {
   "tabs.myCards": "マイデッキ",
   "tabs.cardSets": "単語パック",
   "tabs.training": "トレーニング",
+  "tabs.class": "クラス",
   "tabs.teacher": "先生", // only for teacher accounts
 
   // My Cards dashboard: review button and マイデッキ list
@@ -529,7 +530,7 @@ export default {
   "joinClass.realName": "本名",
   "joinClass.realNamePlaceholder": "例：山田 太郎",
   "joinClass.studentNumber": "出席番号",
-  "joinClass.privacyNote": "本名と出席番号は、このクラスの先生だけが見られます。ほかの生徒には見えません。",
+  "joinClass.privacyNote": "本名と出席番号は、このクラスの先生だけが見られます。クラスメイトには見えません（ランキングにはニックネームが出ます）。",
   "joinClass.back": "もどる",
   "joinClass.confirm": "「{name}」に参加しますか？",
   "joinClass.confirmName": "名前：{name}",
@@ -539,6 +540,52 @@ export default {
   "joinClass.joining": "参加中…",
   "joinClass.done": "「{name}」に参加しました！",
   "joinClass.ok": "OK",
+
+  // クラス tab (supabase/polycards-class-tab.sql)
+  "joinClass.nicknameStep": "クラスでのニックネームを決めよう",
+  "joinClass.confirmNickname": "ニックネーム：{name}",
+  "nickname.label": "ニックネーム（12文字まで）",
+  "nickname.note": "クラスのランキングで、クラスメイトに表示されます",
+  "nickname.placeholder": "例：たろう",
+  "nickname.count": "{n}/12", // characters typed, read aloud with the field
+  "nickname.sheetTitle": "ニックネームを変更",
+  "nickname.save": "保存",
+  "nickname.saving": "保存中…",
+  "nickname.cancel": "キャンセル",
+  "classTab.noClassTitle": "まだクラスに入っていません",
+  "classTab.noClassText": "先生から参加コードをもらったら、ここからクラスに参加できます。",
+  "classTab.join": "＋ クラスに参加",
+  "classTab.pickerLabel": "クラスを選ぶ", // read aloud: the class picker
+  "classTab.teachers": "先生：{names}",
+  "classTab.teacherSeparator": "、",
+  "classTab.nickname": "ニックネーム：{name}",
+  "classTab.changeNickname": "変更",
+  "classTab.changeNicknameAria": "ニックネームを変更", // read aloud
+  "classTab.chooseTitle": "ニックネームを決めよう",
+  "classTab.chooseText": "ランキングに出るには、まずこのクラスでのニックネームを決めてください。本名はクラスメイトには見えません。",
+  "classTab.chooseSave": "決める",
+  "classTab.leaderboardOff": "今はランキングはお休みです",
+  "classTab.loadFailed": "クラスを読み込めませんでした",
+  "leaderboard.title": "今週のランキング",
+  "leaderboard.resets": "月曜日にリセット",
+  "leaderboard.rank": "{n}位",
+  "leaderboard.reviews": "{n}回",
+  "leaderboard.you": "あなた", // small badge on the student's own row
+  "leaderboard.myPlace": "あなたは {rank}位（{n}回）",
+  "leaderboard.myZero": "今週はまだ0回。1回でもランキングに入れます！",
+  "leaderboard.empty": "今週はまだだれも復習していません。最初の1人になろう！",
+  "leaderboard.lastWeek": "先週のトップ3",
+  "leaderboard.avatarAlt": "ポリアバター",
+  "leaderboard.switch": "生徒にランキングを表示", // teacher: the class's switch
+  "leaderboard.teacherOff": "ランキングはオフです。生徒には表示されていません。",
+  "leaderboard.teacherNote": "今週（月曜〜日曜）の復習回数で順位をつけます。ニックネームがない生徒と0回の生徒は出ません。",
+  "classView.leaderboard": "ランキング",
+  "teacher.nicknameValue": "ニックネーム：{name}",
+  "teacher.noNickname": "ニックネーム未設定",
+  "teacher.nicknameLabel": "ニックネーム",
+  "teacher.nicknameHint": "空にすると、生徒にもう一度決めてもらいます",
+  "errors.nicknameTaken": "そのニックネームはもう使われています。ほかのニックネームにしてください",
+  "errors.badNickname": "ニックネームは1〜12文字で入力してください",
 
   // 先生 tab: one student's page (teacher view)
   "studentPage.open": "{name}さんのページを開く", // read aloud: the name on a roster row
