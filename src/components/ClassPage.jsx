@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { colors, fontDisplay, panel } from '../styles/theme';
 import {
   sortRoster, splitJoinCode, cleanRealName, realNameValid, parseStudentNumber, studentNumberValid,
-  classNameValid, parseSchoolYear,
+  classNameValid, parseSchoolYear, dateTimeText,
 } from '../lib/classes';
 import BackButton from './BackButton';
+
 import { Field, ErrorText, StudentFields } from './ClassFields';
 import { inputStyle, ghostSmall, primarySmall, dangerSmall, noAutoFix } from '../styles/forms';
 import { t } from '../i18n';
@@ -51,8 +52,31 @@ function ConfirmLine({ text, yesLabel, danger = false, busy, onYes, onCancel }) 
   );
 }
 
-// One student on the roster: 出席番号, real name, account name; 編集 (inline form) and 外す (inline confirm).
-export function RosterRow({ student, wide = false, onUpdate, onRemove, initialMode = null }) {
+// A 44 px checkbox (role="checkbox") for choosing students to give tickets to.
+function SelectBox({ checked, label, onToggle }) {
+  return (
+    <button
+      type="button" role="checkbox" aria-checked={checked} aria-label={label} onClick={onToggle}
+      style={{ width: 44, height: 44, flexShrink: 0, display: "grid", placeItems: "center", background: "transparent", border: "none", padding: 0, cursor: "pointer" }}
+    >
+      <span
+        aria-hidden="true"
+        style={{
+          width: 24, height: 24, borderRadius: 6, boxSizing: "border-box", display: "grid", placeItems: "center",
+          border: `2px solid ${checked ? colors.accent : colors.line}`, background: checked ? colors.accent : colors.surface,
+          color: colors.accentInk, fontSize: 16, fontWeight: 700, lineHeight: 1,
+        }}
+      >
+        {checked ? "✓" : ""}
+      </span>
+    </button>
+  );
+}
+
+// One student on the roster: (checkbox), 出席番号, real name, account name; tapping the name opens the
+// student's page; 編集 (inline form) and 外す (inline confirm).
+// selectable / selected / onToggle: the checkbox for チケットを贈る. onOpen(): open the student page.
+export function RosterRow({ student, wide = false, onUpdate, onRemove, onOpen, selectable = false, selected = false, onToggle, initialMode = null }) {
   const [mode, setMode] = useState(initialMode); // null | 'edit' | 'remove'
   const [name, setName] = useState(student.real_name);
   const [number, setNumber] = useState(student.student_number == null ? "" : String(student.student_number));
@@ -92,16 +116,31 @@ export function RosterRow({ student, wide = false, onUpdate, onRemove, initialMo
           </div>
         </form>
       ) : (
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ width: 40, flexShrink: 0, textAlign: "center", fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, color: colors.gold }}>
-            {student.student_number ?? "–"}
-          </span>
-          <span style={{ flex: 1, minWidth: 0, display: wide ? "grid" : "block", gridTemplateColumns: wide ? "minmax(0, 1fr) minmax(0, 1fr)" : undefined, alignItems: "center", gap: 12, overflowWrap: "anywhere" }}>
-            <span style={{ display: "block", fontSize: 17, fontWeight: 700, color: colors.text }}>{student.real_name}</span>
-            <span style={{ display: "block", fontSize: 13, color: colors.muted }}>{account}</span>
-          </span>
+        // The 編集 / 外す buttons drop to a second line when the row is narrow (phones).
+        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          {selectable && (
+            <SelectBox checked={selected} label={t("award.select", { name: student.real_name })} onToggle={() => onToggle(student.student_id)} />
+          )}
+          <button
+            type="button"
+            onClick={onOpen}
+            aria-label={t("studentPage.open", { name: student.real_name })}
+            style={{
+              flex: "1 1 180px", minWidth: 0, minHeight: 44, display: "flex", alignItems: "center", gap: 12, padding: 0,
+              background: "transparent", border: "none", cursor: "pointer", textAlign: "left", color: colors.text,
+            }}
+          >
+            <span style={{ width: 36, flexShrink: 0, textAlign: "center", fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, color: colors.gold }}>
+              {student.student_number ?? "–"}
+            </span>
+            <span style={{ flex: 1, minWidth: 0, display: wide ? "grid" : "block", gridTemplateColumns: wide ? "minmax(0, 1fr) minmax(0, 1fr)" : undefined, alignItems: "center", gap: 12, overflowWrap: "anywhere" }}>
+              <span style={{ display: "block", fontSize: 17, fontWeight: 700 }}>{student.real_name}</span>
+              <span style={{ display: "block", fontSize: 13, color: colors.muted }}>{account}</span>
+            </span>
+            <span aria-hidden="true" style={{ flexShrink: 0, fontSize: 22, lineHeight: 1, color: colors.muted }}>›</span>
+          </button>
           {mode !== "remove" && (
-            <span style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+            <span style={{ display: "flex", gap: 6, flexShrink: 0, marginLeft: "auto" }}>
               <button onClick={startEdit} aria-label={t("teacher.editStudent", { name: student.real_name })} style={ghostSmall}>{t("teacher.edit")}</button>
               <button onClick={() => { action.clearError(); setMode("remove"); }} style={{ ...ghostSmall, color: colors.danger }}>{t("teacher.remove")}</button>
             </span>
@@ -172,6 +211,43 @@ export function JoinCodePanel({ code, archived, onShowLarge, onRegenerate }) {
         />
       )}
       <ErrorText>{action.error}</ErrorText>
+    </Panel>
+  );
+}
+
+// 最近のチケット: recent awards in this class (class_awards()), one row per give. null = loading.
+export function ClassAwardsPanel({ awards }) {
+  return (
+    <Panel title={t("award.historyTitle")}>
+      {awards === null ? (
+        <div style={{ fontSize: 14, color: colors.muted }}>{t("common.loading")}</div>
+      ) : awards.length === 0 ? (
+        <div style={{ fontSize: 14, color: colors.muted }}>{t("award.historyEmpty")}</div>
+      ) : (
+        <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 8 }}>
+          {awards.map((a) => {
+            const names = a.student_names || [];
+            const shown = names.slice(0, 3).join(t("award.nameSeparator"));
+            const more = names.length - 3;
+            return (
+              <li key={a.batch_id} style={{ display: "grid", gap: 2, padding: "8px 12px", borderRadius: 12, background: colors.surface2, overflowWrap: "anywhere" }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap", fontSize: 13, color: colors.muted }}>
+                  <span>{dateTimeText(a.created_at)}</span>
+                  <span>{a.teacher_name}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+                  <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 17, color: colors.gold }}>{t("award.amountBadge", { n: a.amount })}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: colors.text }}>{t("award.studentCount", { n: a.student_count })}</span>
+                  <span style={{ fontSize: 13, color: colors.muted }}>
+                    {shown}{more > 0 ? `${t("award.nameSeparator")}${t("award.andMore", { n: more })}` : ""}
+                  </span>
+                </div>
+                {a.message && <div style={{ fontSize: 14, color: colors.text }}>{a.message}</div>}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </Panel>
   );
 }
@@ -248,10 +324,14 @@ function ClassSettingsPanel({ cls, onUpdateClass, onSetArchived }) {
 // One class (先生 tab): roster on the left, join code / teachers / class settings on the right
 // (one column on phones). detail: { class, students, teachers } from class_detail() (null while loading).
 // Each on… action returns a promise; the page shows its error next to the button that ran it.
+// awards: recent awards (class_awards(), null while loading). onOpenStudent(id): a roster name was tapped.
+// onGive(students): チケットを贈る for the checked students. initialSelected: for tests.
 export default function ClassPage({
-  detail, error = null, onBack, wide = false,
+  detail, error = null, onBack, wide = false, awards = null,
   onUpdateClass, onSetArchived, onRegenerate, onUpdateMember, onRemoveMember, onOpenSearch, onShowLarge,
+  onOpenStudent = () => {}, onGive = () => {}, initialSelected = [],
 }) {
+  const [selected, setSelected] = useState(() => new Set(initialSelected));
   const back = <div><BackButton label={t("teacher.backToClasses")} onClick={onBack} /></div>;
   if (!detail) {
     return (
@@ -263,6 +343,15 @@ export default function ClassPage({
   }
   const cls = detail.class;
   const students = sortRoster(detail.students);
+  // Only students still on the roster count as chosen (one may have been removed meanwhile).
+  const chosen = students.filter((s) => selected.has(s.student_id));
+  const allChosen = students.length > 0 && chosen.length === students.length;
+  const toggle = (id) => setSelected((old) => {
+    const next = new Set(old);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const canGive = !cls.archived && students.length > 0;
 
   return (
     <div style={{ display: "grid", gap: 16, paddingTop: 8, textAlign: "left" }}>
@@ -281,12 +370,33 @@ export default function ClassPage({
           title={`${t("teacher.roster")} (${students.length})`}
           action={!cls.archived && <button onClick={() => onOpenSearch("student")} style={primarySmall}>{t("teacher.addStudent")}</button>}
         >
+          {canGive && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+              <button
+                onClick={() => setSelected(allChosen ? new Set() : new Set(students.map((s) => s.student_id)))}
+                style={ghostSmall}
+              >
+                {allChosen ? t("award.clearSelection") : t("award.selectAll")}
+              </button>
+              <button
+                onClick={() => onGive(chosen)}
+                disabled={chosen.length === 0}
+                style={{ ...primarySmall, background: colors.gold, opacity: chosen.length === 0 ? 0.5 : 1 }}
+              >
+                {t("award.giveCount", { n: chosen.length })}
+              </button>
+            </div>
+          )}
           {students.length === 0 ? (
             <div style={{ fontSize: 15, color: colors.muted }}>{t("teacher.noStudents")}</div>
           ) : (
             <ul data-roster="" style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 8 }}>
               {students.map((s) => (
-                <RosterRow key={s.student_id} student={s} wide={wide} onUpdate={onUpdateMember} onRemove={onRemoveMember} />
+                <RosterRow
+                  key={s.student_id} student={s} wide={wide} onUpdate={onUpdateMember} onRemove={onRemoveMember}
+                  onOpen={() => onOpenStudent(s.student_id)}
+                  selectable={canGive} selected={selected.has(s.student_id)} onToggle={toggle}
+                />
               ))}
             </ul>
           )}
@@ -294,6 +404,7 @@ export default function ClassPage({
 
         <div style={{ display: "grid", gap: 16 }}>
           <JoinCodePanel code={cls.join_code} archived={cls.archived} onShowLarge={onShowLarge} onRegenerate={onRegenerate} />
+          <ClassAwardsPanel awards={awards} />
           <TeachersPanel teachers={detail.teachers} onAddTeacher={() => onOpenSearch("teacher")} />
           <ClassSettingsPanel key={`${cls.name}|${cls.school_year}`} cls={cls} onUpdateClass={onUpdateClass} onSetArchived={onSetArchived} />
         </div>

@@ -589,6 +589,9 @@ const CLASS_ERRORS = {
   user_not_found: "errors.userNotFound",
   target_not_teacher: "errors.targetNotTeacher",
   already_teacher: "errors.alreadyTeacher",
+  bad_amount: "errors.badAmount",
+  message_too_long: "errors.messageTooLong",
+  no_students: "errors.noStudents",
 };
 
 // Turns a database error (e.g. "bad_code") into a friendly message.
@@ -684,4 +687,51 @@ export function joinClass(code, realName, studentNumber) {
 // Student: the classes I'm in (names only): [{ id, name, joined_at }].
 export async function fetchMyClasses() {
   return (await callClass('my_classes')) || [];
+}
+
+// ---- Teacher area, Phase 2 (supabase/polycards-teacher-phase2.sql) ----
+
+// Teacher: one student's page (only students in a class I teach): { student, last_studied_at, avatar,
+// peak_points, bonus_points, player_level, tickets, level_counts (9), days, totals, trouble, packs, awards }.
+export async function fetchStudentDetail(classId, studentId) {
+  const d = (await callClass('student_detail', { p_class_id: classId, p_student_id: studentId })) || {};
+  return {
+    ...d,
+    days: d.days ?? [],
+    trouble: d.trouble ?? [],
+    packs: d.packs ?? [],
+    awards: d.awards ?? [],
+    level_counts: d.level_counts ?? Array(9).fill(0),
+    totals: { reviews: 0, spelled_correctly: 0, bonus_points: 0, ...(d.totals || {}) },
+  };
+}
+
+// Teacher: give 1–10 tickets (and an optional message) to students of this class.
+// Returns { batch_id, students, amount }.
+export function awardTickets(classId, studentIds, amount, message) {
+  return callClass('award_tickets', { p_class_id: classId, p_student_ids: studentIds, p_amount: amount, p_message: message });
+}
+
+// Teacher: recent awards in a class, one row per give:
+// [{ batch_id, created_at, teacher_name, amount, message, student_count, student_names }].
+export async function fetchClassAwards(classId) {
+  return (await callClass('class_awards', { p_class_id: classId })) || [];
+}
+
+// Student: awards not seen yet, oldest first: [{ id, teacher_name, amount, message, created_at }].
+// Never throws (the pop-up is a bonus): an error → console.warn and [].
+export async function fetchUnseenAwards() {
+  const { data, error } = await supabase.rpc('my_unseen_awards');
+  if (error) {
+    console.warn("Could not load awards: " + error.message);
+    return [];
+  }
+  return data || [];
+}
+
+// Student: the pop-up showed these awards. Never throws (a failure only means it shows again).
+export async function markAwardsSeen(ids) {
+  if (!ids?.length) return;
+  const { error } = await supabase.rpc('mark_awards_seen', { p_ids: ids });
+  if (error) console.error("Could not mark awards seen: " + error.message);
 }

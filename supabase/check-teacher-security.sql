@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Polycards: check that a STUDENT can't use the teacher functions (2026-10-30)
--- Run AFTER polycards-teachers.sql. Read-only: every check that could write
+-- Run AFTER polycards-teachers.sql (and polycards-teacher-phase2.sql). Read-only: every check that could write
 -- something is undone straight away, so nothing in the database changes.
 --
 -- 1. Put a student's username (or full email) on the line marked  <-- STUDENT
@@ -51,6 +51,11 @@ begin
       ('add_co_teacher',             format('select public.add_co_teacher(%L, %L)', v_class, v_student),                                'not_teacher'),
       ('regenerate_join_code',       format('select public.regenerate_join_code(%L)', v_class),                                         'not_teacher'),
       ('set_class_archived',         format('select public.set_class_archived(%L, true)', v_class),                                    'not_teacher'),
+      ('student_detail',             format('select public.student_detail(%L, %L)', v_class, v_student),                                'not_teacher'),
+      ('award_tickets',              format('select public.award_tickets(%L, array[%L]::uuid[], 10, %L)', v_class, v_student, 'free'), 'not_teacher'),
+      ('class_awards',               format('select * from public.class_awards(%L)', v_class),                                          'not_teacher'),
+      ('insert into ticket_awards',  format('insert into public.ticket_awards (batch_id, student_id, amount) values (gen_random_uuid(), %L, 10)', v_student), 'permission denied'),
+      ('call internal trouble_words_for', format('select * from public.trouble_words_for(%L)', v_student),                               'permission denied'),
       ('read teachers table',        'select count(*) from public.teachers',                                                            'permission denied'),
       ('make myself a teacher',      format('insert into public.teachers (user_id) values (%L)', v_student),                            'permission denied'),
       ('insert into classes',        format('insert into public.classes (name, school_year, join_code) values (%L, 2026, %L)', 'X', 'ABCDEF'), 'permission denied'),
@@ -80,6 +85,8 @@ begin
   v_out := v_out || (case when v_n = 0 then 'PASS' else 'FAIL' end) || '  other students'' real names visible: ' || v_n || E'\n';
   select count(*) into v_n from public.classes;
   v_out := v_out || (case when v_n = 0 then 'PASS' else 'FAIL' end) || '  class rows (join codes) visible: ' || v_n || E'\n';
+  select count(*) into v_n from public.ticket_awards a where a.student_id <> v_student;
+  v_out := v_out || (case when v_n = 0 then 'PASS' else 'FAIL' end) || '  other students'' awards visible: ' || v_n || E'\n';
   select count(*) into v_n from public.class_teachers;
   v_out := v_out || (case when v_n = 0 then 'PASS' else 'FAIL' end) || '  class_teachers rows visible: ' || v_n || E'\n';
   select public.is_teacher() into v_bool;

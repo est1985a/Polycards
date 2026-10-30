@@ -1,7 +1,8 @@
 // Classes (teacher area): join codes, real names, 出席番号 and the roster order. Pure functions.
 // The database (supabase/polycards-teachers.sql) checks everything again; these only keep the
 // forms friendly (e.g. the 参加 button stays off until a code has the right shape).
-import { jstDateKey } from './schedule';
+import { jstDateKey, jstDateTime } from './schedule';
+import { t } from '../i18n';
 
 // The letters a join code is made of: no 0/O and no 1/I/L, so a code read off the board can't be
 // mistyped. Must match new_join_code() in the SQL.
@@ -88,3 +89,22 @@ export function classNameValid(text) {
 
 // The 先生 tab's first screen (TeacherArea.jsx): the class list, not the archived ones.
 export const TEACHER_START = { screen: 'classes', classId: null, archived: false };
+
+// A saved time as "10月30日 18:05" (Japan time); '' if missing.
+export function dateTimeText(at) {
+  const p = jstDateTime(at);
+  return p ? t('studentPage.dateTime', { date: t('stats.date', { month: p.month, day: p.day }), time: p.time }) : '';
+}
+
+// A saved time as "10月30日" (Japan time); '' if missing.
+export function dateText(at) {
+  const p = jstDateTime(at);
+  return p ? t('stats.date', { month: p.month, day: p.day }) : '';
+}
+
+// A student page's "last active" line: last studied (last answer), else last sign-in, else not yet.
+export function lastActiveText(detail) {
+  if (detail?.last_studied_at) return t('studentPage.lastStudied', { when: dateTimeText(detail.last_studied_at) });
+  if (detail?.student?.last_sign_in_at) return t('studentPage.lastSignIn', { when: dateTimeText(detail.student.last_sign_in_at) });
+  return t('studentPage.neverActive');
+}
