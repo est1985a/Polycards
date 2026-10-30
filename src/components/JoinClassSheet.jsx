@@ -2,18 +2,19 @@ import { useState } from 'react';
 import { colors, fontDisplay, btnPrimary } from '../styles/theme';
 import {
   normalizeJoinCode, isJoinCodeShaped, JOIN_CODE_LENGTH, cleanRealName, realNameValid, parseStudentNumber, studentNumberValid,
+  cleanNickname, nicknameValid,
 } from '../lib/classes';
 import * as api from '../lib/api';
 import SheetFrame from './SheetFrame';
-import { Field, ErrorText, StudentFields } from './ClassFields';
+import { Field, ErrorText, StudentFields, NicknameField } from './ClassFields';
 import { inputStyle, ghostSmall, primarySmall, noAutoFix } from '../styles/forms';
 import { t } from '../i18n';
 
 // The steps of joining, as plain markup (tests render each step).
-// step: 'code' | 'details' | 'confirm' | 'done'.
+// step: 'code' | 'details' | 'nickname' | 'confirm' | 'done'.
 export function JoinClassSteps({
-  step, code, onCode, found, name, number, onName, onNumber, busy = false, error = null,
-  onCheck, onDetails, onBack, onJoin, onDone,
+  step, code, onCode, found, name, number, onName, onNumber, nickname = "", onNickname = () => {}, busy = false, error = null,
+  onCheck, onDetails, onNicknameDone = () => {}, onBack, onJoin, onDone,
 }) {
   if (step === "done") {
     return (
@@ -34,6 +35,7 @@ export function JoinClassSteps({
         <div style={{ display: "grid", gap: 4, padding: "10px 14px", borderRadius: 12, background: colors.surface2, fontSize: 16 }}>
           <span>{t("joinClass.confirmName", { name: cleanRealName(name) })}</span>
           <span>{n == null ? t("joinClass.confirmNoNumber") : t("joinClass.confirmNumber", { n })}</span>
+          <span>{t("joinClass.confirmNickname", { name: cleanNickname(nickname) })}</span>
         </div>
         <ErrorText>{error}</ErrorText>
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
@@ -41,6 +43,21 @@ export function JoinClassSteps({
           <button onClick={onJoin} disabled={busy} style={{ ...primarySmall, opacity: busy ? 0.6 : 1 }}>{busy ? t("joinClass.joining") : t("joinClass.join")}</button>
         </div>
       </div>
+    );
+  }
+
+  if (step === "nickname") {
+    const ok = nicknameValid(nickname);
+    return (
+      <form onSubmit={(e) => { e.preventDefault(); if (ok) onNicknameDone(); }} style={{ display: "grid", gap: 12 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: colors.accentText }}>{t("joinClass.nicknameStep")}</div>
+        <NicknameField value={nickname} onChange={onNickname} autoFocus />
+        <ErrorText>{error}</ErrorText>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+          <button type="button" onClick={onBack} style={ghostSmall}>{t("joinClass.back")}</button>
+          <button type="submit" disabled={!ok} style={{ ...primarySmall, opacity: ok ? 1 : 0.6 }}>{t("joinClass.next")}</button>
+        </div>
+      </form>
     );
   }
 
@@ -82,14 +99,17 @@ export function JoinClassSteps({
   );
 }
 
-// クラスに参加 (from the account menu): 1) the join code (checked, shows the class name),
-// 2) 本名 + 出席番号, 3) 参加しますか？, then できた. onJoined(): a class was joined (to reload lists).
+// クラスに参加 (account menu, settings, クラス tab): 1) the join code (checked, shows the class name),
+// 2) 本名 + 出席番号, 3) the nickname classmates see, 4) 参加しますか？, then できた.
+// onJoined({ id, name }): a class was joined (to reload lists and show it in the クラス tab).
+// A nickname already used in the class (nickname_taken) goes back to step 3 with the message.
 export default function JoinClassSheet({ onClose, onJoined = () => {}, check = api.checkJoinCode, join = api.joinClass }) {
   const [step, setStep] = useState("code");
   const [code, setCode] = useState("");
   const [found, setFound] = useState(null);
   const [name, setName] = useState("");
   const [number, setNumber] = useState("");
+  const [nickname, setNickname] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -101,17 +121,24 @@ export default function JoinClassSheet({ onClose, onJoined = () => {}, check = a
   return (
     <SheetFrame titleId="join-class-title" title={t("joinClass.title")} onClose={onClose}>
       <JoinClassSteps
-        step={step} code={code} found={found} name={name} number={number} busy={busy} error={error}
+        step={step} code={code} found={found} name={name} number={number} nickname={nickname} busy={busy} error={error}
         onCode={(v) => { setCode(v); setError(null); }}
         onName={setName}
         onNumber={setNumber}
+        onNickname={(v) => { setNickname(v); setError(null); }}
         onCheck={() => run(async () => { setFound(await check(normalizeJoinCode(code))); setStep("details"); })}
-        onDetails={() => { setError(null); setStep("confirm"); }}
-        onBack={() => { setError(null); setStep(step === "confirm" ? "details" : "code"); }}
+        onDetails={() => { setError(null); setStep("nickname"); }}
+        onNicknameDone={() => { setError(null); setStep("confirm"); }}
+        onBack={() => { setError(null); setStep({ confirm: "nickname", nickname: "details" }[step] ?? "code"); }}
         onJoin={() => run(async () => {
-          await join(normalizeJoinCode(code), cleanRealName(name), parseStudentNumber(number));
-          setStep("done");
-          onJoined();
+          try {
+            const joined = await join(normalizeJoinCode(code), cleanRealName(name), parseStudentNumber(number), cleanNickname(nickname));
+            setStep("done");
+            onJoined(joined ?? found);
+          } catch (e) {
+            if (e.message === t("errors.nicknameTaken")) setStep("nickname");
+            throw e;
+          }
         })}
         onDone={onClose}
       />

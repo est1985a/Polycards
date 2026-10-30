@@ -29,6 +29,7 @@ import Header from './components/Header';
 import LoginScreen from './components/LoginScreen';
 import Tabs from './components/Tabs';
 import TrainingTab from './components/TrainingTab';
+import ClassTab from './components/ClassTab';
 import AbcPractice from './components/AbcPractice';
 import MyCardsTab from './components/MyCardsTab';
 import CardSetsTab from './components/CardSetsTab';
@@ -46,6 +47,7 @@ import StatsScreen from './components/StatsScreen';
 import ThemeUnlockSheet from './components/ThemeUnlockSheet';
 import TeacherArea from './components/TeacherArea';
 import { TEACHER_START } from './lib/classes';
+import { loadLastClass, saveLastClass } from './lib/classTab';
 import JoinClassSheet from './components/JoinClassSheet';
 import AwardPopup from './components/AwardPopup';
 
@@ -57,6 +59,8 @@ const TABS = [
   { id: 'cardSets', label: 'tabs.cardSets' },
   // トレーニング: only when switched on and it has an activity (src/lib/training.js)
   ...(showTrainingTab() ? [{ id: 'training', label: 'tabs.training' }] : []),
+  // クラス: every signed-in user (not in a class yet = a join button)
+  { id: 'class', label: 'tabs.class' },
 ];
 // 先生: only for teacher accounts (is_teacher()). Hiding it is only convenience: the database
 // checks every teacher action itself.
@@ -96,6 +100,8 @@ function App() {
   const [teacherPath, setTeacherPath] = useState(TEACHER_START);
   const [joinOpen, setJoinOpen] = useState(false);
   const [myClasses, setMyClasses] = useState(null);
+  // クラス tab: the class shown, remembered per account on this device ({ userId, classId }).
+  const [classChoice, setClassChoice] = useState(null);
   // Tickets from teachers the student hasn't seen yet (my_unseen_awards()): a pop-up on the dashboard.
   const [awardRows, setAwardRows] = useState([]);
   const [answerMode, setAnswerMode] = useState(() => loadAnswerMode(window.localStorage, HANDWRITING_ENABLED)); // 答え方: off / typing / handwriting
@@ -230,8 +236,15 @@ function App() {
       .catch((e) => { console.error(e); setMyClasses("failed"); });
   }, []);
   useEffect(() => {
-    if (userId && view === "settings") loadMyClasses();
-  }, [userId, view, loadMyClasses]);
+    if (userId && (view === "settings" || (view === "dashboard" && activeTab === "class"))) loadMyClasses();
+  }, [userId, view, activeTab, loadMyClasses]);
+
+  // クラス tab: choosing a class (the picker, or the class just joined) remembers it on this device.
+  const chooseClass = useCallback((classId) => {
+    setClassChoice({ userId, classId });
+    saveLastClass(window.localStorage, userId, classId);
+  }, [userId]);
+  const chosenClassId = classChoice?.userId === userId ? classChoice.classId : loadLastClass(window.localStorage, userId);
 
   // The seen-themes list, read once after sign-in (a late answer for another account is ignored).
   useEffect(() => {
@@ -916,6 +929,9 @@ function App() {
                     <AbcPractice path={trainingPath} onNavigate={navigateTraining} done={trainingDone} onComplete={completeLetter} />
                   )
                 )}
+                {activeTab === "class" && (
+                  <ClassTab classes={myClasses} selectedId={chosenClassId} onSelect={chooseClass} onJoin={() => setJoinOpen(true)} wide={wide} />
+                )}
                 {activeTab === "teacher" && isTeacher && (
                   <TeacherArea path={teacherPath} onNavigate={navigateTeacher} wide={wide} />
                 )}
@@ -1043,7 +1059,7 @@ function App() {
       {/* 使い方 can be opened from the account menu on any screen. */}
       {aboutOpen && <AboutSheet onClose={closeAbout} sessionSize={sessionSize} />}
       {session && joinOpen && (
-        <JoinClassSheet onClose={() => setJoinOpen(false)} onJoined={() => { if (view === "settings") loadMyClasses(); }} />
+        <JoinClassSheet onClose={() => setJoinOpen(false)} onJoined={(joined) => { if (joined?.id) chooseClass(joined.id); loadMyClasses(); }} />
       )}
       {showAwards && <AwardPopup awards={awardRows} onGacha={() => closeAwards(true)} onClose={() => closeAwards(false)} />}
       {packResult && <PackOpening summary={packResult} onClose={closePack} onReview={reviewPack} onGoToMyDeck={goToMyDeck} />}

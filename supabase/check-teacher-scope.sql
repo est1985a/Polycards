@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Polycards: check that a TEACHER only reaches students in their own classes (2026-10-30)
--- Run AFTER polycards-teacher-phase2.sql (and polycards-teacher-phase3.sql). Read-only: every check that could write
+-- Run AFTER polycards-teacher-phase2.sql (and polycards-teacher-phase3.sql, polycards-class-tab.sql). Read-only: every check that could write
 -- something is undone straight away, so nothing in the database changes.
 --
 -- 1. Put a teacher's username (or full email) on the line marked  <-- TEACHER
@@ -62,6 +62,10 @@ begin
       ('class_trouble_words: class I don''t teach', format('select * from public.class_trouble_words(%L)', v_other),                                'not_class_teacher'),
       ('student_honesty: outsider in my class',    format('select public.student_honesty(%L, %L)', v_class, v_outsider),                            'not_member'),
       ('student_honesty: class I don''t teach',    format('select public.student_honesty(%L, %L)', v_other, v_outsider),                            'not_class_teacher'),
+      ('set_member_nickname: class I don''t teach', format('select public.set_member_nickname(%L, %L, %L)', v_other, v_outsider, 'X'),            'not_class_teacher'),
+      ('set_member_nickname: outsider in my class', format('select public.set_member_nickname(%L, %L, %L)', v_class, v_outsider, 'X'),            'not_member'),
+      ('set_class_leaderboard: class I don''t teach', format('select public.set_class_leaderboard(%L, false)', v_other),                           'not_class_teacher'),
+      ('class_leaderboard: class I don''t teach',  format('select public.class_leaderboard(%L)', v_other),                                          'not_member'),
       ('award_tickets: 11 tickets',                format('select public.award_tickets(%L, array[%L]::uuid[], 11, null)', v_class, v_outsider),    'bad_amount'),
       ('change a student''s cards directly',       format('update public.user_cards set level = 7 where user_id = %L', v_outsider),                 'no_error'),
       ('read teachers table',                      'select count(*) from public.teachers',                                                          'permission denied')

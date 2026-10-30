@@ -3,7 +3,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import TeacherTab, { CreateClassForm } from './TeacherTab';
-import ClassPage, { RosterRow, JoinCodePanel } from './ClassPage';
+import ClassPage, { RosterRow, JoinCodePanel, LeaderboardView } from './ClassPage';
 import { ResultRow, AddStudentForm } from './UserSearchSheet';
 import { JoinCodeScreen } from './JoinCodeDisplay';
 import { JoinClassSteps } from './JoinClassSheet';
@@ -24,7 +24,7 @@ const DETAIL = {
   class: { id: 'c1', name: '1年A組', school_year: 2026, join_code: 'ABC234', archived: false },
   students: [
     { student_id: 's3', real_name: '上田 花', student_number: null, display_name: 'ueda', email: 'ueda@polycards.test' },
-    { student_id: 's1', real_name: '佐藤 一郎', student_number: 12, display_name: 'aiden', email: 'aiden@polycards.test' },
+    { student_id: 's1', real_name: '佐藤 一郎', student_number: 12, display_name: 'aiden', email: 'aiden@polycards.test', nickname: 'Ichi' },
     { student_id: 's2', real_name: '加藤 次郎', student_number: 3, display_name: 'amaya', email: 'amaya@polycards.test' },
   ],
   teachers: [{ teacher_id: 't1', display_name: 'test1', is_me: true }, { teacher_id: 't2', display_name: 'Ms. Ito', is_me: false }],
@@ -133,6 +133,43 @@ describe('ClassPage', () => {
   });
 });
 
+describe('class tab: nicknames and the ランキング view (teacher)', () => {
+  it('the roster shows each nickname (or 未設定) under the real name', () => {
+    const h = page();
+    expect(h).toContain('ニックネーム：Ichi');
+    expect(h).toContain('ニックネーム未設定');
+  });
+
+  it('the edit form has the nickname, which may be left empty', () => {
+    const student = DETAIL.students[1];
+    const h = renderToStaticMarkup(<ul><RosterRow student={student} onUpdate={noop} onRemove={noop} initialMode="edit" /></ul>);
+    expect(h).toContain('value="Ichi"');
+    expect(h).toContain('空にすると、生徒にもう一度決めてもらいます');
+    const empty = renderToStaticMarkup(<ul><RosterRow student={DETAIL.students[0]} onUpdate={noop} onRemove={noop} initialMode="edit" /></ul>);
+    expect(empty).not.toMatch(/<button type="submit" disabled=""/);
+  });
+
+  it('the overview shows nicknames from the class detail', () => {
+    const rows = DETAIL.students.map((s) => ({ ...s, reviews: 1, study_days: 1, streak: 0, player_level: 1, cards: 0, tickets: 0, honesty: {} }));
+    const h = page({ view: 'overview', overview: rows });
+    expect(h).toContain('>Ichi<');
+  });
+
+  it('the view switch has ランキング; the view has the switch and the board', () => {
+    const board = { enabled: true, top: [{ rank: 1, nickname: 'Ichi', reviews: 9, is_me: false, avatar: null }], me: null, last_week: [] };
+    const h = page({ view: 'leaderboard', leaderboard: board });
+    expect(h).toContain('ランキング');
+    expect(h).toMatch(/role="switch" aria-checked="true"[^]*生徒にランキングを表示/);
+    expect(h).toContain('今週のランキング');
+    expect(h).not.toContain('あなたは');
+    const off = renderToStaticMarkup(<LeaderboardView cls={{ ...DETAIL.class, leaderboard_enabled: false }} board={board} onSetEnabled={noop} />);
+    expect(off).toContain('aria-checked="false"');
+    expect(off).toContain('生徒には表示されていません');
+    expect(off).toContain('今週のランキング'); // still shown to the teacher
+    expect(renderToStaticMarkup(<LeaderboardView cls={DETAIL.class} board={null} onSetEnabled={noop} />)).toContain('読み込み中');
+  });
+});
+
 describe('search pop-up parts', () => {
   const user = { id: 'u1', display_name: 'aiden', username: 'aiden', email: 'aiden@polycards.test', is_teacher: false };
 
@@ -191,8 +228,20 @@ describe('joining a class (student)', () => {
     expect(steps({ step: 'details', name: '山田', number: '120' })).toContain('出席番号は1〜99');
   });
 
-  it('step 3: confirm, then done', () => {
-    const h = steps({ step: 'confirm', name: ' 山田　太郎 ', number: '７' });
+  it('step 3: the nickname, with the note that classmates will see it', () => {
+    const h = steps({ step: 'nickname', nickname: 'Taro' });
+    expect(h).toContain('クラスのランキングで、クラスメイトに表示されます');
+    expect(h).toContain('4/12');
+    expect(h).not.toMatch(/<button type="submit" disabled=""/);
+    expect(steps({ step: 'nickname', nickname: '　' })).toMatch(/<button type="submit" disabled=""/);
+    expect(steps({ step: 'nickname', nickname: 'abcdefghijklm' })).toMatch(/<button type="submit" disabled=""/);
+    expect(steps({ step: 'nickname', nickname: 'ＡＢＣＤＥＦＧＨＩＪＫＬ' })).not.toMatch(/<button type="submit" disabled=""/); // 12 after NFKC
+    expect(steps({ step: 'nickname', nickname: 'Taro', error: 'そのニックネームはもう使われています' })).toContain('role="alert"');
+  });
+
+  it('step 4: confirm (with the nickname), then done', () => {
+    const h = steps({ step: 'confirm', name: ' 山田　太郎 ', number: '７', nickname: ' Ｔａｒｏ ' });
+    expect(h).toContain('ニックネーム：Taro');
     expect(h).toContain('「1年A組」に参加しますか？');
     expect(h).toContain('名前：山田 太郎');
     expect(h).toContain('出席番号：7');

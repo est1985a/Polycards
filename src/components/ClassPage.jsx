@@ -1,17 +1,19 @@
 import { useState } from 'react';
-import { colors, fontDisplay } from '../styles/theme';
+import { colors, fontDisplay, panel as panelStyle } from '../styles/theme';
 import {
   sortRoster, splitJoinCode, cleanRealName, realNameValid, parseStudentNumber, studentNumberValid,
-  classNameValid, parseSchoolYear, dateTimeText,
+  classNameValid, parseSchoolYear, dateTimeText, cleanNickname, nicknameValid,
 } from '../lib/classes';
 import BackButton from './BackButton';
 import SegmentedSwitch from './SegmentedSwitch';
 import ClassOverview from './ClassOverview';
 import ClassTroubleWords from './ClassTroubleWords';
+import ClassLeaderboard from './ClassLeaderboard';
+import ToggleSwitch from './ToggleSwitch';
 import { OVERVIEW_PERIODS, DEFAULT_PERIOD, DEFAULT_SORT } from '../lib/classOverview';
 import { toggleId } from '../lib/library';
 
-import { Field, ErrorText, StudentFields, Panel, SelectBox } from './ClassFields';
+import { Field, ErrorText, StudentFields, Panel, SelectBox, NicknameField } from './ClassFields';
 import { inputStyle, ghostSmall, primarySmall, dangerSmall, noAutoFix } from '../styles/forms';
 import { t } from '../i18n';
 
@@ -45,15 +47,29 @@ function ConfirmLine({ text, yesLabel, danger = false, busy, onYes, onCancel }) 
   );
 }
 
-// One student on the roster: (checkbox), 出席番号, real name, account name; tapping the name opens the
-// student's page; 編集 (inline form) and 外す (inline confirm).
+// The nickname line under a real name (teachers only): ニックネーム：x, or ニックネーム未設定.
+export function NicknameLine({ nickname }) {
+  return (
+    <span style={{ display: "block", fontSize: 13, color: colors.muted, overflowWrap: "anywhere" }}>
+      {nickname ? t("teacher.nicknameValue", { name: nickname }) : t("teacher.noNickname")}
+    </span>
+  );
+}
+
+// One student on the roster: (checkbox), 出席番号, real name (and class nickname), account name; tapping
+// the name opens the student's page; 編集 (inline form) and 外す (inline confirm).
 // selectable / selected / onToggle: the checkbox for チケットを贈る. onOpen(): open the student page.
-export function RosterRow({ student, wide = false, onUpdate, onRemove, onOpen, selectable = false, selected = false, onToggle, initialMode = null }) {
+// onUpdateNickname(id, nickname): saved only when the nickname changed ('' clears it).
+export function RosterRow({
+  student, wide = false, onUpdate, onUpdateNickname = async () => {}, onRemove, onOpen, selectable = false, selected = false, onToggle, initialMode = null,
+}) {
   const [mode, setMode] = useState(initialMode); // null | 'edit' | 'remove'
   const [name, setName] = useState(student.real_name);
   const [number, setNumber] = useState(student.student_number == null ? "" : String(student.student_number));
+  const [nickname, setNickname] = useState(student.nickname ?? "");
   const action = useAction();
-  const ok = realNameValid(name) && studentNumberValid(number);
+  const nicknameOk = cleanNickname(nickname) === "" || nicknameValid(nickname);
+  const ok = realNameValid(name) && studentNumberValid(number) && nicknameOk;
   // Wide: account name and email; phone: just the account name (the email made rows three lines tall).
   const account = wide
     ? [student.display_name, student.email].filter((x, i, all) => x && all.indexOf(x) === i).join(" · ")
@@ -62,6 +78,7 @@ export function RosterRow({ student, wide = false, onUpdate, onRemove, onOpen, s
   function startEdit() {
     setName(student.real_name);
     setNumber(student.student_number == null ? "" : String(student.student_number));
+    setNickname(student.nickname ?? "");
     action.clearError();
     setMode("edit");
   }
@@ -69,7 +86,11 @@ export function RosterRow({ student, wide = false, onUpdate, onRemove, onOpen, s
   async function save(e) {
     e.preventDefault();
     if (!ok) return;
-    if (await action.run(() => onUpdate(student.student_id, cleanRealName(name), parseStudentNumber(number)))) setMode(null);
+    const nick = cleanNickname(nickname);
+    if (await action.run(async () => {
+      await onUpdate(student.student_id, cleanRealName(name), parseStudentNumber(number));
+      if (nick !== (student.nickname ?? "")) await onUpdateNickname(student.student_id, nick);
+    })) setMode(null);
   }
 
   return (
@@ -81,6 +102,8 @@ export function RosterRow({ student, wide = false, onUpdate, onRemove, onOpen, s
             nameLabel={t("teacher.realName")} numberLabel={t("teacher.studentNumber")} numberHint={t("teacher.studentNumberHint")}
           />
           {!studentNumberValid(number) && <ErrorText>{t("errors.badStudentNumber")}</ErrorText>}
+          <NicknameField value={nickname} onChange={setNickname} label={t("teacher.nicknameLabel")} hint={t("teacher.nicknameHint")} />
+          {!nicknameOk && <ErrorText>{t("errors.badNickname")}</ErrorText>}
           <ErrorText>{action.error}</ErrorText>
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
             <button type="button" onClick={() => setMode(null)} disabled={action.busy} style={ghostSmall}>{t("common.cancel")}</button>
@@ -106,7 +129,10 @@ export function RosterRow({ student, wide = false, onUpdate, onRemove, onOpen, s
               {student.student_number ?? "–"}
             </span>
             <span style={{ flex: 1, minWidth: 0, display: wide ? "grid" : "block", gridTemplateColumns: wide ? "minmax(0, 1fr) minmax(0, 1fr)" : undefined, alignItems: "center", gap: 12, overflowWrap: "anywhere" }}>
-              <span style={{ display: "block", fontSize: 17, fontWeight: 700 }}>{student.real_name}</span>
+              <span style={{ display: "block" }}>
+                <span style={{ display: "block", fontSize: 17, fontWeight: 700 }}>{student.real_name}</span>
+                <NicknameLine nickname={student.nickname} />
+              </span>
               <span style={{ display: "block", fontSize: 13, color: colors.muted }}>{account}</span>
             </span>
             <span aria-hidden="true" style={{ flexShrink: 0, fontSize: 22, lineHeight: 1, color: colors.muted }}>›</span>
@@ -297,6 +323,46 @@ function ClassSettingsPanel({ cls, onUpdateClass, onSetArchived }) {
 //   一覧 (default): the class overview table (class_overview()) at full width, then the class trouble
 //     words beside the join code / awards / teachers / class settings (one column on phones).
 //   名簿: the Phase 2 roster (編集 / 外す / ＋ 生徒を追加) on the left, the same panels on the right.
+// The overview rows with each student's nickname from class_detail() (class_overview has none).
+function withNicknames(rows, students) {
+  if (!rows) return rows;
+  const nick = new Map((students ?? []).map((s) => [s.student_id, s.nickname ?? null]));
+  return rows.map((r) => ({ ...r, nickname: nick.get(r.student_id) ?? null }));
+}
+
+// The ランキング view (teacher): the 生徒にランキングを表示 switch and the same board the students see
+// (still shown to the teacher while it's off). board: class_leaderboard() (null while loading).
+export function LeaderboardView({ cls, board, error = null, onSetEnabled, wide = false }) {
+  const action = useAction();
+  const on = cls.leaderboard_enabled !== false;
+  return (
+    <div style={{ display: "grid", gap: 16, alignContent: "start" }}>
+      {!cls.archived && (
+        <section style={{ ...panelStyle, display: "grid", gap: 8 }}>
+          <button
+            type="button" role="switch" aria-checked={on} disabled={action.busy}
+            onClick={() => action.run(() => onSetEnabled(!on))}
+            style={{
+              minHeight: 44, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: 0,
+              background: "transparent", border: "none", cursor: "pointer", color: colors.text, fontSize: 16, fontWeight: 700, textAlign: "left",
+            }}
+          >
+            {t("leaderboard.switch")}
+            <ToggleSwitch on={on} />
+          </button>
+          <ErrorText>{action.error}</ErrorText>
+          {!on && <div style={{ fontSize: 14, color: colors.muted }}>{t("leaderboard.teacherOff")}</div>}
+          <div style={{ fontSize: 13, color: colors.muted }}>{t("leaderboard.teacherNote")}</div>
+        </section>
+      )}
+      {cls.archived ? <div style={{ fontSize: 15, color: colors.muted }}>{t("teacher.archivedBadge")}</div>
+        : board ? <ClassLeaderboard board={board} viewer="teacher" wide={wide} />
+        : error ? <ErrorText>{error}</ErrorText>
+        : <div style={{ fontSize: 15, color: colors.muted }}>{t("common.loading")}</div>}
+    </div>
+  );
+}
+
 // detail: { class, students, teachers } from class_detail() (null while loading).
 // Each on… action returns a promise; the page shows its error next to the button that ran it.
 // awards: recent awards (class_awards(), null while loading). onOpenStudent(id): a name was tapped.
@@ -309,6 +375,7 @@ export default function ClassPage({
   onOpenStudent = () => {}, onGive = () => {}, initialSelected = [],
   view = "overview", onView = () => {}, days = DEFAULT_PERIOD, onDays = () => {}, sort = DEFAULT_SORT, onSort = () => {},
   overview = null, overviewError = null, troubleWords = null,
+  onUpdateNickname = async () => {}, leaderboard = null, leaderboardError = null, onSetLeaderboard = async () => {},
 }) {
   const [selected, setSelected] = useState(() => new Set(initialSelected));
   const back = <div><BackButton label={t("teacher.backToClasses")} onClick={onBack} /></div>;
@@ -366,7 +433,7 @@ export default function ClassPage({
         <ul data-roster="" style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 8 }}>
           {students.map((s) => (
             <RosterRow
-              key={s.student_id} student={s} wide={wide} onUpdate={onUpdateMember} onRemove={onRemoveMember}
+              key={s.student_id} student={s} wide={wide} onUpdate={onUpdateMember} onUpdateNickname={onUpdateNickname} onRemove={onRemoveMember}
               onOpen={() => onOpenStudent(s.student_id)}
               selectable={canGive} selected={selected.has(s.student_id)} onToggle={toggle}
             />
@@ -390,10 +457,14 @@ export default function ClassPage({
       <ErrorText>{error}</ErrorText>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ flex: wide ? "0 1 260px" : "1 1 200px" }}>
+        <div style={{ flex: wide ? "0 1 380px" : "1 1 100%" }}>
           <SegmentedSwitch
             label={t("classView.label")} value={view} onChange={onView}
-            options={[{ value: "overview", label: t("classView.overview") }, { value: "roster", label: t("classView.roster") }]}
+            options={[
+              { value: "overview", label: t("classView.overview") },
+              { value: "roster", label: t("classView.roster") },
+              { value: "leaderboard", label: t("classView.leaderboard") },
+            ]}
           />
         </div>
         {view === "overview" && (
@@ -406,10 +477,15 @@ export default function ClassPage({
         )}
       </div>
 
-      {view === "overview" ? (
+      {view === "leaderboard" ? (
+        <div style={columns}>
+          <LeaderboardView cls={cls} board={leaderboard} error={leaderboardError} onSetEnabled={onSetLeaderboard} wide={wide} />
+          {side}
+        </div>
+      ) : view === "overview" ? (
         <>
           <ClassOverview
-            rows={overview} error={overviewError} days={days} sort={sort} onSort={onSort} wide={wide} toolbar={giveBar}
+            rows={withNicknames(overview, detail.students)} error={overviewError} days={days} sort={sort} onSort={onSort} wide={wide} toolbar={giveBar}
             selectable={canGive} selected={selected} onToggle={toggle} onOpenStudent={onOpenStudent}
           />
           <div style={columns}>

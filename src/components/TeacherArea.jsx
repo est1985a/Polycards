@@ -28,6 +28,7 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
   const [overview, setOverview] = useState(null); // { key, rows, error }: class_overview() for classId|days
   const [trouble, setTrouble] = useState(null); // { key, rows }: class_trouble_words() for classId|days
   const [honesty, setHonesty] = useState(null); // { key, counts, error }: student_honesty() for one student
+  const [board, setBoard] = useState(null); // { classId, data, error }: class_leaderboard() (ランキング view)
   const [defaultYear] = useState(() => defaultSchoolYear(Date.now()));
   const classId = path.screen === "class" || path.screen === "student" ? path.classId : null;
   const studentId = path.screen === "student" ? path.studentId : null;
@@ -105,6 +106,15 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
     }
   }, []);
 
+  const loadBoard = useCallback(async (cls) => {
+    try {
+      setBoard({ classId: cls, data: await api.fetchClassLeaderboard(cls), error: null });
+    } catch (e) {
+      console.error(e);
+      setBoard((old) => ({ classId: cls, data: old?.classId === cls ? old.data : null, error: e.message }));
+    }
+  }, []);
+
   useEffect(() => {
     if (path.screen === "classes") loadClasses(path.archived);
   }, [path.screen, path.archived, loadClasses]);
@@ -133,6 +143,11 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
     if (classId) loadDetail(classId);
   }, [classId, loadDetail]);
 
+  const onBoard = path.screen === "class" && path.classView === "leaderboard";
+  useEffect(() => {
+    if (classId && onBoard) loadBoard(classId);
+  }, [classId, onBoard, loadBoard]);
+
   const current = list?.archived === path.archived ? list : null;
   const classes = current ? current.rows : null;
   const listError = current?.error ?? null;
@@ -145,12 +160,14 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
   const shownHonesty = honesty?.key === studentKey ? honesty : null;
   const shownOverview = overview?.key === periodKey ? overview : null;
   const shownTrouble = trouble?.key === periodKey ? trouble.rows : null;
+  const shownBoard = board?.classId === classId ? board : null;
 
   // After a change: reload the class (its errors are shown by the button that made the change),
   // and the overview (a new or removed student, a new name or number).
   const reload = async () => {
     await loadDetail(classId);
     if (onOverview) loadOverview(classId, days);
+    if (onBoard) loadBoard(classId);
   };
 
   // チケットを贈る: from the roster (checked students) or a student page (one student).
@@ -215,6 +232,10 @@ export default function TeacherArea({ path, onNavigate, wide = false }) {
           overview={shownOverview?.rows ?? null}
           overviewError={shownOverview?.error ?? null}
           troubleWords={shownTrouble}
+          onUpdateNickname={async (studentId, nickname) => { await api.setMemberNickname(classId, studentId, nickname); await reload(); }}
+          leaderboard={shownBoard?.data ?? null}
+          leaderboardError={shownBoard?.error ?? null}
+          onSetLeaderboard={async (enabled) => { await api.setClassLeaderboard(classId, enabled); await reload(); }}
         />
         {awardSheet}
         {searchMode && (

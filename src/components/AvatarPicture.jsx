@@ -20,13 +20,13 @@ const BLOB = [
 const STAR = "M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z";
 const GLOW = { super_rare: "rarity-glow-super", secret: "rarity-glow-secret" };
 
-function Picture({ avatar, size, silhouette }) {
+function Picture({ avatar, size, silhouette, label }) {
   const hide = silhouette ? { filter: "brightness(0)", opacity: 0.55 } : null;
 
   if (avatar?.image_url) {
     return (
       <img
-        src={avatar.image_url} alt={silhouette ? "" : avatar.name_en || ""} width={size} height={size}
+        src={avatar.image_url} alt={silhouette ? "" : label ?? (avatar.name_en || "")} width={size} height={size}
         style={{ position: "relative", width: size, height: size, objectFit: "contain", borderRadius: size * 0.18, display: "block", ...hide }}
       />
     );
@@ -41,7 +41,7 @@ function Picture({ avatar, size, silhouette }) {
   return (
     <svg
       width={size} height={size} viewBox="0 0 100 100" style={{ position: "relative", display: "block", ...hide }}
-      role="img" aria-label={silhouette ? t("collection.silhouetteLabel") : avatar.name_en || t("gacha.avatarFallback")}
+      role="img" aria-label={silhouette ? t("collection.silhouetteLabel") : label ?? (avatar.name_en || t("gacha.avatarFallback"))}
     >
       {BLOB.map(([points, pct]) => (
         <polygon key={points} points={points} fill={shade(tint, pct)} stroke={shade(tint, pct)} strokeWidth="0.5" strokeLinejoin="round" />
@@ -61,10 +61,11 @@ function Picture({ avatar, size, silhouette }) {
 // One avatar picture, used by PlayerStats, the gacha reveal and the collection.
 // avatar: { slug, name_en, rarity, image_url } (null = the starter cat).
 // silhouette: a dark shape with no letter, for avatars the student doesn't have yet.
+// label: alt text instead of the English name (the class leaderboard gets no names: ポリアバター).
 // Rare and up get twinkling sparkles (Super Rare and Secret also a soft glow), unless
 // silhouette is set or sparkles={false}. Sparkles are decoration only: hidden from
 // screen readers and never block taps.
-export default function AvatarPicture({ avatar, size = 80, silhouette = false, sparkles = true }) {
+export default function AvatarPicture({ avatar, size = 80, silhouette = false, sparkles = true, label = null }) {
   const rarity = avatar?.rarity;
   const stars = silhouette || !sparkles ? [] : sparkleLayout(rarity);
   const glow = stars.length > 0 ? GLOW[rarity] : null;
@@ -75,7 +76,7 @@ export default function AvatarPicture({ avatar, size = 80, silhouette = false, s
       {glow && (
         <span aria-hidden="true" className={glow} style={{ position: "absolute", inset: "-8%", borderRadius: "50%", pointerEvents: "none" }} />
       )}
-      <Picture avatar={avatar} size={size} silhouette={silhouette} />
+      <Picture avatar={avatar} size={size} silhouette={silhouette} label={label ?? undefined} />
       {stars.map(([x, y, f, delay]) => (
         <span
           key={`${x},${y}`} aria-hidden="true" className="rarity-sparkle"

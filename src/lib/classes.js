@@ -81,6 +81,21 @@ export function parseSchoolYear(text) {
   return n >= 2000 && n <= 2100 ? n : NaN;
 }
 
+// Class nicknames (クラス tab): what classmates see on the leaderboard. Same clean-up as
+// clean_nickname() in supabase/polycards-class-tab.sql: NFKC (full-width → half-width, a full-width
+// space → a space), spaces collapsed, trimmed. 1–12 characters (code points, like char_length).
+export const NICKNAME_MAX = 12;
+export function cleanNickname(text) {
+  return String(text ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim();
+}
+
+export function nicknameValid(text) {
+  const name = cleanNickname(text);
+  const n = Array.from(name).length;
+  // eslint-disable-next-line no-control-regex
+  return n >= 1 && n <= NICKNAME_MAX && !/[\u0000-\u001F\u007F-\u009F]/.test(name);
+}
+
 export const CLASS_NAME_MAX = 40;
 export function classNameValid(text) {
   const name = String(text ?? '').trim();
@@ -88,7 +103,7 @@ export function classNameValid(text) {
 }
 
 // The 先生 tab's first screen (TeacherArea.jsx): the class list, not the archived ones.
-// classView / days / sort: the class page's 一覧 / 名簿 view, period (7 or 30 days) and overview column,
+// classView / days / sort: the class page's 一覧 / 名簿 / ランキング view, period (7 or 30 days) and overview column,
 // kept here so 戻る from a student page comes back to the same place.
 export const TEACHER_START = {
   screen: 'classes', classId: null, archived: false,

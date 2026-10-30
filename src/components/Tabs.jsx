@@ -48,6 +48,18 @@ const ICONS = {
       <path d="M4 20l4.6-1.2-3.4-3.4z" fill="currentColor" opacity="0.45" />
     </svg>
   ),
+  // three classmates, the front one with a low-poly facet (クラス)
+  class: (
+    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="5" cy="8.5" r="2.6" fill="currentColor" opacity="0.55" />
+      <path d="M0.5 19.5a4.5 4.5 0 0 1 9 0z" fill="currentColor" opacity="0.55" />
+      <circle cx="19" cy="8.5" r="2.6" fill="currentColor" opacity="0.55" />
+      <path d="M14.5 19.5a4.5 4.5 0 0 1 9 0z" fill="currentColor" opacity="0.55" />
+      <circle cx="12" cy="7" r="3.4" fill="currentColor" stroke={colors.surface} strokeWidth="1.2" />
+      <path d="M5.5 21.5a6.5 6.5 0 0 1 13 0z" fill="currentColor" stroke={colors.surface} strokeWidth="1.2" />
+      <polygon points="12,15 18.5,21.5 12,21.5" fill={colors.surface} opacity="0.25" />
+    </svg>
+  ),
   // a classroom board on an easel, with a low-poly facet and a rising line (先生)
   teacher: (
     <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
@@ -64,7 +76,9 @@ const ICONS = {
 // The active tab's icon and top line use accent (a fill); its label stays in text color,
 // because accent is not readable as text in every theme.
 // wide: the bar spans the whole screen and the tabs stay centered (240 px each).
+// Five tabs on a phone (teachers) get 12 px labels, so トレーニング fits in a fifth of 390 px.
 export default function Tabs({ tabs, active, onChange, wide = false }) {
+  const labelSize = !wide && tabs.length >= 5 ? 12 : 14;
   return (
     <nav
       style={{
@@ -90,7 +104,7 @@ export default function Tabs({ tabs, active, onChange, wide = false }) {
             }}
           >
             <span style={{ color: isActive ? colors.accent : colors.muted, display: "flex" }}>{ICONS[tab.id]}</span>
-            <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 14, color: isActive ? colors.text : colors.muted }}>
+            <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: labelSize, whiteSpace: "nowrap", color: isActive ? colors.text : colors.muted }}>
               {t(tab.label)}
             </span>
           </button>

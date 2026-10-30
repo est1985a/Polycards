@@ -545,7 +545,7 @@ describe('teachers and classes', () => {
     await api.removeStudentFromClass('c1', 's1');
     await api.addCoTeacher('c1', 't2');
     await api.checkJoinCode('ABC234');
-    await api.joinClass('ABC234', '山田', 7);
+    await api.joinClass('ABC234', '山田', 7, 'Yama');
     await api.fetchMyClasses();
     expect(calls).toEqual([
       ['rpc', 'teacher_classes', { p_archived: true }],
@@ -559,7 +559,7 @@ describe('teachers and classes', () => {
       ['rpc', 'remove_student_from_class', { p_class_id: 'c1', p_student_id: 's1' }],
       ['rpc', 'add_co_teacher', { p_class_id: 'c1', p_teacher_user_id: 't2' }],
       ['rpc', 'check_join_code', { p_code: 'ABC234' }],
-      ['rpc', 'join_class', { p_code: 'ABC234', p_real_name: '山田', p_student_number: 7 }],
+      ['rpc', 'join_class', { p_code: 'ABC234', p_real_name: '山田', p_student_number: 7, p_nickname: 'Yama' }],
       ['rpc', 'my_classes', undefined],
     ]);
   });
@@ -674,5 +674,38 @@ describe('teacher area phase 3', () => {
       ['rpc', 'record_answer', { ...base, p_result: 'got_it', p_typed: 'dog', p_mode: 'typing', p_answer_ms: 0 }],
       ['rpc', 'record_answer', { ...base, p_result: 'not_yet', p_mode: 'tap' }],
     ]);
+  });
+});
+
+describe('class tab', () => {
+  it('calls each database function with the right arguments', async () => {
+    result = { data: null, error: null };
+    await api.fetchMyClassInfo('c1');
+    await api.setMyNickname('c1', 'Yama');
+    await api.fetchClassLeaderboard('c1');
+    await api.setClassLeaderboard('c1', false);
+    await api.setMemberNickname('c1', 's1', '');
+    expect(calls).toEqual([
+      ['rpc', 'my_class_info', { p_class_id: 'c1' }],
+      ['rpc', 'set_my_nickname', { p_class_id: 'c1', p_nickname: 'Yama' }],
+      ['rpc', 'class_leaderboard', { p_class_id: 'c1' }],
+      ['rpc', 'set_class_leaderboard', { p_class_id: 'c1', p_enabled: false }],
+      ['rpc', 'set_member_nickname', { p_class_id: 'c1', p_student_id: 's1', p_nickname: '' }],
+    ]);
+  });
+
+  it('fills in empty answers', async () => {
+    result = { data: null, error: null };
+    expect(await api.fetchMyClassInfo('c1')).toEqual({ teachers: [], nickname: null });
+    expect(await api.fetchClassLeaderboard('c1')).toEqual({ enabled: false, top: [], last_week: [], me: null });
+    result = { data: { enabled: false }, error: null };
+    expect((await api.fetchClassLeaderboard('c1')).enabled).toBe(false);
+  });
+
+  it('turns nickname errors into friendly messages', async () => {
+    rpcImpl = async () => ({ data: null, error: { message: 'nickname_taken' } });
+    await expect(api.setMyNickname('c1', 'Aiden')).rejects.toThrow('ニックネームはもう使われています');
+    rpcImpl = async () => ({ data: null, error: { message: 'bad_nickname' } });
+    await expect(api.joinClass('ABC234', '山田', null, '')).rejects.toThrow('ニックネームは1〜12文字');
   });
 });
