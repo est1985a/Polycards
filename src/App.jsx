@@ -143,7 +143,7 @@ function App() {
   const [now, setNow] = useState(() => Date.now()); // for the "2時間後" wording; updated every minute
   const [planRows, setPlanRows] = useState(null); // review plan pop-up rows (null while loading)
   const [planOpen, setPlanOpen] = useState(false);
-  const [aboutOpen, setAboutOpen] = useState(false); // "What is Polycards?" pop-up
+  const [aboutOpen, setAboutOpen] = useState(false); // "What is Polycards?" pop-up: true, or "teacher" = opened at the 先生用ガイド
   const [savingDeck, setSavingDeck] = useState(false);
   const [packResult, setPackResult] = useState(null); // pack opening after Add to My Cards (packSummary)
   const [packFromClass, setPackFromClass] = useState(false); // the pack was added from the クラス tab (課題)
@@ -1009,6 +1009,7 @@ function App() {
                   <TeacherArea
                     path={teacherPath} onNavigate={navigateTeacher} wide={wide}
                     library={libraryData} collections={collectionsData} libraryLoading={loadingLibrary}
+                    onOpenGuide={() => setAboutOpen("teacher")}
                   />
                 )}
                 <Tabs tabs={tabs} active={activeTab} onChange={changeTab} wide={wide} dots={tabDots} />
@@ -1137,7 +1138,7 @@ function App() {
         </div>
       </div>
       {/* 使い方 can be opened from the account menu on any screen. */}
-      {aboutOpen && <AboutSheet onClose={closeAbout} sessionSize={sessionSize} />}
+      {aboutOpen && <AboutSheet onClose={closeAbout} sessionSize={sessionSize} isTeacher={isTeacher} focus={aboutOpen === "teacher" ? "teacher" : null} />}
       {session && joinOpen && (
         <JoinClassSheet onClose={() => setJoinOpen(false)} onJoined={(joined) => { if (joined?.id) chooseClass(joined.id); loadMyClasses(); }} />
       )}

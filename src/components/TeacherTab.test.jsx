@@ -60,6 +60,13 @@ describe('TeacherTab (class list)', () => {
     expect(h).toContain('aria-checked="false"'); // アーカイブ switch off
   });
 
+  it('has a 先生用ガイド pill when it can open the guide', () => {
+    const without = renderToStaticMarkup(<TeacherTab classes={CLASSES} onToggleArchived={noop} onOpen={noop} onCreate={noop} defaultYear={2026} />);
+    expect(without).not.toContain('先生用ガイド');
+    const h = renderToStaticMarkup(<TeacherTab classes={CLASSES} onToggleArchived={noop} onOpen={noop} onCreate={noop} defaultYear={2026} onOpenGuide={noop} />);
+    expect(h).toMatch(/<button[^>]*aria-label="先生用ガイド"[^>]*aria-haspopup="dialog"/);
+  });
+
   it('shows loading, the empty states and errors', () => {
     expect(renderToStaticMarkup(<TeacherTab classes={null} onToggleArchived={noop} onOpen={noop} onCreate={noop} defaultYear={2026} />)).toContain('読み込み中');
     expect(renderToStaticMarkup(<TeacherTab classes={[]} onToggleArchived={noop} onOpen={noop} onCreate={noop} defaultYear={2026} />)).toContain('まだクラスがありません');

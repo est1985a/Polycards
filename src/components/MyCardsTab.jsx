@@ -106,11 +106,12 @@ export function AnswerModeSwitch({ mode = "off", onChange, handwritingEnabled = 
 }
 
 // Small pill at the top right of My Cards: opens the "What is Polycards?" pop-up (AboutSheet).
-export function AboutButton({ onOpen }) {
+// Also the 先生用ガイド pill on the teacher class list (labelKey / ariaKey = its i18n keys).
+export function AboutButton({ onOpen, labelKey = "about.button", ariaKey = "about.buttonLabel" }) {
   return (
     <button
       onClick={onOpen}
-      aria-label={t("about.buttonLabel")}
+      aria-label={t(ariaKey)}
       aria-haspopup="dialog"
       style={{
         minHeight: 44, display: "inline-flex", alignItems: "center", gap: 6, padding: "0 14px",
@@ -123,7 +124,7 @@ export function AboutButton({ onOpen }) {
         <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3" />
         <circle cx="12" cy="17" r="0.6" fill="currentColor" />
       </svg>
-      {t("about.button")}
+      {t(labelKey)}
     </button>
   );
 }

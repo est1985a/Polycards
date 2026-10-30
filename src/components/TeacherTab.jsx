@@ -3,6 +3,7 @@ import { colors, fontDisplay, panel, btnPrimary } from '../styles/theme';
 import { classNameValid, parseSchoolYear } from '../lib/classes';
 import NavRow from './NavRow';
 import ToggleSwitch from './ToggleSwitch';
+import { AboutButton } from './MyCardsTab';
 import { Field, ErrorText } from './ClassFields';
 import { inputStyle, ghostSmall, primarySmall, noAutoFix } from '../styles/forms';
 import { t } from '../i18n';
@@ -62,8 +63,9 @@ export function CreateClassForm({ defaultYear, onCreate, onCancel }) {
 // a switch to show the archived ones instead.
 // classes: rows from teacher_classes() (null while loading); error: a load error.
 // onOpen(id): a class was tapped. onCreate(name, year) → promise. defaultYear: for the form.
+// onOpenGuide: opens the help pop-up at the 先生用ガイド (the pill is hidden without it).
 export default function TeacherTab({
-  classes, error = null, archived = false, onToggleArchived, onOpen, onCreate, defaultYear, wide = false, initialCreating = false,
+  classes, error = null, archived = false, onToggleArchived, onOpen, onCreate, defaultYear, wide = false, initialCreating = false, onOpenGuide,
 }) {
   const [creating, setCreating] = useState(initialCreating);
 
@@ -71,9 +73,12 @@ export default function TeacherTab({
     <div style={{ display: "grid", gap: 16, paddingTop: 8, textAlign: "left" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         <h2 style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 24, margin: 0, color: colors.text }}>{t("teacher.title")}</h2>
-        {!archived && !creating && (
-          <button onClick={() => setCreating(true)} style={{ ...btnPrimary, minHeight: 44 }}>{t("teacher.createClass")}</button>
-        )}
+        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          {onOpenGuide && <AboutButton onOpen={onOpenGuide} labelKey="teacherGuide.open" ariaKey="teacherGuide.open" />}
+          {!archived && !creating && (
+            <button onClick={() => setCreating(true)} style={{ ...btnPrimary, minHeight: 44 }}>{t("teacher.createClass")}</button>
+          )}
+        </div>
       </div>
 
       {creating && !archived && (
