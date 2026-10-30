@@ -34,9 +34,10 @@ export function splitJoinCode(code) {
   return c.length === JOIN_CODE_LENGTH ? [c.slice(0, 3), c.slice(3)] : [c];
 }
 
-// A real name: trimmed, inner spaces (including full-width ones) collapsed to one. '' when blank.
+// A real name: NFKC (a full-width space → a space, ＡＢＣ → ABC), inner spaces collapsed to one,
+// trimmed. '' when blank. Same as clean_real_name() in supabase/polycards-teacher-followups.sql.
 export function cleanRealName(text) {
-  return String(text ?? '').replace(/[\s\u3000]+/g, ' ').trim();
+  return String(text ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim();
 }
 
 export function realNameValid(text) {
@@ -64,6 +65,19 @@ export function sortRoster(students) {
     if (an !== bn) return an - bn;
     return String(a.real_name ?? '').localeCompare(String(b.real_name ?? ''), 'ja');
   });
+}
+
+// 出席番号 used by two or more students (no number ignored): a Set, for the roster's warning mark.
+export function duplicateNumbers(students) {
+  const seen = new Set();
+  const dup = new Set();
+  for (const s of students || []) {
+    const n = s.student_number;
+    if (n == null) continue;
+    if (seen.has(n)) dup.add(n);
+    seen.add(n);
+  }
+  return dup;
 }
 
 // The Japanese school year (年度) a moment falls in, in Japan time: it starts on April 1,

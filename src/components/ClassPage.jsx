@@ -3,7 +3,7 @@ import { useAction } from '../lib/useAction';
 import { colors, fontDisplay, panel as panelStyle } from '../styles/theme';
 import {
   sortRoster, splitJoinCode, cleanRealName, realNameValid, parseStudentNumber, studentNumberValid,
-  classNameValid, parseSchoolYear, dateTimeText, cleanNickname, nicknameValid,
+  classNameValid, parseSchoolYear, dateTimeText, cleanNickname, nicknameValid, duplicateNumbers,
 } from '../lib/classes';
 import BackButton from './BackButton';
 import SegmentedSwitch from './SegmentedSwitch';
@@ -15,7 +15,7 @@ import ToggleSwitch from './ToggleSwitch';
 import { OVERVIEW_PERIODS, DEFAULT_PERIOD, DEFAULT_SORT } from '../lib/classOverview';
 import { toggleId } from '../lib/library';
 
-import { Field, ErrorText, StudentFields, Panel, SelectBox, NicknameField } from './ClassFields';
+import { Field, ErrorText, StudentFields, Panel, SelectBox, NicknameField, SameNumberMark } from './ClassFields';
 import { inputStyle, ghostSmall, primarySmall, dangerSmall, noAutoFix } from '../styles/forms';
 import { t } from '../i18n';
 
@@ -44,8 +44,9 @@ export function NicknameLine({ nickname }) {
 // the name opens the student's page; 編集 (inline form) and 外す (inline confirm).
 // selectable / selected / onToggle: the checkbox for チケットを贈る. onOpen(): open the student page.
 // onUpdateNickname(id, nickname): saved only when the nickname changed ('' clears it).
+// sameNumber: another student has the same 出席番号 (a small gold mark next to it).
 export function RosterRow({
-  student, wide = false, onUpdate, onUpdateNickname = async () => {}, onRemove, onOpen, selectable = false, selected = false, onToggle, initialMode = null,
+  student, wide = false, sameNumber = false, onUpdate, onUpdateNickname = async () => {}, onRemove, onOpen, selectable = false, selected = false, onToggle, initialMode = null,
 }) {
   const [mode, setMode] = useState(initialMode); // null | 'edit' | 'remove'
   const [name, setName] = useState(student.real_name);
@@ -109,8 +110,9 @@ export function RosterRow({
               background: "transparent", border: "none", cursor: "pointer", textAlign: "left", color: colors.text,
             }}
           >
-            <span style={{ width: 36, flexShrink: 0, textAlign: "center", fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, color: colors.gold }}>
+            <span style={{ width: 36, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 2, fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, color: colors.gold }}>
               {student.student_number ?? "–"}
+              {sameNumber && <SameNumberMark size={14} />}
             </span>
             <span style={{ flex: 1, minWidth: 0, display: wide ? "grid" : "block", gridTemplateColumns: wide ? "minmax(0, 1fr) minmax(0, 1fr)" : undefined, alignItems: "center", gap: 12, overflowWrap: "anywhere" }}>
               <span style={{ display: "block" }}>
@@ -235,15 +237,50 @@ export function ClassAwardsPanel({ awards, onCsv = null }) {
   );
 }
 
-// The class's teachers, with ＋ 先生を追加.
-function TeachersPanel({ teachers, onAddTeacher }) {
+// One teacher of the class. canRemove: 外す with an inline confirm (hidden when they're the only
+// teacher; the database refuses that too, last_teacher). Removing yourself asks with its own words.
+export function TeacherRow({ teacher, canRemove, onRemove, initialConfirming = false }) {
+  const [confirming, setConfirming] = useState(initialConfirming);
+  const action = useAction();
+  return (
+    <li style={{ display: "grid", gap: 6 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44 }}>
+        <span style={{ flex: 1, minWidth: 0, fontSize: 15, color: colors.text, overflowWrap: "anywhere" }}>
+          {teacher.display_name}{teacher.is_me && <span style={{ color: colors.muted }}> {t("teacher.you")}</span>}
+        </span>
+        {canRemove && !confirming && (
+          <button
+            onClick={() => { action.clearError(); setConfirming(true); }}
+            aria-label={t("teacher.removeTeacher", { name: teacher.display_name })}
+            style={{ ...ghostSmall, color: colors.danger }}
+          >
+            {t("teacher.remove")}
+          </button>
+        )}
+      </div>
+      {canRemove && confirming && (
+        <ConfirmLine
+          text={teacher.is_me ? t("teacher.leaveClassConfirm") : t("teacher.removeTeacherConfirm", { name: teacher.display_name })}
+          yesLabel={teacher.is_me ? t("teacher.leaveClass") : t("teacher.remove")}
+          danger
+          busy={action.busy}
+          onCancel={() => setConfirming(false)}
+          onYes={async () => { if (await action.run(() => onRemove(teacher.teacher_id, !!teacher.is_me))) setConfirming(false); }}
+        />
+      )}
+      <ErrorText>{action.error}</ErrorText>
+    </li>
+  );
+}
+
+// The class's teachers, with ＋ 先生を追加 and 外す on each (when there is more than one).
+// onRemoveTeacher(teacherId, isMe).
+export function TeachersPanel({ teachers, onAddTeacher, onRemoveTeacher }) {
   return (
     <Panel title={t("teacher.teachers")} action={<button onClick={onAddTeacher} style={ghostSmall}>{t("teacher.addTeacher")}</button>}>
       <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
         {teachers.map((tc) => (
-          <li key={tc.teacher_id} style={{ fontSize: 15, color: colors.text, overflowWrap: "anywhere" }}>
-            {tc.display_name}{tc.is_me && <span style={{ color: colors.muted }}> {t("teacher.you")}</span>}
-          </li>
+          <TeacherRow key={tc.teacher_id} teacher={tc} canRemove={teachers.length > 1} onRemove={onRemoveTeacher} />
         ))}
       </ul>
     </Panel>
@@ -363,7 +400,7 @@ export default function ClassPage({
   overview = null, overviewError = null, troubleWords = null,
   onUpdateNickname = async () => {}, leaderboard = null, leaderboardError = null, onSetLeaderboard = async () => {},
   assignments = null, assignmentsError = null, onNewAssignment = () => {}, onOpenAssignment = () => {},
-  onOverviewCsv = null, onAwardsCsv = null,
+  onOverviewCsv = null, onAwardsCsv = null, onRemoveTeacher = async () => {},
 }) {
   const [selected, setSelected] = useState(() => new Set(initialSelected));
   const back = <div><BackButton label={t("teacher.backToClasses")} onClick={onBack} /></div>;
@@ -377,6 +414,7 @@ export default function ClassPage({
   }
   const cls = detail.class;
   const students = sortRoster(detail.students);
+  const sameNumbers = duplicateNumbers(students);
   // Only students still on the roster count as chosen (one may have been removed meanwhile).
   const chosen = students.filter((s) => selected.has(s.student_id));
   const allChosen = students.length > 0 && chosen.length === students.length;
@@ -404,7 +442,7 @@ export default function ClassPage({
     <div style={{ display: "grid", gap: 16, alignContent: "start" }}>
       <JoinCodePanel code={cls.join_code} archived={cls.archived} onShowLarge={onShowLarge} onRegenerate={onRegenerate} />
       <ClassAwardsPanel awards={awards} onCsv={onAwardsCsv} />
-      <TeachersPanel teachers={detail.teachers} onAddTeacher={() => onOpenSearch("teacher")} />
+      <TeachersPanel teachers={detail.teachers} onAddTeacher={() => onOpenSearch("teacher")} onRemoveTeacher={onRemoveTeacher} />
       <ClassSettingsPanel key={`${cls.name}|${cls.school_year}`} cls={cls} onUpdateClass={onUpdateClass} onSetArchived={onSetArchived} />
     </div>
   );
@@ -421,7 +459,7 @@ export default function ClassPage({
         <ul data-roster="" style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 8 }}>
           {students.map((s) => (
             <RosterRow
-              key={s.student_id} student={s} wide={wide} onUpdate={onUpdateMember} onUpdateNickname={onUpdateNickname} onRemove={onRemoveMember}
+              key={s.student_id} student={s} wide={wide} sameNumber={sameNumbers.has(s.student_number)} onUpdate={onUpdateMember} onUpdateNickname={onUpdateNickname} onRemove={onRemoveMember}
               onOpen={() => onOpenStudent(s.student_id)}
               selectable={canGive} selected={selected.has(s.student_id)} onToggle={toggle}
             />

@@ -3,7 +3,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import TeacherTab, { CreateClassForm } from './TeacherTab';
-import ClassPage, { RosterRow, JoinCodePanel, LeaderboardView } from './ClassPage';
+import ClassPage, { RosterRow, JoinCodePanel, LeaderboardView, TeachersPanel, TeacherRow } from './ClassPage';
 import { ResultRow, AddStudentForm } from './UserSearchSheet';
 import { JoinCodeScreen } from './JoinCodeDisplay';
 import { JoinClassSteps } from './JoinClassSheet';
@@ -254,5 +254,43 @@ describe('joining a class (student)', () => {
     expect(h).toContain('クラスに参加');
     setLang('en');
     expect(renderToStaticMarkup(<AccountMenu user={{ email: 'a@b.c' }} />)).toContain('Join a class');
+  });
+});
+
+describe('removing a teacher', () => {
+  const panel = (teachers) => renderToStaticMarkup(<TeachersPanel teachers={teachers} onAddTeacher={noop} onRemoveTeacher={noop} />);
+
+  it('shows 外す on every teacher only when there are two or more', () => {
+    const two = panel(DETAIL.teachers);
+    expect(two.match(/>外す</g)).toHaveLength(2);
+    expect(two).toContain('aria-label="Ms. Itoを先生から外す"');
+    const one = panel([DETAIL.teachers[0]]);
+    expect(one).not.toContain('外す');
+    expect(one).toContain('test1');
+  });
+
+  it('asks differently when removing yourself', () => {
+    const me = renderToStaticMarkup(<ul><TeacherRow teacher={DETAIL.teachers[0]} canRemove onRemove={noop} initialConfirming /></ul>);
+    expect(me).toContain('このクラスから外れますか？クラスが見られなくなります');
+    expect(me).toContain('>外れる<');
+    const other = renderToStaticMarkup(<ul><TeacherRow teacher={DETAIL.teachers[1]} canRemove onRemove={noop} initialConfirming /></ul>);
+    expect(other).toContain('Ms. Itoをこのクラスの先生から外しますか？');
+    expect(other).not.toContain('外れる');
+  });
+});
+
+describe('same 出席番号 warning', () => {
+  const twins = {
+    ...DETAIL,
+    students: [...DETAIL.students, { student_id: 's4', real_name: '木村 三郎', student_number: 3, display_name: 'kimu', email: 'k@x' }],
+  };
+
+  it('marks only the rows that share a number on the roster, in gold with a label', () => {
+    const roster = page({ detail: twins }).match(/data-roster=""[^]*?<\/ul>/)[0];
+    expect(roster.match(/data-same-number=""/g)).toHaveLength(2);
+    expect(roster).toContain('aria-label="出席番号が同じ生徒がいます"');
+    expect(roster).toContain('<title>出席番号が同じ生徒がいます</title>');
+    expect(roster).toContain('color:var(--gold)');
+    expect(page()).not.toContain('data-same-number');
   });
 });

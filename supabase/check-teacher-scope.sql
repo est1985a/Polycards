@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Polycards: check that a TEACHER only reaches students in their own classes (2026-10-30)
--- Run AFTER polycards-teacher-phase2.sql (and polycards-teacher-phase3.sql, polycards-class-tab.sql, polycards-teacher-phase4.sql). Read-only: every check that could write
+-- Run AFTER polycards-teacher-phase2.sql (and polycards-teacher-phase3.sql, polycards-class-tab.sql, polycards-teacher-phase4.sql, polycards-teacher-followups.sql). Read-only: every check that could write
 -- something is undone straight away, so nothing in the database changes.
 --
 -- 1. Put a teacher's username (or full email) on the line marked  <-- TEACHER
@@ -22,6 +22,9 @@ declare
   v_outsider uuid;   -- an account in none of the teacher's classes
   v_assign   uuid;   -- Phase 4: an assignment of a class the teacher does NOT teach (if any)
   v_assign_expect text;
+  v_other_teacher uuid; -- follow-ups: a teacher of v_other (else the outsider)
+  v_co       uuid[];   -- follow-ups: the other teachers of v_class
+  v_t        uuid;
   v_out      text := '';
   v_n        int;
   v_check    record;
@@ -55,6 +58,12 @@ begin
   v_assign_expect := case when v_assign is null then 'assignment_not_found' else 'not_class_teacher' end;
   v_assign := coalesce(v_assign, gen_random_uuid());
 
+  -- Follow-ups (remove_co_teacher): looked up before switching to the teacher
+  select ct.teacher_id into v_other_teacher from public.class_teachers ct where ct.class_id = v_other limit 1;
+  v_other_teacher := coalesce(v_other_teacher, v_outsider);
+  select coalesce(array_agg(ct.teacher_id), '{}') into v_co from public.class_teachers ct
+  where ct.class_id = v_class and ct.teacher_id <> v_teacher;
+
   -- From here on: signed in as the teacher
   perform set_config('request.jwt.claims', json_build_object('sub', v_teacher, 'role', 'authenticated')::text, true);
   set local role authenticated;
@@ -83,7 +92,9 @@ begin
       ('read class_assignments table',             'select count(*) from public.class_assignments',                                  'permission denied'),
       ('award_tickets: 11 tickets',                format('select public.award_tickets(%L, array[%L]::uuid[], 11, null)', v_class, v_outsider),    'bad_amount'),
       ('change a student''s cards directly',       format('update public.user_cards set level = 7 where user_id = %L', v_outsider),                 'no_error'),
-      ('read teachers table',                      'select count(*) from public.teachers',                                                          'permission denied')
+      ('read teachers table',                      'select count(*) from public.teachers',                                                          'permission denied'),
+      ('remove_co_teacher: class I don''t teach',  format('select public.remove_co_teacher(%L, %L)', v_other, v_other_teacher),                     'not_class_teacher'),
+      ('remove_co_teacher: outsider in my class',  format('select public.remove_co_teacher(%L, %L)', v_class, v_outsider),                          'teacher_not_in_class')
     ) as c(label, stmt, expected)
   loop
     begin
@@ -107,6 +118,20 @@ begin
       end if;
     end;
   end loop;
+
+  -- remove_co_teacher: remove every other teacher of my class, then myself -> last_teacher.
+  -- The block always ends with an error, so every removal here is undone.
+  begin
+    foreach v_t in array v_co loop
+      perform public.remove_co_teacher(v_class, v_t);
+    end loop;
+    perform public.remove_co_teacher(v_class, v_teacher);
+    raise exception 'no_error';
+  exception when others then
+    v_out := v_out || (case when position('last_teacher' in sqlerrm) > 0 then 'PASS  ' else 'FAIL  ' end)
+          || 'remove_co_teacher: the last teacher (' || cardinality(v_co) || ' co-teacher(s) removed first, then undone) ('
+          || sqlerrm || ')' || E'\n';
+  end;
 
   -- Reads: nothing about the outsider
   select count(*) into v_n from public.class_members m where m.student_id = v_outsider;
