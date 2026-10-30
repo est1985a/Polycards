@@ -76,6 +76,23 @@ export function SelectBox({ checked, label, onToggle }) {
   );
 }
 
+// Next to a 出席番号 that another student in the class also has: a small gold "!" (a hint to check,
+// never the danger color). The tooltip and label say why.
+export function SameNumberMark({ size = 16 }) {
+  const label = t("teacher.sameNumber");
+  return (
+    <svg
+      data-same-number="" width={size} height={size} viewBox="0 0 24 24" fill="none" role="img" aria-label={label}
+      style={{ color: colors.gold, flexShrink: 0 }}
+    >
+      <title>{label}</title>
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2.2" />
+      <path d="M12 6.5v7" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+      <circle cx="12" cy="17.3" r="1.6" fill="currentColor" />
+    </svg>
+  );
+}
+
 // A class nickname (1–12 characters) with a counter and the note that classmates will see it.
 // note: false hides the note (the teacher's roster form).
 export function NicknameField({ value, onChange, label, hint, note = true, autoFocus = false }) {

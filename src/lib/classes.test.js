@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   JOIN_CODE_CHARS, normalizeJoinCode, isJoinCodeShaped, splitJoinCode, cleanRealName, realNameValid,
   parseStudentNumber, studentNumberValid, sortRoster, defaultSchoolYear, parseSchoolYear, classNameValid,
-  cleanNickname, nicknameValid, NICKNAME_MAX,
+  cleanNickname, nicknameValid, NICKNAME_MAX, duplicateNumbers,
 } from './classes';
 import { readFileSync } from 'node:fs';
 
@@ -43,6 +43,24 @@ describe('real names and 出席番号', () => {
     expect(realNameValid('   ')).toBe(false);
     expect(realNameValid('山田太郎')).toBe(true);
     expect(realNameValid('あ'.repeat(41))).toBe(false);
+  });
+
+  it('cleans like clean_real_name() in the SQL: NFKC, spaces collapsed, trimmed', () => {
+    expect(cleanRealName('山田　太郎')).toBe('山田 太郎'); // full-width space
+    expect(cleanRealName('　山田 　　太郎　')).toBe('山田 太郎');
+    expect(cleanRealName('ＡＢＣ　Ｋｅｎ')).toBe('ABC Ken');
+    expect(cleanRealName('ﾀﾅｶ ﾊﾅｺ')).toBe('タナカ ハナコ');
+    expect(cleanRealName(null)).toBe('');
+    expect(realNameValid('　　')).toBe(false);
+    const sql = readFileSync(new URL('../../supabase/polycards-teacher-followups.sql', import.meta.url), 'utf8');
+    expect(sql).toMatch(/function public\.clean_real_name[^]*btrim\(regexp_replace\(normalize\(coalesce\(p_name, ''\), NFKC\), '\\s\+', ' ', 'g'\)\)/);
+  });
+
+  it('finds 出席番号 used by two or more students (no number ignored)', () => {
+    const s = (n) => ({ student_number: n });
+    expect([...duplicateNumbers([s(1), s(2), s(1), s(3), s(3), s(3), s(null), s(null)])].sort()).toEqual([1, 3]);
+    expect(duplicateNumbers([s(1), s(2), s(null)]).size).toBe(0);
+    expect(duplicateNumbers(null).size).toBe(0);
   });
 
   it('reads the number: blank = none, 1–99, full-width digits', () => {

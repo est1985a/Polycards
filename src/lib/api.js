@@ -593,6 +593,8 @@ const CLASS_ERRORS = {
   user_not_found: "errors.userNotFound",
   target_not_teacher: "errors.targetNotTeacher",
   already_teacher: "errors.alreadyTeacher",
+  last_teacher: "errors.lastTeacher",
+  teacher_not_in_class: "errors.teacherNotInClass",
   bad_amount: "errors.badAmount",
   message_too_long: "errors.messageTooLong",
   no_students: "errors.noStudents",
@@ -683,6 +685,11 @@ export function removeStudentFromClass(classId, studentId) {
 
 export function addCoTeacher(classId, teacherUserId) {
   return callClass('add_co_teacher', { p_class_id: classId, p_teacher_user_id: teacherUserId });
+}
+
+// Remove a teacher (or myself) from a class. A class always keeps one teacher (last_teacher).
+export function removeCoTeacher(classId, teacherUserId) {
+  return callClass('remove_co_teacher', { p_class_id: classId, p_teacher_user_id: teacherUserId });
 }
 
 // Student: is this code a class I can join? { id, name } (else bad_code / class_archived / already_member).

@@ -544,6 +544,7 @@ describe('teachers and classes', () => {
     await api.updateClassMember('c1', 's1', '山田', null);
     await api.removeStudentFromClass('c1', 's1');
     await api.addCoTeacher('c1', 't2');
+    await api.removeCoTeacher('c1', 't2');
     await api.checkJoinCode('ABC234');
     await api.joinClass('ABC234', '山田', 7, 'Yama');
     await api.fetchMyClasses();
@@ -558,6 +559,7 @@ describe('teachers and classes', () => {
       ['rpc', 'update_class_member', { p_class_id: 'c1', p_student_id: 's1', p_real_name: '山田', p_student_number: null }],
       ['rpc', 'remove_student_from_class', { p_class_id: 'c1', p_student_id: 's1' }],
       ['rpc', 'add_co_teacher', { p_class_id: 'c1', p_teacher_user_id: 't2' }],
+      ['rpc', 'remove_co_teacher', { p_class_id: 'c1', p_teacher_user_id: 't2' }],
       ['rpc', 'check_join_code', { p_code: 'ABC234' }],
       ['rpc', 'join_class', { p_code: 'ABC234', p_real_name: '山田', p_student_number: 7, p_nickname: 'Yama' }],
       ['rpc', 'my_classes', undefined],
@@ -582,6 +584,8 @@ describe('teachers and classes', () => {
     rpcImpl = async () => ({ data: null, error: { message: 'not_teacher' } });
     await expect(api.searchUsers('ai')).rejects.toThrow('先生のアカウントだけが使えます');
     expect(api.classErrorMessage({ message: 'boom' })).toContain('boom');
+    expect(api.classErrorMessage({ message: 'last_teacher' })).toBe('クラスには先生が1人以上必要です');
+    expect(api.classErrorMessage({ message: 'teacher_not_in_class' })).toBe('この人はこのクラスの先生ではありません');
   });
 
   it('is_teacher: true only for a real true; an error counts as no', async () => {

@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Polycards: check that a STUDENT can't use the teacher functions (2026-10-30)
--- Run AFTER polycards-teachers.sql (and polycards-teacher-phase2.sql, polycards-teacher-phase3.sql, polycards-class-tab.sql, polycards-teacher-phase4.sql). Read-only: every check that could write
+-- Run AFTER polycards-teachers.sql (and polycards-teacher-phase2.sql, polycards-teacher-phase3.sql, polycards-class-tab.sql, polycards-teacher-phase4.sql, polycards-teacher-followups.sql). Read-only: every check that could write
 -- something is undone straight away, so nothing in the database changes.
 --
 -- 1. Put a student's username (or full email) on the line marked  <-- STUDENT
@@ -74,6 +74,7 @@ begin
       ('update_class_member',        format('select public.update_class_member(%L, %L, %L, 1)', v_class, v_student, 'X'),               'not_teacher'),
       ('remove_student_from_class',  format('select public.remove_student_from_class(%L, %L)', v_class, v_student),                    'not_teacher'),
       ('add_co_teacher',             format('select public.add_co_teacher(%L, %L)', v_class, v_student),                                'not_teacher'),
+      ('remove_co_teacher',          format('select public.remove_co_teacher(%L, %L)', v_class, v_student),                             'not_teacher'),
       ('regenerate_join_code',       format('select public.regenerate_join_code(%L)', v_class),                                         'not_teacher'),
       ('set_class_archived',         format('select public.set_class_archived(%L, true)', v_class),                                    'not_teacher'),
       ('student_detail',             format('select public.student_detail(%L, %L)', v_class, v_student),                                'not_teacher'),

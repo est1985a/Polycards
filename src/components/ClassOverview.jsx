@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { colors, fontDisplay } from '../styles/theme';
 import { overviewRows, sortOverview, nextSort, lastStudiedText } from '../lib/classOverview';
-import { ErrorText, Panel, SelectBox } from './ClassFields';
+import { ErrorText, Panel, SelectBox, SameNumberMark } from './ClassFields';
+import { duplicateNumbers } from '../lib/classes';
 import { t } from '../i18n';
 
 // The honesty flag: a small flag in gold (a gentle hint, never the danger color).
@@ -66,11 +67,17 @@ function HeaderCell({ column, sort, onSort, wide }) {
 
 // One student's row. Tapping it (or the name, the keyboard way) opens the student page; the
 // checkbox only selects.
-function OverviewRow({ row, columns, now, wide, selectable, selected, onToggle, onOpen }) {
+// sameNumber: another student has the same 出席番号 (a small gold mark next to it).
+function OverviewRow({ row, columns, now, wide, selectable, selected, onToggle, onOpen, sameNumber = false }) {
   const muted = row.unstudied;
   const cell = cellStyle(wide);
   const values = {
-    number: <span style={{ ...num, color: colors.gold }}>{row.student_number ?? "–"}</span>,
+    number: (
+      <span style={{ ...num, color: colors.gold, display: "inline-flex", alignItems: "center", gap: 2 }}>
+        {row.student_number ?? "–"}
+        {sameNumber && <SameNumberMark size={13} />}
+      </span>
+    ),
     name: (
       <button
         type="button"
@@ -134,6 +141,7 @@ export default function ClassOverview({
   const [openedAt] = useState(() => Date.now()); // for 今日 / 昨日 (now: tests)
   const columns = COLUMNS.filter((c) => wide || !c.wideOnly);
   const shown = rows ? sortOverview(overviewRows(rows), sort) : null;
+  const sameNumbers = duplicateNumbers(rows);
   return (
     <Panel title={t("overview.title")} action={action}>
       {toolbar}
@@ -157,7 +165,7 @@ export default function ClassOverview({
                 <OverviewRow
                   key={r.student_id} row={r} columns={columns} now={now ?? openedAt} wide={wide}
                   selectable={selectable} selected={selected.has(r.student_id)} onToggle={onToggle}
-                  onOpen={() => onOpenStudent(r.student_id)}
+                  onOpen={() => onOpenStudent(r.student_id)} sameNumber={sameNumbers.has(r.student_number)}
                 />
               ))}
             </tbody>

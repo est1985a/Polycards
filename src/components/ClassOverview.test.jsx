@@ -172,3 +172,11 @@ describe('ClassPage views', () => {
     expect(h).not.toContain('data-overview');
   });
 });
+
+describe('ClassOverview: same 出席番号', () => {
+  it('marks only the rows that share a number', () => {
+    const rows = [...ROWS, row('c', 2, '木村 三郎')];
+    expect(overview({ rows }).match(/data-same-number=""/g)).toHaveLength(2);
+    expect(overview()).not.toContain('data-same-number');
+  });
+});

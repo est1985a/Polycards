@@ -499,6 +499,12 @@ export default {
   "teacher.close": "Close",
   "teacher.teachers": "Teachers",
   "teacher.you": "(you)",
+  // DRAFT (Andre to check): co-teacher removal and the same-number mark
+  "teacher.removeTeacher": "Remove {name} as a teacher",
+  "teacher.removeTeacherConfirm": "Remove {name} as a teacher of this class?",
+  "teacher.leaveClassConfirm": "Leave this class? You won't be able to see it anymore.",
+  "teacher.leaveClass": "Leave",
+  "teacher.sameNumber": "Another student has the same number.",
   "teacher.addTeacher": "+ Add teacher",
   "teacher.editClass": "Edit name and year",
   "teacher.archive": "Archive this class",
@@ -710,6 +716,8 @@ export default {
   "errors.queryTooShort": "Type at least 2 letters.",
   "errors.userNotFound": "No account found.",
   "errors.targetNotTeacher": "This person doesn't have a teacher account.",
+  "errors.lastTeacher": "A class needs at least one teacher.", // DRAFT
+  "errors.teacherNotInClass": "This person isn't a teacher of this class.", // DRAFT
   "errors.alreadyTeacher": "Already a teacher of this class.",
   "errors.badAmount": "Choose 1 to 10 tickets.",
   "errors.messageTooLong": "The message can be up to 60 characters.",

@@ -318,6 +318,12 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
           onOpenAssignment={(id) => onNavigate({ ...path, screen: "assignment", assignmentId: id })}
           onOverviewCsv={saveOverviewCsv}
           onAwardsCsv={saveAwardsCsv}
+          onRemoveTeacher={async (teacherId, isMe) => {
+            await api.removeCoTeacher(classId, teacherId);
+            // Removing myself: the class can't be opened any more, so back to the class list.
+            if (isMe) onNavigate({ ...path, screen: "classes", classId: null });
+            else await reload();
+          }}
         />
         {awardSheet}
         {searchMode && (
