@@ -184,3 +184,14 @@ describe('品詞 chip in the word list', () => {
     expect(renderRow()).not.toContain('品詞');
   });
 });
+
+describe('word list opened from a 課題 (単語を見る)', () => {
+  it('showDrill={false} hides おためしドリル but keeps ＋ マイデッキに追加; the default still has the drill', () => {
+    const fromClass = renderToStaticMarkup(
+      <WordList activeSet={SET} isAdded={false} saving={false} onAddDeck={() => {}} onStart={() => {}} showDrill={false} />,
+    );
+    expect(fromClass).not.toContain('おためしドリル');
+    expect(fromClass).toContain('マイデッキに追加');
+    expect(renderList()).toContain('おためしドリル');
+  });
+});

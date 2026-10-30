@@ -800,7 +800,11 @@ export default {
   "assign.col.name": "名前",
   "assign.col.status": "状態",
   "assign.col.cards": "カード", // wide screens: learned / all cards
-  "assign.progressNote": "進み具合 = Lv1以上になったカード ÷ パックの全カード（英→日と日→英）。ほかのパックで覚えた単語も数えます。",
+  "assign.legend": "未追加：マイデッキにまだ追加していない　学習中：追加して復習中　完了：すべてのカードに1回以上正解", // never 学習済み / 覚えた: 完了 only means every card is Lv1+
+  "myAssign.guide": "① マイデッキに追加 → ② マイデッキで復習 → ③ 完了！",
+  "myAssign.viewWords": "単語を見る",
+  "common.backToClass": "クラスにもどる", // back button above a pack's word list opened from the クラス tab
+  "assign.progressNote": "進み具合 = Lv1以上になったカード ÷ パックの全カード（英→日と日→英）。ほかのパックで学習した単語も数えます。",
   "assign.statusAria": "{status} {n}%", // read aloud: a progress bar
   // Student: the 課題 section of the クラス tab
   "myAssign.title": "課題",
@@ -832,7 +836,7 @@ export default {
   "csv.assignment.nickname": "ニックネーム",
   "csv.assignment.status": "状態",
   "csv.assignment.percent": "進み具合（%）",
-  "csv.assignment.learned": "覚えたカード",
+  "csv.assignment.learned": "Lv1以上のカード",
   "csv.assignment.total": "全カード",
   "csv.assignment.added": "マイデッキ追加",
   "csv.awards.date": "日時",

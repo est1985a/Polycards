@@ -61,3 +61,16 @@ export function StatusBadge({ status }) {
     </span>
   );
 }
+
+// A line made of short parts that may wrap only between parts, never inside one (so 学習中：追加して復習中
+// stays together on a phone). text is split at sep; joiner is drawn between the parts.
+export function PartsLine({ text, sep, joiner = null, style, ...rest }) {
+  const parts = String(text).split(sep);
+  return (
+    <div {...rest} style={{ display: "flex", flexWrap: "wrap", columnGap: joiner ? 4 : 12, rowGap: 2, ...style }}>
+      {parts.map((part, i) => (
+        <span key={i} style={{ whiteSpace: "nowrap" }}>{part}{joiner && i < parts.length - 1 ? joiner : ""}</span>
+      ))}
+    </div>
+  );
+}

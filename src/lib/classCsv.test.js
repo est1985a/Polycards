@@ -39,7 +39,7 @@ describe('assignmentCsv', () => {
       [{ student_id: 'b', real_name: '鈴木', student_number: 2 }, { student_id: 'a', real_name: '佐藤, 花子', student_number: 1, nickname: 'Hana' }],
     );
     const out = lines(assignmentCsv(rows));
-    expect(out[0]).toBe('番号,名前,ニックネーム,状態,進み具合（%）,覚えたカード,全カード,マイデッキ追加');
+    expect(out[0]).toBe('番号,名前,ニックネーム,状態,進み具合（%）,Lv1以上のカード,全カード,マイデッキ追加');
     expect(out[1]).toBe('1,"佐藤, 花子",Hana,学習中,75,3,4,はい');
     expect(out[2]).toBe('2,鈴木,,未追加,0,0,4,いいえ');
   });

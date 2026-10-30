@@ -94,7 +94,8 @@ export function WordRow({ word, hideJa, revealed, first, onToggle, speech = null
 // speech: { slow } for the speaker buttons, or null when the browser can't speak.
 // The bottom bar's main button is ＋ マイデッキに追加 (or ✓ added + マイデッキへ, onGoToMyDeck);
 // the drill (onStart) is the small おためしドリル button, because it saves nothing.
-export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStart, onGoToMyDeck = null, wide = false, speech = null }) {
+// showDrill: false hides the drill (a pack opened with 単語を見る from the クラス tab's 課題).
+export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStart, onGoToMyDeck = null, wide = false, speech = null, showDrill = true }) {
   const words = activeSet.cards.filter((c) => c.direction === "en2jp");
   // 所持済み tags only while the deck isn't added yet: once it is, every word is owned.
   const ownedIds = !isAdded && Array.isArray(activeSet.ownedWordIds) ? new Set(activeSet.ownedWordIds) : null;
@@ -173,12 +174,12 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
             counts={ownedCounts(activeSet.cards, activeSet.ownedWordIds)}
           />
         </div>
-        <button
+        {showDrill && <button
           onClick={onStart}
           style={{ ...btnGhost, flex: "0 0 auto", minHeight: wide ? 56 : 44, padding: "8px 18px", fontSize: 14, alignSelf: wide ? "auto" : "center" }}
         >
           {t("wordList.startDrill")}
-        </button>
+        </button>}
       </div>
     </div>
   );

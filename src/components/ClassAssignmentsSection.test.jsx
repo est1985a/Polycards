@@ -44,7 +44,7 @@ describe('ClassAssignmentsSection', () => {
     const h = render([a('x', { learned: 20 })]);
     expect(h).toContain('data-status="done"');
     expect(h).toContain('完了');
-    expect(h).not.toContain('マイデッキに追加');
+    expect(h).not.toContain('＋ マイデッキに追加');
     expect(h).not.toContain('復習する');
   });
 
@@ -84,6 +84,26 @@ describe('ClassAssignmentsSection', () => {
     const h = render([a('x', { added: false, owned: 0, learned: 0, due_date: '2026-10-31' })]);
     expect(h).toContain('+ Add to My Deck');
     expect(h).toContain('1 day left');
+  });
+});
+
+describe('how to finish an assignment', () => {
+  it('one guide line for the whole section, and 単語を見る on every card (done too)', () => {
+    const h = render([a('x', { added: false, owned: 0, learned: 0 }), a('y'), a('z', { learned: 20 })]);
+    expect((h.match(/data-assign-guide/g) || []).length).toBe(1);
+    expect(h).toContain('>① マイデッキに追加 →</span>');
+    expect(h).toContain('>② マイデッキで復習 →</span>');
+    expect(h).toContain('>③ 完了！</span>');
+    expect((h.match(/単語を見る/g) || []).length).toBe(3);
+    expect(h).not.toContain('<li data-my-assignment="not_added" role="button"');
+  });
+
+  it('English', () => {
+    setLang('en');
+    const h = render([a('x')]);
+    expect(h).toContain('>① Add to My Deck →</span>');
+    expect(h).toContain('>③ Done!</span>');
+    expect(h).toContain('See words');
   });
 });
 

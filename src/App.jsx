@@ -147,6 +147,9 @@ function App() {
   const [savingDeck, setSavingDeck] = useState(false);
   const [packResult, setPackResult] = useState(null); // pack opening after Add to My Cards (packSummary)
   const [packFromClass, setPackFromClass] = useState(false); // the pack was added from the クラス tab (課題)
+  // Where the open word list came from: 'cardSets' (Word Packs) or 'class' (課題's 単語を見る: no drill,
+  // and its back button says クラスにもどる).
+  const [wordListFrom, setWordListFrom] = useState("cardSets");
   const [removingDeckId, setRemovingDeckId] = useState(null);
   const [stats, setStats] = useState(null); // points and rank
   const [masteredCards, setMasteredCards] = useState([]);
@@ -683,8 +686,9 @@ function App() {
     setView("study");
   }
 
-  // Card Sets: open a deck's word list; the "try it" drill starts from there
-  async function startDeck(deck) {
+  // Card Sets: open a deck's word list; the "try it" drill starts from there.
+  // from: 'class' when opened with 単語を見る on a 課題 card.
+  async function startDeck(deck, from = "cardSets") {
     setLoadingDeck(true);
     try {
       const words = await api.fetchDeckWords(deck.id);
@@ -693,7 +697,9 @@ function App() {
       // Checked before the list shows, so the tags never make rows jump; null = unknown.
       const ownedWordIds = await api.fetchOwnedWordIds(session?.user?.id, words.map((w) => w.id));
       setActiveSet({ id: deck.id, name: deck.name, cards: buildCards(words), ownedWordIds });
+      setWordListFrom(from);
       setView("wordList");
+      window.scrollTo(0, 0);
     } catch {
       alert(t("cardSets.deckEmpty"));
     }
@@ -769,9 +775,17 @@ function App() {
     return added;
   }
 
-  function addDeck() {
-    setPackFromClass(false);
-    return addPack(activeSet);
+  // The word list's (and drill's) ＋ マイデッキに追加. From a 課題's 単語を見る, the クラス tab's progress and
+  // dot reload afterwards, and the pack opening's 今すぐ復習する comes back to クラス.
+  async function addDeck() {
+    const fromClass = view === "wordList" && wordListFrom === "class";
+    setPackFromClass(fromClass);
+    const added = await addPack(activeSet);
+    if (added && fromClass) {
+      setAssignmentsVersion((v) => v + 1);
+      api.fetchPendingAssignments().then(setPendingAssignments);
+    }
+    return added;
   }
 
   // クラス tab, 課題: ＋ マイデッキに追加 runs the same add (with the pack opening) for an assigned pack,
@@ -793,6 +807,11 @@ function App() {
       alert(e.message);
     }
     setAddingAssignedDeckId(null);
+  }
+
+  // クラス tab, 課題: 単語を見る opens the pack's word list (no drill; back = クラスにもどる).
+  function viewAssignedWords(assignment) {
+    startDeck({ id: assignment.deck_id, name: assignment.deck_name }, "class");
   }
 
   // クラス tab, 課題: 復習する reviews this pack's due cards; leaving the review comes back to クラス.
@@ -983,6 +1002,7 @@ function App() {
                     busyDeckId={addingAssignedDeckId}
                     onAddAssignment={addAssignedPack}
                     onReviewAssignment={reviewAssigned}
+                    onViewAssignmentWords={viewAssignedWords}
                   />
                 )}
                 {activeTab === "teacher" && isTeacher && (
@@ -1070,7 +1090,10 @@ function App() {
                 {/* The review has its back button in its own top row. */}
                 {view !== "study" && (
                   <div style={{ marginBottom: 14, textAlign: "left" }}>
-                    <BackButton label={t("common.backToDashboard")} onClick={() => setView("dashboard")} />
+                    <BackButton
+                      label={t(view === "wordList" && wordListFrom === "class" ? "common.backToClass" : "common.backToDashboard")}
+                      onClick={() => setView("dashboard")}
+                    />
                   </div>
                 )}
                 {view === "mastered" && (
@@ -1087,6 +1110,7 @@ function App() {
                     onGoToMyDeck={goToMyDeck}
                     wide={wide}
                     speech={speech}
+                    showDrill={wordListFrom !== "class"}
                   />
                 )}
                 {activeSet && (view === "study" || reviewBehind) && (

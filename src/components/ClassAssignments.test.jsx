@@ -123,3 +123,21 @@ describe('class page: the 課題 view and the CSV buttons', () => {
     expect(h).toContain('Due Oct 29 · Past due');
   });
 });
+
+describe('the status legend', () => {
+  it('explains 未追加 / 学習中 / 完了 on the list and above the table, without 学習済み or 覚えた', () => {
+    const list = renderToStaticMarkup(<ClassAssignments assignments={[ASSIGNMENT]} onNew={noop} onOpen={noop} now={NOW} />);
+    const table = renderToStaticMarkup(<AssignmentPage assignment={ASSIGNMENT} roster={ROSTER} className="1年A組" onBack={noop} onUpdate={noop} onDelete={noop} now={NOW} />);
+    for (const h of [list, table]) {
+      // one phrase per part, each kept on one line
+      expect(h).toContain('white-space:nowrap">未追加：マイデッキにまだ追加していない</span>');
+      expect(h).toContain('white-space:nowrap">学習中：追加して復習中</span>');
+      expect(h).toContain('white-space:nowrap">完了：すべてのカードに1回以上正解</span>');
+      expect(h).not.toContain('学習済み');
+      expect(h).not.toContain('覚えた');
+    }
+    // the short pills stay
+    expect(table).toContain('data-status="not_added"');
+    expect(renderToStaticMarkup(<ClassAssignments assignments={[]} onNew={noop} onOpen={noop} />)).not.toContain('data-assign-legend');
+  });
+});

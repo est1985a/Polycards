@@ -8,7 +8,7 @@ import BackButton from './BackButton';
 import { ConfirmLine, NicknameLine } from './ClassPage';
 import { useAction } from '../lib/useAction';
 import { ErrorText, Field, Panel } from './ClassFields';
-import { DuePill, ProgressBar, StatusBadge } from './AssignmentParts';
+import { DuePill, ProgressBar, StatusBadge, PartsLine } from './AssignmentParts';
 import { inputStyle, ghostSmall, primarySmall, noAutoFix } from '../styles/forms';
 import { t } from '../i18n';
 
@@ -196,6 +196,7 @@ export default function AssignmentPage({
       )}
 
       <Panel title={t("assign.tableTitle")}>
+        <PartsLine data-assign-legend="" text={t("assign.legend")} sep={/\u3000| · /} style={{ fontSize: 13, color: colors.muted }} />
         {shown.length === 0 ? (
           <div style={{ fontSize: 15, color: colors.muted }}>{t("teacher.noStudents")}</div>
         ) : (

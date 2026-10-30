@@ -60,7 +60,8 @@ function ClassHeader({ info, onChangeNickname }) {
 export function ClassTabView({
   classes, selectedId, onSelect = () => {}, info = null, board = null, error = null, wide = false,
   onJoin = () => {}, onChangeNickname = () => {}, onSaveNickname = async () => {},
-  assignments = null, dueFor = () => 0, busyDeckId = null, onAddAssignment = () => {}, onReviewAssignment = () => {}, now = null,
+  assignments = null, dueFor = () => 0, busyDeckId = null, onAddAssignment = () => {}, onReviewAssignment = () => {},
+  onViewAssignmentWords = () => {}, now = null,
 }) {
   const frame = (children) => (
     <div style={{ display: "grid", gap: 16, paddingTop: 8, textAlign: "left", maxWidth: wide ? 900 : undefined, margin: wide ? "0 auto" : undefined, width: "100%" }}>
@@ -109,7 +110,7 @@ export function ClassTabView({
       {/* Phase 4: the class's assigned packs (課題), my own progress only. */}
       <ClassAssignmentsSection
         key={info.id} assignments={assignments} dueFor={dueFor} busyDeckId={busyDeckId}
-        onAdd={onAddAssignment} onReview={onReviewAssignment} now={now}
+        onAdd={onAddAssignment} onReview={onReviewAssignment} onViewWords={onViewAssignmentWords} now={now}
       />
       {main}
     </>,
@@ -123,7 +124,7 @@ export function ClassTabView({
 // the progress reloads. dueFor / busyDeckId / onAddAssignment / onReviewAssignment: from App.
 export default function ClassTab({
   classes, selectedId, onSelect, onJoin, wide = false,
-  assignmentsVersion = 0, dueFor, busyDeckId = null, onAddAssignment, onReviewAssignment,
+  assignmentsVersion = 0, dueFor, busyDeckId = null, onAddAssignment, onReviewAssignment, onViewAssignmentWords,
 }) {
   const list = Array.isArray(classes) ? classes : null;
   const classId = pickClass(list, selectedId);
@@ -187,6 +188,7 @@ export default function ClassTab({
         busyDeckId={busyDeckId}
         onAddAssignment={onAddAssignment}
         onReviewAssignment={onReviewAssignment}
+        onViewAssignmentWords={onViewAssignmentWords}
       />
       {editing && shownInfo?.data && (
         <NicknameSheet initial={shownInfo.data.nickname ?? ""} onSave={saveNickname} onClose={() => setEditing(false)} />

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { colors } from '../styles/theme';
 import { assignmentSummary } from '../lib/assignments';
 import { ErrorText, Panel } from './ClassFields';
-import { DuePill, ProgressBar } from './AssignmentParts';
+import { DuePill, ProgressBar, PartsLine } from './AssignmentParts';
 import { primarySmall } from '../styles/forms';
 import { t } from '../i18n';
 
@@ -55,6 +55,7 @@ export default function ClassAssignments({ assignments, error = null, archived =
       action={!archived && <button onClick={onNew} style={primarySmall}>{t("assign.new")}</button>}
     >
       {archived && <div style={{ fontSize: 14, color: colors.muted }}>{t("assign.archivedNote")}</div>}
+      {assignments?.length > 0 && <PartsLine data-assign-legend="" text={t("assign.legend")} sep={/\u3000| · /} style={{ fontSize: 13, color: colors.muted }} />}
       <ErrorText>{error}</ErrorText>
       {assignments === null ? (
         !error && <div style={{ fontSize: 14, color: colors.muted }}>{t("common.loading")}</div>
