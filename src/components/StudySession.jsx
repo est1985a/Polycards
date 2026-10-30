@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { colors, fontDisplay, fontBody, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
 import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
-import { srsAnswer, newSessionId, saveErrorReporter } from '../lib/srs';
+import { srsAnswer, newSessionId, saveErrorReporter, answerTiming } from '../lib/srs';
 import { checkSpelling, ignoreNextKey, isAlternateAnswer, needsOtherMeaningCheck, cardAnswerMode } from '../lib/spelling';
 import { reduceMotionOn } from '../lib/settings';
 import { recordAnswer, checkOtherMeaning, holdAnswer, flushHeldAnswer, dropHeldAnswer } from '../lib/api';
@@ -260,6 +260,13 @@ export default function StudySession({
   const actionsRef = useRef(null); // the input and answer buttons under the card
   const turnRef = useRef(turn); // the current turn, for answers that arrive after a wait
   useEffect(() => { turnRef.current = turn; }, [turn]);
+  // When the card on screen appeared and was flipped (performance.now() ms), sent with each answer for
+  // the teachers' honesty hint. A card put back by 元に戻す comes back already flipped: not timed.
+  const timingRef = useRef({ shownAt: null, revealAt: null });
+  const untimedTurnRef = useRef(null);
+  useEffect(() => {
+    timingRef.current = { shownAt: untimedTurnRef.current === turn ? null : performance.now(), revealAt: null };
+  }, [turn]);
 
   // Leaving the review in any way sends the held answer. A layout-effect cleanup runs while React
   // is still updating the screen, before App's effects wait for pending saves and recount points.
@@ -299,6 +306,7 @@ export default function StudySession({
       setHandwritingFailed(true);
     });
   }, [handwritingSession]);
+  const answerModeName = handwritingCard ? "handwriting" : typingCard ? "typing" : "tap"; // recorded with the answer
   const typingPhase = !typingCard ? null : !typedResult ? "typing" : typedResult.next ? "next" : "choose";
 
   // The card is answered (flipped, 答える / こたえる pressed, or わからない): it keeps the mode it has now.
@@ -395,13 +403,21 @@ export default function StudySession({
     setLevelUp(null);
     setSpellBonus(null);
     setUndo(null);
+    untimedTurnRef.current = turn + 1;
     setTurn((t) => t + 1);
+  }
+
+  // How this card is being answered and how long it took, taken at the moment of the answer
+  // (so a held answer keeps its own times).
+  function answerExtra() {
+    return { mode: answerModeName, ...answerTiming(timingRef.current, performance.now()) };
   }
 
   // Sends one SRS answer. typedText / localSpelling: typing mode only. The database checks the
   // spelling itself and decides the bonus; if it disagrees with the app, only warn.
-  function send(result, typedText = null, localSpelling = null) {
-    recordAnswer(card, result, sessionId, typedText)
+  // extra: answerExtra(), taken when the student answered.
+  function send(result, typedText = null, localSpelling = null, extra = answerExtra()) {
+    recordAnswer(card, result, sessionId, typedText, extra)
       .then((saved) => {
         if (typedText !== null && saved && saved.spelling !== localSpelling) {
           console.warn("Spelling check differs from the database:", { typed: typedText, app: localSpelling, database: saved.spelling });
@@ -420,12 +436,13 @@ export default function StudySession({
     // and saves the new level itself (same rules as src/lib/srs.js).
     const snapshot = snapshotNow();
     const answer = srsAnswer(card.level, knew ? "got_it" : "not_yet", wrongCounts[card.id] || 0);
+    const extra = answerExtra();
     // Typing mode, one letter off or wrong: the student's choice goes with what they typed.
     if (typedResult) {
       const typedText = typed, spelling = typedResult.spelling;
-      holdForUndo(snapshot, knew, () => send(answer.result, typedText, spelling));
+      holdForUndo(snapshot, knew, () => send(answer.result, typedText, spelling, extra));
     } else {
-      holdForUndo(snapshot, knew, () => send(answer.result));
+      holdForUndo(snapshot, knew, () => send(answer.result, null, null, extra));
     }
 
     showFloats(answer);
@@ -603,7 +620,11 @@ export default function StudySession({
 
   const addDeckControl = isSrs ? null : <AddDeckButton isAdded={isAdded} saving={saving} onAdd={onAddDeck} counts={ownedCounts(activeSet.cards, activeSet.ownedWordIds)} />;
   const answerSize = wide ? { minHeight: short ? 60 : 76, fontSize: 18 } : { minHeight: 52 };
-  const reveal = () => { lockMode(); setRevealed(true); };
+  const reveal = () => {
+    if (timingRef.current.revealAt == null) timingRef.current.revealAt = performance.now();
+    lockMode();
+    setRevealed(true);
+  };
   const compactCard = typingPhase === "typing";
   // fit: the card takes the room left between the question and the buttons, between these heights.
   // After a handwriting answer (boxes, result lines and buttons under it) it may get smaller still.

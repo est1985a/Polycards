@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   LEVEL_HOURS, MAX_LEVEL, MASTERED, DEFAULT_SESSION_SIZE, SESSION_SIZES, RESTORED_LEVEL, isMastered,
-  levelAfterCorrect, levelAfterWrong, nextReviewDate, restoreUpdate, levelUpLabel,
+  levelAfterCorrect, levelAfterWrong, nextReviewDate, restoreUpdate, levelUpLabel, answerTiming,
 } from './srs';
 
 describe('settings', () => {
@@ -139,5 +139,19 @@ describe('levelUpLabel (level-up float)', () => {
 
   it('shows nothing when a card missed earlier this session is answered correctly (it does not move up)', () => {
     expect(levelUpLabel(3, true, 1)).toBeNull();
+  });
+});
+
+describe('answerTiming (times for the teachers\' honesty hint)', () => {
+  it('measures from when the card appeared, in whole ms', () => {
+    expect(answerTiming({ shownAt: 1000, revealAt: 1640.4 }, 2900.6)).toEqual({ revealMs: 640, answerMs: 1901 });
+  });
+  it('leaves out what was not timed', () => {
+    expect(answerTiming({ shownAt: 1000, revealAt: null }, 2500)).toEqual({ revealMs: null, answerMs: 1500 });
+    expect(answerTiming({ shownAt: null, revealAt: null }, 2500)).toEqual({ revealMs: null, answerMs: null });
+    expect(answerTiming(null, 2500)).toEqual({ revealMs: null, answerMs: null });
+  });
+  it('never gives a negative time', () => {
+    expect(answerTiming({ shownAt: 5000, revealAt: 4000 }, 4500)).toEqual({ revealMs: 0, answerMs: 0 });
   });
 });

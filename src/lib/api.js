@@ -227,10 +227,11 @@ export function answerErrorMessage(error) {
 // Saves one SRS review answer through the database function record_answer(), which works out
 // the new level, saves the card and logs the answer. result: 'got_it' (わかった) or 'not_yet' (まだ).
 // sessionId: one id per review session. typed: what the student typed (typing mode), else null;
-// the database checks the spelling itself. Resolves with what the database returns
-// (null for a card that is no longer due, which is only a console warning).
-export function recordAnswer(card, result, sessionId, typed = null) {
-  const save = answerQueue.then(() => sendAnswer(card, result, sessionId, typed));
+// the database checks the spelling itself. extra: { mode, revealMs, answerMs } (how the card was
+// answered and how fast, for the teachers' honesty hint; each sent only when set). Resolves with
+// what the database returns (null for a card that is no longer due, which is only a console warning).
+export function recordAnswer(card, result, sessionId, typed = null, extra = null) {
+  const save = answerQueue.then(() => sendAnswer(card, result, sessionId, typed, extra));
   answerQueue = save.catch(() => {}); // a failed answer doesn't hold up the next one
   pendingSaves.add(save);
   const done = () => pendingSaves.delete(save);
@@ -238,7 +239,7 @@ export function recordAnswer(card, result, sessionId, typed = null) {
   return save;
 }
 
-async function sendAnswer(card, result, sessionId, typed) {
+async function sendAnswer(card, result, sessionId, typed, extra) {
   const args = {
     p_word_id: card.wordId,
     p_direction: card.direction,
@@ -246,6 +247,9 @@ async function sendAnswer(card, result, sessionId, typed) {
     p_session_id: sessionId,
   };
   if (typed !== null) args.p_typed = typed;
+  if (extra?.mode) args.p_mode = extra.mode;
+  if (extra?.revealMs != null) args.p_reveal_ms = extra.revealMs;
+  if (extra?.answerMs != null) args.p_answer_ms = extra.answerMs;
   const { data, error } = await supabase.rpc('record_answer', args);
   if (error) {
     if ((error.message || "").includes('not_due')) {
@@ -716,6 +720,30 @@ export function awardTickets(classId, studentIds, amount, message) {
 // [{ batch_id, created_at, teacher_name, amount, message, student_count, student_names }].
 export async function fetchClassAwards(classId) {
   return (await callClass('class_awards', { p_class_id: classId })) || [];
+}
+
+// ---- Teacher area, Phase 3 (supabase/polycards-teacher-phase3.sql) ----
+
+// Teacher: the whole class in one call, one row per student: [{ student_id, real_name, student_number,
+// display_name, last_studied_at, reviews, study_days (both in the last `days` Japan days), streak,
+// player_level, cards, tickets, honesty (counts over honestyDays, see src/lib/honesty.js) }].
+export async function fetchClassOverview(classId, days, fastMs, honestyDays) {
+  return (await callClass('class_overview', {
+    p_class_id: classId, p_days: days, p_fast_ms: fastMs, p_honesty_days: honestyDays,
+  })) || [];
+}
+
+// Teacher: the words the class missed most in the last `days` Japan days (top 20):
+// [{ word_id, english, japanese, pos, student_count, misses, students: [{ student_id, real_name, student_number, misses }] }].
+export async function fetchClassTroubleWords(classId, days) {
+  return (await callClass('class_trouble_words', { p_class_id: classId, p_days: days })) || [];
+}
+
+// Teacher: one student's honesty counts (see src/lib/honesty.js).
+export async function fetchStudentHonesty(classId, studentId, days, fastMs) {
+  return (await callClass('student_honesty', {
+    p_class_id: classId, p_student_id: studentId, p_days: days, p_fast_ms: fastMs,
+  })) || {};
 }
 
 // Student: awards not seen yet, oldest first: [{ id, teacher_name, amount, message, created_at }].

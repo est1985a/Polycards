@@ -1,12 +1,17 @@
 import { useState } from 'react';
-import { colors, fontDisplay, panel } from '../styles/theme';
+import { colors, fontDisplay } from '../styles/theme';
 import {
   sortRoster, splitJoinCode, cleanRealName, realNameValid, parseStudentNumber, studentNumberValid,
   classNameValid, parseSchoolYear, dateTimeText,
 } from '../lib/classes';
 import BackButton from './BackButton';
+import SegmentedSwitch from './SegmentedSwitch';
+import ClassOverview from './ClassOverview';
+import ClassTroubleWords from './ClassTroubleWords';
+import { OVERVIEW_PERIODS, DEFAULT_PERIOD, DEFAULT_SORT } from '../lib/classOverview';
+import { toggleId } from '../lib/library';
 
-import { Field, ErrorText, StudentFields } from './ClassFields';
+import { Field, ErrorText, StudentFields, Panel, SelectBox } from './ClassFields';
 import { inputStyle, ghostSmall, primarySmall, dangerSmall, noAutoFix } from '../styles/forms';
 import { t } from '../i18n';
 
@@ -29,18 +34,6 @@ function useAction() {
   return { busy, error, run, clearError: () => setError(null) };
 }
 
-function Panel({ title, action, children }) {
-  return (
-    <section style={{ ...panel, display: "grid", gap: 12, alignContent: "start" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-        <h3 style={{ margin: 0, fontFamily: fontDisplay, fontSize: 18, fontWeight: 700, color: colors.text }}>{title}</h3>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-
 // An inline "are you sure?" line with キャンセル and a confirm button (like 復習に戻す in Mastered).
 function ConfirmLine({ text, yesLabel, danger = false, busy, onYes, onCancel }) {
   return (
@@ -49,27 +42,6 @@ function ConfirmLine({ text, yesLabel, danger = false, busy, onYes, onCancel }) 
       <button onClick={onCancel} disabled={busy} style={ghostSmall}>{t("common.cancel")}</button>
       <button onClick={onYes} disabled={busy} style={{ ...(danger ? dangerSmall : primarySmall), opacity: busy ? 0.6 : 1 }}>{busy ? "…" : yesLabel}</button>
     </div>
-  );
-}
-
-// A 44 px checkbox (role="checkbox") for choosing students to give tickets to.
-function SelectBox({ checked, label, onToggle }) {
-  return (
-    <button
-      type="button" role="checkbox" aria-checked={checked} aria-label={label} onClick={onToggle}
-      style={{ width: 44, height: 44, flexShrink: 0, display: "grid", placeItems: "center", background: "transparent", border: "none", padding: 0, cursor: "pointer" }}
-    >
-      <span
-        aria-hidden="true"
-        style={{
-          width: 24, height: 24, borderRadius: 6, boxSizing: "border-box", display: "grid", placeItems: "center",
-          border: `2px solid ${checked ? colors.accent : colors.line}`, background: checked ? colors.accent : colors.surface,
-          color: colors.accentInk, fontSize: 16, fontWeight: 700, lineHeight: 1,
-        }}
-      >
-        {checked ? "✓" : ""}
-      </span>
-    </button>
   );
 }
 
@@ -321,15 +293,22 @@ function ClassSettingsPanel({ cls, onUpdateClass, onSetArchived }) {
   );
 }
 
-// One class (先生 tab): roster on the left, join code / teachers / class settings on the right
-// (one column on phones). detail: { class, students, teachers } from class_detail() (null while loading).
+// One class (先生 tab). Two views (一覧 / 名簿, `view`, kept in App's teacherPath):
+//   一覧 (default): the class overview table (class_overview()) at full width, then the class trouble
+//     words beside the join code / awards / teachers / class settings (one column on phones).
+//   名簿: the Phase 2 roster (編集 / 外す / ＋ 生徒を追加) on the left, the same panels on the right.
+// detail: { class, students, teachers } from class_detail() (null while loading).
 // Each on… action returns a promise; the page shows its error next to the button that ran it.
-// awards: recent awards (class_awards(), null while loading). onOpenStudent(id): a roster name was tapped.
-// onGive(students): チケットを贈る for the checked students. initialSelected: for tests.
+// awards: recent awards (class_awards(), null while loading). onOpenStudent(id): a name was tapped.
+// onGive(students): チケットを贈る for the checked students (the same selection in both views).
+// overview / overviewError: class_overview() rows (null while loading). troubleWords: class_trouble_words().
+// days / onDays: the period (7 or 30). sort / onSort: the overview's column. initialSelected: for tests.
 export default function ClassPage({
   detail, error = null, onBack, wide = false, awards = null,
   onUpdateClass, onSetArchived, onRegenerate, onUpdateMember, onRemoveMember, onOpenSearch, onShowLarge,
   onOpenStudent = () => {}, onGive = () => {}, initialSelected = [],
+  view = "overview", onView = () => {}, days = DEFAULT_PERIOD, onDays = () => {}, sort = DEFAULT_SORT, onSort = () => {},
+  overview = null, overviewError = null, troubleWords = null,
 }) {
   const [selected, setSelected] = useState(() => new Set(initialSelected));
   const back = <div><BackButton label={t("teacher.backToClasses")} onClick={onBack} /></div>;
@@ -346,13 +325,58 @@ export default function ClassPage({
   // Only students still on the roster count as chosen (one may have been removed meanwhile).
   const chosen = students.filter((s) => selected.has(s.student_id));
   const allChosen = students.length > 0 && chosen.length === students.length;
-  const toggle = (id) => setSelected((old) => {
-    const next = new Set(old);
-    if (next.has(id)) next.delete(id); else next.add(id);
-    return next;
-  });
+  const toggle = (id) => setSelected((old) => toggleId(old, id));
   const canGive = !cls.archived && students.length > 0;
+  const giveBar = canGive && (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
+      <button
+        onClick={() => setSelected(allChosen ? new Set() : new Set(students.map((s) => s.student_id)))}
+        style={ghostSmall}
+      >
+        {allChosen ? t("award.clearSelection") : t("award.selectAll")}
+      </button>
+      <button
+        onClick={() => onGive(chosen)}
+        disabled={chosen.length === 0}
+        style={{ ...primarySmall, background: colors.gold, opacity: chosen.length === 0 ? 0.5 : 1 }}
+      >
+        {t("award.giveCount", { n: chosen.length })}
+      </button>
+    </div>
+  );
 
+  const side = (
+    <div style={{ display: "grid", gap: 16, alignContent: "start" }}>
+      <JoinCodePanel code={cls.join_code} archived={cls.archived} onShowLarge={onShowLarge} onRegenerate={onRegenerate} />
+      <ClassAwardsPanel awards={awards} />
+      <TeachersPanel teachers={detail.teachers} onAddTeacher={() => onOpenSearch("teacher")} />
+      <ClassSettingsPanel key={`${cls.name}|${cls.school_year}`} cls={cls} onUpdateClass={onUpdateClass} onSetArchived={onSetArchived} />
+    </div>
+  );
+
+  const roster = (
+    <Panel
+      title={`${t("teacher.roster")} (${students.length})`}
+      action={!cls.archived && <button onClick={() => onOpenSearch("student")} style={primarySmall}>{t("teacher.addStudent")}</button>}
+    >
+      {giveBar}
+      {students.length === 0 ? (
+        <div style={{ fontSize: 15, color: colors.muted }}>{t("teacher.noStudents")}</div>
+      ) : (
+        <ul data-roster="" style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 8 }}>
+          {students.map((s) => (
+            <RosterRow
+              key={s.student_id} student={s} wide={wide} onUpdate={onUpdateMember} onRemove={onRemoveMember}
+              onOpen={() => onOpenStudent(s.student_id)}
+              selectable={canGive} selected={selected.has(s.student_id)} onToggle={toggle}
+            />
+          ))}
+        </ul>
+      )}
+    </Panel>
+  );
+
+  const columns = { display: "grid", gap: 16, alignItems: "start", gridTemplateColumns: wide ? "minmax(0, 1fr) 340px" : "1fr" };
   return (
     <div style={{ display: "grid", gap: 16, paddingTop: 8, textAlign: "left" }}>
       {back}
@@ -365,50 +389,40 @@ export default function ClassPage({
       </div>
       <ErrorText>{error}</ErrorText>
 
-      <div style={{ display: "grid", gap: 16, alignItems: "start", gridTemplateColumns: wide ? "minmax(0, 1fr) 340px" : "1fr" }}>
-        <Panel
-          title={`${t("teacher.roster")} (${students.length})`}
-          action={!cls.archived && <button onClick={() => onOpenSearch("student")} style={primarySmall}>{t("teacher.addStudent")}</button>}
-        >
-          {canGive && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-              <button
-                onClick={() => setSelected(allChosen ? new Set() : new Set(students.map((s) => s.student_id)))}
-                style={ghostSmall}
-              >
-                {allChosen ? t("award.clearSelection") : t("award.selectAll")}
-              </button>
-              <button
-                onClick={() => onGive(chosen)}
-                disabled={chosen.length === 0}
-                style={{ ...primarySmall, background: colors.gold, opacity: chosen.length === 0 ? 0.5 : 1 }}
-              >
-                {t("award.giveCount", { n: chosen.length })}
-              </button>
-            </div>
-          )}
-          {students.length === 0 ? (
-            <div style={{ fontSize: 15, color: colors.muted }}>{t("teacher.noStudents")}</div>
-          ) : (
-            <ul data-roster="" style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 8 }}>
-              {students.map((s) => (
-                <RosterRow
-                  key={s.student_id} student={s} wide={wide} onUpdate={onUpdateMember} onRemove={onRemoveMember}
-                  onOpen={() => onOpenStudent(s.student_id)}
-                  selectable={canGive} selected={selected.has(s.student_id)} onToggle={toggle}
-                />
-              ))}
-            </ul>
-          )}
-        </Panel>
-
-        <div style={{ display: "grid", gap: 16 }}>
-          <JoinCodePanel code={cls.join_code} archived={cls.archived} onShowLarge={onShowLarge} onRegenerate={onRegenerate} />
-          <ClassAwardsPanel awards={awards} />
-          <TeachersPanel teachers={detail.teachers} onAddTeacher={() => onOpenSearch("teacher")} />
-          <ClassSettingsPanel key={`${cls.name}|${cls.school_year}`} cls={cls} onUpdateClass={onUpdateClass} onSetArchived={onSetArchived} />
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ flex: wide ? "0 1 260px" : "1 1 200px" }}>
+          <SegmentedSwitch
+            label={t("classView.label")} value={view} onChange={onView}
+            options={[{ value: "overview", label: t("classView.overview") }, { value: "roster", label: t("classView.roster") }]}
+          />
         </div>
+        {view === "overview" && (
+          <div style={{ flex: wide ? "0 1 220px" : "1 1 160px" }}>
+            <SegmentedSwitch
+              label={t("overview.periodLabel")} value={days} onChange={onDays}
+              options={OVERVIEW_PERIODS.map((n) => ({ value: n, label: t("overview.period", { n }) }))}
+            />
+          </div>
+        )}
       </div>
+
+      {view === "overview" ? (
+        <>
+          <ClassOverview
+            rows={overview} error={overviewError} days={days} sort={sort} onSort={onSort} wide={wide} toolbar={giveBar}
+            selectable={canGive} selected={selected} onToggle={toggle} onOpenStudent={onOpenStudent}
+          />
+          <div style={columns}>
+            <ClassTroubleWords key={days} words={troubleWords} days={days} />
+            {side}
+          </div>
+        </>
+      ) : (
+        <div style={columns}>
+          {roster}
+          {side}
+        </div>
+      )}
     </div>
   );
 }

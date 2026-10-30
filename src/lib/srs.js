@@ -113,3 +113,11 @@ export function saveErrorReporter(show = (message) => alert(message)) {
     show(error.message);
   };
 }
+
+// How long a card took, for the teachers' honesty hint (record_answer's p_reveal_ms / p_answer_ms).
+// timing: { shownAt, revealAt } in performance.now() ms (shownAt null = not timed, e.g. a card put
+// back by 元に戻す; revealAt null = not flipped by a tap). now: the moment of the answer.
+export function answerTiming(timing, now) {
+  const since = (at) => (timing?.shownAt == null || at == null ? null : Math.max(0, Math.round(at - timing.shownAt)));
+  return { revealMs: since(timing?.revealAt), answerMs: since(now) };
+}

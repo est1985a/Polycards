@@ -88,7 +88,12 @@ export function classNameValid(text) {
 }
 
 // The 先生 tab's first screen (TeacherArea.jsx): the class list, not the archived ones.
-export const TEACHER_START = { screen: 'classes', classId: null, archived: false };
+// classView / days / sort: the class page's 一覧 / 名簿 view, period (7 or 30 days) and overview column,
+// kept here so 戻る from a student page comes back to the same place.
+export const TEACHER_START = {
+  screen: 'classes', classId: null, archived: false,
+  classView: 'overview', days: 7, sort: { key: 'number', dir: 'asc' },
+};
 
 // A saved time as "10月30日 18:05" (Japan time); '' if missing.
 export function dateTimeText(at) {

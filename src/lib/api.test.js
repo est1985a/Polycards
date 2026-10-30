@@ -633,3 +633,46 @@ describe('teacher area phase 2', () => {
     await expect(api.fetchStudentDetail('c1', 'x')).rejects.toThrow('この生徒はクラスにいません');
   });
 });
+
+describe('teacher area phase 3', () => {
+  it('calls each database function with the right arguments', async () => {
+    result = { data: [], error: null };
+    await api.fetchClassOverview('c1', 7, 1000, 30);
+    await api.fetchClassTroubleWords('c1', 30);
+    result = { data: { tap_answers: 3 }, error: null };
+    expect(await api.fetchStudentHonesty('c1', 's1', 30, 1000)).toEqual({ tap_answers: 3 });
+    expect(calls).toEqual([
+      ['rpc', 'class_overview', { p_class_id: 'c1', p_days: 7, p_fast_ms: 1000, p_honesty_days: 30 }],
+      ['rpc', 'class_trouble_words', { p_class_id: 'c1', p_days: 30 }],
+      ['rpc', 'student_honesty', { p_class_id: 'c1', p_student_id: 's1', p_days: 30, p_fast_ms: 1000 }],
+    ]);
+  });
+
+  it('turns a null answer into an empty list or object', async () => {
+    result = { data: null, error: null };
+    expect(await api.fetchClassOverview('c1', 7, 1000, 30)).toEqual([]);
+    expect(await api.fetchClassTroubleWords('c1', 7)).toEqual([]);
+    expect(await api.fetchStudentHonesty('c1', 's1', 30, 1000)).toEqual({});
+  });
+
+  it('turns errors into friendly messages', async () => {
+    rpcImpl = async () => ({ data: null, error: { message: 'not_class_teacher' } });
+    await expect(api.fetchClassOverview('c1', 7, 1000, 30)).rejects.toThrow();
+    rpcImpl = async () => ({ data: null, error: { message: 'not_member' } });
+    await expect(api.fetchStudentHonesty('c1', 'x', 30, 1000)).rejects.toThrow('この生徒はクラスにいません');
+  });
+
+  it('record_answer: sends the answer mode and times only when they are set', async () => {
+    const SESSION = '11111111-2222-4333-8444-555555555555';
+    result = { data: {}, error: null };
+    await api.recordAnswer({ wordId: 'w', direction: 'jp2en' }, 'got_it', SESSION, null, { mode: 'tap', revealMs: 640, answerMs: 1900 });
+    await api.recordAnswer({ wordId: 'w', direction: 'jp2en' }, 'got_it', SESSION, 'dog', { mode: 'typing', revealMs: null, answerMs: 0 });
+    await api.recordAnswer({ wordId: 'w', direction: 'jp2en' }, 'not_yet', SESSION, null, { mode: 'tap', revealMs: null, answerMs: null });
+    const base = { p_word_id: 'w', p_direction: 'jp2en', p_session_id: SESSION };
+    expect(calls).toEqual([
+      ['rpc', 'record_answer', { ...base, p_result: 'got_it', p_mode: 'tap', p_reveal_ms: 640, p_answer_ms: 1900 }],
+      ['rpc', 'record_answer', { ...base, p_result: 'got_it', p_typed: 'dog', p_mode: 'typing', p_answer_ms: 0 }],
+      ['rpc', 'record_answer', { ...base, p_result: 'not_yet', p_mode: 'tap' }],
+    ]);
+  });
+});

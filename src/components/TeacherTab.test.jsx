@@ -33,7 +33,7 @@ const DETAIL = {
 const page = (props = {}) => renderToStaticMarkup(
   <ClassPage
     detail={DETAIL} onBack={noop} onUpdateClass={noop} onSetArchived={noop} onRegenerate={noop}
-    onUpdateMember={noop} onRemoveMember={noop} onOpenSearch={noop} onShowLarge={noop}
+    onUpdateMember={noop} onRemoveMember={noop} onOpenSearch={noop} onShowLarge={noop} view="roster"
     {...props}
   />,
 );
