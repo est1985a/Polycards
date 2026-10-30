@@ -1,6 +1,6 @@
-// Tests for building dictionary links. Run with: npm test
+// Tests for cleaning a card's English and highlighting it in examples. Run with: npm test
 import { describe, it, expect } from 'vitest';
-import { cleanSearchTerm, dictionaryUrl, highlightParts } from './dictionary';
+import { cleanSearchTerm, highlightParts } from './dictionary';
 
 describe('cleanSearchTerm', () => {
   it('removes "..." and the extra space it leaves', () => {
@@ -24,21 +24,6 @@ describe('cleanSearchTerm', () => {
 
   it('collapses extra spaces', () => {
     expect(cleanSearchTerm('  get   up  ')).toBe('get up');
-  });
-});
-
-describe('dictionaryUrl', () => {
-  it('builds an encoded ALC search address', () => {
-    expect(dictionaryUrl('Call me ...')).toBe('https://eow.alc.co.jp/search?q=call%20me');
-    expect(dictionaryUrl('want to ...')).toBe('https://eow.alc.co.jp/search?q=want%20to');
-    expect(dictionaryUrl('South Africa')).toBe('https://eow.alc.co.jp/search?q=south%20africa');
-    expect(dictionaryUrl("What's this?")).toBe("https://eow.alc.co.jp/search?q=what's%20this");
-  });
-
-  it('gives null when nothing is left to search for', () => {
-    expect(dictionaryUrl('')).toBeNull();
-    expect(dictionaryUrl('...?')).toBeNull();
-    expect(dictionaryUrl(undefined)).toBeNull();
   });
 });
 

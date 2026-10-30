@@ -234,9 +234,8 @@ export default {
   "practice.stroke.downCurveRight": "下へおりて、右へ曲げる",
   "practice.stroke.uThenDown": "下へおりて丸く上がり、まっすぐ下へ",
 
-  // Back of the card: example sentence and dictionary link
+  // Back of the card: example sentence
   "wordInfo.example": "例文",
-  "wordInfo.dictionary": "辞書で調べる",
 
   // Mastered list (opened from the Mastered button on My Cards)
   "mastered.restore": "復習に戻す", // put a Mastered card back into reviews
