@@ -8,7 +8,9 @@ export function cardPoints(level) {
 }
 
 // Total points for a list of card levels (one entry per user_cards row,
-// so both directions of a word count separately).
+// so both directions of a word count separately). The database has the same rule
+// (card_points() / card_points_total() in supabase/polycards-server-peak-points.sql) and is the one
+// that saves the peak; keep CARD_POINTS and card_points() in step.
 export function totalPoints(levels) {
   return levels.reduce((sum, level) => sum + cardPoints(level), 0);
 }
@@ -34,9 +36,4 @@ export function playerRank(rankPoints) {
 // Used for the "points to the next rank" bar. Keep in step with playerRank above.
 export function pointsForRank(rank) {
   return 20 * (rank - 1) ** 2;
-}
-
-// The peak only goes up: removing a deck or losing levels never lowers it.
-export function newPeak(currentPoints, savedPeak) {
-  return Math.max(currentPoints, savedPeak);
 }

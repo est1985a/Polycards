@@ -1,8 +1,10 @@
 // Tests for points and rank. Pure functions only: no database, no test account.
 // Run with: npm test
 import { describe, it, expect } from 'vitest';
-import { CARD_POINTS, MASTERED, RESTORED_LEVEL } from './srs';
-import { cardPoints, totalPoints, levelCounts, playerRank, pointsForRank, newPeak } from './points';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { CARD_POINTS, MASTERED } from './srs';
+import { cardPoints, totalPoints, levelCounts, playerRank, pointsForRank } from './points';
 
 describe('points per card', () => {
   it('uses the agreed values for levels 0 to 7 and Mastered', () => {
@@ -71,25 +73,14 @@ describe('rank', () => {
   });
 });
 
-describe('peak points', () => {
-  it('goes up when current points are higher', () => {
-    expect(newPeak(150, 100)).toBe(150);
-  });
-
-  it('never goes down when current points drop (e.g. a deck was removed)', () => {
-    expect(newPeak(40, 100)).toBe(100);
-    expect(newPeak(0, 100)).toBe(100);
-  });
-
-  it('stays the same when they are equal', () => {
-    expect(newPeak(100, 100)).toBe(100);
-  });
-
-  it('never goes down when a Mastered card is put back (34 → 1 point)', () => {
-    const before = totalPoints([MASTERED]);
-    const after = totalPoints([RESTORED_LEVEL]);
-    expect([before, after]).toEqual([34, 1]);
-    expect(newPeak(after, newPeak(before, 0))).toBe(34);
+describe('server peak points', () => {
+  // The database calculates and saves the peak (card_points() in this SQL file), so its table
+  // must be the same as CARD_POINTS.
+  it('card_points() in the SQL uses the same values as CARD_POINTS', () => {
+    const sql = readFileSync(join(import.meta.dirname, '../../supabase/polycards-server-peak-points.sql'), 'utf8');
+    const match = sql.match(/function public\.card_points\(p_level int\)[\s\S]*?array\[([\d,\s]+)\]/);
+    expect(match).not.toBeNull();
+    expect(match[1].split(',').map(Number)).toEqual(CARD_POINTS);
   });
 });
 

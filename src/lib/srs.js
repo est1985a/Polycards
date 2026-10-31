@@ -10,7 +10,8 @@ export const MAX_LEVEL = LEVEL_HOURS.length - 1; // highest level that is still 
 // Mastered is stored as one level above MAX_LEVEL, with no next review.
 export const MASTERED = MAX_LEVEL + 1;
 // Points each card (one word in one direction) is worth, by its level. New cards are worth 0;
-// the last entry is for Mastered cards.
+// the last entry is for Mastered cards. Keep in step with card_points() in
+// supabase/polycards-server-peak-points.sql (the database saves the peak from it).
 export const CARD_POINTS = [0, 1, 2, 3, 5, 8, 13, 21, 34];
 // Max cards per review session: the student picks 10, 20 or 30 in settings (1回の枚数, saved on
 // the device, see loadSessionSize in settings.js). 20 until they choose.

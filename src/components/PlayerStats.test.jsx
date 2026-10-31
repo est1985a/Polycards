@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import PlayerStats from './PlayerStats';
 
-const stats = { playerRank: 3, currentPoints: 90, peakPoints: 100, levelCounts: [] };
+const stats = { playerRank: 3, peakPoints: 100, levelCounts: [] };
 
 describe('PlayerStats', () => {
   it('calls the player level "Rank", so it is not confused with card levels', () => {

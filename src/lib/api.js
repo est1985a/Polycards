@@ -414,7 +414,8 @@ export async function restoreMasteredCard(userId, card) {
   if (error) throw new Error("Could not put the card back: " + error.message);
 }
 
-// Highest points the student has ever had (0 if they have no user_stats row yet).
+// Highest points the student has ever had (0 if they have no user_stats row yet). Calculated and
+// saved only by the database (supabase/polycards-server-peak-points.sql); students can only read it.
 export async function fetchPeakPoints() {
   const { data, error } = await supabase
     .from('user_stats')
@@ -467,14 +468,6 @@ export async function fetchTroubleWords() {
   const { data, error } = await supabase.rpc('my_trouble_words');
   if (error) throw new Error("Could not load trouble words: " + error.message);
   return data || [];
-}
-
-// The database trigger also keeps the highest value, so this can never lower the peak.
-export async function savePeakPoints(userId, peakPoints) {
-  const { error } = await supabase
-    .from('user_stats')
-    .upsert({ user_id: userId, peak_points: peakPoints, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
-  if (error) throw new Error("Could not save points: " + error.message);
 }
 
 // ---------------------------------------------------------------------

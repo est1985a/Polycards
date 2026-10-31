@@ -11,9 +11,9 @@ const avatarBox = (wide) => ({
 });
 
 // Player card: avatar, rank, points, and progress to the next rank.
-// stats: { playerRank, currentPoints, peakPoints, bonusPoints, levelCounts } (from src/lib/points.js).
+// stats: { playerRank, peakPoints, bonusPoints, levelCounts } (peakPoints is saved by the database).
 // The big EXP number, the rank and the next-rank bar all use peak + spelling bonus (bonusPoints,
-// from typing mode), so EXP never goes down when cards lose levels (currentPoints is not shown).
+// from typing mode), so EXP never goes down when cards lose levels.
 // avatar: the equipped avatar from gacha_status (null = the starter cat). wide: a bigger avatar.
 // onOpenCollection: tapping the avatar opens the ポリアバター図鑑 (without it the avatar is just a picture,
 // as on a teacher's view of a student).

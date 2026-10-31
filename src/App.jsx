@@ -4,7 +4,7 @@ import * as api from './lib/api';
 import { buildCards, buildReviewCards } from './lib/drill';
 import { loadSchoolLevel, saveSchoolLevel } from './lib/library';
 import { packWords, packSummary } from './lib/packOpening';
-import { totalPoints, levelCounts, playerRank, newPeak } from './lib/points';
+import { levelCounts, playerRank } from './lib/points';
 import { MASTERED, dueByDeck, sessionCardKeys, moreDueCount, nextSetRows } from './lib/srs';
 import { HANDWRITING_ENABLED } from './handwriting/config';
 import { nextReviewSummary, jstDateKey } from './lib/schedule';
@@ -375,7 +375,7 @@ function App() {
 
   // Recount points whenever the dashboard is shown (so right after every review)
   useEffect(() => {
-    if (session && view === "dashboard") loadStats(session.user.id);
+    if (session && view === "dashboard") loadStats();
   }, [session, view]);
 
   // Gacha status: when the app opens, after every review (the dashboard is shown again),
@@ -610,20 +610,19 @@ function App() {
     markThemesSeen();
   }
 
-  async function loadStats(userId) {
+  // The peak is calculated and saved by the database (a trigger on user_cards, see
+  // supabase/polycards-server-peak-points.sql); the app only reads it.
+  async function loadStats() {
     try {
       await api.waitForPendingSaves(); // include the last answers of a review that just ended
-      const [levels, savedPeak, bonusPoints] = await Promise.all([
+      const [levels, peakPoints, bonusPoints] = await Promise.all([
         api.fetchAllCardLevels(),
         api.fetchPeakPoints(),
         // The spelling bonus only adds to rank; if it can't be read, show the rest anyway.
         api.fetchBonusPoints().catch((e) => { console.error(e); return 0; }),
       ]);
-      const currentPoints = totalPoints(levels);
-      const peakPoints = newPeak(currentPoints, savedPeak);
-      if (peakPoints > savedPeak) await api.savePeakPoints(userId, peakPoints);
       setStats({
-        currentPoints, peakPoints, bonusPoints,
+        peakPoints, bonusPoints,
         playerRank: playerRank(peakPoints + bonusPoints), // same as gacha_player_level() in the database
         levelCounts: levelCounts(levels),
       });
@@ -949,7 +948,7 @@ function App() {
     } catch (e) {
       alert(e.message);
     }
-    await Promise.all([loadMyDecks(), loadDueRows(), loadStats(session.user.id)]);
+    await Promise.all([loadMyDecks(), loadDueRows(), loadStats()]);
     setRemovingDeckId(null);
   }
 
