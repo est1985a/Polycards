@@ -9,6 +9,7 @@ import StudentPage from './StudentPage';
 import AwardSheet from './AwardSheet';
 import AssignPackPage from './AssignPackPage';
 import AssignmentPage from './AssignmentPage';
+import RosterPasteSheet from './RosterPasteSheet';
 import { downloadCsv } from '../lib/csv';
 import { overviewCsv, assignmentCsv, awardsCsv, classCsvName } from '../lib/classCsv';
 import { t } from '../i18n';
@@ -38,6 +39,9 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
   const [honesty, setHonesty] = useState(null); // { key, counts, error }: student_honesty() for one student
   const [board, setBoard] = useState(null); // { classId, data, error }: class_leaderboard() (ランキング view)
   const [assign, setAssign] = useState(null); // { classId, rows, error }: assignments_for_class() (課題)
+  const [pending, setPending] = useState(null); // { classId, rows }: class_roster_pending() (未ログイン rows)
+  const [pendingCounts, setPendingCounts] = useState({}); // { [classId]: n } for the class list
+  const [pasteOpen, setPasteOpen] = useState(false); // ＋ 名簿を貼り付け
   const [defaultYear] = useState(() => defaultSchoolYear(Date.now()));
   const classId = ["class", "student", "assignNew", "assignment"].includes(path.screen) ? path.classId : null;
   const studentId = path.screen === "student" ? path.studentId : null;
@@ -133,9 +137,22 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
     }
   }, []);
 
+  // 未ログイン rows of a pre-filled roster (never throws; [] before the SQL is run).
+  const loadPending = useCallback(async (id) => {
+    setPending({ classId: id, rows: await api.fetchRosterPending(id) });
+  }, []);
+
   useEffect(() => {
-    if (path.screen === "classes") loadClasses(path.archived);
+    if (path.screen !== "classes") return;
+    loadClasses(path.archived);
+    let current = true;
+    api.fetchRosterPendingCounts().then((counts) => { if (current) setPendingCounts(counts); });
+    return () => { current = false; };
   }, [path.screen, path.archived, loadClasses]);
+
+  useEffect(() => {
+    if (classId && path.screen === "class") loadPending(classId);
+  }, [classId, path.screen, loadPending]);
 
   useEffect(() => {
     if (classId && path.screen === "class") loadAwards(classId);
@@ -189,6 +206,7 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
 
   const classAwards = awards?.classId === classId ? awards.rows : null;
   const classLeavers = leavers?.classId === classId ? leavers.rows : null;
+  const classPending = pending?.classId === classId ? pending.rows : [];
   const shown = student?.key === studentKey ? student : null;
   const shownHonesty = honesty?.key === studentKey ? honesty : null;
   const shownOverview = overview?.key === periodKey ? overview : null;
@@ -213,7 +231,7 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
   // After a change: reload the class (its errors are shown by the button that made the change),
   // and the overview (a new or removed student, a new name or number).
   const reload = async () => {
-    await loadDetail(classId);
+    await Promise.all([loadDetail(classId), loadPending(classId)]);
     if (onOverview) loadOverview(classId, days);
     if (onBoard) loadBoard(classId);
     if (onAssign) loadAssignments(classId); // a new or removed student
@@ -308,6 +326,10 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
           onShowLarge={() => setShowLarge(true)}
           awards={classAwards}
           leavers={classLeavers}
+          pending={classPending}
+          onPasteRoster={() => setPasteOpen(true)}
+          onUpdatePending={async (entryId, name, number, email) => { await api.updateRosterEntry(entryId, name, number, email); await reload(); }}
+          onRemovePending={async (entryId) => { await api.removeRosterEntry(entryId); await reload(); }}
           onOpenStudent={(id) => onNavigate({ ...path, screen: "student", studentId: id, assignmentId: null })}
           onGive={setGiveTo}
           view={path.classView ?? "overview"}
@@ -347,7 +369,7 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
           <UserSearchSheet
             mode={searchMode}
             existingIds={existing}
-            students={detail?.students ?? []}
+            students={[...(detail?.students ?? []), ...classPending.map((p) => ({ ...p, student_id: `pending:${p.id}` }))]}
             onSearch={api.searchUsers}
             onAdd={async (user, name, number) => {
               if (searchMode === "teacher") await api.addCoTeacher(classId, user.id);
@@ -355,6 +377,19 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
               await reload();
             }}
             onClose={() => setSearchMode(null)}
+          />
+        )}
+        {pasteOpen && (
+          <RosterPasteSheet
+            members={detail?.students ?? []}
+            pending={classPending}
+            onCheck={(rows) => api.addRosterEntries(classId, rows, true)}
+            onSave={async (rows) => {
+              const results = await api.addRosterEntries(classId, rows);
+              await reload();
+              return results;
+            }}
+            onClose={() => setPasteOpen(false)}
           />
         )}
         {showLarge && detail?.class && (
@@ -372,6 +407,7 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
       wide={wide}
       defaultYear={defaultYear}
       onOpenGuide={onOpenGuide}
+      pendingCounts={pendingCounts}
       onToggleArchived={(archived) => onNavigate({ ...path, archived })}
       onOpen={(id) => onNavigate({ ...path, screen: "class", classId: id, classView: TEACHER_START.classView, sort: TEACHER_START.sort })}
       onCreate={async (name, year) => {

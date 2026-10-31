@@ -78,6 +78,7 @@ export function ClassTabView({
       <section style={{ ...panel, display: "grid", gap: 12, justifyItems: "center", textAlign: "center", padding: 24 }}>
         <h2 style={{ margin: 0, fontFamily: fontDisplay, fontSize: 22, fontWeight: 700, color: colors.text }}>{t("classTab.noClassTitle")}</h2>
         <p style={{ margin: 0, fontSize: 15, color: colors.muted }}>{t("classTab.noClassText")}</p>
+        <p style={{ margin: 0, fontSize: 14, color: colors.muted }}>{t("classTab.noClassSchoolAccount")}</p>
         <button onClick={onJoin} style={{ ...btnPrimary, minHeight: 48, padding: "0 24px" }}>{t("classTab.join")}</button>
       </section>,
     );

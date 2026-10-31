@@ -226,6 +226,8 @@ p {
   .report-sheet { max-width: 520px; }
   /* Letter practice (PracticeSheet.jsx): the guide beside the 4 boxes on a landscape iPad. */
   .practice-sheet { max-width: 820px; }
+  /* 名簿を貼り付け (RosterPasteSheet.jsx): room for a pasted roster and its preview. */
+  .roster-paste-sheet { max-width: 640px; }
 }
 /* Landscape iPads: the help pop-up gets a little more room (the teacher guide is long). */
 @media (min-width: 900px) {

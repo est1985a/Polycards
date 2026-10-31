@@ -19,6 +19,7 @@ describe('ClassTabView', () => {
     const h = view({ classes: [], info: null, board: null });
     expect(h).toContain('まだクラスに入っていません');
     expect(h).toContain('＋ クラスに参加');
+    expect(h).toContain('学校のGoogleアカウントでログインしているか確認してください。');
   });
 
   it('loading and a failed class list', () => {

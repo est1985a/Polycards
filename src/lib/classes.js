@@ -67,6 +67,16 @@ export function sortRoster(students) {
   });
 }
 
+// The 名簿 as one list: members (class_detail) and 未ログイン rows of a pre-filled roster
+// (class_roster_pending(); marked pending: true, with a student_id that can't clash with a real one),
+// sorted together by 出席番号 then name.
+export function combinedRoster(students, pending) {
+  return sortRoster([
+    ...(students || []),
+    ...(pending || []).map((p) => ({ ...p, pending: true, student_id: `pending:${p.id}` })),
+  ]);
+}
+
 // 出席番号 used by two or more students (no number ignored): a Set, for the roster's warning mark.
 export function duplicateNumbers(students) {
   const seen = new Set();

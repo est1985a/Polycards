@@ -3,7 +3,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import TeacherTab, { CreateClassForm } from './TeacherTab';
-import ClassPage, { RosterRow, JoinCodePanel, LeaderboardView, TeachersPanel, TeacherRow, LeaversPanel } from './ClassPage';
+import ClassPage, { RosterRow, JoinCodePanel, LeaderboardView, TeachersPanel, TeacherRow, LeaversPanel, PendingRosterRow } from './ClassPage';
 import { ResultRow, AddStudentForm } from './UserSearchSheet';
 import { JoinCodeScreen } from './JoinCodeDisplay';
 import { JoinClassSteps } from './JoinClassSheet';
@@ -346,5 +346,53 @@ describe('same 出席番号 warning', () => {
     expect(en).toContain('Number 3 is already used by 加藤 次郎. Save anyway?');
     expect(en).toContain('>Save anyway<');
     expect(en).toContain('>Go back<');
+  });
+});
+
+describe('pre-filled roster (名簿を貼り付け)', () => {
+  const PENDING = [
+    { id: 'e1', email: 'yamada@ryukokurg.ed.jp', real_name: '山田 未来', student_number: 5 },
+    { id: 'e2', email: 'kato@ryukokurg.ed.jp', real_name: '加藤 三郎', student_number: 3 },
+  ];
+
+  it('the 名簿 has ＋ 名簿を貼り付け next to ＋ 生徒を追加', () => {
+    const h = page();
+    expect(h).toMatch(/＋ 名簿を貼り付け[^]*＋ 生徒を追加/);
+    expect(page({ detail: { ...DETAIL, class: { ...DETAIL.class, archived: true } } })).not.toContain('＋ 名簿を貼り付け');
+  });
+
+  it('未ログイン rows sit in 出席番号 order with everyone else, counted apart in the title', () => {
+    const h = page({ pending: PENDING });
+    expect(h).toContain('生徒 (3 + 未ログイン 2)');
+    const roster = h.slice(h.indexOf('data-roster'));
+    const order = ['加藤 三郎', '加藤 次郎', '山田 未来', '佐藤 一郎', '上田 花'].map((n) => roster.indexOf(n));
+    expect(order.every((x, i) => x > 0 && (i === 0 || x > order[i - 1]))).toBe(true);
+    expect(roster.match(/data-pending-tag/g)).toHaveLength(2);
+    expect(roster).toContain('yamada@ryukokurg.ed.jp');
+    // 加藤 次郎 (member) and 加藤 三郎 (未ログイン) share 3
+    expect(roster.match(/data-duplicate-number/g)).toHaveLength(2);
+    // only members can be chosen for tickets
+    expect(roster.match(/role="checkbox"/g)).toHaveLength(3);
+    expect(page()).toContain('生徒 (3)');
+  });
+
+  it('a 未ログイン row edits name, number and email, and asks before removing', () => {
+    const edit = renderToStaticMarkup(<PendingRosterRow entry={PENDING[0]} onUpdate={noop} onRemove={noop} initialMode="edit" />);
+    expect(edit).toContain('value="山田 未来"');
+    expect(edit).toContain('value="5"');
+    expect(edit).toContain('value="yamada@ryukokurg.ed.jp"');
+    expect(edit).toContain('メールアドレス');
+    const remove = renderToStaticMarkup(<PendingRosterRow entry={PENDING[0]} onUpdate={noop} onRemove={noop} initialMode="remove" />);
+    expect(remove).toContain('山田 未来 を名簿から外しますか？');
+  });
+
+  it('the class list counts members, plus 未ログイン when there are some', () => {
+    const h = renderToStaticMarkup(<TeacherTab classes={CLASSES} pendingCounts={{ c1: 4 }} onToggleArchived={noop} onOpen={noop} onCreate={noop} defaultYear={2026} />);
+    expect(h).toContain('31人 + 未ログイン 4');
+    expect(h).toContain('>1人<');
+    setLang('en');
+    const en = renderToStaticMarkup(<TeacherTab classes={CLASSES} pendingCounts={{ c2: 1 }} onToggleArchived={noop} onOpen={noop} onCreate={noop} defaultYear={2026} />);
+    expect(en).toContain('1 student + 1 not signed in');
+    expect(en).toContain('31 students');
   });
 });

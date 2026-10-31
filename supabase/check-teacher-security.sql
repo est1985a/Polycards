@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Polycards: check that a STUDENT can't use the teacher functions (2026-10-30)
--- Run AFTER polycards-teachers.sql (and polycards-teacher-phase2.sql, polycards-teacher-phase3.sql, polycards-class-tab.sql, polycards-teacher-phase4.sql, polycards-teacher-followups.sql, polycards-class-leave-and-join-limit.sql). Read-only: every check that could write
+-- Run AFTER polycards-teachers.sql (and polycards-teacher-phase2.sql, polycards-teacher-phase3.sql, polycards-class-tab.sql, polycards-teacher-phase4.sql, polycards-teacher-followups.sql, polycards-class-leave-and-join-limit.sql, polycards-roster-prefill.sql). Read-only: every check that could write
 -- something is undone straight away, so nothing in the database changes.
 --
 -- 1. Put a student's username (or full email) on the line marked  <-- STUDENT
@@ -137,7 +137,9 @@ begin
       ('call internal join_code_setting', format('select public.join_code_setting(%L)', 'max_failures'),                               'permission denied'),
       ('call internal join_code_blocked_until', 'select public.join_code_blocked_until()',                                              'permission denied'),
       ('call internal note_join_code_failure', 'select public.note_join_code_failure()',                                                'permission denied'),
-      ('call internal join_code_wrong', 'select public.join_code_wrong()',                                                              'permission denied')
+      ('call internal join_code_wrong', 'select public.join_code_wrong()',                                                              'permission denied'),
+      -- Pre-filled rosters (polycards-roster-prefill.sql; check-roster-prefill.sql has the full checks)
+      ('add_roster_entries',         format('select public.add_roster_entries(%L, %L::jsonb)', v_class, '[]'),                          'not_teacher')
     ) as c(label, stmt, expected)
   loop
     begin

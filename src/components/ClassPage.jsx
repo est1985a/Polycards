@@ -3,7 +3,7 @@ import { useAction } from '../lib/useAction';
 import { colors, fontDisplay, panel as panelStyle } from '../styles/theme';
 import {
   sortRoster, splitJoinCode, cleanRealName, realNameValid, parseStudentNumber, studentNumberValid,
-  classNameValid, parseSchoolYear, dateTimeText, dateText, cleanNickname, nicknameValid, duplicateNumbers, numberConflict,
+  classNameValid, parseSchoolYear, dateTimeText, dateText, cleanNickname, nicknameValid, duplicateNumbers, numberConflict, combinedRoster,
 } from '../lib/classes';
 import BackButton from './BackButton';
 import SegmentedSwitch from './SegmentedSwitch';
@@ -16,6 +16,7 @@ import { OVERVIEW_PERIODS, DEFAULT_PERIOD, DEFAULT_SORT } from '../lib/classOver
 import { toggleId } from '../lib/library';
 
 import { Field, ErrorText, StudentFields, Panel, SelectBox, NicknameField, DuplicateNumberTag } from './ClassFields';
+import { cleanEmail, emailValid } from '../lib/rosterPaste';
 import { inputStyle, ghostSmall, primarySmall, dangerSmall, noAutoFix } from '../styles/forms';
 import { t } from '../i18n';
 
@@ -158,6 +159,123 @@ export function RosterRow({
             busy={action.busy}
             onCancel={() => setMode(null)}
             onYes={() => action.run(() => onRemove(student.student_id))}
+          />
+          <ErrorText>{action.error}</ErrorText>
+        </>
+      )}
+    </li>
+  );
+}
+
+// The gold 未ログイン pill on a pre-filled roster row: the student hasn't signed in yet (a hint,
+// never the danger color; the tooltip says they'll join when they sign in with Google).
+export function PendingTag() {
+  return (
+    <span
+      data-pending-tag=""
+      title={t("teacher.pendingTagHint")}
+      style={{
+        display: "inline-block", padding: "1px 8px", borderRadius: 999, border: `1.5px dashed ${colors.gold}`,
+        fontSize: 12, fontWeight: 700, lineHeight: 1.5, color: colors.gold, whiteSpace: "nowrap",
+      }}
+    >
+      {t("teacher.pendingTag")}
+    </span>
+  );
+}
+
+// A pre-filled roster row nobody has claimed yet (class_roster_pending()): 出席番号, real name with
+// 未ログイン, the email; 編集 (name, number, email) and 外す (inline confirm). No checkbox and no
+// student page: there is no account yet. students: the whole roster (members + pending), so a
+// number another student has asks before saving.
+export function PendingRosterRow({ entry, students = [], sameNumber = false, onUpdate, onRemove, initialMode = null }) {
+  const [mode, setMode] = useState(initialMode); // null | 'edit' | 'remove'
+  const [name, setName] = useState(entry.real_name);
+  const [number, setNumber] = useState(entry.student_number == null ? "" : String(entry.student_number));
+  const [email, setEmail] = useState(entry.email);
+  const [taken, setTaken] = useState(null);
+  const action = useAction();
+  const ok = realNameValid(name) && studentNumberValid(number) && emailValid(email);
+  const rowId = `pending:${entry.id}`;
+
+  function startEdit() {
+    setName(entry.real_name);
+    setNumber(entry.student_number == null ? "" : String(entry.student_number));
+    setEmail(entry.email);
+    setTaken(null);
+    action.clearError();
+    setMode("edit");
+  }
+
+  function save(e) {
+    e.preventDefault();
+    if (!ok) return;
+    const n = parseStudentNumber(number);
+    const other = n !== entry.student_number ? numberConflict(students, n, rowId) : null;
+    if (other) setTaken(other);
+    else saveNow();
+  }
+
+  async function saveNow() {
+    if (await action.run(() => onUpdate(entry.id, cleanRealName(name), parseStudentNumber(number), cleanEmail(email)))) setMode(null);
+    setTaken(null);
+  }
+
+  return (
+    <li data-pending-row="" style={{ display: "grid", gap: 10, padding: "10px 12px", background: colors.surface2, borderRadius: 14 }}>
+      {mode === "edit" ? (
+        <form onSubmit={save} style={{ display: "grid", gap: 10 }} aria-label={t("teacher.editPending", { name: entry.real_name })}>
+          <StudentFields
+            name={name} number={number} onName={setName} onNumber={(v) => { setNumber(v); setTaken(null); }} autoFocus
+            nameLabel={t("teacher.realName")} numberLabel={t("teacher.studentNumber")} numberHint={t("teacher.studentNumberHint")}
+          />
+          {!studentNumberValid(number) && <ErrorText>{t("errors.badStudentNumber")}</ErrorText>}
+          <Field label={t("teacher.email")}>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} {...noAutoFix} autoCapitalize="none" style={inputStyle} />
+          </Field>
+          {!emailValid(email) && <ErrorText>{t("errors.badEmail")}</ErrorText>}
+          <ErrorText>{action.error}</ErrorText>
+          {taken ? (
+            <NumberTakenConfirm number={parseStudentNumber(number)} other={taken} busy={action.busy} onSave={saveNow} onBack={() => setTaken(null)} />
+          ) : (
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button type="button" onClick={() => setMode(null)} disabled={action.busy} style={ghostSmall}>{t("common.cancel")}</button>
+              <button type="submit" disabled={!ok || action.busy} style={{ ...primarySmall, opacity: !ok || action.busy ? 0.6 : 1 }}>{action.busy ? t("teacher.saving") : t("teacher.save")}</button>
+            </div>
+          )}
+        </form>
+      ) : (
+        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <span style={{ flex: "1 1 180px", minWidth: 0, minHeight: 44, display: "flex", alignItems: "center", gap: 12, color: colors.text }}>
+            <span style={{ width: 36, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, color: colors.gold }}>
+              {entry.student_number ?? "–"}
+            </span>
+            <span style={{ flex: 1, minWidth: 0, display: "block", overflowWrap: "anywhere" }}>
+              <span style={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 8, rowGap: 2 }}>
+                <span style={{ fontSize: 17, fontWeight: 700 }}>{entry.real_name}</span>
+                <PendingTag />
+                {sameNumber && <DuplicateNumberTag />}
+              </span>
+              <span style={{ display: "block", fontSize: 13, color: colors.muted }}>{entry.email}</span>
+            </span>
+          </span>
+          {mode !== "remove" && (
+            <span style={{ display: "flex", gap: 6, flexShrink: 0, marginLeft: "auto" }}>
+              <button onClick={startEdit} aria-label={t("teacher.editPending", { name: entry.real_name })} style={ghostSmall}>{t("teacher.edit")}</button>
+              <button onClick={() => { action.clearError(); setMode("remove"); }} style={{ ...ghostSmall, color: colors.danger }}>{t("teacher.remove")}</button>
+            </span>
+          )}
+        </div>
+      )}
+      {mode === "remove" && (
+        <>
+          <ConfirmLine
+            text={t("teacher.removePendingConfirm", { name: entry.real_name })}
+            yesLabel={t("teacher.remove")}
+            danger
+            busy={action.busy}
+            onCancel={() => setMode(null)}
+            onYes={() => action.run(() => onRemove(entry.id))}
           />
           <ErrorText>{action.error}</ErrorText>
         </>
@@ -464,6 +582,7 @@ export default function ClassPage({
   onUpdateNickname = async () => {}, leaderboard = null, leaderboardError = null, onSetLeaderboard = async () => {},
   assignments = null, assignmentsError = null, onNewAssignment = () => {}, onOpenAssignment = () => {},
   onOverviewCsv = null, onAwardsCsv = null, onRemoveTeacher = async () => {}, leavers = null,
+  pending = [], onPasteRoster = () => {}, onUpdatePending = async () => {}, onRemovePending = async () => {},
 }) {
   const [selected, setSelected] = useState(() => new Set(initialSelected));
   const back = <div><BackButton label={t("teacher.backToClasses")} onClick={onBack} /></div>;
@@ -477,7 +596,9 @@ export default function ClassPage({
   }
   const cls = detail.class;
   const students = sortRoster(detail.students);
-  const sameNumbers = duplicateNumbers(students);
+  // 名簿 shows members and 未ログイン rows (pre-filled roster) together; only members can be chosen.
+  const roster = combinedRoster(detail.students, pending);
+  const sameNumbers = duplicateNumbers(roster);
   // Only students still on the roster count as chosen (one may have been removed meanwhile).
   const chosen = students.filter((s) => selected.has(s.student_id));
   const allChosen = students.length > 0 && chosen.length === students.length;
@@ -510,23 +631,36 @@ export default function ClassPage({
     </div>
   );
 
-  const roster = (
+  const rosterTitle = pending.length > 0
+    ? t("teacher.rosterTitlePending", { title: t("teacher.roster"), n: students.length, p: pending.length })
+    : `${t("teacher.roster")} (${students.length})`;
+  const rosterPanel = (
     <Panel
-      title={`${t("teacher.roster")} (${students.length})`}
-      action={!cls.archived && <button onClick={() => onOpenSearch("student")} style={primarySmall}>{t("teacher.addStudent")}</button>}
+      title={rosterTitle}
+      action={!cls.archived && (
+        <span style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <button onClick={onPasteRoster} style={ghostSmall}>{t("teacher.pasteRoster")}</button>
+          <button onClick={() => onOpenSearch("student")} style={primarySmall}>{t("teacher.addStudent")}</button>
+        </span>
+      )}
     >
       {giveBar}
-      {students.length === 0 ? (
+      {roster.length === 0 ? (
         <div style={{ fontSize: 15, color: colors.muted }}>{t("teacher.noStudents")}</div>
       ) : (
         <ul data-roster="" style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 8 }}>
-          {students.map((s) => (
+          {roster.map((s) => (s.pending ? (
+            <PendingRosterRow
+              key={s.student_id} entry={s} students={roster}
+              sameNumber={sameNumbers.has(s.student_number)} onUpdate={onUpdatePending} onRemove={onRemovePending}
+            />
+          ) : (
             <RosterRow
-              key={s.student_id} student={s} students={students} wide={wide} sameNumber={sameNumbers.has(s.student_number)} onUpdate={onUpdateMember} onUpdateNickname={onUpdateNickname} onRemove={onRemoveMember}
+              key={s.student_id} student={s} students={roster} wide={wide} sameNumber={sameNumbers.has(s.student_number)} onUpdate={onUpdateMember} onUpdateNickname={onUpdateNickname} onRemove={onRemoveMember}
               onOpen={() => onOpenStudent(s.student_id)}
               selectable={canGive} selected={selected.has(s.student_id)} onToggle={toggle}
             />
-          ))}
+          )))}
         </ul>
       )}
     </Panel>
@@ -597,7 +731,7 @@ export default function ClassPage({
       ) : (
         <div style={columns}>
           <div style={{ display: "grid", gap: 16, alignContent: "start" }}>
-            {roster}
+            {rosterPanel}
             <LeaversPanel leavers={leavers} />
           </div>
           {side}
