@@ -3,7 +3,7 @@ import { useAction } from '../lib/useAction';
 import { colors, fontDisplay, panel as panelStyle } from '../styles/theme';
 import {
   sortRoster, splitJoinCode, cleanRealName, realNameValid, parseStudentNumber, studentNumberValid,
-  classNameValid, parseSchoolYear, dateTimeText, cleanNickname, nicknameValid, duplicateNumbers,
+  classNameValid, parseSchoolYear, dateTimeText, cleanNickname, nicknameValid, duplicateNumbers, numberConflict,
 } from '../lib/classes';
 import BackButton from './BackButton';
 import SegmentedSwitch from './SegmentedSwitch';
@@ -15,18 +15,18 @@ import ToggleSwitch from './ToggleSwitch';
 import { OVERVIEW_PERIODS, DEFAULT_PERIOD, DEFAULT_SORT } from '../lib/classOverview';
 import { toggleId } from '../lib/library';
 
-import { Field, ErrorText, StudentFields, Panel, SelectBox, NicknameField, SameNumberMark } from './ClassFields';
+import { Field, ErrorText, StudentFields, Panel, SelectBox, NicknameField, DuplicateNumberTag } from './ClassFields';
 import { inputStyle, ghostSmall, primarySmall, dangerSmall, noAutoFix } from '../styles/forms';
 import { t } from '../i18n';
 
 
-// An inline "are you sure?" line with キャンセル and a confirm button (like 復習に戻す in Mastered).
-export function ConfirmLine({ text, yesLabel, danger = false, busy, onYes, onCancel }) {
+// An inline "are you sure?" line with キャンセル (or cancelLabel) and a confirm button (like 復習に戻す in Mastered).
+export function ConfirmLine({ text, yesLabel, cancelLabel = null, danger = false, busy, onYes, onCancel }) {
   return (
     <div role="group" aria-label={text} style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "flex-end", gap: 8, paddingTop: 10, borderTop: `1px solid ${colors.line}` }}>
       <span style={{ flex: "1 1 160px", fontSize: 15, fontWeight: 700, color: colors.text }}>{text}</span>
-      <button onClick={onCancel} disabled={busy} style={ghostSmall}>{t("common.cancel")}</button>
-      <button onClick={onYes} disabled={busy} style={{ ...(danger ? dangerSmall : primarySmall), opacity: busy ? 0.6 : 1 }}>{busy ? "…" : yesLabel}</button>
+      <button type="button" onClick={onCancel} disabled={busy} style={ghostSmall}>{cancelLabel ?? t("common.cancel")}</button>
+      <button type="button" onClick={onYes} disabled={busy} style={{ ...(danger ? dangerSmall : primarySmall), opacity: busy ? 0.6 : 1 }}>{busy ? "…" : yesLabel}</button>
     </div>
   );
 }
@@ -44,14 +44,16 @@ export function NicknameLine({ nickname }) {
 // the name opens the student's page; 編集 (inline form) and 外す (inline confirm).
 // selectable / selected / onToggle: the checkbox for チケットを贈る. onOpen(): open the student page.
 // onUpdateNickname(id, nickname): saved only when the nickname changed ('' clears it).
-// sameNumber: another student has the same 出席番号 (a small gold mark next to it).
+// sameNumber: another student has the same 出席番号 (a gold 番号重複 tag after the name).
+// students: the whole roster, so changing the number to one another student has asks before saving.
 export function RosterRow({
-  student, wide = false, sameNumber = false, onUpdate, onUpdateNickname = async () => {}, onRemove, onOpen, selectable = false, selected = false, onToggle, initialMode = null,
+  student, students = [], wide = false, sameNumber = false, onUpdate, onUpdateNickname = async () => {}, onRemove, onOpen, selectable = false, selected = false, onToggle, initialMode = null, initialTaken = null,
 }) {
   const [mode, setMode] = useState(initialMode); // null | 'edit' | 'remove'
   const [name, setName] = useState(student.real_name);
   const [number, setNumber] = useState(student.student_number == null ? "" : String(student.student_number));
   const [nickname, setNickname] = useState(student.nickname ?? "");
+  const [taken, setTaken] = useState(initialTaken); // the student who already has the new number (asking first)
   const action = useAction();
   const nicknameOk = cleanNickname(nickname) === "" || nicknameValid(nickname);
   const ok = realNameValid(name) && studentNumberValid(number) && nicknameOk;
@@ -64,18 +66,28 @@ export function RosterRow({
     setName(student.real_name);
     setNumber(student.student_number == null ? "" : String(student.student_number));
     setNickname(student.nickname ?? "");
+    setTaken(null);
     action.clearError();
     setMode("edit");
   }
 
-  async function save(e) {
+  // 保存: a changed number that another student already has asks first (a warning, never a block).
+  function save(e) {
     e.preventDefault();
     if (!ok) return;
+    const n = parseStudentNumber(number);
+    const other = n !== student.student_number ? numberConflict(students, n, student.student_id) : null;
+    if (other) setTaken(other);
+    else saveNow();
+  }
+
+  async function saveNow() {
     const nick = cleanNickname(nickname);
     if (await action.run(async () => {
       await onUpdate(student.student_id, cleanRealName(name), parseStudentNumber(number));
       if (nick !== (student.nickname ?? "")) await onUpdateNickname(student.student_id, nick);
     })) setMode(null);
+    setTaken(null);
   }
 
   return (
@@ -83,17 +95,21 @@ export function RosterRow({
       {mode === "edit" ? (
         <form onSubmit={save} style={{ display: "grid", gap: 10 }} aria-label={t("teacher.editStudent", { name: student.real_name })}>
           <StudentFields
-            name={name} number={number} onName={setName} onNumber={setNumber} autoFocus
+            name={name} number={number} onName={setName} onNumber={(v) => { setNumber(v); setTaken(null); }} autoFocus
             nameLabel={t("teacher.realName")} numberLabel={t("teacher.studentNumber")} numberHint={t("teacher.studentNumberHint")}
           />
           {!studentNumberValid(number) && <ErrorText>{t("errors.badStudentNumber")}</ErrorText>}
           <NicknameField value={nickname} onChange={setNickname} label={t("teacher.nicknameLabel")} hint={t("teacher.nicknameHint")} />
           {!nicknameOk && <ErrorText>{t("errors.badNickname")}</ErrorText>}
           <ErrorText>{action.error}</ErrorText>
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-            <button type="button" onClick={() => setMode(null)} disabled={action.busy} style={ghostSmall}>{t("common.cancel")}</button>
-            <button type="submit" disabled={!ok || action.busy} style={{ ...primarySmall, opacity: !ok || action.busy ? 0.6 : 1 }}>{action.busy ? t("teacher.saving") : t("teacher.save")}</button>
-          </div>
+          {taken ? (
+            <NumberTakenConfirm number={parseStudentNumber(number)} other={taken} busy={action.busy} onSave={saveNow} onBack={() => setTaken(null)} />
+          ) : (
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button type="button" onClick={() => setMode(null)} disabled={action.busy} style={ghostSmall}>{t("common.cancel")}</button>
+              <button type="submit" disabled={!ok || action.busy} style={{ ...primarySmall, opacity: !ok || action.busy ? 0.6 : 1 }}>{action.busy ? t("teacher.saving") : t("teacher.save")}</button>
+            </div>
+          )}
         </form>
       ) : (
         // The 編集 / 外す buttons drop to a second line when the row is narrow (phones).
@@ -112,11 +128,13 @@ export function RosterRow({
           >
             <span style={{ width: 36, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 2, fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, color: colors.gold }}>
               {student.student_number ?? "–"}
-              {sameNumber && <SameNumberMark size={14} />}
             </span>
             <span style={{ flex: 1, minWidth: 0, display: wide ? "grid" : "block", gridTemplateColumns: wide ? "minmax(0, 1fr) minmax(0, 1fr)" : undefined, alignItems: "center", gap: 12, overflowWrap: "anywhere" }}>
               <span style={{ display: "block" }}>
-                <span style={{ display: "block", fontSize: 17, fontWeight: 700 }}>{student.real_name}</span>
+                <span style={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 8, rowGap: 2 }}>
+                  <span style={{ fontSize: 17, fontWeight: 700 }}>{student.real_name}</span>
+                  {sameNumber && <DuplicateNumberTag />}
+                </span>
                 <NicknameLine nickname={student.nickname} />
               </span>
               <span style={{ display: "block", fontSize: 13, color: colors.muted }}>{account}</span>
@@ -145,6 +163,21 @@ export function RosterRow({
         </>
       )}
     </li>
+  );
+}
+
+// "Number 3 is already used by 山田 太郎. Save anyway?" with 保存する / 戻る (teachers adding a student
+// or changing a number). Shared with the add-a-student form.
+export function NumberTakenConfirm({ number, other, busy, onSave, onBack }) {
+  return (
+    <ConfirmLine
+      text={t("teacher.numberTakenConfirm", { n: number, name: other.real_name })}
+      yesLabel={t("teacher.saveAnyway")}
+      cancelLabel={t("teacher.goBack")}
+      busy={busy}
+      onYes={onSave}
+      onCancel={onBack}
+    />
   );
 }
 
@@ -239,9 +272,11 @@ export function ClassAwardsPanel({ awards, onCsv = null }) {
 
 // One teacher of the class. canRemove: 外す with an inline confirm (hidden when they're the only
 // teacher; the database refuses that too, last_teacher). Removing yourself asks with its own words.
-export function TeacherRow({ teacher, canRemove, onRemove, initialConfirming = false }) {
+// onError(message | null): the panel shows the error, so it stays when the row is gone after a reload
+// (teacher_not_in_class).
+export function TeacherRow({ teacher, canRemove, onRemove, onError = () => {}, initialConfirming = false }) {
   const [confirming, setConfirming] = useState(initialConfirming);
-  const action = useAction();
+  const [busy, setBusy] = useState(false);
   return (
     <li style={{ display: "grid", gap: 6 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 44 }}>
@@ -250,7 +285,7 @@ export function TeacherRow({ teacher, canRemove, onRemove, initialConfirming = f
         </span>
         {canRemove && !confirming && (
           <button
-            onClick={() => { action.clearError(); setConfirming(true); }}
+            onClick={() => { onError(null); setConfirming(true); }}
             aria-label={t("teacher.removeTeacher", { name: teacher.display_name })}
             style={{ ...ghostSmall, color: colors.danger }}
           >
@@ -263,12 +298,20 @@ export function TeacherRow({ teacher, canRemove, onRemove, initialConfirming = f
           text={teacher.is_me ? t("teacher.leaveClassConfirm") : t("teacher.removeTeacherConfirm", { name: teacher.display_name })}
           yesLabel={teacher.is_me ? t("teacher.leaveClass") : t("teacher.remove")}
           danger
-          busy={action.busy}
+          busy={busy}
           onCancel={() => setConfirming(false)}
-          onYes={async () => { if (await action.run(() => onRemove(teacher.teacher_id, !!teacher.is_me))) setConfirming(false); }}
+          onYes={async () => {
+            setBusy(true); onError(null);
+            try {
+              await onRemove(teacher.teacher_id, !!teacher.is_me);
+              setConfirming(false);
+            } catch (e) {
+              onError(e.message);
+            }
+            setBusy(false);
+          }}
         />
       )}
-      <ErrorText>{action.error}</ErrorText>
     </li>
   );
 }
@@ -276,13 +319,15 @@ export function TeacherRow({ teacher, canRemove, onRemove, initialConfirming = f
 // The class's teachers, with ＋ 先生を追加 and 外す on each (when there is more than one).
 // onRemoveTeacher(teacherId, isMe).
 export function TeachersPanel({ teachers, onAddTeacher, onRemoveTeacher }) {
+  const [error, setError] = useState(null);
   return (
     <Panel title={t("teacher.teachers")} action={<button onClick={onAddTeacher} style={ghostSmall}>{t("teacher.addTeacher")}</button>}>
       <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
         {teachers.map((tc) => (
-          <TeacherRow key={tc.teacher_id} teacher={tc} canRemove={teachers.length > 1} onRemove={onRemoveTeacher} />
+          <TeacherRow key={tc.teacher_id} teacher={tc} canRemove={teachers.length > 1} onRemove={onRemoveTeacher} onError={setError} />
         ))}
       </ul>
+      <ErrorText>{error}</ErrorText>
     </Panel>
   );
 }
@@ -459,7 +504,7 @@ export default function ClassPage({
         <ul data-roster="" style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 8 }}>
           {students.map((s) => (
             <RosterRow
-              key={s.student_id} student={s} wide={wide} sameNumber={sameNumbers.has(s.student_number)} onUpdate={onUpdateMember} onUpdateNickname={onUpdateNickname} onRemove={onRemoveMember}
+              key={s.student_id} student={s} students={students} wide={wide} sameNumber={sameNumbers.has(s.student_number)} onUpdate={onUpdateMember} onUpdateNickname={onUpdateNickname} onRemove={onRemoveMember}
               onOpen={() => onOpenStudent(s.student_id)}
               selectable={canGive} selected={selected.has(s.student_id)} onToggle={toggle}
             />

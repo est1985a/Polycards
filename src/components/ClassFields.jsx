@@ -93,6 +93,23 @@ export function SameNumberMark({ size = 16 }) {
   );
 }
 
+// On the roster, after the real name of every student whose 出席番号 another student also has
+// (often two students typed the same number when joining): a small gold 番号重複 pill. A hint, never the danger color.
+export function DuplicateNumberTag() {
+  return (
+    <span
+      data-duplicate-number=""
+      title={t("teacher.sameNumber")}
+      style={{
+        display: "inline-block", padding: "1px 8px", borderRadius: 999, border: `1.5px solid ${colors.gold}`,
+        fontSize: 12, fontWeight: 700, lineHeight: 1.5, color: colors.gold, whiteSpace: "nowrap",
+      }}
+    >
+      {t("teacher.duplicateNumberTag")}
+    </span>
+  );
+}
+
 // A class nickname (1–12 characters) with a counter and the note that classmates will see it.
 // note: false hides the note (the teacher's roster form).
 export function NicknameField({ value, onChange, label, hint, note = true, autoFocus = false }) {

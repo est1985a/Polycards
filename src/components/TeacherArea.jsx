@@ -319,7 +319,13 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
           onOverviewCsv={saveOverviewCsv}
           onAwardsCsv={saveAwardsCsv}
           onRemoveTeacher={async (teacherId, isMe) => {
-            await api.removeCoTeacher(classId, teacherId);
+            try {
+              await api.removeCoTeacher(classId, teacherId);
+            } catch (e) {
+              // Someone already removed them: reload so the list is right, and still show the message.
+              if (e.code === "teacher_not_in_class") await reload().catch(() => {});
+              throw e;
+            }
             // Removing myself: the class can't be opened any more, so back to the class list.
             if (isMe) onNavigate({ ...path, screen: "classes", classId: null });
             else await reload();
@@ -330,6 +336,7 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
           <UserSearchSheet
             mode={searchMode}
             existingIds={existing}
+            students={detail?.students ?? []}
             onSearch={api.searchUsers}
             onAdd={async (user, name, number) => {
               if (searchMode === "teacher") await api.addCoTeacher(classId, user.id);

@@ -594,8 +594,13 @@ describe('teachers and classes', () => {
     rpcImpl = async () => ({ data: null, error: { message: 'not_teacher' } });
     await expect(api.searchUsers('ai')).rejects.toThrow('先生のアカウントだけが使えます');
     expect(api.classErrorMessage({ message: 'boom' })).toContain('boom');
-    expect(api.classErrorMessage({ message: 'last_teacher' })).toBe('クラスには先生が1人以上必要です');
-    expect(api.classErrorMessage({ message: 'teacher_not_in_class' })).toBe('この人はこのクラスの先生ではありません');
+    // The thrown error also carries the code, so a screen can react (e.g. reload after teacher_not_in_class).
+    rpcImpl = async () => ({ data: null, error: { message: 'teacher_not_in_class' } });
+    await expect(api.removeCoTeacher('c1', 't2')).rejects.toMatchObject({ code: 'teacher_not_in_class', message: 'この先生はもうこのクラスにいません。' });
+    rpcImpl = async () => ({ data: null, error: { message: 'boom' } });
+    await expect(api.removeCoTeacher('c1', 't2')).rejects.toMatchObject({ code: null });
+    expect(api.classErrorMessage({ message: 'last_teacher' })).toBe('最後の先生は外せません。先に別の先生を追加してください。');
+    expect(api.classErrorMessage({ message: 'teacher_not_in_class' })).toBe('この先生はもうこのクラスにいません。');
   });
 
   it('is_teacher: true only for a real true; an error counts as no', async () => {

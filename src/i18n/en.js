@@ -566,10 +566,14 @@ export default {
   "teacher.you": "(you)",
   // DRAFT (Andre to check): co-teacher removal and the same-number mark
   "teacher.removeTeacher": "Remove {name} as a teacher",
-  "teacher.removeTeacherConfirm": "Remove {name} as a teacher of this class?",
+  "teacher.removeTeacherConfirm": "Remove {name} from this class? No student data will be deleted.",
   "teacher.leaveClassConfirm": "Leave this class? You won't be able to see it anymore.",
   "teacher.leaveClass": "Leave",
   "teacher.sameNumber": "Another student has the same number.",
+  "teacher.duplicateNumberTag": "Duplicate no.",
+  "teacher.numberTakenConfirm": "Number {n} is already used by {name}. Save anyway?",
+  "teacher.saveAnyway": "Save anyway",
+  "teacher.goBack": "Go back",
   "teacher.addTeacher": "+ Add teacher",
   "teacher.editClass": "Edit name and year",
   "teacher.archive": "Archive this class",
@@ -810,8 +814,8 @@ export default {
   "errors.queryTooShort": "Type at least 2 letters.",
   "errors.userNotFound": "No account found.",
   "errors.targetNotTeacher": "This person doesn't have a teacher account.",
-  "errors.lastTeacher": "A class needs at least one teacher.", // DRAFT
-  "errors.teacherNotInClass": "This person isn't a teacher of this class.", // DRAFT
+  "errors.lastTeacher": "You can't remove the last teacher. Add another teacher first.",
+  "errors.teacherNotInClass": "This teacher is no longer in this class.",
   "errors.alreadyTeacher": "Already a teacher of this class.",
   "errors.badAmount": "Choose 1 to 10 tickets.",
   "errors.messageTooLong": "The message can be up to 60 characters.",

@@ -607,16 +607,26 @@ const CLASS_ERRORS = {
   bad_due_date: "errors.badDueDate",
 };
 
+// The known code in a database error (e.g. "bad_code"), or null.
+function classErrorCode(error) {
+  const text = error?.message || "";
+  return Object.keys(CLASS_ERRORS).find((c) => text.includes(c)) ?? null;
+}
+
 // Turns a database error (e.g. "bad_code") into a friendly message.
 export function classErrorMessage(error) {
-  const text = error?.message || "";
-  const code = Object.keys(CLASS_ERRORS).find((c) => text.includes(c));
-  return code ? t(CLASS_ERRORS[code]) : t("errors.classFailed", { detail: text || "unknown error" });
+  const code = classErrorCode(error);
+  return code ? t(CLASS_ERRORS[code]) : t("errors.classFailed", { detail: error?.message || "unknown error" });
 }
 
 async function callClass(name, args) {
   const { data, error } = await supabase.rpc(name, args);
-  if (error) throw new Error(classErrorMessage(error));
+  if (error) {
+    // The message is for the screen; .code (e.g. 'teacher_not_in_class') lets a screen react to it.
+    const failure = new Error(classErrorMessage(error));
+    failure.code = classErrorCode(error);
+    throw failure;
+  }
   return data;
 }
 
