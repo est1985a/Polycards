@@ -114,7 +114,8 @@ Shared-word rules:
 - Per-deck due counts count a shared word under every added deck that contains it, so per-deck numbers can add up to more than the "Due now" total.
 
 Rules:
-- Never change the schema or RLS yourself. Write the SQL in a separate block and I will run it in the Supabase SQL editor.
+- Supabase access from Claude (the Supabase connector): **read-only queries only** (`select`, `pg_get_functiondef`, listing tables, logs, advisors), run without asking, e.g. to check live function definitions or which words are missing data. Never run anything that writes through it: no `insert` / `update` / `delete`, schema, RLS, grant or function changes, and no `apply_migration`, even for small data fixes.
+- All writes are mine: put the SQL in a file under `supabase/` (or a separate block for a one-off) and I will run it in the Supabase SQL editor.
 - Never commit secrets. The anon key is public by design, but a service-role key must never appear in the repo. The recording script's settings (`GOOGLE_APPLICATION_CREDENTIALS` = full path to the Google service account JSON file, kept outside the repo; `GOOGLE_CLOUD_PROJECT` = the project ID; `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`) live only in `.env.audio` (repo root, in `.gitignore`; Vite never loads it); nothing in `src/` may read it.
 - **After adding new words (or editing an English word or its `speak_as`) via SQL, run `npm run audio` (on the Mac or the Windows PC) to record them.** Until then those words use the built-in voice.
 - Supabase returns at most 1,000 rows per query; keep that in mind for large lists.
