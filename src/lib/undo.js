@@ -6,7 +6,7 @@
 // handwriting cards (the まだ / わかった choice after a close or wrong answer). mode: the answer mode the
 // card was answered in (tap / typing / handwriting), so an undone card comes back the same way even if
 // the student switched the mode after answering.
-const FIELDS = ["pile", "counts", "wrongCounts", "clearedCount", "typed", "typedResult", "retryUsed", "mode"];
+const FIELDS = ["pile", "wrongCounts", "clearedCount", "typed", "typedResult", "retryUsed", "mode"];
 
 // A copy of the session state just before an answer. The arrays and objects are copied, so later
 // changes to the session can't reach it.

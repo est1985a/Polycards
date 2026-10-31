@@ -1,12 +1,11 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { colors, fontDisplay, fontBody, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
-import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
+import { shuffle, reinsert } from '../lib/drill';
 import { srsAnswer, newSessionId, saveErrorReporter, answerTiming, DEFAULT_SESSION_SIZE } from '../lib/srs';
 import { checkSpelling, ignoreNextKey, isAlternateAnswer, needsOtherMeaningCheck, cardAnswerMode } from '../lib/spelling';
 import { reduceMotionOn } from '../lib/settings';
 import { recordAnswer, checkOtherMeaning, holdAnswer, flushHeldAnswer, dropHeldAnswer } from '../lib/api';
 import { takeSnapshot, makeUndo, restoreState, chipLabelKey } from '../lib/undo';
-import Stamp from './Stamp';
 import AddDeckButton from './AddDeckButton';
 import { ownedCounts } from '../lib/library';
 import FlipCard from './FlipCard';
@@ -23,8 +22,6 @@ import { t, tx } from '../i18n';
 
 // Visually hidden but read by screen readers.
 const srOnly = { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)", whiteSpace: "nowrap" };
-
-const stampFill = (n) => Array.from({ length: CLEAR_TARGET }, (_, i) => i < n);
 
 // An answer button's text: the English line, then the Japanese line under it. English mode has
 // no Japanese line ("" in en.js), so the button shows English only.
@@ -271,7 +268,6 @@ export default function StudySession({
 }) {
   const isSrs = activeSet.mode === 'srs';
   const [pile, setPile] = useState(() => shuffle(activeSet.cards.map((c) => c.id)));
-  const [counts, setCounts] = useState({});           // drill: correct answers per card
   const [wrongCounts, setWrongCounts] = useState({}); // SRS: misses per card this session
   const [clearedCount, setClearedCount] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -411,7 +407,7 @@ export default function StudySession({
 
   // The session as it is now, before an answer changes it (for Undo).
   function snapshotNow() {
-    return takeSnapshot({ pile, counts, wrongCounts, clearedCount, typed, typedResult, retryUsed, mode });
+    return takeSnapshot({ pile, wrongCounts, clearedCount, typed, typedResult, retryUsed, mode });
   }
 
   // A まだ / わかった answer: held (sent later, see the top of StudySession) so it can be undone.
@@ -434,7 +430,6 @@ export default function StudySession({
     dropHeldAnswer();
     const state = restoreState(undo);
     setPile(state.pile);
-    setCounts(state.counts);
     setWrongCounts(state.wrongCounts);
     setClearedCount(state.clearedCount);
     setTyped(state.typed);
@@ -581,26 +576,12 @@ export default function StudySession({
     finishAnswer(nextPile, typedResult.again ? 0 : 1);
   }
 
+  // Drill: わかった clears the card; まだ puts it back into the pile for later.
   function handleDrillAnswer(knew) {
     holdForUndo(snapshotNow(), knew, () => {}); // the drill saves nothing, but can be undone
-    const nextCounts = { ...counts };
-    let nextPile = pile.slice(1);
-    let clearedDelta = 0;
-
-    if (knew) {
-      const n = (counts[card.id] || 0) + 1;
-      nextCounts[card.id] = n;
-      if (n >= CLEAR_TARGET) {
-        clearedDelta = 1;
-      } else {
-        nextPile = reinsert(nextPile, card.id);
-      }
-    } else {
-      nextCounts[card.id] = 0;
-      nextPile = reinsert(nextPile, card.id);
-    }
-    setCounts(nextCounts);
-    finishAnswer(nextPile, clearedDelta);
+    const nextPile = pile.slice(1);
+    if (knew) finishAnswer(nextPile, 1);
+    else finishAnswer(reinsert(nextPile, card.id), 0);
   }
 
   function handleAnswer(knew) {
@@ -756,11 +737,6 @@ export default function StudySession({
             {levelUpFloat}
             {spellBonusFloat}
           </div>
-          {!isSrs && (
-            <div style={{ display: "flex", gap: 6, justifyContent: "center" }}>
-              {stampFill(counts[card.id] || 0).map((f, i) => <Stamp key={i} filled={f} />)}
-            </div>
-          )}
           <div ref={actionsRef} style={{ display: "grid", gap }}>
             {handwritingCard ? (
               <>

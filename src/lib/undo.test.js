@@ -7,7 +7,6 @@ const card = { id: "w1-j2e", front: "犬", back: "dog" };
 
 const before = {
   pile: ["w1-j2e", "w2-e2j", "w3-e2j"],
-  counts: { "w2-e2j": 1 },
   wrongCounts: { "w3-e2j": 1 },
   clearedCount: 4,
   typed: "dgo",
@@ -27,10 +26,9 @@ describe('undo snapshot', () => {
     expect(restored.pile.filter((id) => id === card.id)).toHaveLength(1);
   });
 
-  it('puts back miss counts, the cleared count and drill counts', () => {
+  it('puts back miss counts, and the cleared count', () => {
     const restored = restoreState(makeUndo(takeSnapshot(before), card, true));
     expect(restored.wrongCounts).toEqual({ "w3-e2j": 1 });
-    expect(restored.counts).toEqual({ "w2-e2j": 1 });
     expect(restored.clearedCount).toBe(4);
   });
 

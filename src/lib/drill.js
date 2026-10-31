@@ -1,8 +1,6 @@
 // Helpers for building and shuffling study piles.
 import { posKey } from './partsOfSpeech';
 
-export const CLEAR_TARGET = 2; // only used for the Card Sets practice drill
-
 // Optional example sentences: missing or blank ones become null.
 const example = (s) => (s && s.trim()) || null;
 
