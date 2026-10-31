@@ -55,6 +55,25 @@ describe('ClassOverview', () => {
     expect(h).toContain('レビュー');
   });
 
+  it('header and rows share one fixed set of columns, centered except the name', () => {
+    const h = overview({ wide: true, selectable: true });
+    expect(h).toContain('table-layout:fixed');
+    expect(h.match(/<col[ />]/g)).toHaveLength(11); // checkbox + 10 columns
+    const aligns = (tag) => [...h.matchAll(new RegExp(`<${tag}[^>]*text-align:(\\w+)`, 'g'))].map((m) => m[1]);
+    expect(aligns('th')).toEqual(['center', 'left', ...Array(8).fill('center')]);
+    expect(aligns('td').slice(0, 10)).toEqual(['center', 'left', ...Array(8).fill('center')]);
+  });
+
+  it('scrolls inside its card with a sticky header only for a long class', () => {
+    expect(overview()).not.toContain('data-overview-scroll');
+    expect(overview()).not.toContain('position:sticky');
+    const many = Array.from({ length: 16 }, (_, i) => row(`s${i}`, i + 1, `生徒 ${i + 1}`));
+    const h = overview({ rows: many });
+    expect(h).toContain('data-overview-scroll');
+    expect(h).toContain('max-height:70vh');
+    expect(h).toContain('position:sticky');
+  });
+
   it('has the Phase 2 checkboxes when giving is possible', () => {
     expect(overview({ selectable: true }).match(/role="checkbox"/g)).toHaveLength(2);
     expect(overview()).not.toContain('role="checkbox"');
