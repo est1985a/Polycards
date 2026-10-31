@@ -30,6 +30,7 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
   const [searchMode, setSearchMode] = useState(null); // 'student' | 'teacher' | null
   const [showLarge, setShowLarge] = useState(false);
   const [awards, setAwards] = useState(null); // { classId, rows }: the class's recent awards
+  const [leavers, setLeavers] = useState(null); // { classId, rows }: students who left (class_leavers())
   const [student, setStudent] = useState(null); // { key, detail, error }: one student's page
   const [giveTo, setGiveTo] = useState(null); // students the award pop-up is open for
   const [overview, setOverview] = useState(null); // { key, rows, error }: class_overview() for classId|days
@@ -140,6 +141,14 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
     if (classId && path.screen === "class") loadAwards(classId);
   }, [classId, path.screen, loadAwards]);
 
+  // 名簿: students who left the class themselves (never throws; [] before the SQL is run).
+  useEffect(() => {
+    if (!classId || path.screen !== "class") return;
+    let current = true;
+    api.fetchClassLeavers(classId).then((rows) => { if (current) setLeavers({ classId, rows }); });
+    return () => { current = false; };
+  }, [classId, path.screen]);
+
   useEffect(() => {
     if (studentKey) loadStudent(classId, studentId);
   }, [studentKey, classId, studentId, loadStudent]);
@@ -179,6 +188,7 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
   const detailError = mine?.error ?? null;
 
   const classAwards = awards?.classId === classId ? awards.rows : null;
+  const classLeavers = leavers?.classId === classId ? leavers.rows : null;
   const shown = student?.key === studentKey ? student : null;
   const shownHonesty = honesty?.key === studentKey ? honesty : null;
   const shownOverview = overview?.key === periodKey ? overview : null;
@@ -297,6 +307,7 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
           onOpenSearch={setSearchMode}
           onShowLarge={() => setShowLarge(true)}
           awards={classAwards}
+          leavers={classLeavers}
           onOpenStudent={(id) => onNavigate({ ...path, screen: "student", studentId: id, assignmentId: null })}
           onGive={setGiveTo}
           view={path.classView ?? "overview"}

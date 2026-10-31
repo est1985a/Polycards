@@ -273,6 +273,13 @@ function App() {
   }, [userId]);
   const chosenClassId = classChoice?.userId === userId ? classChoice.classId : loadLastClass(window.localStorage, userId);
 
+  // クラス tab: the student left a class. The list reloads (pickClass() then shows the first class
+  // left, or the no-class panel) and the 課題 dot is counted again.
+  const leftClass = useCallback(() => {
+    loadMyClasses();
+    api.fetchPendingAssignments().then(setPendingAssignments);
+  }, [loadMyClasses]);
+
   // The seen-themes list, read once after sign-in (a late answer for another account is ignored).
   useEffect(() => {
     if (!userId) return;
@@ -1099,6 +1106,7 @@ function App() {
                 {activeTab === "class" && (
                   <ClassTab
                     classes={myClasses} selectedId={chosenClassId} onSelect={chooseClass} onJoin={() => setJoinOpen(true)} wide={wide}
+                    onLeft={leftClass}
                     assignmentsVersion={assignmentsVersion}
                     dueFor={(deckId) => dueCounts[deckId] || 0}
                     busyDeckId={addingAssignedDeckId}

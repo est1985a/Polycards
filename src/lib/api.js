@@ -3,7 +3,7 @@
 import { supabase } from './supabaseClient';
 import { DEFAULT_SESSION_SIZE, MASTERED, restoreUpdate } from './srs';
 import { shapeLibrary, shapeCollections } from './library';
-import { jstDayBounds, jstHourStart } from './schedule';
+import { jstDayBounds, jstHourStart, jstDateTime } from './schedule';
 import { posKey } from './partsOfSpeech';
 import { t } from '../i18n';
 
@@ -738,14 +738,52 @@ export function removeCoTeacher(classId, teacherUserId) {
   return callClass('remove_co_teacher', { p_class_id: classId, p_teacher_user_id: teacherUserId });
 }
 
-// Student: is this code a class I can join? { id, name } (else bad_code / class_archived / already_member).
+// Join codes (supabase/polycards-class-leave-and-join-limit.sql): a wrong code, and too many wrong
+// codes, come back as { error: 'bad_code' } / { error: 'too_many_tries', retry_at } (a raised error
+// would undo the server's failure count). The older SQL raised bad_code instead; both end up as the
+// same thrown error with .code, so the app works before and after that SQL is run.
+export function joinCodeFailure(data) {
+  const message = data.error === 'too_many_tries'
+    ? t("errors.joinCodeLocked", { time: jstDateTime(data.retry_at)?.time ?? '' })
+    : classErrorMessage({ message: data.error });
+  const failure = new Error(message);
+  failure.code = data.error === 'too_many_tries' ? 'too_many_tries' : classErrorCode({ message: data.error });
+  return failure;
+}
+
+async function callJoin(name, args) {
+  const data = await callClass(name, args);
+  if (data?.error) throw joinCodeFailure(data);
+  return data;
+}
+
+// Student: is this code a class I can join? { id, name } (else bad_code / too_many_tries /
+// class_archived / already_member).
 export function checkJoinCode(code) {
-  return callClass('check_join_code', { p_code: code });
+  return callJoin('check_join_code', { p_code: code });
 }
 
 // Student: join the class with this code, with the nickname classmates will see. { id, name }
 export function joinClass(code, realName, studentNumber, nickname) {
-  return callClass('join_class', { p_code: code, p_real_name: realName, p_student_number: studentNumber, p_nickname: nickname });
+  return callJoin('join_class', { p_code: code, p_real_name: realName, p_student_number: studentNumber, p_nickname: nickname });
+}
+
+// Student: leave one of my classes. Only my membership goes; study data, My Deck, tickets and
+// Polyavatars stay. Rejoining works with the class code.
+export function leaveClass(classId) {
+  return callClass('leave_class', { p_class_id: classId });
+}
+
+// Teacher: students who left this class and haven't rejoined, newest first:
+// [{ student_id, real_name, student_number, nickname, left_at }]. Never throws: an error (e.g. the
+// SQL isn't run yet) only console.warns and gives [].
+export async function fetchClassLeavers(classId) {
+  const { data, error } = await supabase.rpc('class_leavers', { p_class_id: classId });
+  if (error) {
+    console.warn("Could not load students who left: " + error.message);
+    return [];
+  }
+  return data || [];
 }
 
 // Student: the classes I'm in (names only): [{ id, name, joined_at }].

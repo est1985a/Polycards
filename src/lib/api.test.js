@@ -558,6 +558,8 @@ describe('teachers and classes', () => {
     await api.checkJoinCode('ABC234');
     await api.joinClass('ABC234', '山田', 7, 'Yama');
     await api.fetchMyClasses();
+    await api.leaveClass('c1');
+    await api.fetchClassLeavers('c1');
     expect(calls).toEqual([
       ['rpc', 'teacher_classes', { p_archived: true }],
       ['rpc', 'create_class', { p_name: '1年A組', p_school_year: 2026 }],
@@ -573,6 +575,8 @@ describe('teachers and classes', () => {
       ['rpc', 'check_join_code', { p_code: 'ABC234' }],
       ['rpc', 'join_class', { p_code: 'ABC234', p_real_name: '山田', p_student_number: 7, p_nickname: 'Yama' }],
       ['rpc', 'my_classes', undefined],
+      ['rpc', 'leave_class', { p_class_id: 'c1' }],
+      ['rpc', 'class_leavers', { p_class_id: 'c1' }],
     ]);
   });
 
@@ -601,6 +605,40 @@ describe('teachers and classes', () => {
     await expect(api.removeCoTeacher('c1', 't2')).rejects.toMatchObject({ code: null });
     expect(api.classErrorMessage({ message: 'last_teacher' })).toBe('最後の先生は外せません。先に別の先生を追加してください。');
     expect(api.classErrorMessage({ message: 'teacher_not_in_class' })).toBe('この先生はもうこのクラスにいません。');
+  });
+
+  it('join codes: a raised bad_code (older SQL) and a returned one (newer SQL) give the same error', async () => {
+    rpcImpl = async () => ({ data: null, error: { message: 'bad_code' } });
+    await expect(api.checkJoinCode('XXXXXX')).rejects.toMatchObject({ code: 'bad_code', message: 'コードが見つかりません。もう一度確認してください' });
+    rpcImpl = async () => ({ data: { error: 'bad_code' }, error: null });
+    await expect(api.checkJoinCode('XXXXXX')).rejects.toMatchObject({ code: 'bad_code', message: 'コードが見つかりません。もう一度確認してください' });
+    await expect(api.joinClass('XXXXXX', '山田', null, 'Yama')).rejects.toMatchObject({ code: 'bad_code' });
+  });
+
+  it('join codes: too many wrong codes says when to try again (Japan time)', async () => {
+    rpcImpl = async () => ({ data: { error: 'too_many_tries', retry_at: '2026-10-31T09:20:00Z' }, error: null });
+    await expect(api.checkJoinCode('XXXXXX')).rejects.toMatchObject({ code: 'too_many_tries', message: expect.stringContaining('18:20') });
+    await expect(api.joinClass('XXXXXX', '山田', null, 'Yama')).rejects.toMatchObject({ code: 'too_many_tries' });
+    const { setLang } = await import('../i18n');
+    setLang('en');
+    try {
+      await expect(api.checkJoinCode('XXXXXX')).rejects.toThrow('You can try again at 18:20.');
+    } finally {
+      setLang('ja');
+    }
+  });
+
+  it('join codes: a right code still returns the class', async () => {
+    rpcImpl = async () => ({ data: { id: 'c1', name: '1年A組' }, error: null });
+    expect(await api.checkJoinCode('ABC234')).toEqual({ id: 'c1', name: '1年A組' });
+  });
+
+  it('class_leavers never throws (e.g. before the SQL is run)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    rpcImpl = async () => ({ data: null, error: { message: 'function does not exist' } });
+    expect(await api.fetchClassLeavers('c1')).toEqual([]);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it('is_teacher: true only for a real true; an error counts as no', async () => {

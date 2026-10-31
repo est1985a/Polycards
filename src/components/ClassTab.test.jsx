@@ -3,6 +3,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { ClassTabView } from './ClassTab';
+import { LeaveClassConfirm } from './LeaveClassSheet';
 import Tabs from './Tabs';
 import { setLang } from '../i18n';
 
@@ -61,6 +62,31 @@ describe('ClassTabView', () => {
     setLang('en');
     expect(view()).toContain('Teacher: アンドレ先生, test1先生');
     expect(view({ classes: [] })).toContain('Join a class');
+  });
+});
+
+describe('leaving a class', () => {
+  it('a small クラスをぬける button under the class, not on the no-class panel', () => {
+    expect(view()).toContain('クラスをぬける');
+    expect(view({ info: { ...INFO, nickname: null }, board: null })).toContain('クラスをぬける');
+    expect(view({ classes: [], info: null, board: null })).not.toContain('クラスをぬける');
+  });
+
+  it('the confirm pop-up says what stays and what goes', () => {
+    const h = renderToStaticMarkup(<LeaveClassConfirm name="1年A組" onLeave={() => {}} onCancel={() => {}} />);
+    expect(h).toContain('「1年A組」からぬけますか？');
+    for (const text of ['学習の記録', 'マイデッキ', 'ガチャ券', 'ポリアバター', 'ランキングと課題', '参加コード', 'キャンセル', 'ぬける']) {
+      expect(h).toContain(text);
+    }
+    const busy = renderToStaticMarkup(<LeaveClassConfirm name="1年A組" busy error="だめ" onLeave={() => {}} onCancel={() => {}} />);
+    expect(busy).toContain('ぬけています…');
+    expect(busy).toContain('だめ');
+  });
+
+  it('works in English', () => {
+    setLang('en');
+    expect(view()).toContain('Leave this class');
+    expect(renderToStaticMarkup(<LeaveClassConfirm name="1A" onLeave={() => {}} onCancel={() => {}} />)).toContain('Leave “1A”?');
   });
 });
 

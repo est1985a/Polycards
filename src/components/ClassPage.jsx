@@ -3,7 +3,7 @@ import { useAction } from '../lib/useAction';
 import { colors, fontDisplay, panel as panelStyle } from '../styles/theme';
 import {
   sortRoster, splitJoinCode, cleanRealName, realNameValid, parseStudentNumber, studentNumberValid,
-  classNameValid, parseSchoolYear, dateTimeText, cleanNickname, nicknameValid, duplicateNumbers, numberConflict,
+  classNameValid, parseSchoolYear, dateTimeText, dateText, cleanNickname, nicknameValid, duplicateNumbers, numberConflict,
 } from '../lib/classes';
 import BackButton from './BackButton';
 import SegmentedSwitch from './SegmentedSwitch';
@@ -392,6 +392,23 @@ function ClassSettingsPanel({ cls, onUpdateClass, onSetArchived }) {
 //     words beside the join code / awards / teachers / class settings (one column on phones).
 //   名簿: the Phase 2 roster (編集 / 外す / ＋ 生徒を追加) on the left, the same panels on the right.
 // The overview rows with each student's nickname from class_detail() (class_overview has none).
+// ぬけた生徒: students who left this class themselves and haven't rejoined (nothing when none).
+export function LeaversPanel({ leavers }) {
+  if (!leavers?.length) return null;
+  return (
+    <Panel title={t("teacher.leaversTitle")}>
+      <ul data-leavers="" style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
+        {leavers.map((l) => (
+          <li key={l.student_id} style={{ fontSize: 15, color: colors.muted, overflowWrap: "anywhere" }}>
+            {l.student_number != null && <span style={{ fontFamily: fontDisplay, marginRight: 8 }}>{l.student_number}</span>}
+            {t("teacher.leaverLine", { name: l.real_name, date: dateText(l.left_at) })}
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  );
+}
+
 function withNicknames(rows, students) {
   if (!rows) return rows;
   const nick = new Map((students ?? []).map((s) => [s.student_id, s.nickname ?? null]));
@@ -437,6 +454,7 @@ export function LeaderboardView({ cls, board, error = null, onSetEnabled, wide =
 // onGive(students): チケットを贈る for the checked students (the same selection in both views).
 // overview / overviewError: class_overview() rows (null while loading). troubleWords: class_trouble_words().
 // days / onDays: the period (7 or 30). sort / onSort: the overview's column. initialSelected: for tests.
+// leavers: students who left the class themselves (class_leavers(), shown under the 名簿).
 export default function ClassPage({
   detail, error = null, onBack, wide = false, awards = null,
   onUpdateClass, onSetArchived, onRegenerate, onUpdateMember, onRemoveMember, onOpenSearch, onShowLarge,
@@ -445,7 +463,7 @@ export default function ClassPage({
   overview = null, overviewError = null, troubleWords = null,
   onUpdateNickname = async () => {}, leaderboard = null, leaderboardError = null, onSetLeaderboard = async () => {},
   assignments = null, assignmentsError = null, onNewAssignment = () => {}, onOpenAssignment = () => {},
-  onOverviewCsv = null, onAwardsCsv = null, onRemoveTeacher = async () => {},
+  onOverviewCsv = null, onAwardsCsv = null, onRemoveTeacher = async () => {}, leavers = null,
 }) {
   const [selected, setSelected] = useState(() => new Set(initialSelected));
   const back = <div><BackButton label={t("teacher.backToClasses")} onClick={onBack} /></div>;
@@ -578,7 +596,10 @@ export default function ClassPage({
         </>
       ) : (
         <div style={columns}>
-          {roster}
+          <div style={{ display: "grid", gap: 16, alignContent: "start" }}>
+            {roster}
+            <LeaversPanel leavers={leavers} />
+          </div>
           {side}
         </div>
       )}

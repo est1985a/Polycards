@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Polycards: check that a STUDENT can't use the teacher functions (2026-10-30)
--- Run AFTER polycards-teachers.sql (and polycards-teacher-phase2.sql, polycards-teacher-phase3.sql, polycards-class-tab.sql, polycards-teacher-phase4.sql, polycards-teacher-followups.sql). Read-only: every check that could write
+-- Run AFTER polycards-teachers.sql (and polycards-teacher-phase2.sql, polycards-teacher-phase3.sql, polycards-class-tab.sql, polycards-teacher-phase4.sql, polycards-teacher-followups.sql, polycards-class-leave-and-join-limit.sql). Read-only: every check that could write
 -- something is undone straight away, so nothing in the database changes.
 --
 -- 1. Put a student's username (or full email) on the line marked  <-- STUDENT
@@ -123,7 +123,21 @@ begin
       ('call internal assignment_progress_for', format('select * from public.assignment_progress_for(%L)', v_class),                    'permission denied'),
       ('call internal assignment_class_for_teacher', 'select public.assignment_class_for_teacher(gen_random_uuid())',                  'permission denied'),
       ('call internal deck_source',  'select public.deck_source(gen_random_uuid())',                                                    'permission denied'),
-      ('call internal clean_assignment_note', format('select public.clean_assignment_note(%L)', 'X'),                                   'permission denied')
+      ('call internal clean_assignment_note', format('select public.clean_assignment_note(%L)', 'X'),                                   'permission denied'),
+      -- Leaving a class and the join-code limit (polycards-class-leave-and-join-limit.sql)
+      ('leave_class: made-up class', format('select public.leave_class(%L)', v_fake),                                                   'not_member'),
+      ('leave_class: another class', format('select public.leave_class(%L)', coalesce(v_foreign, v_fake)),                             'not_member'),
+      ('class_leavers',              format('select * from public.class_leavers(%L)', v_class),                                         'not_teacher'),
+      ('read class_leaves',          'select count(*) from public.class_leaves',                                                        'permission denied'),
+      ('insert into class_leaves',   format('insert into public.class_leaves (class_id, student_id, real_name) values (%L, %L, %L)', v_class, v_student, 'X'), 'permission denied'),
+      ('delete class_leaves',        'delete from public.class_leaves',                                                                 'permission denied'),
+      ('read join_code_failures',    'select count(*) from public.join_code_failures',                                                  'permission denied'),
+      ('insert into join_code_failures', format('insert into public.join_code_failures (user_id) values (%L)', v_student),              'permission denied'),
+      ('delete join_code_failures',  'delete from public.join_code_failures',                                                           'permission denied'),
+      ('call internal join_code_setting', format('select public.join_code_setting(%L)', 'max_failures'),                               'permission denied'),
+      ('call internal join_code_blocked_until', 'select public.join_code_blocked_until()',                                              'permission denied'),
+      ('call internal note_join_code_failure', 'select public.note_join_code_failure()',                                                'permission denied'),
+      ('call internal join_code_wrong', 'select public.join_code_wrong()',                                                              'permission denied')
     ) as c(label, stmt, expected)
   loop
     begin
@@ -197,6 +211,38 @@ begin
     exception when others then
       v_out := v_out || (case when position('already_member' in sqlerrm) > 0 then 'PASS' else 'FAIL' end)
                      || '  join_class with a spaced, hyphenated, lowercase code (' || sqlerrm || ')' || E'\n';
+    end;
+  end if;
+
+  -- Join-code limit: wrong codes up to the limit. The try that reaches the limit already says
+  -- too_many_tries; after that even a right code is refused. Everything is undone ('undo').
+  -- (5 = join_code_setting('max_failures'); if you change it, change the 5 here too.)
+  begin
+    v_json := '';
+    for v_n in 1..5 loop
+      v_json := v_json || coalesce(public.check_join_code('ZZZZZ0')->>'error', 'none') || ' ';
+    end loop;
+    if v_code is not null then
+      v_json := v_json || '| right code: ' || coalesce(public.check_join_code(v_code)->>'error', 'none');
+    end if;
+    raise exception 'undo';
+  exception when others then
+    if sqlerrm <> 'undo' then v_json := 'unexpected error: ' || sqlerrm; end if;
+    v_out := v_out || (case when v_json like 'bad_code bad_code bad_code bad_code too_many_tries %'
+                             and (v_code is null or v_json like '%right code: too_many_tries')
+                            then 'PASS' else 'FAIL' end)
+                   || '  5 wrong codes lock joining (' || v_json || ')' || E'\n';
+  end;
+
+  -- Leaving: the student's own membership goes, and a direct delete changes nothing. Undone.
+  if v_myclass is not null then
+    begin
+      perform public.leave_class(v_myclass);
+      select count(*) into v_n from public.my_classes() x where x.id = v_myclass;
+      raise exception 'undo';
+    exception when others then
+      v_out := v_out || (case when sqlerrm = 'undo' and v_n = 0 then 'PASS' else 'FAIL' end)
+                     || '  leave_class removes my own membership (' || sqlerrm || ')' || E'\n';
     end;
   end if;
 

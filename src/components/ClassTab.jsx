@@ -5,6 +5,7 @@ import { pickClass } from '../lib/classTab';
 import SegmentedSwitch from './SegmentedSwitch';
 import ClassLeaderboard from './ClassLeaderboard';
 import NicknameSheet, { NicknameForm } from './NicknameSheet';
+import LeaveClassSheet from './LeaveClassSheet';
 import ClassAssignmentsSection from './ClassAssignmentsSection';
 import { ErrorText } from './ClassFields';
 import { ghostSmall, inputStyle } from '../styles/forms';
@@ -57,11 +58,12 @@ function ClassHeader({ info, onChangeNickname }) {
 // "failed"). info / board: my_class_info() / class_leaderboard() for selectedId (null while loading).
 // assignments: my_class_assignments() (Phase 4, null while loading); dueFor / busyDeckId /
 // onAddAssignment / onReviewAssignment: see ClassAssignmentsSection. now: a fixed time for tests.
+// onLeave(): opens the クラスをぬける pop-up (a small button at the very bottom, away from the rest).
 export function ClassTabView({
   classes, selectedId, onSelect = () => {}, info = null, board = null, error = null, wide = false,
   onJoin = () => {}, onChangeNickname = () => {}, onSaveNickname = async () => {},
   assignments = null, dueFor = () => 0, busyDeckId = null, onAddAssignment = () => {}, onReviewAssignment = () => {},
-  onViewAssignmentWords = () => {}, now = null,
+  onViewAssignmentWords = () => {}, onLeave = () => {}, now = null,
 }) {
   const frame = (children) => (
     <div style={{ display: "grid", gap: 16, paddingTop: 8, textAlign: "left", maxWidth: wide ? 900 : undefined, margin: wide ? "0 auto" : undefined, width: "100%" }}>
@@ -113,6 +115,9 @@ export function ClassTabView({
         onAdd={onAddAssignment} onReview={onReviewAssignment} onViewWords={onViewAssignmentWords} now={now}
       />
       {main}
+      <div style={{ display: "flex", justifyContent: "center", paddingTop: 8 }}>
+        <button onClick={onLeave} style={{ ...ghostSmall, color: colors.muted }}>{t("classTab.leave")}</button>
+      </div>
     </>,
   );
 }
@@ -122,8 +127,9 @@ export function ClassTabView({
 // selectedId / onSelect come from App, which remembers the last class per account (src/lib/classTab.js).
 // onJoin(): opens the join pop-up. assignmentsVersion: App bumps it after adding an assigned pack, so
 // the progress reloads. dueFor / busyDeckId / onAddAssignment / onReviewAssignment: from App.
+// onLeft(classId): the student left a class (App reloads the class list and the 課題 dot).
 export default function ClassTab({
-  classes, selectedId, onSelect, onJoin, wide = false,
+  classes, selectedId, onSelect, onJoin, onLeft = () => {}, wide = false,
   assignmentsVersion = 0, dueFor, busyDeckId = null, onAddAssignment, onReviewAssignment, onViewAssignmentWords,
 }) {
   const list = Array.isArray(classes) ? classes : null;
@@ -132,6 +138,7 @@ export default function ClassTab({
   const [board, setBoard] = useState(null); // { classId, data, error }
   const [assigned, setAssigned] = useState(null); // { classId, rows }: my_class_assignments()
   const [editing, setEditing] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   const load = useCallback(async (id) => {
     try {
@@ -189,9 +196,22 @@ export default function ClassTab({
         onAddAssignment={onAddAssignment}
         onReviewAssignment={onReviewAssignment}
         onViewAssignmentWords={onViewAssignmentWords}
+        onLeave={() => setLeaving(true)}
       />
       {editing && shownInfo?.data && (
         <NicknameSheet initial={shownInfo.data.nickname ?? ""} onSave={saveNickname} onClose={() => setEditing(false)} />
+      )}
+      {leaving && shownInfo?.data && (
+        <LeaveClassSheet
+          name={shownInfo.data.name}
+          onClose={() => setLeaving(false)}
+          onLeave={async () => {
+            const id = shownInfo.data.id;
+            await api.leaveClass(id);
+            setLeaving(false);
+            onLeft(id);
+          }}
+        />
       )}
     </>
   );

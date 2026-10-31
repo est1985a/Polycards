@@ -3,7 +3,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import TeacherTab, { CreateClassForm } from './TeacherTab';
-import ClassPage, { RosterRow, JoinCodePanel, LeaderboardView, TeachersPanel, TeacherRow } from './ClassPage';
+import ClassPage, { RosterRow, JoinCodePanel, LeaderboardView, TeachersPanel, TeacherRow, LeaversPanel } from './ClassPage';
 import { ResultRow, AddStudentForm } from './UserSearchSheet';
 import { JoinCodeScreen } from './JoinCodeDisplay';
 import { JoinClassSteps } from './JoinClassSheet';
@@ -261,6 +261,24 @@ describe('joining a class (student)', () => {
     expect(h).toContain('クラスに参加');
     setLang('en');
     expect(renderToStaticMarkup(<AccountMenu user={{ email: 'a@b.c' }} />)).toContain('Join a class');
+  });
+});
+
+describe('students who left', () => {
+  const LEFT = [{ student_id: 's9', real_name: '山田 太郎', student_number: 5, nickname: 'Taro', left_at: '2026-10-30T09:05:00Z' }];
+
+  it('the 名簿 shows ぬけた生徒 with the date (Japan time); nothing when none', () => {
+    const h = page({ leavers: LEFT });
+    expect(h).toContain('ぬけた生徒');
+    expect(h).toMatch(/data-leavers=""[^]*5[^]*山田 太郎 — 10月30日にぬけました/);
+    expect(page({ leavers: [] })).not.toContain('ぬけた生徒');
+    expect(page()).not.toContain('ぬけた生徒');
+    expect(page({ leavers: LEFT, view: 'overview' })).not.toContain('ぬけた生徒');
+  });
+
+  it('works in English', () => {
+    setLang('en');
+    expect(renderToStaticMarkup(<LeaversPanel leavers={LEFT} />)).toContain('山田 太郎 — left on Oct 30');
   });
 });
 

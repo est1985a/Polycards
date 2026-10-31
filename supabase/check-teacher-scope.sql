@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Polycards: check that a TEACHER only reaches students in their own classes (2026-10-30)
--- Run AFTER polycards-teacher-phase2.sql (and polycards-teacher-phase3.sql, polycards-class-tab.sql, polycards-teacher-phase4.sql, polycards-teacher-followups.sql). Read-only: every check that could write
+-- Run AFTER polycards-teacher-phase2.sql (and polycards-teacher-phase3.sql, polycards-class-tab.sql, polycards-teacher-phase4.sql, polycards-teacher-followups.sql, polycards-class-leave-and-join-limit.sql). Read-only: every check that could write
 -- something is undone straight away, so nothing in the database changes.
 --
 -- 1. Put a teacher's username (or full email) on the line marked  <-- TEACHER
@@ -76,6 +76,7 @@ begin
       ('award_tickets: class I don''t teach',      format('select public.award_tickets(%L, array[%L]::uuid[], 1, null)', v_other, v_outsider),     'not_class_teacher'),
       ('class_awards: class I don''t teach',       format('select * from public.class_awards(%L)', v_other),                                        'not_class_teacher'),
       ('class_detail: class I don''t teach',       format('select public.class_detail(%L)', v_other),                                               'not_class_teacher'),
+      ('class_leavers: class I don''t teach',      format('select * from public.class_leavers(%L)', v_other),                                       'not_class_teacher'),
       ('class_overview: class I don''t teach',     format('select * from public.class_overview(%L)', v_other),                                      'not_class_teacher'),
       ('class_trouble_words: class I don''t teach', format('select * from public.class_trouble_words(%L)', v_other),                                'not_class_teacher'),
       ('student_honesty: outsider in my class',    format('select public.student_honesty(%L, %L)', v_class, v_outsider),                            'not_member'),
