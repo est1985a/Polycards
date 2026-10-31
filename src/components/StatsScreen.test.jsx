@@ -22,6 +22,10 @@ const text = (html) => html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ');
 const count = (html, re) => (html.match(re) || []).length;
 
 describe('StatsScreen', () => {
+  it('the back button stays pinned to the top while the page scrolls', () => {
+    expect(render()).toMatch(/data-sticky-back="" style="position:sticky/);
+  });
+
   it('shows the streak, calendar, daily chart, totals and trouble words', () => {
     const html = render();
     const plain = text(html);

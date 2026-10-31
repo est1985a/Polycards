@@ -126,34 +126,47 @@ describe('カードの動きを減らす (polycards.reduceMotion)', () => {
   });
 });
 
-describe('自動再生 / ゆっくり (polycards.autoPlay, polycards.slowSpeech)', () => {
-  const pairs = [
-    ['polycards.autoPlay', loadAutoPlay, saveAutoPlay],
-    ['polycards.slowSpeech', loadSlowSpeech, saveSlowSpeech],
-  ];
-
-  it('are off by default and remember the choice', () => {
-    for (const [key, load, save] of pairs) {
-      const storage = memory();
-      expect(load(storage), key).toBe(false);
-      save(storage, true);
-      expect(storage.getItem(key)).toBe('true');
-      expect(load(storage), key).toBe(true);
-      save(storage, false);
-      expect(load(storage), key).toBe(false);
-    }
+describe('自動再生 (polycards.autoPlay)', () => {
+  it('is on by default and remembers the choice', () => {
+    const storage = memory();
+    expect(loadAutoPlay(storage)).toBe(true);
+    saveAutoPlay(storage, false);
+    expect(storage.getItem('polycards.autoPlay')).toBe('false');
+    expect(loadAutoPlay(storage)).toBe(false);
+    saveAutoPlay(storage, true);
+    expect(loadAutoPlay(storage)).toBe(true);
   });
 
-  it('are off for broken values or blocked storage', () => {
-    for (const [key, load, save] of pairs) {
-      const storage = memory();
-      for (const bad of ['1', 'yes', 'TRUE', '']) {
-        storage.setItem(key, bad);
-        expect(load(storage), `${key} ${bad}`).toBe(false);
-      }
-      expect(load(blocked)).toBe(false);
-      expect(() => save(blocked, true)).not.toThrow();
+  it('stays on for broken values or blocked storage (only "false" turns it off)', () => {
+    const storage = memory();
+    for (const bad of ['1', 'no', 'FALSE', '']) {
+      storage.setItem('polycards.autoPlay', bad);
+      expect(loadAutoPlay(storage), bad).toBe(true);
     }
+    expect(loadAutoPlay(blocked)).toBe(true);
+    expect(() => saveAutoPlay(blocked, false)).not.toThrow();
+  });
+});
+
+describe('ゆっくり (polycards.slowSpeech)', () => {
+  it('is off by default and remembers the choice', () => {
+    const storage = memory();
+    expect(loadSlowSpeech(storage)).toBe(false);
+    saveSlowSpeech(storage, true);
+    expect(storage.getItem('polycards.slowSpeech')).toBe('true');
+    expect(loadSlowSpeech(storage)).toBe(true);
+    saveSlowSpeech(storage, false);
+    expect(loadSlowSpeech(storage)).toBe(false);
+  });
+
+  it('is off for broken values or blocked storage', () => {
+    const storage = memory();
+    for (const bad of ['1', 'yes', 'TRUE', '']) {
+      storage.setItem('polycards.slowSpeech', bad);
+      expect(loadSlowSpeech(storage), bad).toBe(false);
+    }
+    expect(loadSlowSpeech(blocked)).toBe(false);
+    expect(() => saveSlowSpeech(blocked, true)).not.toThrow();
   });
 });
 

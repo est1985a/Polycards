@@ -25,3 +25,18 @@ export default function BackButton({ label, onClick, ariaLabel }) {
     </button>
   );
 }
+
+// The back button pinned to the top of the screen while the page scrolls (settings, stats), so it
+// can be reached without scrolling back up. The row lets taps through; only the button takes them.
+export function StickyBackButton(props) {
+  return (
+    <div
+      data-sticky-back=""
+      style={{ position: "sticky", top: "calc(8px + env(safe-area-inset-top))", zIndex: 6, pointerEvents: "none" }}
+    >
+      <div style={{ display: "inline-flex", maxWidth: "100%", pointerEvents: "auto" }}>
+        <BackButton {...props} />
+      </div>
+    </div>
+  );
+}

@@ -12,6 +12,7 @@ import { ownedCounts } from '../lib/library';
 import FlipCard from './FlipCard';
 import BackButton from './BackButton';
 import ReviewModeToggle from './ReviewModeToggle';
+import AutoPlayToggle from './AutoPlayToggle';
 import { useCardReport } from './useCardReport';
 import { reportedAnswer } from '../lib/cardReports';
 import HandwritingInput from '../handwriting/HandwritingInput.jsx';
@@ -242,7 +243,7 @@ export function TypingArea({
 // usual (the undo chip goes away); the card on screen and the rest of the session stay.
 export default function StudySession({
   activeSet, isAdded, saving, onAddDeck, onBack, answerMode = "off", onAnswerModeChange = null,
-  wide = false, sideChip = false, speech = null, fit = false, short = false, onTypingOpen = null,
+  wide = false, sideChip = false, speech = null, onAutoPlayChange = null, fit = false, short = false, onTypingOpen = null,
 }) {
   const isSrs = activeSet.mode === 'srs';
   const [pile, setPile] = useState(() => shuffle(activeSet.cards.map((c) => c.id)));
@@ -656,22 +657,29 @@ export default function StudySession({
 
   return (
     <div style={fit ? { flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column", gap } : { display: "grid", gap }}>
-      {/* Top row: back, the session name and progress, and (SRS) the 答え方 toggle. On phones the */}
-      {/* name and progress go onto their own line under the other two (.review-top-name). */}
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
-        <BackButton label={t("common.backToDashboard")} onClick={onBack} />
-        <div
-          className="review-top-name"
-          style={{ flex: "1 1 140px", minWidth: 0, display: "grid", gap: 2, fontSize: 13, color: colors.text, textAlign: "left" }}
-        >
-          <span style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeSet.name}</span>
-          <span style={{ color: colors.muted }}>{t("review.progress", { cleared: clearedCount, left: pile.length })}</span>
-        </div>
-        {isSrs && onAnswerModeChange && (
-          <div style={{ marginLeft: "auto" }}>
-            <ReviewModeToggle mode={answerMode} onChange={onAnswerModeChange} handwritingEnabled={HANDWRITING_ENABLED} />
+      {/* Top row (.review-top in src/index.css): back, the session name and progress, the 自動再生 */}
+      {/* switch (when the browser can speak) and (SRS) the 答え方 toggle. On phones the name and */}
+      {/* progress go onto a second line, with the 自動再生 switch at its right. */}
+      <div className="review-top-box">
+        <div className="review-top">
+          <div style={{ gridArea: "back", minWidth: 0, display: "flex" }}>
+            <BackButton label={t("common.backToDashboard")} onClick={onBack} />
           </div>
-        )}
+          <div style={{ gridArea: "name", minWidth: 0, display: "grid", gap: 2, fontSize: 13, color: colors.text, textAlign: "left" }}>
+            <span style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeSet.name}</span>
+            <span style={{ color: colors.muted }}>{t("review.progress", { cleared: clearedCount, left: pile.length })}</span>
+          </div>
+          {speech && onAutoPlayChange && (
+            <div style={{ gridArea: "sound", justifySelf: "end" }}>
+              <AutoPlayToggle on={speech.autoPlay} onChange={onAutoPlayChange} />
+            </div>
+          )}
+          {isSrs && onAnswerModeChange && (
+            <div style={{ gridArea: "mode", justifySelf: "end" }}>
+              <ReviewModeToggle mode={answerMode} onChange={onAnswerModeChange} handwritingEnabled={HANDWRITING_ENABLED} />
+            </div>
+          )}
+        </div>
       </div>
 
       {addDeckControl}

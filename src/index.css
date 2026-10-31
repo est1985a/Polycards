@@ -38,11 +38,32 @@ body {
 .back-button:active { background: color-mix(in srgb, var(--surface2) 85%, var(--bg)); border-color: var(--accent); }
 .back-button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
-/* Answer-mode toggle in the review header (ReviewModeToggle.jsx): icons only on narrow screens. */
+/* Review top row (StudySession.jsx): back, name and progress, the 自動再生 switch, the 答え方 toggle.
+   The narrow layout follows the width of the review column (.review-top-box is the container), not
+   the screen: on an upright iPad the column is only 480 px wide. Back and the 答え方 toggle (icons
+   only) on the first line; name and progress under them, with 自動再生 at the right. */
+.review-top-box { container-type: inline-size; }
+.review-top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: "back name sound mode";
+  align-items: center;
+  gap: 10px;
+}
+@container (max-width: 599px) {
+  .mode-toggle-label { display: none; }
+  .review-top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "back mode" "name sound";
+  }
+}
+/* Browsers without container queries (before iPadOS 16): the same by screen width. */
 @media (max-width: 599px) {
   .mode-toggle-label { display: none; }
-  /* Review top row (StudySession.jsx): back and the toggle on the first line, name and progress under them. */
-  .review-top-name { order: 3; flex-basis: 100% !important; }
+  .review-top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "back mode" "name sound";
+  }
 }
 
 /* Review screen (App.jsx, view "study"): the page is exactly one screen tall, so the card shrinks and
