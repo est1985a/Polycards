@@ -757,8 +757,37 @@ export default {
   "honesty.noFlag": "Nothing stands out",
   "honesty.note": "This is a hint, not proof. Spelling a word is harder than knowing it, so a small gap is normal. If something worries you, talk with the student.",
 
+  // Card reports. The reason names are Andre's; the rest is a DRAFT.
+  "report.flag": "Report a problem with this card",
+  "report.title": "Report a problem",
+  "report.reasonLabel": "What is wrong?",
+  "report.reason.spelling": "Spelling mistake",
+  "report.reason.meaning": "Wrong meaning",
+  "report.reason.example": "Problem with the example sentence",
+  "report.reason.accept_answer": "My answer should be accepted",
+  "report.reason.handwriting": "Handwriting not recognized correctly",
+  "report.reason.audio": "Audio problem",
+  "report.reason.pos": "Wrong part of speech",
+  "report.reason.display": "Display problem",
+  "report.reason.other": "Other",
+  "report.yourAnswer": "Your answer",
+  "report.whatAnswer": "What was your answer?",
+  "report.noteLabel": "More details (optional)",
+  "report.count": "{n}/{max}",
+  "report.attachShot": "Attach screenshot",
+  "report.shotAlt": "Screenshot",
+  "report.choosePhoto": "Choose photo",
+  "report.photoFailed": "This photo can't be used",
+  "report.send": "Send",
+  "report.sending": "Sending…",
+  "report.sent": "Thanks! Report sent",
+  "report.alreadyReported": "You already reported this. Thank you!",
+
   // Error messages
   "errors.saveFailed": "Couldn't save",
+  "errors.reportLimit": "You can't send more reports today. Please try again tomorrow!", // DRAFT
+  "errors.reportFailed": "The report couldn't be sent. Please try again.", // DRAFT
+  "errors.reportOpenFailed": "The report screen couldn't open. Please try again.", // DRAFT
   "errors.cardNotFound": "Couldn't find this card",
   "errors.notSignedIn": "Please log in",
   "errors.noTickets": "You have no gacha tickets",

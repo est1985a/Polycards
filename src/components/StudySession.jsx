@@ -12,6 +12,8 @@ import { ownedCounts } from '../lib/library';
 import FlipCard from './FlipCard';
 import BackButton from './BackButton';
 import ReviewModeToggle from './ReviewModeToggle';
+import { useCardReport } from './useCardReport';
+import { reportedAnswer } from '../lib/cardReports';
 import HandwritingInput from '../handwriting/HandwritingInput.jsx';
 import { loadModel } from '../handwriting/model.js';
 import { fittingAlternates, writtenAnswer } from '../handwriting/answerLayout.js';
@@ -233,6 +235,11 @@ export function TypingArea({
 // it away and put the session back as it was (src/lib/undo.js). It is sent when the next answer is
 // given, when this screen closes, and when the app goes to the background. A correct spelling and
 // わからない are not undoable: they are sent at once, after the held answer.
+//
+// Report flag: on the back of the card (FlipCard onReport), so only once the answer shows. The report
+// sheet's state lives in useCardReport, apart from the session's: opening and closing it changes
+// nothing here. If choosing a photo puts the page in the background, the held answer is sent as
+// usual (the undo chip goes away); the card on screen and the rest of the session stay.
 export default function StudySession({
   activeSet, isAdded, saving, onAddDeck, onBack, answerMode = "off", onAnswerModeChange = null,
   wide = false, sideChip = false, speech = null, fit = false, short = false, onTypingOpen = null,
@@ -256,6 +263,7 @@ export default function StudySession({
   const [undo, setUndo] = useState(null); // the held まだ / わかった answer that can be undone (makeUndo)
   const [answeredOnce, setAnsweredOnce] = useState(false); // keeps the chip's row reserved after the first answer
   const [modeLock, setModeLock] = useState(null); // the answer mode of the card on screen once it is answered
+  const { openReport, reportUi } = useCardReport();
   const promptRef = useRef(null);
   const actionsRef = useRef(null); // the input and answer buttons under the card
   const turnRef = useRef(turn); // the current turn, for answers that arrive after a wait
@@ -566,6 +574,18 @@ export default function StudySession({
     else handleDrillAnswer(knew);
   }
 
+  // The flag on the card on screen: what the report sheet needs (the general review has no deck).
+  function reportCard() {
+    if (!card) return;
+    openReport({
+      wordId: card.wordId, english: card.en, direction: card.direction,
+      deckId: activeSet.id === "review" ? null : activeSet.id,
+      source: isSrs ? "review" : "drill",
+      answerMode: answerModeName,
+      answer: reportedAnswer(typedResult, typed, writtenAnswer(card.en)),
+    });
+  }
+
   // Level-up float over the next card (or the finish panel), see src/index.css. It can't be tapped,
   // so the answer buttons keep working underneath.
   // Mastered!: big and gold, rising from the card's top edge (1 s).
@@ -689,6 +709,7 @@ export default function StudySession({
             <FlipCard
               key={`card-${turn}`} card={card} showLevel={isSrs} revealed={revealed} onFlip={reveal}
               compact={compactCard} wide={wide} speech={speech} fill={Boolean(cardSlot)} short={fit && short}
+              onReport={reportCard}
             />
             {levelUpFloat}
             {spellBonusFloat}
@@ -781,6 +802,7 @@ export default function StudySession({
           <button style={btnGhost} onClick={onBack}>{t("review.backToDashboard")}</button>
         </div>
       )}
+      {reportUi}
     </div>
   );
 }

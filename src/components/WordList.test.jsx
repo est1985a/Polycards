@@ -195,3 +195,14 @@ describe('word list opened from a 課題 (単語を見る)', () => {
     expect(renderList()).toContain('おためしドリル');
   });
 });
+
+describe('WordList report flag', () => {
+  it('is on every word of the list', () => {
+    expect(renderList().match(/aria-label="このカードの問題を報告"/g)).toHaveLength(2);
+  });
+  it('comes after the English word in a row, and only with onReport', () => {
+    expect(renderRow()).not.toContain('このカードの問題を報告');
+    const html = renderRow({ onReport: () => {} });
+    expect(html.indexOf('>already<')).toBeLessThan(html.indexOf('このカードの問題を報告'));
+  });
+});

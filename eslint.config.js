@@ -19,8 +19,8 @@ export default defineConfig([
     },
   },
   {
-    // The audio recording script runs in Node on the Mac, not in the browser.
-    files: ['scripts/**/*.{js,mjs}'],
+    // The audio recording script runs in Node on the Mac, not in the browser; so does vite.config.js.
+    files: ['scripts/**/*.{js,mjs}', 'vite.config.js'],
     languageOptions: { globals: globals.node },
   },
 ])

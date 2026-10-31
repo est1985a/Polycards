@@ -201,6 +201,8 @@ p {
   }
   /* "What is Polycards?" (AboutSheet.jsx) is a longer read, so its box is wider. */
   .about-sheet { max-width: 560px; }
+  /* Card reports (ReportHost.jsx): wide enough for the reasons in two columns, each on one line. */
+  .report-sheet { max-width: 520px; }
   /* Letter practice (PracticeSheet.jsx): the guide beside the 4 boxes on a landscape iPad. */
   .practice-sheet { max-width: 820px; }
 }

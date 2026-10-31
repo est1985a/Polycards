@@ -852,3 +852,76 @@ export async function fetchPendingAssignments() {
   }
   return typeof data === 'number' ? data : 0;
 }
+
+// ---------------------------------------------------------------------------
+// Card reports (supabase/polycards-card-reports.sql): a student reports a problem with a card.
+// Students can only send reports (submit_card_report) and add their own screenshot once
+// (attach_report_screenshot); nobody but Andre can read them back.
+
+// Database error code → i18n key of the message. already_reported isn't really an error: the
+// report sheet thanks the student instead (report.alreadyReported).
+const REPORT_ERRORS = {
+  already_reported: "report.alreadyReported",
+  report_limit: "errors.reportLimit",
+  not_signed_in: "errors.notSignedIn",
+};
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// The database's error code (e.g. "report_limit"), or null for anything else.
+export function reportErrorCode(error) {
+  const text = error?.message || "";
+  return Object.keys(REPORT_ERRORS).find((c) => text.includes(c)) || null;
+}
+
+export function reportErrorMessage(error) {
+  const code = reportErrorCode(error);
+  return t(code ? REPORT_ERRORS[code] : "errors.reportFailed");
+}
+
+// Sends one report; resolves with the new report's id. Throws an Error whose `code` is the
+// database's error code (reportErrorCode) or null.
+// report: { wordId, direction (null in the word list), deckId, source ('review' | 'drill' |
+// 'word_list'), reason, note, submittedAnswer, answerMode, context }.
+export async function submitCardReport(report) {
+  const { data, error } = await supabase.rpc('submit_card_report', {
+    p_word_id: report.wordId,
+    p_direction: report.direction ?? null,
+    p_deck_id: UUID_RE.test(report.deckId ?? "") ? report.deckId : null, // never 'review' etc.
+    p_source: report.source,
+    p_reason: report.reason,
+    p_note: report.note || null,
+    p_submitted_answer: report.submittedAnswer || null,
+    p_answer_mode: report.answerMode ?? null,
+    p_context: report.context ?? null,
+  });
+  if (error) {
+    console.error("submit_card_report failed:", error.message);
+    const failure = new Error(error.message);
+    failure.code = reportErrorCode(error);
+    throw failure;
+  }
+  return data;
+}
+
+// The screenshot of a report that was just sent: uploaded (JPEG) to the private bucket as
+// {my user id}/{report id}.jpg, then saved on the report. Never throws: the report already
+// counts as sent, so a failure is only a console warning. true when both steps worked.
+export async function sendReportScreenshot(reportId, blob) {
+  try {
+    const { data: auth } = await supabase.auth.getSession();
+    const userId = auth?.session?.user?.id;
+    if (!userId) throw new Error("not signed in");
+    const path = `${userId}/${reportId}.jpg`;
+    const { error: uploadError } = await supabase.storage
+      .from('report-screenshots')
+      .upload(path, blob, { contentType: 'image/jpeg', upsert: false });
+    if (uploadError) throw uploadError;
+    const { error } = await supabase.rpc('attach_report_screenshot', { p_report_id: reportId, p_path: path });
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.warn("Report screenshot not saved:", error?.message || error);
+    return false;
+  }
+}
