@@ -64,8 +64,9 @@ export function CreateClassForm({ defaultYear, onCreate, onCancel }) {
 // classes: rows from teacher_classes() (null while loading); error: a load error.
 // onOpen(id): a class was tapped. onCreate(name, year) → promise. defaultYear: for the form.
 // onOpenGuide: opens the help pop-up at the 先生用ガイド (the pill is hidden without it).
+// pendingCounts: { [classId]: n } 未ログイン rows of a pre-filled roster (the pill becomes 28人 + 未ログイン 4).
 export default function TeacherTab({
-  classes, error = null, archived = false, onToggleArchived, onOpen, onCreate, defaultYear, wide = false, initialCreating = false, onOpenGuide,
+  classes, error = null, archived = false, onToggleArchived, onOpen, onCreate, defaultYear, wide = false, initialCreating = false, onOpenGuide, pendingCounts = {},
 }) {
   const [creating, setCreating] = useState(initialCreating);
 
@@ -117,7 +118,9 @@ export default function TeacherTab({
               <NavRow
                 title={c.name}
                 subtitle={t("teacher.schoolYearValue", { n: c.school_year })}
-                pill={t("teacher.studentCount", { n: c.student_count })}
+                pill={pendingCounts[c.id] > 0
+                  ? t("teacher.studentCountPending", { n: c.student_count, p: pendingCounts[c.id], count: c.student_count })
+                  : t("teacher.studentCount", { n: c.student_count })}
                 badge={c.archived ? <span style={{ fontSize: 13, color: colors.muted }}>{t("teacher.archivedBadge")}</span> : <CodePill code={c.join_code} />}
                 onClick={() => onOpen(c.id)}
               />

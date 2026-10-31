@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   JOIN_CODE_CHARS, normalizeJoinCode, isJoinCodeShaped, splitJoinCode, cleanRealName, realNameValid,
   parseStudentNumber, studentNumberValid, sortRoster, defaultSchoolYear, parseSchoolYear, classNameValid,
-  cleanNickname, nicknameValid, NICKNAME_MAX, duplicateNumbers, numberConflict,
+  cleanNickname, nicknameValid, NICKNAME_MAX, duplicateNumbers, numberConflict, combinedRoster,
 } from './classes';
 import { readFileSync } from 'node:fs';
 
@@ -103,6 +103,21 @@ describe('sortRoster', () => {
     ];
     expect(sortRoster(rows).map((r) => r.real_name)).toEqual(['Kato', 'Sato', 'Abe', 'Ueda']);
     expect(rows[0].real_name).toBe('Ueda'); // the original list is unchanged
+  });
+});
+
+describe('combinedRoster (members + 未ログイン rows)', () => {
+  it('sorts both together and marks the pending ones with an id that can\'t clash', () => {
+    const rows = combinedRoster(
+      [{ student_id: 's1', real_name: 'Sato', student_number: 12 }, { student_id: 's2', real_name: 'Ueda', student_number: null }],
+      [{ id: 'e1', real_name: 'Kato', student_number: 3, email: 'k@b.jp' }],
+    );
+    expect(rows.map((r) => [r.real_name, r.student_id, !!r.pending])).toEqual([
+      ['Kato', 'pending:e1', true], ['Sato', 's1', false], ['Ueda', 's2', false],
+    ]);
+    expect(combinedRoster(null, null)).toEqual([]);
+    // a pending row's number counts for the "same number" question when editing a member
+    expect(numberConflict(rows, 3, 's1').real_name).toBe('Kato');
   });
 });
 

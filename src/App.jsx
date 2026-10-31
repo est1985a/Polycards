@@ -48,6 +48,8 @@ import { TEACHER_START } from './lib/classes';
 import { loadLastClass, saveLastClass } from './lib/classTab';
 import JoinClassSheet from './components/JoinClassSheet';
 import AwardPopup from './components/AwardPopup';
+import RosterJoinPopup from './components/RosterJoinPopup';
+import { rosterJoinStart, rosterJoinNext } from './lib/rosterJoin';
 
 // A theme key from the account or the device; unknown keys become the default theme.
 const knownTheme = (key) => (themes[key] ? key : DEFAULT_THEME);
@@ -107,6 +109,12 @@ function App() {
   const [pendingAssignments, setPendingAssignments] = useState(0);
   const [addingAssignedDeckId, setAddingAssignedDeckId] = useState(null);
   const [assignmentsVersion, setAssignmentsVersion] = useState(0);
+  // Pre-filled rosters: the pop-up for classes a teacher's roster put this account in ({ userId, state },
+  // state from src/lib/rosterJoin.js), the account already checked this sign-in, and a key that
+  // reloads the クラス tab once the nicknames are chosen.
+  const [rosterJoin, setRosterJoin] = useState(null);
+  const rosterClaimedFor = useRef(null);
+  const [classTabKey, setClassTabKey] = useState(0);
   // Settings saved on the account with a copy on the device (src/lib/accountSettings.js). They start
   // from the device's copy (main.jsx already applied its language and reduce motion); after sign-in
   // the account's version wins. settingsRef always holds the newest, so quick changes stack.
@@ -222,6 +230,7 @@ function App() {
         setGacha(null); setReveal(null); setCollection(null); pulseChecked.current = false;
         setThemeRows(null); setThemesFailed(false); setSeenSaved(null);
         setIsTeacher(false); setMyClasses(null); setJoinOpen(false); setAwardRows([]); setPendingAssignments(0);
+        setRosterJoin(null); rosterClaimedFor.current = null;
       }
       // Log-out: forget this account's theme and settings on the device and go back to Midnight
       // and the default settings.
@@ -279,6 +288,22 @@ function App() {
     loadMyClasses();
     api.fetchPendingAssignments().then(setPendingAssignments);
   }, [loadMyClasses]);
+
+  // Pre-filled rosters: once per sign-in (also when the app opens already signed in), join the classes
+  // a teacher's roster put this account in. The database uses only the account's own Google email.
+  // Any class joined (or still without a nickname) opens the pop-up; the first becomes the クラス tab's class.
+  useEffect(() => {
+    if (!userId || rosterClaimedFor.current === userId) return;
+    rosterClaimedFor.current = userId;
+    api.claimMyRoster().then((result) => {
+      const start = rosterJoinStart(result);
+      if (!start) return;
+      setRosterJoin({ userId, state: start });
+      chooseClass(start.queue[0].id);
+      loadMyClasses();
+      api.fetchPendingAssignments().then(setPendingAssignments);
+    });
+  }, [userId, chooseClass, loadMyClasses]);
 
   // The seen-themes list, read once after sign-in (a late answer for another account is ignored).
   useEffect(() => {
@@ -416,7 +441,23 @@ function App() {
     api.markAwardsSeen(ids).then(loadGacha);
     if (toGacha) openGacha();
   }
-  const showAwards = !!session && view === "dashboard" && awardRows.length > 0 && !planOpen && !aboutOpen && !packResult && !joinOpen;
+  // The pre-filled roster pop-up (one class after another: joined, then the nickname). It comes
+  // before the award and theme pop-ups, which wait until it is done.
+  const rosterJoinState = rosterJoin?.userId === userId ? rosterJoin.state : null;
+  const showRosterJoin = !!session && !!rosterJoinState && view === "dashboard" && !planOpen && !aboutOpen && !packResult && !joinOpen;
+  function nextRosterJoin() {
+    setRosterJoin((old) => (old ? { ...old, state: rosterJoinNext(old.state) } : old));
+  }
+  async function saveRosterNickname(classId, nickname) {
+    await api.setMyNickname(classId, nickname);
+    const next = rosterJoinNext(rosterJoinState);
+    setRosterJoin(next ? { userId, state: next } : null);
+    if (!next) {
+      loadMyClasses();
+      setClassTabKey((k) => k + 1);
+    }
+  }
+  const showAwards = !!session && view === "dashboard" && awardRows.length > 0 && !planOpen && !aboutOpen && !packResult && !joinOpen && !showRosterJoin;
 
   // The header pulse plays once; switch it off so it doesn't replay when the header changes.
   useEffect(() => {
@@ -1105,6 +1146,7 @@ function App() {
                 )}
                 {activeTab === "class" && (
                   <ClassTab
+                    key={classTabKey}
                     classes={myClasses} selectedId={chosenClassId} onSelect={chooseClass} onJoin={() => setJoinOpen(true)} wide={wide}
                     onLeft={leftClass}
                     assignmentsVersion={assignmentsVersion}
@@ -1125,7 +1167,7 @@ function App() {
                 <Tabs tabs={tabs} active={activeTab} onChange={changeTab} wide={wide} dots={tabDots} />
                 {planOpen && <ReviewPlanSheet rows={planRows} now={now} onClose={closePlan} />}
                 {/* New theme unlocked: only on My Cards, never during a review. */}
-                {unlock && activeTab === "myCards" && !planOpen && !aboutOpen && !showAwards && (
+                {unlock && activeTab === "myCards" && !planOpen && !aboutOpen && !showAwards && !showRosterJoin && (
                   <ThemeUnlockSheet item={unlock.theme} others={unlock.others} rank={rank} onUse={applyUnlockedTheme} onLater={markThemesSeen} />
                 )}
               </div>
@@ -1257,6 +1299,7 @@ function App() {
       {session && joinOpen && (
         <JoinClassSheet onClose={() => setJoinOpen(false)} onJoined={(joined) => { if (joined?.id) chooseClass(joined.id); loadMyClasses(); }} />
       )}
+      {showRosterJoin && <RosterJoinPopup state={rosterJoinState} onNext={nextRosterJoin} onSaveNickname={saveRosterNickname} />}
       {showAwards && <AwardPopup awards={awardRows} onGacha={() => closeAwards(true)} onClose={() => closeAwards(false)} />}
       {packResult && <PackOpening summary={packResult} onClose={closePack} onReview={reviewPack} onGoToMyDeck={goToMyDeck} />}
     </div>

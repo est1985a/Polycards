@@ -641,6 +641,43 @@ describe('teachers and classes', () => {
     warn.mockRestore();
   });
 
+  it('pre-filled rosters: arguments, never-throw loads, error codes', async () => {
+    result = { data: [], error: null };
+    calls.length = 0;
+    await api.addRosterEntries('c1', [{ student_number: '1', real_name: 'A', email: 'a@b.jp' }], true);
+    await api.addRosterEntries('c1', []);
+    await api.fetchRosterPending('c1');
+    await api.updateRosterEntry('e1', '山田', 3, 'a@b.jp');
+    await api.removeRosterEntry('e1');
+    await api.claimMyRoster();
+    expect(calls).toEqual([
+      ['rpc', 'add_roster_entries', { p_class_id: 'c1', p_rows: [{ student_number: '1', real_name: 'A', email: 'a@b.jp' }], p_dry_run: true }],
+      ['rpc', 'add_roster_entries', { p_class_id: 'c1', p_rows: [], p_dry_run: false }],
+      ['rpc', 'class_roster_pending', { p_class_id: 'c1' }],
+      ['rpc', 'update_roster_entry', { p_entry_id: 'e1', p_real_name: '山田', p_student_number: 3, p_email: 'a@b.jp' }],
+      ['rpc', 'remove_roster_entry', { p_entry_id: 'e1' }],
+      ['rpc', 'claim_my_roster', undefined],
+    ]);
+    result = { data: [{ class_id: 'c1', pending: 4 }], error: null };
+    expect(await api.fetchRosterPendingCounts()).toEqual({ c1: 4 });
+
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      rpcImpl = async () => ({ data: null, error: { message: 'function does not exist' } });
+      expect(await api.fetchRosterPending('c1')).toEqual([]);
+      expect(await api.fetchRosterPendingCounts()).toEqual({});
+      expect(await api.claimMyRoster()).toEqual([]);
+    } finally {
+      warn.mockRestore();
+    }
+    rpcImpl = async () => ({ data: null, error: { message: 'too_many_rows' } });
+    await expect(api.addRosterEntries('c1', [])).rejects.toMatchObject({ code: 'too_many_rows', message: '一度に追加できるのは200行までです' });
+    rpcImpl = async () => ({ data: null, error: { message: 'roster_email_taken' } });
+    await expect(api.updateRosterEntry('e1', 'A', 1, 'a@b.jp')).rejects.toMatchObject({ code: 'roster_email_taken' });
+    rpcImpl = async () => ({ data: null, error: { message: 'roster_entry_not_found' } });
+    await expect(api.removeRosterEntry('e1')).rejects.toMatchObject({ code: 'roster_entry_not_found' });
+  });
+
   it('is_teacher: true only for a real true; an error counts as no', async () => {
     result = { data: true, error: null };
     expect(await api.fetchIsTeacher()).toBe(true);

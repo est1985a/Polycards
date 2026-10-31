@@ -24,6 +24,12 @@ export const TEACHER_GUIDE = {
       paragraphs: ['teacherGuide.roster.p1', 'teacherGuide.roster.p2', 'teacherGuide.roster.p3'],
     },
     {
+      icon: '📥',
+      heading: 'teacherGuide.paste.heading',
+      steps: ['teacherGuide.paste.1', 'teacherGuide.paste.2', 'teacherGuide.paste.3'],
+      paragraphsEnd: ['teacherGuide.paste.p1', 'teacherGuide.paste.p2'],
+    },
+    {
       icon: '📊',
       heading: 'teacherGuide.student.heading',
       paragraphs: ['teacherGuide.student.p1', 'teacherGuide.student.p2'],

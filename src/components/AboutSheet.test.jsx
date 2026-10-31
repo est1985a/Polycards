@@ -96,9 +96,9 @@ describe('AboutSheet', () => {
     const html = render({ isTeacher: true });
     expect(html).toContain('id="teacher-guide"');
     expect(html).toContain('先生用ガイド');
-    expect(TEACHER_GUIDE.sections).toHaveLength(9);
+    expect(TEACHER_GUIDE.sections).toHaveLength(10);
     const guide = html.slice(html.indexOf('id="teacher-guide"'));
-    ['クラスを作って、生徒に参加してもらう', '生徒を検索して追加する', '名簿：本名と出席番号', '生徒の記録と「答え方のようす」', '一覧と、よく間違えた単語', '課題（パックを出す）', 'ガチャ券を贈る', 'クラスのランキング', 'CSVで保存'].forEach((heading, i) => {
+    ['クラスを作って、生徒に参加してもらう', '生徒を検索して追加する', '名簿：本名と出席番号', '名簿を貼り付け：ログインで自動参加', '生徒の記録と「答え方のようす」', '一覧と、よく間違えた単語', '課題（パックを出す）', 'ガチャ券を贈る', 'クラスのランキング', 'CSVで保存'].forEach((heading, i) => {
       expect(guide).toMatch(new RegExp(`<span[^>]*>${String.fromCharCode(0x2460 + i)} </span>${heading}</h3>`));
     });
     expect(guide).toContain('先生へのヒント');
@@ -106,7 +106,7 @@ describe('AboutSheet', () => {
 
   it('quotes the real button names in the teacher guide', () => {
     const guide = text(render({ isTeacher: true }));
-    ['＋ クラスを作る', '大きく表示', '＋ 生徒を追加', 'チケットを贈る', '＋ 課題を出す', '生徒にランキングを表示', 'CSVで保存', 'クラスに参加'].forEach((label) => {
+    ['＋ クラスを作る', '大きく表示', '＋ 生徒を追加', 'チケットを贈る', '＋ 課題を出す', '生徒にランキングを表示', 'CSVで保存', 'クラスに参加', '＋ 名簿を貼り付け', '名簿に追加'].forEach((label) => {
       expect(guide).toContain(label);
     });
   });

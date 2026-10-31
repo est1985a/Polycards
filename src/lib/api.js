@@ -641,6 +641,13 @@ const CLASS_ERRORS = {
   deck_not_found: "errors.deckNotFound",
   note_too_long: "errors.noteTooLong",
   bad_due_date: "errors.badDueDate",
+  // Pre-filled rosters (supabase/polycards-roster-prefill.sql)
+  too_many_rows: "errors.tooManyRosterRows",
+  no_rows: "errors.noRosterRows",
+  bad_rows: "errors.badRosterRows",
+  bad_email: "errors.badEmail",
+  roster_entry_not_found: "errors.rosterEntryNotFound",
+  roster_email_taken: "errors.rosterEmailTaken",
 };
 
 // The known code in a database error (e.g. "bad_code"), or null.
@@ -784,6 +791,57 @@ export async function fetchClassLeavers(classId) {
     return [];
   }
   return data || [];
+}
+
+// ---- Pre-filled rosters (supabase/polycards-roster-prefill.sql) ----
+
+// Teacher: add pasted rows ([{ student_number, real_name, email }], max 200) to a class. dryRun: the
+// same answers, nothing saved (the preview). One result per row, in order:
+// [{ row, email, status: added_pending | added_member | already_member | updated | error, reason }].
+export async function addRosterEntries(classId, rows, dryRun = false) {
+  return (await callClass('add_roster_entries', { p_class_id: classId, p_rows: rows, p_dry_run: dryRun })) || [];
+}
+
+// Teacher: the class's 未ログイン rows: [{ id, email, real_name, student_number, created_at }].
+// Never throws: an error (e.g. the SQL isn't run yet) only console.warns and gives [].
+export async function fetchRosterPending(classId) {
+  const { data, error } = await supabase.rpc('class_roster_pending', { p_class_id: classId });
+  if (error) {
+    console.warn("Could not load the pre-filled roster: " + error.message);
+    return [];
+  }
+  return data || [];
+}
+
+// Teacher: 未ログイン counts for every class I teach: { [classId]: n }. Never throws ({} on an error).
+export async function fetchRosterPendingCounts() {
+  const { data, error } = await supabase.rpc('teacher_roster_pending_counts');
+  if (error) {
+    console.warn("Could not load the pre-filled roster counts: " + error.message);
+    return {};
+  }
+  return Object.fromEntries((data || []).map((r) => [r.class_id, r.pending]));
+}
+
+// Teacher: change or remove a 未ログイン row (not one a student already claimed).
+export function updateRosterEntry(entryId, realName, studentNumber, email) {
+  return callClass('update_roster_entry', { p_entry_id: entryId, p_real_name: realName, p_student_number: studentNumber, p_email: email });
+}
+
+export function removeRosterEntry(entryId) {
+  return callClass('remove_roster_entry', { p_entry_id: entryId });
+}
+
+// Student, once per sign-in: join the classes a teacher's roster put me in (the database uses only
+// my own Google email). [{ id, name, needs_nickname }]. Never throws: an error only console.warns
+// and gives [] (joining with a code still works).
+export async function claimMyRoster() {
+  const { data, error } = await supabase.rpc('claim_my_roster');
+  if (error) {
+    console.warn("Could not check the pre-filled class rosters: " + error.message);
+    return [];
+  }
+  return Array.isArray(data) ? data : [];
 }
 
 // Student: the classes I'm in (names only): [{ id, name, joined_at }].
