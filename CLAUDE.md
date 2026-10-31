@@ -336,6 +336,11 @@ Roughly in order. Ask me before starting any of these.
 - Word game for packs a student has finished.
 - Polyavatar pictures (uploads to replace the placeholders), including the Secret ones (school mascot, and teachers with their permission).
 - Teacher area follow-ups: tune the `HONESTY` thresholds after a few weeks of real student data, check CSV download on a real school iPad, review the DRAFT English for the teacher / class screens.
+- Class name / 年度 easier to find: it can already be changed (クラス名・年度を変更, the last panel of the class page's right column, `ClassSettingsPanel` in ClassPage.jsx), but on 一覧 that column starts below the full-width table, so it is at the very bottom of the page. Idea: a small 編集 next to the class name at the top of the class page.
+
+### Schools (before a second school uses Polycards)
+- Gap found 2026-10-31 (checked live): `search_users` searches **every account** (name, username, email, any school), and `add_student_to_class` adds **any** account to a class without the student agreeing; the teacher can then open that student's page (study history, trouble words, honesty hint, packs). Fine while only one school's teachers exist; not with two.
+- Plan (Andre chose the full route): a `schools` table; each teacher assigned to a school (SQL editor only, like `teachers`); each class belongs to its teacher's school; teacher search and adding students only reach students already in a class of the same school (new students join with the class code, which is their consent); co-teachers only from the same school; student emails hidden in teacher search. Class pages, overview, CSV and leaderboards are already per class, and the library / gacha / themes stay shared. Needs SQL + app changes and updated `check-teacher-security.sql` / `check-teacher-scope.sql` (a teacher of school A can't find, add or read a school B student or teacher).
 
 ### Tech clean-up
 - Move some settings from the device to the student's account.
