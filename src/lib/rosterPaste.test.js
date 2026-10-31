@@ -81,6 +81,11 @@ describe('parseRosterPaste', () => {
     ]);
   });
 
+  it('a typed number that is too big is still the number (an error), never part of the name', () => {
+    const [row] = parseRosterPaste('120 番号ミス test@ryukokurg.ed.jp').rows;
+    expect([row.numberText, row.realName, row.problems]).toEqual(['120', '番号ミス', ['number']]);
+  });
+
   it('a line with only an email says the name is missing; a line without an email has missing columns', () => {
     const p = parseRosterPaste('kenta@ryukokurg.ed.jp\nblahblah@ryukokurg.ed.jp\n120');
     expect(p.rows.map((r) => [r.raw, r.problems])).toEqual([

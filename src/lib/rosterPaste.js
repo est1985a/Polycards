@@ -58,13 +58,14 @@ export function splitRosterLine(line) {
 // skipped; so is the first line when it has no @ (a header row). Extra columns are ignored.
 // A line with no tab and no comma (typed by hand) is split on spaces instead: see spaceCells().
 // A hand-typed line such as "1 山田 太郎 taro@ryukokurg.ed.jp" → [number, name, email]: the email is
-// the last word (it must have an @), the number the first word when it is 1–2 digits (optional),
+// the last word (it must have an @), the number the first word when it is all digits (optional;
+// 120 is then flagged as a bad number, not taken as part of the name),
 // and everything in between the name (its spaces kept). null when the last word has no @.
 export function spaceCells(line) {
   const words = line.trim().split(/\s+/).filter(Boolean);
   if (words.length === 0 || !words[words.length - 1].includes('@')) return null;
   const email = words.pop();
-  const number = words.length > 0 && /^\d{1,2}$/.test(words[0]) ? words.shift() : '';
+  const number = words.length > 0 && /^\d+$/.test(words[0]) ? words.shift() : '';
   return [number, words.join(' '), email];
 }
 

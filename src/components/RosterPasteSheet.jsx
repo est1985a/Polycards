@@ -47,7 +47,7 @@ export function RosterPastePreview({ rows, headerSkipped = false }) {
               padding: "8px 12px", borderRadius: 12, background: colors.surface2,
             }}
           >
-            <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 18, color: colors.gold, textAlign: "center", lineHeight: 1.5 }}>
+            <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 18, color: colors.gold, textAlign: "center", lineHeight: 1.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {unsplit ? "–" : r.studentNumber == null || Number.isNaN(r.studentNumber) ? (r.numberText || "–") : r.studentNumber}
             </span>
             <span style={{ minWidth: 0, display: "grid", gap: 2, overflowWrap: "anywhere" }}>
