@@ -154,7 +154,9 @@ export default {
   "review.undo": "Undo",
   "review.undoAria": "Undo your answer to the last card",
   "review.allCleared": "All done!",
-  "review.backToDashboard": "Back to My Deck",
+  "review.continue": "Keep reviewing ({n})", // DRAFT
+  "review.moreDue": "Cards to review now: {n}", // DRAFT
+  "review.nothingMoreDue": "Nothing to review right now", // DRAFT
 
   // Handwriting answer mode (Apple Pencil) in reviews
   "handwriting.hint": "Use your Apple Pencil. Write one letter in each box.",

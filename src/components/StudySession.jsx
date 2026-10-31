@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { colors, fontDisplay, fontBody, cardStyle, btnPrimary, btnGhost, btnDanger } from '../styles/theme';
 import { CLEAR_TARGET, shuffle, reinsert } from '../lib/drill';
-import { srsAnswer, newSessionId, saveErrorReporter, answerTiming } from '../lib/srs';
+import { srsAnswer, newSessionId, saveErrorReporter, answerTiming, DEFAULT_SESSION_SIZE } from '../lib/srs';
 import { checkSpelling, ignoreNextKey, isAlternateAnswer, needsOtherMeaningCheck, cardAnswerMode } from '../lib/spelling';
 import { reduceMotionOn } from '../lib/settings';
 import { recordAnswer, checkOtherMeaning, holdAnswer, flushHeldAnswer, dropHeldAnswer } from '../lib/api';
@@ -237,12 +237,36 @@ export function TypingArea({
 // given, when this screen closes, and when the app goes to the background. A correct spelling and
 // わからない are not undoable: they are sent at once, after the held answer.
 //
+// 全部クリア panel of an SRS review: how many cards are due now and 続けて復習する（N枚）, the next set
+// (at most the session size). moreDue: undefined while counting (the same height, so nothing jumps),
+// null if counting failed (nothing shown; the back button at the top still works), 0 = nothing due.
+export function ContinueReview({ moreDue, sessionSize, onContinue, busy = false }) {
+  if (moreDue === null) return null;
+  if (moreDue === undefined) return <div aria-hidden="true" style={{ minHeight: 82 }} />;
+  if (moreDue === 0) {
+    return <p style={{ margin: 0, fontSize: 14, color: colors.muted }}>{t("review.nothingMoreDue")}</p>;
+  }
+  return (
+    <div style={{ display: "grid", gap: 10 }}>
+      <p style={{ margin: 0, fontSize: 14, color: colors.text }}>{t("review.moreDue", { n: moreDue })}</p>
+      <button
+        style={{ ...btnPrimary, width: "100%", minHeight: 52, fontSize: 17, opacity: busy ? 0.6 : 1 }}
+        onClick={onContinue}
+        disabled={busy}
+      >
+        {t("review.continue", { n: Math.min(moreDue, sessionSize) })}
+      </button>
+    </div>
+  );
+}
+
 // Report flag: on the back of the card (FlipCard onReport), so only once the answer shows. The report
 // sheet's state lives in useCardReport, apart from the session's: opening and closing it changes
 // nothing here. If choosing a photo puts the page in the background, the held answer is sent as
 // usual (the undo chip goes away); the card on screen and the rest of the session stay.
 export default function StudySession({
   activeSet, isAdded, saving, onAddDeck, onBack, answerMode = "off", onAnswerModeChange = null,
+  countMoreDue = null, onContinue = null, continuing = false, sessionSize = DEFAULT_SESSION_SIZE,
   wide = false, sideChip = false, speech = null, onAutoPlayChange = null, fit = false, short = false, onTypingOpen = null,
 }) {
   const isSrs = activeSet.mode === 'srs';
@@ -298,6 +322,16 @@ export default function StudySession({
 
   const done = pile.length === 0;
   const card = done ? null : activeSet.cards.find((c) => c.id === pile[0]) || null;
+
+  // SRS: cards due now besides this session's (undefined while counting, null if the count failed).
+  // Counted once, the first time the pile runs out; an undo and the same last answer don't change it.
+  const [moreDue, setMoreDue] = useState(undefined);
+  const countStarted = useRef(false);
+  useEffect(() => {
+    if (!done || !isSrs || !countMoreDue || countStarted.current) return;
+    countStarted.current = true;
+    countMoreDue().then(setMoreDue, (e) => { console.error(e); setMoreDue(null); });
+  }, [done, isSrs, countMoreDue]);
   const mode = cardAnswerMode(modeLock, answerMode); // the mode for the card on screen
   const typingCard = Boolean(card) && isSrs && mode !== "off" && card.direction === "jp2en";
   // Handwriting goes through the same typing-mode answers, only the input differs.
@@ -807,7 +841,9 @@ export default function StudySession({
             </div>
           )}
           {addDeckControl}
-          <button style={btnGhost} onClick={onBack}>{t("review.backToDashboard")}</button>
+          {isSrs && onContinue && (
+            <ContinueReview moreDue={moreDue} sessionSize={sessionSize} onContinue={onContinue} busy={continuing} />
+          )}
         </div>
       )}
       {reportUi}

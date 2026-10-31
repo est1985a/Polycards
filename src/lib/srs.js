@@ -33,6 +33,27 @@ export function dueByDeck(dueRows) {
   return counts;
 }
 
+// Continue reviewing (the 全部クリア panel). A card's key: word id + direction.
+export function cardKey(wordId, direction) {
+  return `${wordId}:${direction}`;
+}
+// Keys of the cards in a review session (the ones just reviewed).
+export function sessionCardKeys(cards) {
+  return new Set((cards || []).map((c) => cardKey(c.wordId, c.direction)));
+}
+// Cards due right now, from fetchDueRows() rows, for one deck (deckId) or all of them (null),
+// leaving out the session's own cards (skipKeys), whose last answers may still be saving.
+export function moreDueCount(dueRows, deckId, skipKeys) {
+  return (dueRows || []).filter((r) =>
+    !skipKeys.has(cardKey(r.word_id, r.direction))
+    && (!deckId || r.words?.deck_words?.some((d) => d.deck_id === deckId))
+  ).length;
+}
+// The next review's rows: fetchReviewRows() rows without the session's cards, at most limit.
+export function nextSetRows(rows, skipKeys, limit) {
+  return (rows || []).filter((r) => !skipKeys.has(cardKey(r.word_id, r.direction))).slice(0, limit);
+}
+
 // A mastered card put back into reviews starts again at this level, due right away.
 export const RESTORED_LEVEL = 1;
 

@@ -1,7 +1,7 @@
 // Tests for the answer area under the study card and what each review answer sends. Run with: npm test
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import StudySession, { AnswerArea, TypingArea, PreviousCardChip } from './StudySession';
+import StudySession, { AnswerArea, TypingArea, PreviousCardChip, ContinueReview } from './StudySession';
 import { makeUndo, takeSnapshot } from '../lib/undo';
 import { setLang } from '../i18n';
 import { srsAnswer, newSessionId, saveErrorReporter } from '../lib/srs';
@@ -305,5 +305,50 @@ describe('review top row', () => {
     expect(html).toContain('min-height:240px');
     expect(session({ fit: true, wide: true, short: true })).toContain('min-height:200px');
     expect(session()).not.toContain('max-height:420px'); // not fitted: unchanged
+  });
+});
+
+describe('全部クリア panel: continue reviewing (ContinueReview)', () => {
+  const panel = (props) => renderToStaticMarkup(<ContinueReview sessionSize={20} onContinue={() => {}} {...props} />);
+
+  it('more cards due: the real total and a button for the next set (at most the session size)', () => {
+    const html = panel({ moreDue: 45 });
+    expect(html).toContain('いま復習できるカード：全45枚');
+    expect(html).toContain('続けて復習する（20枚）');
+  });
+
+  it('fewer due than the session size: the button says how many', () => {
+    expect(panel({ moreDue: 7 })).toContain('続けて復習する（7枚）');
+  });
+
+  it('nothing due: a calm line and no button', () => {
+    const html = panel({ moreDue: 0 });
+    expect(html).toContain('今は復習するカードはありません');
+    expect(html).not.toContain('<button');
+  });
+
+  it('still counting: an empty space of the same height, no text', () => {
+    const html = panel({ moreDue: undefined });
+    expect(html).toContain('aria-hidden="true"');
+    expect(html).not.toContain('<button');
+  });
+
+  it('count failed: nothing', () => {
+    expect(panel({ moreDue: null })).toBe('');
+  });
+
+  it('busy: the button is disabled', () => {
+    expect(panel({ moreDue: 5, busy: true })).toContain('disabled=""');
+  });
+
+  it('English (DRAFT wording)', () => {
+    setLang('en');
+    try {
+      expect(panel({ moreDue: 45 })).toContain('Cards to review now: 45');
+      expect(panel({ moreDue: 45 })).toContain('Keep reviewing (20)');
+      expect(panel({ moreDue: 0 })).toContain('Nothing to review right now');
+    } finally {
+      setLang('ja');
+    }
   });
 });

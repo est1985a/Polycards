@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   LEVEL_HOURS, MAX_LEVEL, MASTERED, DEFAULT_SESSION_SIZE, SESSION_SIZES, RESTORED_LEVEL, isMastered,
   levelAfterCorrect, levelAfterWrong, nextReviewDate, restoreUpdate, levelUpLabel, answerTiming, dueByDeck,
+  cardKey, sessionCardKeys, moreDueCount, nextSetRows,
 } from './srs';
 
 describe('settings', () => {
@@ -165,5 +166,39 @@ describe('dueByDeck', () => {
     ];
     expect(dueByDeck(rows)).toEqual({ a: 2, b: 1 });
     expect(dueByDeck(null)).toEqual({});
+  });
+});
+
+describe('continue reviewing (moreDueCount, nextSetRows)', () => {
+  const due = (word, direction, decks) => ({ word_id: word, direction, words: { deck_words: decks.map((d) => ({ deck_id: d })) } });
+  const rows = [
+    due('w1', 'jp2en', ['d1']), due('w1', 'en2jp', ['d1']),
+    due('w2', 'jp2en', ['d1', 'd2']), due('w3', 'en2jp', ['d2']),
+  ];
+  const skip = sessionCardKeys([{ wordId: 'w1', direction: 'jp2en' }]);
+
+  it('keys are word id + direction', () => {
+    expect(cardKey('w1', 'jp2en')).toBe('w1:jp2en');
+    expect(skip.has('w1:jp2en')).toBe(true);
+    expect(skip.has('w1:en2jp')).toBe(false);
+  });
+
+  it('every pack: all due cards except the session\'s own', () => {
+    expect(moreDueCount(rows, null, skip)).toBe(3);
+  });
+
+  it('one pack: only that pack\'s cards (a shared word counts)', () => {
+    expect(moreDueCount(rows, 'd1', skip)).toBe(2);
+    expect(moreDueCount(rows, 'd2', skip)).toBe(2);
+  });
+
+  it('nothing due', () => {
+    expect(moreDueCount([], null, skip)).toBe(0);
+    expect(moreDueCount(null, null, skip)).toBe(0);
+  });
+
+  it('next set: leaves out the session\'s cards, at most limit', () => {
+    expect(nextSetRows(rows, skip, 2).map((r) => cardKey(r.word_id, r.direction))).toEqual(['w1:en2jp', 'w2:jp2en']);
+    expect(nextSetRows(rows, skip, 20)).toHaveLength(3);
   });
 });
