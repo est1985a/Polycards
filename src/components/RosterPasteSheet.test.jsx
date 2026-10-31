@@ -37,6 +37,15 @@ describe('RosterPastePreview', () => {
     expect(h).toContain('学校のアドレス（@ryukokurg.ed.jp）ではありません');
   });
 
+  it('a line that could not be split is shown as pasted, with nothing in the number column', () => {
+    const p = parseRosterPaste('1\tA\ta@b.jp\n120 only');
+    const html = renderToStaticMarkup(<RosterPastePreview rows={previewRows(p, [{ status: 'added_pending' }])} />);
+    expect(html).toContain('120 only');
+    expect(html).toContain('列が足りません。1行に「出席番号・名前・メールアドレス」を入れてください');
+    const email = renderToStaticMarkup(<RosterPastePreview rows={previewRows(parseRosterPaste('kenta@ryukokurg.ed.jp'), [])} />);
+    expect(email).toContain('名前がありません');
+  });
+
   it('English', () => {
     setLang('en');
     expect(renderToStaticMarkup(<StatusPill status="added_member" />)).toContain('Added now (signed in)');

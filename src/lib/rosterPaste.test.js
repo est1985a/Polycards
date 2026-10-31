@@ -68,7 +68,25 @@ describe('parseRosterPaste', () => {
       `6\t${'あ'.repeat(41)}\tlong@b.jp`,
     ].join('\n'));
     expect(p.rows.map((r) => r.problems)).toEqual([
-      ['name'], ['columns'], ['email'], ['duplicateEmail'], ['duplicateEmail'], ['name'],
+      ['noName'], ['columns'], ['email'], ['duplicateEmail'], ['duplicateEmail'], ['name'],
+    ]);
+  });
+
+  it('reads hand-typed lines separated by spaces (number optional, email last)', () => {
+    const p = parseRosterPaste('1 山田 太郎 taro@ryukokurg.ed.jp\n１２　佐藤　花子　hanako@ryukokurg.ed.jp\nKenta Mori kenta@ryukokurg.ed.jp');
+    expect(shape(p.rows)).toEqual([
+      [1, '山田 太郎', 'taro@ryukokurg.ed.jp', ''],
+      [12, '佐藤 花子', 'hanako@ryukokurg.ed.jp', ''],
+      [null, 'Kenta Mori', 'kenta@ryukokurg.ed.jp', ''],
+    ]);
+  });
+
+  it('a line with only an email says the name is missing; a line without an email has missing columns', () => {
+    const p = parseRosterPaste('kenta@ryukokurg.ed.jp\nblahblah@ryukokurg.ed.jp\n120');
+    expect(p.rows.map((r) => [r.raw, r.problems])).toEqual([
+      ['kenta@ryukokurg.ed.jp', ['noName']],
+      ['blahblah@ryukokurg.ed.jp', ['noName']],
+      ['120', ['columns']],
     ]);
   });
 

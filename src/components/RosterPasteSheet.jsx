@@ -36,7 +36,10 @@ export function RosterPastePreview({ rows, headerSkipped = false }) {
     <div style={{ display: "grid", gap: 10 }}>
       {headerSkipped && <div style={{ fontSize: 14, color: colors.muted }}>{t("rosterPaste.headerSkipped")}</div>}
       <ul aria-label={t("rosterPaste.previewLabel")} style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
-        {rows.map((r) => (
+        {rows.map((r) => {
+          // A line that couldn't be split into columns is shown as pasted (nothing in the number column).
+          const unsplit = r.problems?.includes('columns');
+          return (
           <li
             key={r.line}
             style={{
@@ -45,14 +48,14 @@ export function RosterPastePreview({ rows, headerSkipped = false }) {
             }}
           >
             <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 18, color: colors.gold, textAlign: "center", lineHeight: 1.5 }}>
-              {r.studentNumber == null || Number.isNaN(r.studentNumber) ? (r.numberText || "–") : r.studentNumber}
+              {unsplit ? "–" : r.studentNumber == null || Number.isNaN(r.studentNumber) ? (r.numberText || "–") : r.studentNumber}
             </span>
             <span style={{ minWidth: 0, display: "grid", gap: 2, overflowWrap: "anywhere" }}>
               <span style={{ display: "flex", flexWrap: "wrap", alignItems: "center", columnGap: 8, rowGap: 2 }}>
-                <span style={{ fontSize: 16, fontWeight: 700, color: colors.text }}>{r.realName || "–"}</span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: colors.text }}>{unsplit ? r.raw : r.realName || "–"}</span>
                 {r.sameNumber && <DuplicateNumberTag />}
               </span>
-              <span style={{ fontSize: 13, color: colors.muted }}>{r.email || "–"}</span>
+              {!unsplit && <span style={{ fontSize: 13, color: colors.muted }}>{r.email || "–"}</span>}
               {r.status === 'error' && <span style={{ fontSize: 13, color: colors.danger }}>{t(`rosterPaste.reason.${r.reason}`)}</span>}
               {r.status !== 'error' && r.outsideSchool && (
                 <span data-outside-school="" style={{ fontSize: 13, color: colors.gold }}>{t("rosterPaste.outsideSchool", { domain: SCHOOL_EMAIL_DOMAIN })}</span>
@@ -60,7 +63,8 @@ export function RosterPastePreview({ rows, headerSkipped = false }) {
             </span>
             <StatusPill status={r.status} />
           </li>
-        ))}
+          );
+        })}
       </ul>
       {summary.errors > 0 && <div style={{ fontSize: 14, color: colors.muted }}>{t("rosterPaste.errorsSkipped")}</div>}
     </div>

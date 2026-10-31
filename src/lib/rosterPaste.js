@@ -51,10 +51,23 @@ export function splitRosterLine(line) {
 }
 
 // The pasted text → { rows, headerSkipped, tooMany }.
-//   rows: [{ line (1-based line in the paste), numberText, studentNumber (number | null | NaN),
-//            realName, email, problems: ['columns' | 'number' | 'name' | 'email' | 'duplicateEmail'] }]
+//   rows: [{ line (1-based line in the paste), raw (the line as pasted, trimmed), numberText,
+//            studentNumber (number | null | NaN), realName, email,
+//            problems: ['columns' | 'number' | 'noName' | 'name' | 'email' | 'duplicateEmail'] }]
 // Each line is NFKC-normalized first (full-width digits, commas and spaces). Blank lines are
 // skipped; so is the first line when it has no @ (a header row). Extra columns are ignored.
+// A line with no tab and no comma (typed by hand) is split on spaces instead: see spaceCells().
+// A hand-typed line such as "1 山田 太郎 taro@ryukokurg.ed.jp" → [number, name, email]: the email is
+// the last word (it must have an @), the number the first word when it is 1–2 digits (optional),
+// and everything in between the name (its spaces kept). null when the last word has no @.
+export function spaceCells(line) {
+  const words = line.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0 || !words[words.length - 1].includes('@')) return null;
+  const email = words.pop();
+  const number = words.length > 0 && /^\d{1,2}$/.test(words[0]) ? words.shift() : '';
+  return [number, words.join(' '), email];
+}
+
 export function parseRosterPaste(text) {
   const lines = String(text ?? '').split(/\r\n|\r|\n/);
   const rows = [];
@@ -62,8 +75,9 @@ export function parseRosterPaste(text) {
   let first = true;
   lines.forEach((raw, i) => {
     const line = raw.normalize('NFKC');
-    const cells = splitRosterLine(line).map((c) => c.trim());
+    let cells = splitRosterLine(line).map((c) => c.trim());
     if (cells.every((c) => c === '')) return;
+    if (cells.length < 3 && !line.includes('\t') && !line.includes(',')) cells = spaceCells(line) ?? cells;
     if (first) {
       first = false;
       if (!line.includes('@')) { headerSkipped = true; return; }
@@ -71,6 +85,7 @@ export function parseRosterPaste(text) {
     const numberText = cells[0] ?? '';
     const row = {
       line: i + 1,
+      raw: line.trim(),
       numberText,
       studentNumber: parseStudentNumber(numberText),
       realName: cleanRealName(cells[1] ?? ''),
@@ -80,7 +95,8 @@ export function parseRosterPaste(text) {
     if (cells.length < 3) row.problems.push('columns');
     else {
       if (Number.isNaN(row.studentNumber)) row.problems.push('number');
-      if (!realNameValid(row.realName)) row.problems.push('name');
+      if (row.realName === '') row.problems.push('noName');
+      else if (!realNameValid(row.realName)) row.problems.push('name');
       if (!emailValid(row.email)) row.problems.push('email');
     }
     rows.push(row);
