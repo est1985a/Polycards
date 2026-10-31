@@ -518,6 +518,16 @@ function App() {
     window.scrollTo(0, 0);
   }
 
+  // Settings and stats are full pages, but students tap the empty space beside them (the page
+  // background, side gutters and margins, all marked data-page-space) to close them, as with a
+  // pop-up: such a tap works like 戻る. A tap on anything else (panels, header, tabs, pop-ups) is not
+  // on one of those elements, so it does nothing here.
+  function leaveOnEmptySpace(e) {
+    if (view !== "settings" && view !== "stats") return;
+    if (!(e.target instanceof Element) || !e.target.hasAttribute("data-page-space")) return;
+    leaveScreenNow();
+  }
+
   // 学習の記録: open the page at once (読み込み中…), then load the days, totals and trouble words.
   // Shown again from settings (settings was opened on it), it keeps the data it has.
   async function openStats() {
@@ -927,10 +937,12 @@ function App() {
     <div
       className={studyFit ? `study-page${studyTyping ? " study-typing" : ""}` : undefined}
       style={studyFit ? undefined : { minHeight: "100vh" }}
+      data-page-space=""
+      onClick={leaveOnEmptySpace}
     >
       {/* The theme's background (and backdrop) behind everything; see .app-backdrop in index.css. */}
       <div className="app-backdrop" aria-hidden="true" />
-      <div className={fill} style={wide ? { ...wrap, maxWidth: wideLayout.maxWidth } : wrap}>
+      <div className={fill} style={wide ? { ...wrap, maxWidth: wideLayout.maxWidth } : wrap} data-page-space="">
         <Header
           variant={bandHeader ? "band" : "compact"} user={session?.user} onSignOut={handleLogout} onHome={goHome} wide={wide}
           gacha={gacha} pulseGacha={gachaPulse} onOpenGacha={openGacha}
@@ -941,12 +953,13 @@ function App() {
 
         <div
           className={fill}
+          data-page-space=""
           style={{
             position: "relative", marginTop: bandHeader ? -headerBand.overlap : 0,
             padding: `0 ${wide ? wideLayout.gutter : gutter}px ${studyFit ? "calc(12px + env(safe-area-inset-bottom))" : "60px"}`,
           }}
         >
-          <div className={fill} style={{ maxWidth: contentWidth, width: "100%", margin: "0 auto" }}>
+          <div className={fill} style={{ maxWidth: contentWidth, width: "100%", margin: "0 auto" }} data-page-space="">
             {!session ? (
               <LoginScreen error={authError} onGoogleLogin={handleGoogleLogin} onPasswordLogin={handlePasswordLogin} />
             ) : view === "dashboard" ? (
@@ -1127,6 +1140,7 @@ function App() {
                     wide={wide}
                     sideChip={sideChip}
                     speech={speech}
+                    onAutoPlayChange={changeAutoPlay}
                     fit={studyFit}
                     short={short}
                     onTypingOpen={setStudyTyping}

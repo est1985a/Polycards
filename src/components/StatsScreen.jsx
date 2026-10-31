@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { colors, fontDisplay, panel } from '../styles/theme';
-import BackButton from './BackButton';
+import { StickyBackButton } from './BackButton';
 import {
   currentStreak, bestStreak, daysStudied, shade, monthOf, addMonths, compareMonths, monthRange, monthDays, monthGrid, monthTotals,
 } from '../lib/studyStats';
@@ -298,9 +298,7 @@ export function StatsBody({ data, today, masteredCount = 0, wide = false, viewer
 export default function StatsScreen({ data, error = null, today, onBack, masteredCount = 0, wide = false }) {
   return (
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
-      <div>
-        <BackButton label={t("settings.back")} onClick={onBack} />
-      </div>
+      <StickyBackButton label={t("settings.back")} onClick={onBack} />
       <h2 style={{ margin: 0, fontWeight: 700, fontSize: 30 }}>{t("stats.pageTitle")}</h2>
 
       {error ? (

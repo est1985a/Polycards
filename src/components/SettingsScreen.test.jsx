@@ -37,6 +37,10 @@ describe('SettingsScreen', () => {
     for (const title of ['テーマ', '学習', '表示']) expect(html).toMatch(new RegExp(`<h3[^>]*>${title}</h3>`));
   });
 
+  it('the back button stays pinned to the top while the page scrolls', () => {
+    expect(render()).toMatch(/data-sticky-back="" style="position:sticky/);
+  });
+
   it('shows one tile per theme, in unlock order', () => {
     const keys = [...render().matchAll(/data-theme-key="([a-z]+)"/g)].map((m) => m[1]);
     expect(keys).toEqual(['midnight', 'ryukoku', 'snow', 'pizza', 'lagoon', 'sakura', 'matcha', 'autumn', 'neon', 'galaxy']);

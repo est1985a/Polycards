@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { colors, fontDisplay, fontBody, panel, btnGhost } from '../styles/theme';
-import BackButton from './BackButton';
+import { StickyBackButton } from './BackButton';
 import { SESSION_SIZES } from '../lib/srs';
 import { isUnlocked, unlockLabel } from '../lib/themeUnlocks';
 import { AnswerModeSwitch } from './MyCardsTab';
@@ -214,9 +214,7 @@ export default function SettingsScreen({
 
   return (
     <div style={{ display: "grid", gap: 16, textAlign: "left" }}>
-      <div>
-        <BackButton label={t("settings.back")} onClick={onBack} />
-      </div>
+      <StickyBackButton label={t("settings.back")} onClick={onBack} />
       <h2 style={{ margin: 0, fontWeight: 700, fontSize: 30 }}>{t("settings.title")}</h2>
 
       <Section title={t("settings.themes")}>

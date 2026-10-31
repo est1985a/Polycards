@@ -286,6 +286,18 @@ describe('review top row', () => {
     expect(html).not.toContain('aria-label="答え方"');
   });
 
+  it('自動再生 switch: only when the browser can speak, in the review and the drill', () => {
+    const speech = { autoPlay: true, slow: false };
+    expect(session({ speech, onAutoPlayChange: () => {} })).toMatch(/role="switch" aria-checked="true" aria-label="自動再生"/);
+    expect(session({ speech: { ...speech, autoPlay: false }, onAutoPlayChange: () => {} })).toContain('aria-checked="false" aria-label="自動再生"');
+    expect(session({ speech: null, onAutoPlayChange: () => {} })).not.toContain('自動再生');
+    expect(session({ speech })).not.toContain('自動再生'); // no handler: no switch
+    const drill = renderToStaticMarkup(
+      <StudySession activeSet={{ id: 'd1', name: 'Unit 1', cards, ownedWordIds: null }} onBack={() => {}} speech={speech} onAutoPlayChange={() => {}} />
+    );
+    expect(drill).toContain('aria-label="自動再生"');
+  });
+
   it('fit: a flex column; the card slot shrinks between its limits', () => {
     const html = session({ fit: true, wide: true });
     expect(html).toContain('flex-direction:column');

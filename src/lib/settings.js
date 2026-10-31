@@ -49,9 +49,9 @@ export function saveReduceMotion(storage, on) {
   write(storage, REDUCE_MOTION_KEY, on ? "true" : "false");
 }
 
-// 自動再生 (read the English word aloud when it appears): off unless "true" is saved.
+// 自動再生 (read the English word aloud when it appears): on unless "false" is saved.
 export function loadAutoPlay(storage) {
-  return read(storage, AUTO_PLAY_KEY) === "true";
+  return read(storage, AUTO_PLAY_KEY) !== "false";
 }
 
 export function saveAutoPlay(storage, on) {
