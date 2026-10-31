@@ -355,3 +355,19 @@ Roughly in order. Ask me before starting any of these.
 - Gap found 2026-10-31 (checked live): `search_users` searches **every account** (name, username, email, any school), and `add_student_to_class` adds **any** account to a class without the student agreeing; the teacher can then open that student's page (study history, trouble words, honesty hint, packs). Fine while only one school's teachers exist; not with two.
 - Plan (Andre chose the full route): a `schools` table; each teacher assigned to a school (SQL editor only, like `teachers`); each class belongs to its teacher's school; teacher search and adding students only reach students already in a class of the same school (new students join with the class code, which is their consent); co-teachers only from the same school; student emails hidden in teacher search. Class pages, overview, CSV and leaderboards are already per class, and the library / gacha / themes stay shared. Needs SQL + app changes and updated `check-teacher-security.sql` / `check-teacher-scope.sql` (a teacher of school A can't find, add or read a school B student or teacher).
 
+
+### Launch and hosting (after the November 2026 pilot, all done together)
+- Pilot: a few teachers and two JHS classes from 2026-11-04, signing in with school Google accounts (@ryukokurg.ed.jp). Students are placed in classes by the pre-filled roster (名簿を貼り付け); join codes are the backup.
+- Google sign-in stays in **Testing** for the pilot (decided 2026-10-31). The OAuth client is "Polycards Web client" (836079428828-…) in the Polycards Google Cloud project, the same ID as in Supabase → Auth → Google. It has no test users, yet Google accounts, students included, sign in normally, apparently because Polycards only asks for name and email. Branding page: app name Polycards, support and developer email est1985a@gmail.com, authorized domain erhudovlvqynpkmtgsef.supabase.co (needed for sign-in: never remove it), no logo, no links. Publish app stays greyed out until the branding page has a home page and a privacy policy link.
+- Custom domain (e.g. polycards.com), in one go:
+  1. Buy the domain and add it to the Vercel project; the vercel.app address keeps working.
+  2. Supabase → Authentication → URL Configuration: new Site URL and redirect URLs.
+  3. A privacy policy page in the app (/privacy, Japanese and English): what Polycards stores (Google name and email, the real name and 出席番号 teachers enter, study records), who can see it, how to ask for deletion.
+  4. Google branding page: home page, privacy policy link, the new domain under authorized domains (Google may ask to verify it in Search Console), then Audience → Publish app.
+  5. Optional: logo (the favicon as a 120×120 PNG) and brand verification, so the sign-in screen shows Polycards instead of the Supabase address. Uploading a logo starts verification, and branding can't change while it's pending.
+  6. Update the QR code and address on the student はじめかた sheet and the teacher quick-start.
+  - The Google screen will still mention erhudovlvqynpkmtgsef.supabase.co unless Supabase's custom domain add-on (paid plan) is added.
+- Before rolling out beyond the pilot:
+  - Get the school's approval: Polycards stores students' real names, 出席番号 and school emails.
+  - `user_cards` still allows direct client writes (a student could raise their own EXP / rank; the weekly ranking is safe because it counts server-recorded reviews). Move card writes into server functions and revoke direct UPDATE.
+  - Supabase free plan: a project pauses after about a week with no activity (risk over winter break), and the database limit is 500 MB (21 MB on 2026-10-31; answer_log is about 0.5 KB per answer).
