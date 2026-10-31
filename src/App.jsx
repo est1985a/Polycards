@@ -6,17 +6,15 @@ import { loadSchoolLevel, saveSchoolLevel } from './lib/library';
 import { packWords, packSummary } from './lib/packOpening';
 import { totalPoints, levelCounts, playerRank, newPeak } from './lib/points';
 import { MASTERED, dueByDeck, sessionCardKeys, moreDueCount, nextSetRows } from './lib/srs';
-import { loadAnswerMode, saveAnswerMode } from './lib/spelling';
 import { HANDWRITING_ENABLED } from './handwriting/config';
 import { nextReviewSummary, jstDateKey } from './lib/schedule';
 import { singleFlight } from './lib/gacha';
 import { openScreen, leaveScreen, reviewKept } from './lib/screens';
 import { testLoginEmail, LOGIN_FAILED_MESSAGE } from './lib/login';
+import { applyReduceMotion, applyLang, loadThemeCache, saveThemeCache, clearThemeCache, devThemeOverride } from './lib/settings';
 import {
-  loadSessionSize, saveSessionSize, loadReduceMotion, saveReduceMotion, applyReduceMotion, saveLang, applyLang,
-  loadAutoPlay, saveAutoPlay, loadSlowSpeech, saveSlowSpeech,
-  loadThemeCache, saveThemeCache, clearThemeCache, devThemeOverride,
-} from './lib/settings';
+  SETTING_DEFAULTS, mergeSettings, settingsPayload, sameSettings, loadDeviceSettings, saveDeviceSettings, clearDeviceSettings,
+} from './lib/accountSettings';
 import { themeList, newThemes, featuredUnlock, markSeen } from './lib/themeUnlocks';
 import { themes, applyTheme, getTheme, DEFAULT_THEME } from './themes';
 import { wrap, gutter, headerBand, tabBarHeight, wideLayout } from './styles/theme';
@@ -24,7 +22,7 @@ import { useWide, useSideChip, useShort } from './lib/useWide';
 import BackButton from './components/BackButton';
 import { showTrainingTab, TRAINING_START, letterPracticeId, doneLettersFromProgress } from './lib/training';
 import { speechAvailable } from './lib/speech';
-import { t, getLang } from './i18n';
+import { t } from './i18n';
 import Header from './components/Header';
 import LoginScreen from './components/LoginScreen';
 import Tabs from './components/Tabs';
@@ -109,15 +107,33 @@ function App() {
   const [pendingAssignments, setPendingAssignments] = useState(0);
   const [addingAssignedDeckId, setAddingAssignedDeckId] = useState(null);
   const [assignmentsVersion, setAssignmentsVersion] = useState(0);
-  const [answerMode, setAnswerMode] = useState(() => loadAnswerMode(window.localStorage, HANDWRITING_ENABLED)); // 答え方: off / typing / handwriting
-  // Settings saved on this device (src/lib/settings.js)
-  const [sessionSize, setSessionSize] = useState(() => loadSessionSize(window.localStorage)); // 1回の枚数
-  const [reduceMotion, setReduceMotion] = useState(() => loadReduceMotion(window.localStorage)); // カードの動きを減らす
-  const [autoPlay, setAutoPlay] = useState(() => loadAutoPlay(window.localStorage)); // 自動再生
-  const [slowSpeech, setSlowSpeech] = useState(() => loadSlowSpeech(window.localStorage)); // ゆっくり
+  // Settings saved on the account with a copy on the device (src/lib/accountSettings.js). They start
+  // from the device's copy (main.jsx already applied its language and reduce motion); after sign-in
+  // the account's version wins. settingsRef always holds the newest, so quick changes stack.
+  const [settings, setSettings] = useState(() => loadDeviceSettings(window.localStorage, HANDWRITING_ENABLED));
+  const settingsRef = useRef(settings);
+  // Account sync: which account the settings were synced with (changes are saved there only after
+  // that), and whether the last save failed (then the device's version is sent at the next sync
+  // instead of being replaced by the older one on the account).
+  const settingsSync = useRef({ userId: null, unsaved: false });
+  const { answerMode, sessionSize, reduceMotion, autoPlay, slowSpeech, lang } = settings; // 答え方, 1回の枚数, カードの動きを減らす, 自動再生, ゆっくり, 言語
+  // Settings: shown at once and copied to the device. The language is switched before the re-render,
+  // so every text is looked up in the new one.
+  const showSettings = useCallback((next) => {
+    settingsRef.current = next;
+    applyLang(next.lang);
+    saveDeviceSettings(window.localStorage, next);
+    setSettings(next);
+  }, []);
+
+  // Log-out: back to the default settings, on the screen and on the device (see clearDeviceSettings).
+  const resetSettings = useCallback(() => {
+    settingsSync.current = { userId: null, unsaved: false };
+    showSettings(SETTING_DEFAULTS);
+    clearDeviceSettings(window.localStorage);
+  }, [showSettings]);
   const [canSpeak] = useState(() => speechAvailable()); // no speech in this browser: no speaker buttons
   const speech = canSpeak ? { autoPlay, slow: slowSpeech } : null;
-  const [lang, setLangState] = useState(getLang); // 言語 / Language, applied in main.jsx before the first render
 
   // Theme: saved on the account (gacha_set_theme), cached on the device. main.jsx already applied the cache.
   const [themeKey, setThemeKey] = useState(() => knownTheme(loadThemeCache(window.localStorage)));
@@ -207,14 +223,16 @@ function App() {
         setThemeRows(null); setThemesFailed(false); setSeenSaved(null);
         setIsTeacher(false); setMyClasses(null); setJoinOpen(false); setAwardRows([]); setPendingAssignments(0);
       }
-      // Log-out: forget this account's theme on the device and go back to Midnight.
+      // Log-out: forget this account's theme and settings on the device and go back to Midnight
+      // and the default settings.
       if (event === "SIGNED_OUT") {
         clearThemeCache(window.localStorage);
         setThemeKey(DEFAULT_THEME);
+        resetSettings();
       }
     });
     return () => subscription.unsubscribe();
-  }, []);
+  }, [resetSettings]);
 
   // The rank each theme needs, read once after sign-in. If it can't be read, only Midnight is offered.
   const userId = session?.user?.id ?? null;
@@ -264,6 +282,58 @@ function App() {
       .catch((e) => console.error(e));
     return () => { current = false; };
   }, [userId]);
+
+  // Saves the whole settings object on the account (in order; a failure is sent again at the next sync).
+  const pushSettings = useCallback((id, next) => {
+    api.saveUserSettings(id, settingsPayload(next))
+      .then(() => { if (settingsSync.current.userId === id) settingsSync.current.unsaved = false; })
+      .catch((e) => {
+        console.error(e);
+        if (settingsSync.current.userId === id) settingsSync.current.unsaved = true;
+      });
+  }, []);
+
+  // Syncs the settings with the account: after sign-in (also when the app opens already signed in)
+  // and whenever the app comes back into view, so a change made on another device shows up here.
+  // No row yet = the device's settings are uploaded; otherwise the account's version wins.
+  const signedInAs = useRef(null);
+  useEffect(() => { signedInAs.current = userId; }, [userId]);
+  const syncSettings = useCallback(async () => {
+    if (!userId) return;
+    await api.waitForSettingsSaves();
+    const sync = settingsSync.current;
+    if (sync.userId === userId && sync.unsaved) {
+      pushSettings(userId, settingsRef.current); // the account still has an older version
+      return;
+    }
+    let account;
+    try {
+      account = await api.fetchUserSettings();
+    } catch (e) {
+      console.error(e); // keep the device's settings; the next sync tries again
+      return;
+    }
+    if (signedInAs.current !== userId) return;
+    if (account === null) {
+      try {
+        await api.createUserSettings(userId, settingsPayload(settingsRef.current));
+      } catch (e) {
+        console.error(e);
+        return;
+      }
+    } else {
+      const next = mergeSettings(settingsRef.current, account, HANDWRITING_ENABLED);
+      if (!sameSettings(next, settingsRef.current)) showSettings(next);
+    }
+    if (signedInAs.current === userId) settingsSync.current = { userId, unsaved: false };
+  }, [userId, showSettings, pushSettings]);
+  useEffect(() => {
+    if (!userId) return;
+    syncSettings();
+    const onVisible = () => { if (document.visibilityState === "visible") syncSettings(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [userId, syncSettings]);
 
   // Show the chosen theme (not while trying one with ?theme= in development).
   useEffect(() => {
@@ -421,37 +491,21 @@ function App() {
   const closePlan = useCallback(() => setPlanOpen(false), []);
   const closeAbout = useCallback(() => setAboutOpen(false), []);
 
-  function changeAnswerMode(mode) {
-    setAnswerMode(mode);
-    saveAnswerMode(window.localStorage, mode);
+  // One setting changed: shown at once, saved on the device, and on the account once synced.
+  function changeSetting(key, value) {
+    const next = { ...settingsRef.current, [key]: value };
+    showSettings(next);
+    const sync = settingsSync.current;
+    if (userId && sync.userId === userId) pushSettings(userId, next);
   }
 
-  function changeSessionSize(size) {
-    setSessionSize(size);
-    saveSessionSize(window.localStorage, size);
-  }
-
-  function changeReduceMotion(on) {
-    setReduceMotion(on);
-    saveReduceMotion(window.localStorage, on);
-  }
-
-  function changeAutoPlay(on) {
-    setAutoPlay(on);
-    saveAutoPlay(window.localStorage, on);
-  }
-
-  function changeSlowSpeech(on) {
-    setSlowSpeech(on);
-    saveSlowSpeech(window.localStorage, on);
-  }
-
+  const changeAnswerMode = (mode) => changeSetting("answerMode", mode);
+  const changeSessionSize = (size) => changeSetting("sessionSize", size);
+  const changeReduceMotion = (on) => changeSetting("reduceMotion", on);
+  const changeAutoPlay = (on) => changeSetting("autoPlay", on);
+  const changeSlowSpeech = (on) => changeSetting("slowSpeech", on);
   // 言語 / Language: switches every text at once (the state change re-renders the whole app).
-  function changeLang(next) {
-    const used = applyLang(next);
-    saveLang(window.localStorage, used);
-    setLangState(used);
-  }
+  const changeLang = (next) => changeSetting("lang", next);
 
   // Themes: unlocked by rank (the one the player card shows); "new" = unlocked but not yet shown.
   const rank = stats?.playerRank ?? null;
@@ -670,6 +724,7 @@ function App() {
     await supabase.auth.signOut();
     clearThemeCache(window.localStorage); // also done on SIGNED_OUT; here too in case that event is missed
     setThemeKey(DEFAULT_THEME);
+    resetSettings();
     goHome(); // the next sign-in starts on My Cards too
     setTrainingDone(new Set());
   };

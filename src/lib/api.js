@@ -478,6 +478,49 @@ export async function savePeakPoints(userId, peakPoints) {
 }
 
 // ---------------------------------------------------------------------
+// Settings saved on the account (user_settings, supabase/polycards-user-settings.sql; own row only).
+// ---------------------------------------------------------------------
+
+// The account's settings object, or null when the account has none saved yet.
+export async function fetchUserSettings() {
+  const { data, error } = await supabase
+    .from('user_settings')
+    .select('settings')
+    .maybeSingle();
+  if (error) throw new Error("Could not load settings: " + error.message);
+  return data ? (data.settings ?? {}) : null;
+}
+
+// First save for an account: never overwrites a row another device already created
+// (then that row wins at the next sync).
+export async function createUserSettings(userId, settings) {
+  const { error } = await supabase
+    .from('user_settings')
+    .upsert({ user_id: userId, settings }, { onConflict: 'user_id', ignoreDuplicates: true });
+  if (error) throw new Error("Could not save settings: " + error.message);
+}
+
+// Saves are sent one at a time in the order they were made, so a quick second change can't be
+// overwritten by the first one arriving late.
+let settingsSaves = Promise.resolve();
+
+export function saveUserSettings(userId, settings) {
+  const save = settingsSaves.then(async () => {
+    const { error } = await supabase
+      .from('user_settings')
+      .upsert({ user_id: userId, settings, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    if (error) throw new Error("Could not save settings: " + error.message);
+  });
+  settingsSaves = save.catch(() => {});
+  return save;
+}
+
+// Resolves once every settings save made so far has finished (failed ones included).
+export function waitForSettingsSaves() {
+  return settingsSaves;
+}
+
+// ---------------------------------------------------------------------
 // Gacha. The app only calls these database functions (see supabase/polycards-gacha.sql),
 // never the gacha tables. Reviews and tickets are counted by the database.
 // ---------------------------------------------------------------------

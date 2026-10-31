@@ -830,3 +830,35 @@ describe('card reports', () => {
     expect(await api.sendReportScreenshot('r1', 'BLOB')).toBe(false);
   });
 });
+
+describe('settings saved on the account', () => {
+  it('reads the own row: null when there is none yet', async () => {
+    result = { data: null, error: null };
+    expect(await api.fetchUserSettings()).toBeNull();
+    expect(calls).toContainEqual(['from', 'user_settings']);
+    expect(calls).toContainEqual(['select', 'settings']);
+    result = { data: { settings: { lang: 'en' } }, error: null };
+    expect(await api.fetchUserSettings()).toEqual({ lang: 'en' });
+  });
+
+  it('the first save never overwrites a row another device made', async () => {
+    await api.createUserSettings('u1', { lang: 'en' });
+    expect(calls).toContainEqual(['upsert', { user_id: 'u1', settings: { lang: 'en' } }, { onConflict: 'user_id', ignoreDuplicates: true }]);
+  });
+
+  it('later saves replace the row and go out in order', async () => {
+    const first = api.saveUserSettings('u1', { lang: 'en' });
+    const second = api.saveUserSettings('u1', { lang: 'ja' });
+    await Promise.all([first, second, api.waitForSettingsSaves()]);
+    const upserts = calls.filter((c) => c[0] === 'upsert');
+    expect(upserts.map((c) => c[1].settings.lang)).toEqual(['en', 'ja']);
+    expect(upserts[0][2]).toEqual({ onConflict: 'user_id' });
+  });
+
+  it('a failed save throws, and the next one still goes out', async () => {
+    result = { data: null, error: { message: 'offline' } };
+    await expect(api.saveUserSettings('u1', { lang: 'en' })).rejects.toThrow('offline');
+    result = { data: null, error: null };
+    await expect(api.saveUserSettings('u1', { lang: 'ja' })).resolves.toBeUndefined();
+  });
+});
