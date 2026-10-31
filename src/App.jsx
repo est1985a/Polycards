@@ -5,7 +5,7 @@ import { buildCards, buildReviewCards } from './lib/drill';
 import { loadSchoolLevel, saveSchoolLevel } from './lib/library';
 import { packWords, packSummary } from './lib/packOpening';
 import { totalPoints, levelCounts, playerRank, newPeak } from './lib/points';
-import { MASTERED, dueByDeck } from './lib/srs';
+import { MASTERED, dueByDeck, sessionCardKeys, moreDueCount, nextSetRows } from './lib/srs';
 import { loadAnswerMode, saveAnswerMode } from './lib/spelling';
 import { HANDWRITING_ENABLED } from './handwriting/config';
 import { nextReviewSummary, jstDateKey } from './lib/schedule';
@@ -725,7 +725,42 @@ function App() {
       if (rows.length === 0) {
         alert(t("myCards.nothingDueAlert"));
       } else {
-        beginSession({ id: deck?.id || 'review', name: deck?.name || t("review.defaultName"), cards: buildReviewCards(rows), mode: 'srs' });
+        beginSession(reviewSet(deck, rows));
+      }
+    } catch (e) {
+      alert(e.message);
+    }
+    setLoadingDeck(false);
+  }
+
+  // A review session's set. deck: the pack reviewed, or null for every pack (kept for 続けて復習する).
+  function reviewSet(deck, rows) {
+    return { id: deck?.id || 'review', name: deck?.name || t("review.defaultName"), cards: buildReviewCards(rows), mode: 'srs', deck: deck || null };
+  }
+
+  // 全部クリア panel: how many cards are due now (same pack, or every pack), not counting the
+  // cards of the review that just ended (their last answers may still be saving or held for undo).
+  async function countMoreDue() {
+    const skip = sessionCardKeys(activeSet?.cards);
+    return moreDueCount(await api.fetchDueRows(), activeSet?.deck?.id || null, skip);
+  }
+
+  // 続けて復習する: saves the held last answer and waits for every save, then starts the next set
+  // of the same review, leaving out the cards just reviewed.
+  async function continueReview() {
+    if (!session || !activeSet) return;
+    const deck = activeSet.deck || null;
+    const skip = sessionCardKeys(activeSet.cards);
+    setLoadingDeck(true);
+    try {
+      api.flushHeldAnswer();
+      await api.waitForPendingSaves();
+      const rows = nextSetRows(await api.fetchReviewRows(deck?.id, sessionSize + skip.size), skip, sessionSize);
+      if (rows.length === 0) {
+        alert(t("myCards.nothingDueAlert"));
+      } else {
+        beginSession(reviewSet(deck, rows));
+        window.scrollTo(0, 0);
       }
     } catch (e) {
       alert(e.message);
@@ -1135,6 +1170,10 @@ function App() {
                     saving={savingDeck}
                     onAddDeck={addDeck}
                     onBack={() => setView("dashboard")}
+                    countMoreDue={countMoreDue}
+                    onContinue={continueReview}
+                    continuing={loadingDeck}
+                    sessionSize={sessionSize}
                     answerMode={answerMode}
                     onAnswerModeChange={changeAnswerMode}
                     wide={wide}

@@ -148,7 +148,9 @@ export default {
   "review.undo": "元に戻す", // button on that chip: takes back the last まだ / わかった
   "review.undoAria": "前のカードの答えを元に戻す", // aria-label of that button
   "review.allCleared": "全部クリアしました！", // end of a review or drill
-  "review.backToDashboard": "マイデッキにもどる",
+  "review.continue": "続けて復習する（{n}枚）", // 全部クリア panel: starts the next set of the same review
+  "review.moreDue": "いま復習できるカード：全{n}枚",
+  "review.nothingMoreDue": "今は復習するカードはありません",
 
   // 手書き answer mode (Apple Pencil) in reviews
   "handwriting.hint": "Apple Pencil で、1マスに1文字ずつ書いてください",
