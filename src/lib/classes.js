@@ -80,6 +80,14 @@ export function duplicateNumbers(students) {
   return dup;
 }
 
+// The other student who already has this 出席番号, for the "save anyway?" question when a teacher
+// adds a student or changes a number: the first match in the roster, or null (no number, or nobody else).
+// exceptStudentId: the student being edited (their own number never counts).
+export function numberConflict(students, number, exceptStudentId = null) {
+  if (number == null) return null;
+  return (students || []).find((s) => s.student_number === number && s.student_id !== exceptStudentId) ?? null;
+}
+
 // The Japanese school year (年度) a moment falls in, in Japan time: it starts on April 1,
 // so January–March still belong to the year before.
 export function defaultSchoolYear(time) {

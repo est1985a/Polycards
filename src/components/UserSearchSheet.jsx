@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { colors, fontDisplay } from '../styles/theme';
-import { cleanRealName, realNameValid, parseStudentNumber, studentNumberValid } from '../lib/classes';
+import { cleanRealName, realNameValid, parseStudentNumber, studentNumberValid, numberConflict } from '../lib/classes';
+import { NumberTakenConfirm } from './ClassPage';
 import SheetFrame from './SheetFrame';
 import { Field, ErrorText, StudentFields } from './ClassFields';
 import { inputStyle, ghostSmall, primarySmall, noAutoFix } from '../styles/forms';
@@ -32,17 +33,26 @@ export function ResultRow({ user, added, actionLabel, busy = false, onPick }) {
   );
 }
 
-// The 本名 / 出席番号 form after a student was picked.
-export function AddStudentForm({ user, onAdd, onBack }) {
+// The 本名 / 出席番号 form after a student was picked. students: the class roster, so a number another
+// student already has asks before adding (a warning, never a block).
+export function AddStudentForm({ user, students = [], onAdd, onBack, initialTaken = null }) {
   const [name, setName] = useState("");
   const [number, setNumber] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [taken, setTaken] = useState(initialTaken); // the student who already has this number (asking first)
   const ok = realNameValid(name) && studentNumberValid(number);
 
-  async function submit(e) {
+  function submit(e) {
     e.preventDefault();
     if (!ok || busy) return;
+    const other = numberConflict(students, parseStudentNumber(number));
+    if (other) setTaken(other);
+    else addNow();
+  }
+
+  async function addNow() {
+    setTaken(null);
     setBusy(true); setError(null);
     try {
       await onAdd(user, cleanRealName(name), parseStudentNumber(number));
@@ -56,15 +66,19 @@ export function AddStudentForm({ user, onAdd, onBack }) {
     <form onSubmit={submit} style={{ display: "grid", gap: 12 }}>
       <div style={{ fontFamily: fontDisplay, fontSize: 18, fontWeight: 700, overflowWrap: "anywhere" }}>{t("teacher.addingStudent", { name: user.display_name })}</div>
       <StudentFields
-        name={name} number={number} onName={setName} onNumber={setNumber} autoFocus
+        name={name} number={number} onName={setName} onNumber={(v) => { setNumber(v); setTaken(null); }} autoFocus
         nameLabel={t("teacher.realName")} numberLabel={t("teacher.studentNumber")} numberHint={t("teacher.studentNumberHint")}
       />
       {!studentNumberValid(number) && <ErrorText>{t("errors.badStudentNumber")}</ErrorText>}
       <ErrorText>{error}</ErrorText>
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-        <button type="button" onClick={onBack} disabled={busy} style={ghostSmall}>{t("teacher.backToSearch")}</button>
-        <button type="submit" disabled={!ok || busy} style={{ ...primarySmall, opacity: !ok || busy ? 0.6 : 1 }}>{busy ? t("teacher.adding") : t("teacher.add")}</button>
-      </div>
+      {taken ? (
+        <NumberTakenConfirm number={taken.student_number} other={taken} busy={busy} onSave={addNow} onBack={() => setTaken(null)} />
+      ) : (
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+          <button type="button" onClick={onBack} disabled={busy} style={ghostSmall}>{t("teacher.backToSearch")}</button>
+          <button type="submit" disabled={!ok || busy} style={{ ...primarySmall, opacity: !ok || busy ? 0.6 : 1 }}>{busy ? t("teacher.adding") : t("teacher.add")}</button>
+        </div>
+      )}
     </form>
   );
 }
@@ -73,7 +87,8 @@ export function AddStudentForm({ user, onAdd, onBack }) {
 // (mode "teacher": teacher accounts only, added straight away).
 // existingIds: ids already in the class (shown as 追加済み). onSearch(query, teachersOnly) → promise of rows;
 // onAdd(user, realName, number) → promise (teacher mode: onAdd(user)). Closes after a successful add.
-export default function UserSearchSheet({ mode = "student", existingIds, onSearch, onAdd, onClose }) {
+// students: the class roster (for the "number already used" question).
+export default function UserSearchSheet({ mode = "student", existingIds, students = [], onSearch, onAdd, onClose }) {
   const teachersOnly = mode === "teacher";
   const [query, setQuery] = useState("");
   const [found, setFound] = useState(null); // { query, rows, error }: the last search answered
@@ -117,6 +132,7 @@ export default function UserSearchSheet({ mode = "student", existingIds, onSearc
       {picked ? (
         <AddStudentForm
           user={picked}
+          students={students}
           onBack={() => setPicked(null)}
           onAdd={async (user, name, number) => { await onAdd(user, name, number); onClose(); }}
         />

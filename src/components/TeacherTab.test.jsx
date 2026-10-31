@@ -278,10 +278,12 @@ describe('removing a teacher', () => {
 
   it('asks differently when removing yourself', () => {
     const me = renderToStaticMarkup(<ul><TeacherRow teacher={DETAIL.teachers[0]} canRemove onRemove={noop} initialConfirming /></ul>);
-    expect(me).toContain('このクラスから外れますか？クラスが見られなくなります');
+    expect(me).toContain('このクラスの担当から外れますか？外れると、このクラスは見られなくなります。');
     expect(me).toContain('>外れる<');
+    expect(me).toContain('>キャンセル<');
     const other = renderToStaticMarkup(<ul><TeacherRow teacher={DETAIL.teachers[1]} canRemove onRemove={noop} initialConfirming /></ul>);
-    expect(other).toContain('Ms. Itoをこのクラスの先生から外しますか？');
+    expect(other).toContain('Ms. Ito をこのクラスの担当から外しますか？生徒のデータは消えません。');
+    expect(other).toContain('>外す<');
     expect(other).not.toContain('外れる');
   });
 });
@@ -292,12 +294,39 @@ describe('same 出席番号 warning', () => {
     students: [...DETAIL.students, { student_id: 's4', real_name: '木村 三郎', student_number: 3, display_name: 'kimu', email: 'k@x' }],
   };
 
-  it('marks only the rows that share a number on the roster, in gold with a label', () => {
+  it('tags only the rows that share a number on the roster with 番号重複, in gold', () => {
     const roster = page({ detail: twins }).match(/data-roster=""[^]*?<\/ul>/)[0];
-    expect(roster.match(/data-same-number=""/g)).toHaveLength(2);
-    expect(roster).toContain('aria-label="出席番号が同じ生徒がいます"');
-    expect(roster).toContain('<title>出席番号が同じ生徒がいます</title>');
-    expect(roster).toContain('color:var(--gold)');
-    expect(page()).not.toContain('data-same-number');
+    expect(roster.match(/data-duplicate-number=""/g)).toHaveLength(2);
+    expect(roster.match(/>番号重複</g)).toHaveLength(2);
+    expect(roster).toContain('title="出席番号が同じ生徒がいます"');
+    expect(roster).toMatch(/data-duplicate-number=""[^>]*color:var\(--gold\)/);
+    expect(roster).not.toContain('data-same-number'); // the small ! stays only on the 一覧 table
+    expect(page()).not.toContain('data-duplicate-number');
+  });
+
+  it('English: Duplicate no.', () => {
+    setLang('en');
+    expect(page({ detail: twins })).toContain('>Duplicate no.<');
+  });
+
+  it('editing a number another student has asks 保存する / 戻る first', () => {
+    const h = renderToStaticMarkup(<ul><RosterRow student={DETAIL.students[1]} students={twins.students} onUpdate={noop} onRemove={noop} initialMode="edit" initialTaken={twins.students[2]} /></ul>);
+    expect(h).toContain('出席番号 12 は すでに 加藤 次郎 さんが使っています。このまま保存しますか？');
+    expect(h).toContain('>保存する<');
+    expect(h).toContain('>戻る<');
+    expect(h).not.toMatch(/<button type="submit"/); // the normal 保存 waits behind the question
+    expect(renderToStaticMarkup(<ul><RosterRow student={DETAIL.students[1]} onUpdate={noop} onRemove={noop} initialMode="edit" /></ul>)).not.toContain('保存しますか');
+  });
+
+  it('adding a student with a number another student has asks too (English as well)', () => {
+    const user = { id: 'u1', display_name: 'aiden' };
+    const h = renderToStaticMarkup(<AddStudentForm user={user} students={twins.students} onAdd={noop} onBack={noop} initialTaken={twins.students[2]} />);
+    expect(h).toContain('出席番号 3 は すでに 加藤 次郎 さんが使っています。このまま保存しますか？');
+    expect(h).toContain('>保存する<');
+    setLang('en');
+    const en = renderToStaticMarkup(<AddStudentForm user={user} students={twins.students} onAdd={noop} onBack={noop} initialTaken={twins.students[2]} />);
+    expect(en).toContain('Number 3 is already used by 加藤 次郎. Save anyway?');
+    expect(en).toContain('>Save anyway<');
+    expect(en).toContain('>Go back<');
   });
 });

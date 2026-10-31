@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   JOIN_CODE_CHARS, normalizeJoinCode, isJoinCodeShaped, splitJoinCode, cleanRealName, realNameValid,
   parseStudentNumber, studentNumberValid, sortRoster, defaultSchoolYear, parseSchoolYear, classNameValid,
-  cleanNickname, nicknameValid, NICKNAME_MAX, duplicateNumbers,
+  cleanNickname, nicknameValid, NICKNAME_MAX, duplicateNumbers, numberConflict,
 } from './classes';
 import { readFileSync } from 'node:fs';
 
@@ -61,6 +61,24 @@ describe('real names and 出席番号', () => {
     expect([...duplicateNumbers([s(1), s(2), s(1), s(3), s(3), s(3), s(null), s(null)])].sort()).toEqual([1, 3]);
     expect(duplicateNumbers([s(1), s(2), s(null)]).size).toBe(0);
     expect(duplicateNumbers(null).size).toBe(0);
+  });
+
+  it('finds the other student who already has a number (numberConflict)', () => {
+    const roster = [
+      { student_id: 'a', real_name: '山田 太郎', student_number: 3 },
+      { student_id: 'b', real_name: '佐藤 花子', student_number: 5 },
+      { student_id: 'c', real_name: '木村 三郎', student_number: 3 },
+      { student_id: 'd', real_name: '田中 一', student_number: null },
+    ];
+    expect(numberConflict(roster, null)).toBeNull(); // no number: never a conflict
+    expect(numberConflict(roster, 7)).toBeNull(); // a free number
+    expect(numberConflict(roster, 5).real_name).toBe('佐藤 花子');
+    expect(numberConflict(roster, 3).student_id).toBe('a'); // several: the first one
+    expect(numberConflict(roster, 5, 'b')).toBeNull(); // my own number doesn't count
+    expect(numberConflict(roster, 3, 'a').student_id).toBe('c');
+    expect(numberConflict([], 3)).toBeNull();
+    expect(numberConflict(null, 3)).toBeNull();
+    expect(numberConflict(undefined, 3, 'a')).toBeNull();
   });
 
   it('reads the number: blank = none, 1–99, full-width digits', () => {
