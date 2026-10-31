@@ -753,8 +753,38 @@ export default {
   "honesty.noFlag": "特に気になるところはありません",
   "honesty.note": "これはヒントで、証拠ではありません。スペルは「わかる」より難しいので、少しの差はふつうです。気になるときは本人と話してみてください。",
 
+  // Card reports (ReportFlag.jsx, ReportHost.jsx): the flag on a card and the report pop-up.
+  // The reason names are Andre's; the rest is a DRAFT.
+  "report.flag": "このカードの問題を報告", // read aloud for the flag button
+  "report.title": "問題を報告",
+  "report.reasonLabel": "どんな問題？",
+  "report.reason.spelling": "スペルがまちがっている",
+  "report.reason.meaning": "意味がちがう",
+  "report.reason.example": "例文がおかしい",
+  "report.reason.accept_answer": "わたしの答えも正しいはず",
+  "report.reason.handwriting": "手書きが正しく読まれない",
+  "report.reason.audio": "音声がおかしい",
+  "report.reason.pos": "品詞がちがう",
+  "report.reason.display": "表示がおかしい",
+  "report.reason.other": "その他",
+  "report.yourAnswer": "あなたの答え", // pre-filled with what was typed or written
+  "report.whatAnswer": "どんな答え？", // tap mode: nothing typed, so the student writes it
+  "report.noteLabel": "くわしく（書かなくてもOK）",
+  "report.count": "{n}/{max}",
+  "report.attachShot": "スクリーンショットを付ける",
+  "report.shotAlt": "スクリーンショット",
+  "report.choosePhoto": "写真をえらぶ",
+  "report.photoFailed": "この写真は使えませんでした",
+  "report.send": "送る",
+  "report.sending": "送信中…",
+  "report.sent": "ありがとう！報告しました",
+  "report.alreadyReported": "もう報告してあるよ。ありがとう！",
+
   // Error messages (pop-ups and red text)
   "errors.saveFailed": "保存できませんでした", // a review answer couldn't be saved
+  "errors.reportLimit": "今日はもう報告できません。また明日お願いします！", // DRAFT: 20 reports a day
+  "errors.reportFailed": "報告を送れませんでした。もう一度ためしてください", // DRAFT
+  "errors.reportOpenFailed": "報告の画面を開けませんでした。もう一度ためしてください", // DRAFT: the sheet's code couldn't download
   "errors.cardNotFound": "このカードは見つかりませんでした",
   "errors.notSignedIn": "ログインしてください",
   "errors.noTickets": "ガチャ券がありません",

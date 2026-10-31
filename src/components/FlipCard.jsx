@@ -3,6 +3,7 @@ import { colors, fontDisplay, fontBody } from '../styles/theme';
 import WordInfo from './WordInfo';
 import SpeakerButton from './SpeakerButton';
 import PosChip from './PosChip';
+import ReportFlag from './ReportFlag';
 import { speakWord, stopSpeaking } from '../lib/speech';
 import { directionLabel } from '../lib/drill';
 import { t } from '../i18n';
@@ -67,12 +68,15 @@ function wordStyle(text, isEnglish, size, jaSize = Math.round(size * 5 / 6), fil
 // answer buttons below) instead of a fixed height; big text follows the screen height. short: a short
 // screen (landscape iPad), so less padding and tighter gaps; nothing is hidden. If the back still
 // doesn't fit, it scrolls inside the card.
+// onReport: the report flag (ReportFlag) in the back's top row, before the Lv chip, or null for none.
+// It is on the back only, so it appears once the answer shows and never gives the answer away.
+// data-flip-inner / data-face: what a report screenshot uses to draw the card flat (reportCapture.js).
 // speech: { autoPlay, slow } for the 発音を聞く button, or null when the browser can't speak.
 // The button reads the main English (card.en) and only shows where the English is already visible:
 // the front of an English → Japanese card, and the back of every card (so never before the answer
 // on a Japanese → English card). Auto-play: when the front of an English → Japanese card appears,
 // or when a Japanese → English card flips. A card that appears already flipped (Undo) stays quiet.
-export default function FlipCard({ card, showLevel, revealed, onFlip, compact = false, wide = false, speech = null, fill = false, short = false }) {
+export default function FlipCard({ card, showLevel, revealed, onFlip, compact = false, wide = false, speech = null, fill = false, short = false, onReport = null }) {
   const backRef = useRef(null);
   const frontIsEnglish = card.direction === "en2jp";
   const shownFlipped = useRef(revealed); // flipped from the start (Undo): no auto-play
@@ -127,6 +131,7 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
     <div style={{ perspective: 1200, ...(fill && { height: "100%" }) }}>
       <div
         className="flip-card-inner"
+        data-flip-inner={revealed ? "back" : "front"}
         style={{
           display: "grid", transformStyle: "preserve-3d", transition: FLIP,
           ...(fill && { height: "100%", gridTemplateRows: "minmax(0, 1fr)" }),
@@ -135,6 +140,7 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
       >
         {/* Front: the question */}
         <Front
+          data-face="front"
           onClick={compact ? undefined : onFlip}
           inert={revealed}
           style={{ ...face, ...faceFit, minHeight, background: colors.surface, border: `2px solid ${colors.line}`, color: colors.text, cursor: compact ? "default" : "pointer" }}
@@ -163,6 +169,7 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
           <div
             data-front-pos=""
             inert={revealed}
+            data-face="front"
             style={{
               ...face, ...faceFit, minHeight: 0, alignSelf: "start", border: "2px solid transparent", paddingBottom: 0,
               visibility: "hidden", pointerEvents: "none", transform: "translateZ(1px)",
@@ -179,6 +186,7 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
         {/* Back: the answer */}
         <div
           ref={backRef}
+          data-face="back"
           tabIndex={-1}
           inert={!revealed}
           style={{
@@ -198,7 +206,10 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
                 >
                   {t("review.answerPill")}
                 </span>
-                {showLevel && <LevelChip level={card.level} />}
+                <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  {onReport && <ReportFlag onClick={onReport} />}
+                  {showLevel && <LevelChip level={card.level} />}
+                </span>
               </div>
               {/* fill: if the back is taller than the card, this part scrolls inside the card (centered by */}
               {/* auto margins, so a scrolled back starts at its top instead of being cut off above). */}
@@ -222,6 +233,7 @@ export default function FlipCard({ card, showLevel, revealed, onFlip, compact = 
           <div
             data-front-speaker=""
             inert={revealed}
+            data-face="front"
             style={{
               gridArea: "1 / 1", alignSelf: "end", justifySelf: "end", margin: 14,
               backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden", transform: "translateZ(1px)",

@@ -6,6 +6,8 @@ import Highlighted from './Highlighted';
 import ToggleSwitch from './ToggleSwitch';
 import SpeakerButton from './SpeakerButton';
 import PosChip from './PosChip';
+import ReportFlag from './ReportFlag';
+import { useCardReport } from './useCardReport';
 import { t, tx } from '../i18n';
 
 const blurred = { filter: "blur(6px)", userSelect: "none" };
@@ -17,7 +19,8 @@ const blurred = { filter: "blur(6px)", userSelect: "none" };
 // The 品詞 chip (word.pos) comes after the English word and the speaker.
 // speech: { slow } for the 発音を聞く button after the English word, or null (no button).
 // owned: the student already has this word (a small muted 所持済み tag after the English word).
-export function WordRow({ word, hideJa, revealed, first, onToggle, speech = null, owned = false }) {
+// onReport: the report flag, last after the English word (null = none).
+export function WordRow({ word, hideJa, revealed, first, onToggle, speech = null, owned = false, onReport = null }) {
   const hidden = hideJa && !revealed;
   // Props for the Japanese parts: hidden and skipped by screen readers while hidden.
   const jaHidden = hidden || undefined;
@@ -69,6 +72,7 @@ export function WordRow({ word, hideJa, revealed, first, onToggle, speech = null
                 {t("wordList.owned")}
               </span>
             )}
+            {onReport && <ReportFlag onClick={onReport} size={16} style={{ margin: "-6px -8px" }} />}
           </span>
           {jp}
         </span>
@@ -103,6 +107,7 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
   // words tapped open while hidden; cleared by the switch, and reset when the deck is left
   // (App gives the list key={activeSet.id}, so another deck always starts fresh)
   const [revealed, setRevealed] = useState(() => new Set());
+  const { openReport, reportUi } = useCardReport();
 
   function toggleHide() {
     setHideJa((h) => !h);
@@ -153,6 +158,7 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
             hideJa={hideJa}
             revealed={revealed.has(w.wordId)}
             onToggle={() => setRevealed((r) => toggleId(r, w.wordId))}
+            onReport={() => openReport({ wordId: w.wordId, english: w.en, direction: null, deckId: activeSet.id, source: "word_list", answerMode: null, answer: "" })}
           />
         ))}
       </ol>
@@ -181,6 +187,7 @@ export default function WordList({ activeSet, isAdded, saving, onAddDeck, onStar
           {t("wordList.startDrill")}
         </button>}
       </div>
+      {reportUi}
     </div>
   );
 }

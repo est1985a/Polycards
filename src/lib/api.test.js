@@ -8,6 +8,8 @@ const calls = [];
 let result = { data: [], error: null, count: 0 };
 const defaultRpc = async (name, args) => { calls.push(['rpc', name, args]); return result; };
 let rpcImpl = defaultRpc;
+let sessionUser = 'u1';
+let uploadError = null;
 
 // A fake query: every method records its name and arguments and returns the same query;
 // awaiting it gives `result`.
@@ -25,6 +27,12 @@ vi.mock('./supabaseClient', () => ({
   supabase: {
     from: (table) => { calls.push(['from', table]); return fakeQuery(); },
     rpc: (...args) => rpcImpl(...args),
+    auth: { getSession: async () => ({ data: { session: sessionUser ? { user: { id: sessionUser } } : null } }) },
+    storage: {
+      from: (bucket) => ({
+        upload: async (...args) => { calls.push(['upload', bucket, ...args]); return { error: uploadError }; },
+      }),
+    },
   },
 }));
 
@@ -40,6 +48,8 @@ beforeEach(() => {
   calls.length = 0;
   result = { data: [], error: null, count: 0 };
   rpcImpl = defaultRpc;
+  sessionUser = 'u1';
+  uploadError = null;
 });
 
 describe('Mastered cards are never due', () => {
@@ -761,5 +771,57 @@ describe('teacher area phase 4: assigned packs', () => {
     await expect(api.deleteAssignment('a1')).rejects.toThrow('この課題は見つかりませんでした');
     rpcImpl = async () => ({ data: null, error: { message: 'not_class_teacher' } });
     await expect(api.fetchClassAssignments('c9')).rejects.toThrow();
+  });
+});
+
+describe('card reports', () => {
+  const DECK = '081656da-63f4-4520-a34f-4d5a11b2938b';
+  const REPORT = { wordId: 'w1', direction: 'jp2en', deckId: DECK, source: 'review', reason: 'accept_answer', note: 'hi', submittedAnswer: 'colour', answerMode: 'typing', context: { lang: 'ja' } };
+
+  it('sends a report with every argument and returns its id', async () => {
+    result = { data: 'r1', error: null };
+    expect(await api.submitCardReport(REPORT)).toBe('r1');
+    expect(calls).toEqual([['rpc', 'submit_card_report', {
+      p_word_id: 'w1', p_direction: 'jp2en', p_deck_id: DECK, p_source: 'review', p_reason: 'accept_answer',
+      p_note: 'hi', p_submitted_answer: 'colour', p_answer_mode: 'typing', p_context: { lang: 'ja' },
+    }]]);
+  });
+
+  it('sends no deck for the general review (its id is not a deck) and nulls for a word-list report', async () => {
+    await api.submitCardReport({ wordId: 'w1', direction: null, deckId: 'review', source: 'word_list', reason: 'other', note: '' });
+    expect(calls[0][2]).toMatchObject({ p_deck_id: null, p_direction: null, p_note: null, p_submitted_answer: null, p_answer_mode: null, p_context: null });
+  });
+
+  it('throws with the database error code', async () => {
+    rpcImpl = async () => ({ data: null, error: { message: 'already_reported' } });
+    await expect(api.submitCardReport(REPORT)).rejects.toMatchObject({ code: 'already_reported' });
+    rpcImpl = async () => ({ data: null, error: { message: 'report_limit' } });
+    await expect(api.submitCardReport(REPORT)).rejects.toMatchObject({ code: 'report_limit' });
+    rpcImpl = async () => ({ data: null, error: { message: 'boom' } });
+    await expect(api.submitCardReport(REPORT)).rejects.toMatchObject({ code: null });
+  });
+
+  it('turns error codes into friendly messages (already_reported is a thank-you)', () => {
+    expect(api.reportErrorMessage({ message: 'already_reported' })).toBe('もう報告してあるよ。ありがとう！');
+    expect(api.reportErrorMessage({ message: 'report_limit' })).toContain('今日はもう報告できません');
+    expect(api.reportErrorMessage({ message: 'boom' })).toContain('報告を送れませんでした');
+  });
+
+  it('uploads the screenshot to my own folder as {user}/{report}.jpg, then attaches it', async () => {
+    result = { data: null, error: null };
+    expect(await api.sendReportScreenshot('r1', 'BLOB')).toBe(true);
+    expect(calls).toEqual([
+      ['upload', 'report-screenshots', 'u1/r1.jpg', 'BLOB', { contentType: 'image/jpeg', upsert: false }],
+      ['rpc', 'attach_report_screenshot', { p_report_id: 'r1', p_path: 'u1/r1.jpg' }],
+    ]);
+  });
+
+  it('never throws when the screenshot fails (the report still counts)', async () => {
+    uploadError = { message: 'bucket full' };
+    expect(await api.sendReportScreenshot('r1', 'BLOB')).toBe(false);
+    expect(calls.some((c) => c[1] === 'attach_report_screenshot')).toBe(false);
+    uploadError = null;
+    sessionUser = null;
+    expect(await api.sendReportScreenshot('r1', 'BLOB')).toBe(false);
   });
 });

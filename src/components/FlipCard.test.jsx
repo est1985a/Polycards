@@ -175,3 +175,32 @@ describe('FlipCard', () => {
     });
   });
 });
+
+describe('FlipCard report flag', () => {
+  const FLAG = 'aria-label="このカードの問題を報告"';
+
+  it('is only on the back, so it never shows before the answer', () => {
+    const { front, back } = faces(render({ onReport: () => {} }));
+    expect(front).not.toContain(FLAG);
+    expect(back).toContain(FLAG);
+    // the back is inert (can't be reached) until the card is flipped
+    expect(back).toMatch(/data-face="back" tabindex="-1" inert=""/);
+    expect(faces(render({ onReport: () => {}, revealed: true })).back).not.toMatch(/data-face="back" tabindex="-1" inert=""/);
+  });
+
+  it('sits before the Lv chip in the back\'s top row (no extra row)', () => {
+    const { back } = faces(render({ onReport: () => {} }));
+    expect(back.indexOf(FLAG)).toBeLessThan(back.indexOf('Lv 3'));
+    expect(back.indexOf('答え')).toBeLessThan(back.indexOf(FLAG));
+  });
+
+  it('is not there without onReport, nor on the compact typing card', () => {
+    expect(render()).not.toContain(FLAG);
+    expect(render({ onReport: () => {}, compact: true })).not.toContain(FLAG);
+  });
+
+  it('marks the faces so a report screenshot can draw the card flat', () => {
+    expect(render()).toContain('data-flip-inner="front"');
+    expect(render({ revealed: true })).toContain('data-flip-inner="back"');
+  });
+});
