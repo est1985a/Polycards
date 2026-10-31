@@ -644,7 +644,6 @@ export default {
   "classTab.chooseSave": "OK",
   "classTab.leaderboardOff": "The ranking is taking a break right now.",
   "classTab.loadFailed": "Couldn't load the class",
-  // DRAFT (Andre to check): classTab.leave*, errors.joinCodeLocked, teacher.leavers*
   "classTab.leave": "Leave this class",
   "classTab.leaveTitle": "Leave the class",
   "classTab.leaveConfirm": "Leave “{name}”?",
