@@ -47,13 +47,13 @@ describe('CollectionTile', () => {
 });
 
 describe('GachaCollection', () => {
-  it('shows owned / total and per-rarity counts with the Secret total hidden', () => {
+  it('shows owned / total (missing Secrets not counted) and per-rarity counts with the Secret total hidden', () => {
     const cat = { ...owned, id: 1, slug: 'cat', name_ja: 'ネコ', name_en: 'Cat', equipped: true };
     for (const wide of [false, true]) {
       const html = renderToStaticMarkup(<GachaCollection rows={[cat, owned, unowned, secret]} onEquip={() => {}} onBack={() => {}} wide={wide} />);
       expect(html).toContain('>ガチャ</span>');
       expect(html).toContain('ポリアバター図鑑');
-      expect(html).toContain('2 / 4');
+      expect(html).toContain('2 / 3');
       expect(html).toContain('0 / ?');
       expect(html).toContain('Series 1');
       expect(html).toContain('>Cat</div>');
@@ -134,5 +134,47 @@ describe('GachaCollection: Halloween 2026', () => {
     // Not owned yet: an ordinary silhouette (not the locked ??? tile)
     expect(section).toContain('data-tile="silhouette"');
     expect(section).not.toContain('???');
+  });
+});
+
+describe('GachaCollection: Secrets can\'t be counted', () => {
+  const sec = (id, isOwned) => ({
+    id, slug: isOwned ? `secret-${id}` : null, rarity: 'secret', series: 'Series 1', owned: isOwned, equipped: false,
+    name_ja: isOwned ? 'ひみつ' : null, name_en: isOwned ? `Secret ${id}` : null, image_url: null,
+  });
+  const render = (rows) => renderToStaticMarkup(<GachaCollection rows={rows} onEquip={() => {}} onBack={() => {}} />);
+  const count = (html, s) => html.split(s).length - 1;
+  // The header's owned / total (the first gold number after the title)
+  const header = (html) => html.match(/ポリアバター図鑑<\/h2><span[^>]*>(\d+) \/ (\d+)</).slice(1).map(Number);
+
+  it('0 Secrets owned: one ??? whatever the number missing, total without them', () => {
+    const html = render([owned, unowned, sec(10, false), sec(11, false), sec(12, false)]);
+    expect(count(html, 'data-tile="secret"')).toBe(1);
+    expect(header(html)).toEqual([1, 2]);
+    expect(html).toContain('0 / ?');
+  });
+
+  it('some Secrets owned: the owned ones as tiles, then one ???', () => {
+    const html = render([owned, unowned, sec(10, true), sec(11, false), sec(12, false)]);
+    expect(count(html, 'data-tile="secret"')).toBe(1);
+    expect(html).toContain('>Secret 10</div>');
+    expect(html.indexOf('>Secret 10</div>')).toBeLessThan(html.indexOf('data-tile="secret"'));
+    expect(header(html)).toEqual([2, 3]);
+    expect(html).toContain('1 / ?');
+  });
+
+  it('every Secret owned: no ???', () => {
+    const html = render([owned, unowned, sec(10, true), sec(11, true)]);
+    expect(html).not.toContain('data-tile="secret"');
+    expect(html).not.toContain('???');
+    expect(header(html)).toEqual([3, 4]);
+  });
+
+  it('the new database placeholder (id null, sort_order null) shows one ??? and is not tappable', () => {
+    const placeholder = { ...sec(null, false), sort_order: null, obtained_at: null, unlock_rank: null };
+    const html = render([owned, sec(10, true), placeholder]);
+    expect(count(html, 'data-tile="secret"')).toBe(1);
+    expect(html).toMatch(/<div data-tile="secret"/);
+    expect(header(html)).toEqual([2, 2]);
   });
 });

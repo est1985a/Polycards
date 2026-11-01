@@ -133,14 +133,47 @@ function seriesRank(series) {
   return eventSeries(series) ? 1 : 0;
 }
 
+// A Secret the student doesn't have yet. These never count toward a total, so students can't
+// work out how many Secrets exist.
+function missingSecret(row) {
+  return row.rarity === 'secret' && !row.owned;
+}
+
+// The collection rows to show: owned and non-Secret rows as they are, and every missing Secret
+// of a series replaced by ONE locked row (id null, so it can't be worn), placed last. Works with
+// the old gacha_collection (one row per missing Secret) and the new one (already one placeholder).
+export function collectionRows(rows) {
+  const out = [];
+  const lockedSeries = [];
+  for (const row of rows || []) {
+    if (!missingSecret(row)) out.push(row);
+    else if (!lockedSeries.includes(row.series)) lockedSeries.push(row.series);
+  }
+  for (const series of lockedSeries) {
+    out.push({
+      id: null, slug: null, rarity: 'secret', series, sort_order: null, owned: false, obtained_at: null,
+      equipped: false, name_ja: null, name_en: null, image_url: null, unlock_rank: null,
+    });
+  }
+  return out;
+}
+
+// owned / total for the whole collection: total leaves out missing Secrets
+// (= active non-Secret avatars + the Secrets this student owns).
+export function collectionTotals(rows) {
+  const counted = (rows || []).filter((r) => !missingSecret(r));
+  return { owned: counted.filter((r) => r.owned).length, total: counted.length };
+}
+
 // Collection rows → [{ series, owned, total, groups: [{ rarity, avatars }] }], keeping the database
 // order inside each part. Rarities go ★ → Secret, except event sets: ★★★ / ★★ / ★ (best first).
+// Missing Secrets become one ??? per series (collectionRows) and don't count in the series total.
 export function groupCollection(rows) {
   const series = [];
-  for (const row of rows || []) {
+  for (const row of collectionRows(rows)) {
     let s = series.find((x) => x.series === row.series);
     if (!s) series.push((s = { series: row.series, owned: 0, total: 0, groups: [] }));
-    s.total += 1;
+    if (!missingSecret(row)) s.total += 1;
     if (row.owned) s.owned += 1;
     let g = s.groups.find((x) => x.rarity === row.rarity);
     if (!g) s.groups.push((g = { rarity: row.rarity, avatars: [] }));

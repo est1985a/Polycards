@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { colors, fontDisplay, panel } from '../styles/theme';
 import BackButton from './BackButton';
-import { rarityInfo, rarityGlow, groupCollection, rarityCounts, tileState, specialColor, seriesTitle, eventSeries } from '../lib/gacha';
+import { rarityInfo, rarityGlow, groupCollection, collectionTotals, rarityCounts, tileState, specialColor, seriesTitle, eventSeries } from '../lib/gacha';
 import AvatarPicture from './AvatarPicture';
 import AvatarViewer from './AvatarViewer';
 import { t } from '../i18n';
@@ -13,7 +13,8 @@ const tileBase = {
 
 // One avatar in the collection.
 // Owned: picture and name, tap to wear it. Not owned: a dark silhouette with no name.
-// Secret not owned: a locked ??? tile (the database sends no picture for these).
+// Secret not owned: a locked ??? tile, at most one per series (the database sends no picture,
+// name or id for these). It isn't a button, so tapping it does nothing.
 export function CollectionTile({ avatar, equipping = false, onEquip }) {
   const state = tileState(avatar);
   const info = rarityInfo(avatar.rarity);
@@ -155,7 +156,8 @@ function SummaryPanel({ rows, equipped, onView, avatarRef }) {
 // wide: summary panel on the left, avatars on the right.
 // from: where it was opened ("gacha" → ← ガチャ, "dashboard" → ← 戻る); onBack goes back there.
 export default function GachaCollection({ rows, equippingId, onEquip, onBack, from = "gacha", wide = false }) {
-  const owned = (rows || []).filter((r) => r.owned).length;
+  // Missing Secrets don't count in the total, so students can't tell how many exist.
+  const { owned, total } = collectionTotals(rows);
   const equipped = (rows || []).find((r) => r.equipped) || null;
   const [viewing, setViewing] = useState(false);
   const avatarRef = useRef(null);
@@ -186,7 +188,7 @@ export default function GachaCollection({ rows, equippingId, onEquip, onBack, fr
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 10, paddingTop: 6 }}>
                     {g.avatars.map((a) => (
-                      <CollectionTile key={a.id} avatar={a} equipping={equippingId != null} onEquip={onEquip} />
+                      <CollectionTile key={a.id ?? `secret-${s.series}`} avatar={a} equipping={equippingId != null} onEquip={onEquip} />
                     ))}
                   </div>
                 </div>
@@ -206,7 +208,7 @@ export default function GachaCollection({ rows, equippingId, onEquip, onBack, fr
         <h2 style={{ margin: 0, fontWeight: 700, fontSize: 28 }}>{t("collection.title")}</h2>
         {rows && (
           <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, color: colors.gold }}>
-            {owned} / {rows.length}
+            {owned} / {total}
           </span>
         )}
       </div>

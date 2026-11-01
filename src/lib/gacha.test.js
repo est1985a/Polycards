@@ -1,6 +1,6 @@
 // Tests for the gacha helpers. Run with: npm test
 import { describe, it, expect, vi } from 'vitest';
-import { ticketProgress, spellingProgress, groupCollection, rarityCounts, tileState, singleFlight, sparkleLayout, obtainedDate, specialTier, specialColor, RARITY_ORDER, eventSeries, eventActive, eventEndDate, eventShare, seriesTitle } from './gacha';
+import { ticketProgress, spellingProgress, groupCollection, collectionRows, collectionTotals, rarityCounts, tileState, singleFlight, sparkleLayout, obtainedDate, specialTier, specialColor, RARITY_ORDER, eventSeries, eventActive, eventEndDate, eventShare, seriesTitle } from './gacha';
 import { setLang } from '../i18n';
 import { metalColors } from '../styles/theme';
 
@@ -47,6 +47,20 @@ describe('collection', () => {
       { rarity: 'super_rare', owned: 0, total: 1 },
       { rarity: 'secret', owned: 1, total: null },
     ]);
+  });
+
+  it('missing Secrets: one locked row per series, placed after the owned Secrets, not counted', () => {
+    const more = [...rows, { id: 7, series: 'Series 1', rarity: 'secret', owned: false }];
+    const shown = collectionRows(more);
+    expect(shown.filter((r) => r.rarity === 'secret' && !r.owned)).toHaveLength(1);
+    expect(shown.at(-1)).toMatchObject({ id: null, rarity: 'secret', series: 'Series 1', owned: false, equipped: false, sort_order: null });
+    const groups = groupCollection(more);
+    expect(groups[0].groups.at(-1).avatars.map((a) => a.id)).toEqual([5, null]);
+    expect(groups[0]).toMatchObject({ owned: 3, total: 4 });
+    expect(collectionTotals(more)).toEqual({ owned: 3, total: 5 });
+    // Every Secret owned: no locked row
+    const all = collectionRows(rows.map((r) => (r.rarity === 'secret' ? { ...r, owned: true } : r)));
+    expect(all.some((r) => r.id === null)).toBe(false);
   });
 
   it('picks the tile look: owned, silhouette, or locked secret', () => {
