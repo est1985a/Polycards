@@ -29,6 +29,16 @@ export const mix = (a, b, pct) => `color-mix(in srgb, ${a} ${pct}%, ${b})`;
 export const tintLight = "white";
 export const tintDark = "black";
 
+// Special Polyavatar tiers (placeholder pictures and their frames). Fixed metal colors, the same in
+// every theme, like the logo's Midnight colors. Keys match the avatar slugs (special-bronze …).
+export const metalColors = {
+  bronze: "#c27c43",
+  silver: "#b9c3cf",
+  gold: "#f2c53d",
+  platinum: "#d9e8e4",
+  diamond: "#7fdcf5",
+};
+
 export const fontDisplay = "'Chakra Petch', 'Zen Maru Gothic', sans-serif"; // headings, numbers
 export const fontBody = "'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', 'Yu Gothic', sans-serif"; // body, Japanese
 

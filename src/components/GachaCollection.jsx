@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { colors, fontDisplay, panel } from '../styles/theme';
 import BackButton from './BackButton';
-import { rarityInfo, rarityGlow, groupCollection, rarityCounts, tileState } from '../lib/gacha';
+import { rarityInfo, rarityGlow, groupCollection, rarityCounts, tileState, specialColor } from '../lib/gacha';
 import AvatarPicture from './AvatarPicture';
 import AvatarViewer from './AvatarViewer';
 import { t } from '../i18n';
@@ -26,6 +26,17 @@ export function CollectionTile({ avatar, equipping = false, onEquip }) {
     );
   }
 
+  // A Special not reached yet: its silhouette and the rank that gives it.
+  if (state === "special") {
+    const how = t("collection.specialHow", { n: avatar.unlock_rank });
+    return (
+      <div data-tile="special" aria-label={how} style={{ ...tileBase, border: `2px dashed ${colors.gold}` }}>
+        <AvatarPicture avatar={avatar} size={64} silhouette />
+        <div style={{ fontSize: 12, lineHeight: 1.3, fontWeight: 700, color: colors.text, textAlign: "center" }}>{how}</div>
+      </div>
+    );
+  }
+
   if (state === "silhouette") {
     return (
       <div data-tile="silhouette" aria-label={t("collection.notOwned")} style={{ ...tileBase, border: `2px solid ${colors.line}` }}>
@@ -44,7 +55,7 @@ export function CollectionTile({ avatar, equipping = false, onEquip }) {
       aria-label={t(worn ? "collection.wornLabel" : "collection.equipLabel", { nameJa: avatar.name_ja, nameEn: avatar.name_en })}
       style={{
         ...tileBase, cursor: worn ? "default" : "pointer", fontFamily: "inherit", color: colors.text,
-        border: `2px solid ${worn ? colors.accent : info.color}`,
+        border: `2px solid ${worn ? colors.accent : specialColor(avatar) || info.color}`,
         boxShadow: avatar.rarity === "secret" ? rarityGlow("secret") : "none",
       }}
     >
@@ -155,14 +166,15 @@ export default function GachaCollection({ rows, equippingId, onEquip, onBack, fr
     <div style={{ display: "grid", gap: 20, textAlign: "left" }}>
       {groupCollection(rows).map((s) => (
         <section key={s.series} style={{ display: "grid", gap: 12 }}>
-          <h3 style={{ margin: 0, fontSize: 18 }}>{s.series}</h3>
+          <h3 style={{ margin: 0, fontSize: 18 }}>{s.series === "Special" ? t("collection.specialSeries") : s.series}</h3>
           {s.groups.map((g) => {
               const r = rarityInfo(g.rarity);
               return (
                 <div key={g.rarity} style={{ display: "grid", gap: 8 }}>
                   <div style={{ fontSize: 14, fontWeight: 700 }}>
                     {r.stars && <span style={{ color: r.color, marginRight: 4 }}>{r.stars}</span>}
-                    {r.label}
+                    {/* The Special section's heading already says スペシャル: here only how to get them. */}
+                    {g.rarity === "special" ? t("collection.specialIntro") : r.label}
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 10, paddingTop: 6 }}>
                     {g.avatars.map((a) => (

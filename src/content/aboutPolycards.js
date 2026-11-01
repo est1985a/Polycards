@@ -48,7 +48,7 @@ export const ABOUT = {
     {
       icon: '🎫',
       heading: 'about.tickets.heading',
-      paragraphs: ['about.tickets.p1'],
+      paragraphs: ['about.tickets.p1', 'about.tickets.p2'],
     },
     {
       icon: '🏋️',

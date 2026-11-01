@@ -16,6 +16,7 @@ import {
   SETTING_DEFAULTS, mergeSettings, settingsPayload, sameSettings, loadDeviceSettings, saveDeviceSettings, clearDeviceSettings,
 } from './lib/accountSettings';
 import { themeList, newThemes, featuredUnlock, markSeen } from './lib/themeUnlocks';
+import { rankUpView, themesSeenAt } from './lib/rankUp';
 import { themes, applyTheme, getTheme, DEFAULT_THEME } from './themes';
 import { wrap, gutter, headerBand, tabBarHeight, wideLayout } from './styles/theme';
 import { useWide, useSideChip, useShort } from './lib/useWide';
@@ -43,6 +44,7 @@ import GachaCollection from './components/GachaCollection';
 import SettingsScreen from './components/SettingsScreen';
 import StatsScreen from './components/StatsScreen';
 import ThemeUnlockSheet from './components/ThemeUnlockSheet';
+import RankUpSheet from './components/RankUpSheet';
 import TeacherArea from './components/TeacherArea';
 import { TEACHER_START } from './lib/classes';
 import { loadLastClass, saveLastClass } from './lib/classTab';
@@ -152,6 +154,14 @@ function App() {
   // (seen_theme_unlocks), read once after sign-in. null until loaded (or if it can't be read):
   // then no pop-up and no dot, so a failed load never shows an old pop-up again.
   const [seenSaved, setSeenSaved] = useState(null); // { userId, keys }
+  // Rank-up pop-up: rank_rewards() (rank from the database, last_seen_rank, Special Polyavatars),
+  // loaded whenever the dashboard is shown. data null = couldn't be read (no pop-up).
+  const [rankRewards, setRankRewards] = useState(null); // { userId, data }
+  const [rankSeenThemes, setRankSeenThemes] = useState(null); // { userId, keys } marked seen by a rank-up
+  // The rank whose pop-up is showing (open: true) or was shown in this visit. While it is open, a
+  // reload doesn't touch the data (so the pop-up stays); afterwards a load that started before
+  // mark_rank_seen finished can't bring the same pop-up back.
+  const rankShownRef = useRef(null); // { userId, rank, open }
   const themeSaving = useRef(false); // while a choice is being saved, an older gacha_status must not undo it
 
   // Study session
@@ -426,12 +436,28 @@ function App() {
     if (session && view === "dashboard") loadAwards();
   }, [session, view, loadAwards]);
 
+  // Rank-up pop-up data: whenever the dashboard is shown (after a review's answers are saved).
+  const loadRankRewards = useCallback(() => {
+    if (!userId) return;
+    api.waitForPendingSaves()
+      .then(() => api.fetchRankRewards())
+      .then((data) => {
+        const shown = rankShownRef.current?.userId === userId ? rankShownRef.current : null;
+        if (shown?.open) return;
+        if (data && shown) data.last_seen_rank = Math.max(Number(data.last_seen_rank), shown.rank);
+        setRankRewards({ userId, data });
+      });
+  }, [userId]);
+  useEffect(() => {
+    if (session && view === "dashboard") loadRankRewards();
+  }, [session, view, loadRankRewards]);
+
   useEffect(() => {
     if (!session) return;
-    const onVisible = () => { if (document.visibilityState === "visible") { loadGacha(); loadAwards(); } };
+    const onVisible = () => { if (document.visibilityState === "visible") { loadGacha(); loadAwards(); loadRankRewards(); } };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [session, loadAwards]);
+  }, [session, loadAwards, loadRankRewards]);
 
   // The award pop-up was closed (とじる) or ガチャへ was pressed: exactly the awards it showed are
   // marked seen, and the gacha status reloads so the ticket badge shows them.
@@ -559,10 +585,54 @@ function App() {
   const rank = stats?.playerRank ?? null;
   const themeItems = useMemo(() => (themeRows ? themeList(themeRows, themes) : null), [themeRows]);
   // Nothing counts as new until the seen list (saved on the account) has loaded.
-  const seenThemes = seenSaved?.userId === userId ? seenSaved.keys : null;
+  const rankMarked = useMemo(() => (rankSeenThemes?.userId === userId ? rankSeenThemes.keys : []), [rankSeenThemes, userId]);
+  const seenThemes = useMemo(
+    () => (seenSaved?.userId === userId ? [...new Set([...seenSaved.keys, ...rankMarked])] : null),
+    [seenSaved, userId, rankMarked],
+  );
   const themesReady = !!themeItems && rank != null && !!seenThemes;
   const hasNewTheme = themesReady && newThemes(themeItems, rank, seenThemes).length > 0;
-  const unlock = themesReady ? featuredUnlock(themeItems, rank, seenThemes) : null;
+  // Rank-up pop-up: uses only the database's rank (rank_rewards), so it can't repeat if the app's
+  // own rank ever differs. It replaces the theme-unlock pop-up, which waits until the rank rewards
+  // have loaded and stays only as a fallback (e.g. no rank_rewards yet).
+  const rewardsLoaded = rankRewards?.userId === userId;
+  const rankUpCandidate = useMemo(
+    () => (rewardsLoaded ? rankUpView(rankRewards.data, themeItems) : null),
+    [rewardsLoaded, rankRewards, themeItems],
+  );
+  const unlock = themesReady && rewardsLoaded && !rankUpCandidate
+    ? featuredUnlock(themeItems, rank, seenThemes) : null;
+
+  // The rank-up pop-up: on My Cards, when no other pop-up is up. As soon as it shows, its rank is
+  // saved as seen (mark_rank_seen; closing the app still counts as seen), and every theme unlocked at
+  // that rank too, so the theme-unlock pop-up never follows it. Closing it updates the screen.
+  const canShowRankUp = !!session && view === "dashboard" && activeTab === "myCards" && !planOpen && !aboutOpen
+    && !packResult && !joinOpen && !showAwards && !showRosterJoin;
+  const rankUpShown = canShowRankUp ? rankUpCandidate : null;
+  const rankUpThemeKeys = useMemo(
+    () => (rankUpCandidate ? themesSeenAt(themeItems, rankUpCandidate.rank).filter((k) => k !== DEFAULT_THEME) : []),
+    [rankUpCandidate, themeItems],
+  );
+  useEffect(() => {
+    if (!rankUpShown || !userId) return;
+    const shown = rankShownRef.current;
+    if (shown?.userId === userId && shown.rank >= rankUpShown.rank) return;
+    rankShownRef.current = { userId, rank: rankUpShown.rank, open: true };
+    api.markRankSeen(rankUpShown.rank);
+    if (rankUpThemeKeys.length) api.markThemeUnlocksSeen(rankUpThemeKeys).catch((e) => console.error(e));
+  }, [rankUpShown, userId, rankUpThemeKeys]);
+  function closeRankUp() {
+    const shownRank = rankUpCandidate?.rank;
+    if (shownRank == null) return;
+    rankShownRef.current = { userId, rank: shownRank, open: false };
+    setRankRewards((old) => (old?.data ? { ...old, data: { ...old.data, last_seen_rank: shownRank } } : old));
+    setRankSeenThemes((old) => ({ userId, keys: [...new Set([...(old?.userId === userId ? old.keys : []), ...rankUpThemeKeys])] }));
+  }
+  // つける in the rank-up pop-up: wears the new Special Polyavatar (throws so the pop-up shows the error).
+  async function equipFromRankUp(avatarId) {
+    await api.equipAvatar(avatarId);
+    setGacha(await api.fetchGachaStatus());
+  }
 
   // Every theme unlocked now counts as seen (the dot and the pop-up go away at once), then the
   // new keys are saved on the account. If saving fails, they only stay seen for this visit.
@@ -1166,6 +1236,10 @@ function App() {
                 )}
                 <Tabs tabs={tabs} active={activeTab} onChange={changeTab} wide={wide} dots={tabDots} />
                 {planOpen && <ReviewPlanSheet rows={planRows} now={now} onClose={closePlan} />}
+                {/* Rank up: only on My Cards, never during a review (replaces the theme pop-up). */}
+                {rankUpShown && (
+                  <RankUpSheet view={rankUpShown} onUseTheme={chooseTheme} onEquip={equipFromRankUp} onClose={closeRankUp} />
+                )}
                 {/* New theme unlocked: only on My Cards, never during a review. */}
                 {unlock && activeTab === "myCards" && !planOpen && !aboutOpen && !showAwards && !showRosterJoin && (
                   <ThemeUnlockSheet item={unlock.theme} others={unlock.others} rank={rank} onUse={applyUnlockedTheme} onLater={markThemesSeen} />

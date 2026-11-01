@@ -591,6 +591,27 @@ export async function markThemeUnlocksSeen(keys) {
   return Array.isArray(data) ? data : [];
 }
 
+// Rank-up pop-up (supabase/polycards-rankup-special.sql): { rank, last_seen_rank, specials: [{ id, slug,
+// name_ja, name_en, rarity, image_url, unlock_rank, owned, obtained_at }] }. rank = gacha_player_level(),
+// the only rank the pop-up uses. Never throws: null when it can't be read (or the SQL isn't run yet),
+// which simply means no pop-up.
+export async function fetchRankRewards() {
+  const { data, error } = await supabase.rpc('rank_rewards');
+  if (error) {
+    console.warn("Could not load rank rewards: " + error.message);
+    return null;
+  }
+  if (!data || typeof data !== 'object' || data.rank == null || data.last_seen_rank == null) return null;
+  return { ...data, specials: Array.isArray(data.specials) ? data.specials : [] };
+}
+
+// Saves that the pop-up for this rank was shown (the database never saves more than the real rank).
+// Never throws (an error only console.errors; the pop-up may then show once more next time).
+export async function markRankSeen(rank) {
+  const { error } = await supabase.rpc('mark_rank_seen', { p_rank: rank });
+  if (error) console.error("Could not save the seen rank: " + error.message);
+}
+
 // Training tab progress (supabase/polycards-training-progress.sql): the student's own rows,
 // [{ practice_id, times_completed, first_completed_at, last_completed_at }].
 export async function fetchTrainingProgress() {

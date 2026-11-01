@@ -1,6 +1,7 @@
-import { colors, fontDisplay } from '../styles/theme';
-import { rarityInfo, sparkleLayout } from '../lib/gacha';
+import { colors, fontDisplay, mix, tintLight, tintDark } from '../styles/theme';
+import { rarityInfo, sparkleLayout, specialColor } from '../lib/gacha';
 import Avatar from './Avatar';
+import LogoMark from './LogoMark';
 import { t } from '../i18n';
 
 // Placeholder blob: a low-poly round shape tinted with the rarity color.
@@ -18,7 +19,36 @@ const BLOB = [
 
 // 4-point star for the rarity sparkles (viewBox 0 0 20 20).
 const STAR = "M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z";
-const GLOW = { super_rare: "rarity-glow-super", secret: "rarity-glow-secret" };
+const GLOW = { super_rare: "rarity-glow-super", secret: "rarity-glow-secret", special: "rarity-glow-super" };
+
+// Placeholder for a Special Polyavatar with no picture yet: a low-poly plate in its metal
+// (bronze, silver, gold, platinum, diamond), lit from the top left, with the Polyvo logo on it.
+const METAL = [
+  ["50,4 82,18 50,50", tintLight, 55],
+  ["82,18 96,50 50,50", tintLight, 80],
+  ["96,50 82,82 50,50", tintDark, 78],
+  ["82,82 50,96 50,50", tintDark, 62],
+  ["50,96 18,82 50,50", tintDark, 72],
+  ["18,82 4,50 50,50", tintDark, 88],
+  ["4,50 18,18 50,50", tintLight, 70],
+  ["18,18 50,4 50,50", tintLight, 45],
+];
+
+function SpecialPlaceholder({ metal, size, hide, label }) {
+  return (
+    <span role="img" aria-label={label} style={{ position: "relative", display: "block", width: size, height: size, ...hide }}>
+      <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" style={{ display: "block" }}>
+        {METAL.map(([points, tint, pct]) => {
+          const fill = mix(metal, tint, pct);
+          return <polygon key={points} points={points} fill={fill} stroke={fill} strokeWidth="0.5" strokeLinejoin="round" />;
+        })}
+      </svg>
+      <span style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <LogoMark height={size * 0.46} />
+      </span>
+    </span>
+  );
+}
 
 function Picture({ avatar, size, silhouette, label }) {
   const hide = silhouette ? { filter: "brightness(0)", opacity: 0.55 } : null;
@@ -34,6 +64,12 @@ function Picture({ avatar, size, silhouette, label }) {
 
   if (!avatar || avatar.slug === "cat") {
     return <span style={{ position: "relative", display: "flex", ...hide }}><Avatar size={size} /></span>;
+  }
+
+  const metal = specialColor(avatar);
+  if (metal) {
+    const name = silhouette ? t("collection.silhouetteLabel") : label ?? (avatar.name_en || t("gacha.avatarFallback"));
+    return <SpecialPlaceholder metal={metal} size={size} hide={hide} label={name} />;
   }
 
   const tint = rarityInfo(avatar.rarity).color;
@@ -69,7 +105,7 @@ export default function AvatarPicture({ avatar, size = 80, silhouette = false, s
   const rarity = avatar?.rarity;
   const stars = silhouette || !sparkles ? [] : sparkleLayout(rarity);
   const glow = stars.length > 0 ? GLOW[rarity] : null;
-  const color = rarityInfo(rarity).color;
+  const color = specialColor(avatar) || rarityInfo(rarity).color;
 
   return (
     <span style={{ position: "relative", display: "block", width: size, height: size, flexShrink: 0 }}>

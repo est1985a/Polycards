@@ -1,16 +1,42 @@
 // Gacha helpers for the screens (pure functions, no database calls).
-import { colors } from '../styles/theme';
+import { colors, metalColors } from '../styles/theme';
 import { t } from '../i18n';
 import { jstDateKey } from './schedule';
 
 // Rarities in display order. color: the theme color used for that rarity; labelKey: its name (i18n).
-export const RARITY_ORDER = ['normal', 'rare', 'super_rare', 'secret'];
+// 'special' = the Special Polyavatars given at Rank 80, 90 … 120 (never from the gacha).
+export const RARITY_ORDER = ['normal', 'rare', 'super_rare', 'secret', 'special'];
 export const RARITIES = {
   normal: { stars: '★', labelKey: 'rarity.normal', color: colors.muted },
   rare: { stars: '★★', labelKey: 'rarity.rare', color: colors.accent },
   super_rare: { stars: '★★★', labelKey: 'rarity.superRare', color: colors.gold },
   secret: { stars: '', labelKey: 'rarity.secret', color: colors.danger },
+  special: { stars: '◆', labelKey: 'rarity.special', color: colors.gold },
 };
+
+// Special Polyavatars: the tier of each unlock rank (and slug special-<tier>), in order.
+export const SPECIAL_TIERS = [
+  { tier: 'bronze', rank: 80 },
+  { tier: 'silver', rank: 90 },
+  { tier: 'gold', rank: 100 },
+  { tier: 'platinum', rank: 110 },
+  { tier: 'diamond', rank: 120 },
+];
+
+// The tier of a Special Polyavatar (from its slug, else its unlock rank), or null.
+export function specialTier(avatar) {
+  if (!avatar || avatar.rarity !== 'special') return null;
+  const fromSlug = typeof avatar.slug === 'string' && avatar.slug.startsWith('special-') ? avatar.slug.slice(8) : null;
+  if (fromSlug && metalColors[fromSlug]) return fromSlug;
+  const byRank = SPECIAL_TIERS.find((s) => s.rank === Number(avatar.unlock_rank));
+  return byRank ? byRank.tier : SPECIAL_TIERS[0].tier;
+}
+
+// The metal color of a Special Polyavatar (null for every other avatar).
+export function specialColor(avatar) {
+  const tier = specialTier(avatar);
+  return tier ? metalColors[tier] : null;
+}
 
 export function rarityInfo(rarity) {
   const info = RARITIES[rarity] || RARITIES.normal;
@@ -31,6 +57,7 @@ export const SPARKLES = {
   rare: [[8, 14, 0.16, 0], [90, 30, 0.12, 0.6], [78, 88, 0.13, 1.2]],
   super_rare: [[6, 10, 0.22, 0], [92, 16, 0.16, 0.5], [96, 64, 0.2, 1.0], [4, 70, 0.14, 1.4], [60, -4, 0.12, 0.8]],
   secret: [[4, 8, 0.22, 0], [94, 10, 0.18, 0.4], [98, 58, 0.22, 0.8], [2, 62, 0.16, 1.2], [54, -6, 0.14, 0.3], [70, 98, 0.14, 1.0]],
+  special: [[6, 10, 0.2, 0], [94, 14, 0.16, 0.5], [96, 66, 0.2, 1.0], [4, 70, 0.14, 1.4], [58, -4, 0.12, 0.8]],
 };
 
 export function sparkleLayout(rarity) {
@@ -68,8 +95,10 @@ export function groupCollection(rows) {
 }
 
 // Owned / total per rarity. The Secret total is null (shown as "?") so students can't count them.
+// Specials are listed only when the collection has them (before the SQL is run it has none).
 export function rarityCounts(rows) {
-  return RARITY_ORDER.map((rarity) => {
+  const hasSpecial = (rows || []).some((r) => r.rarity === 'special');
+  return RARITY_ORDER.filter((rarity) => rarity !== 'special' || hasSpecial).map((rarity) => {
     const all = (rows || []).filter((r) => r.rarity === rarity);
     return {
       rarity,
@@ -79,9 +108,11 @@ export function rarityCounts(rows) {
   });
 }
 
-// How a collection tile looks: 'owned', 'silhouette' (not owned yet) or 'secret' (locked ???).
+// How a collection tile looks: 'owned', 'silhouette' (not owned yet), 'special' (a Special not
+// reached yet: silhouette + the rank that gives it) or 'secret' (locked ???).
 export function tileState(row) {
   if (row.owned) return 'owned';
+  if (row.rarity === 'special') return 'special';
   return row.rarity === 'secret' ? 'secret' : 'silhouette';
 }
 

@@ -1,6 +1,7 @@
 // Tests for the gacha helpers. Run with: npm test
 import { describe, it, expect, vi } from 'vitest';
-import { ticketProgress, spellingProgress, groupCollection, rarityCounts, tileState, singleFlight, sparkleLayout, obtainedDate } from './gacha';
+import { ticketProgress, spellingProgress, groupCollection, rarityCounts, tileState, singleFlight, sparkleLayout, obtainedDate, specialTier, specialColor, RARITY_ORDER } from './gacha';
+import { metalColors } from '../styles/theme';
 
 describe('ticketProgress', () => {
   it('measures progress to the next ticket from the status', () => {
@@ -52,6 +53,43 @@ describe('collection', () => {
     expect(tileState(rows[1])).toBe('silhouette');
     expect(tileState(rows[3])).toBe('secret');
     expect(tileState(rows[4])).toBe('owned'); // an owned Secret shows normally
+  });
+});
+
+describe('Special Polyavatars', () => {
+  const special = [
+    { id: 10, series: 'Special', rarity: 'special', owned: true, slug: 'special-bronze', unlock_rank: 80 },
+    { id: 11, series: 'Special', rarity: 'special', owned: false, slug: null, unlock_rank: 90 },
+  ];
+
+  it('come last in the rarity order and get their own group', () => {
+    expect(RARITY_ORDER[RARITY_ORDER.length - 1]).toBe('special');
+    const groups = groupCollection([...rows, ...special]);
+    expect(groups.map((s) => s.series)).toEqual(['Series 1', 'Series 2', 'Special']);
+    expect(groups[2].groups.map((g) => g.rarity)).toEqual(['special']);
+  });
+
+  it('are counted (with their total) only when the collection has them', () => {
+    expect(rarityCounts(rows).map((r) => r.rarity)).not.toContain('special');
+    expect(rarityCounts([...rows, ...special]).at(-1)).toEqual({ rarity: 'special', owned: 1, total: 2 });
+  });
+
+  it('show a locked Special as its own tile state', () => {
+    expect(tileState(special[0])).toBe('owned');
+    expect(tileState(special[1])).toBe('special');
+  });
+
+  it('find the tier from the slug, else from the unlock rank', () => {
+    expect(specialTier(special[0])).toBe('bronze');
+    expect(specialTier(special[1])).toBe('silver');
+    expect(specialTier({ rarity: 'special', unlock_rank: 120 })).toBe('diamond');
+    expect(specialTier({ rarity: 'rare', slug: 'special-gold' })).toBeNull();
+    expect(specialColor({ rarity: 'special', slug: 'special-platinum' })).toBe(metalColors.platinum);
+    expect(specialColor({ rarity: 'normal' })).toBeNull();
+  });
+
+  it('sparkle like the other high rarities', () => {
+    expect(sparkleLayout('special').length).toBeGreaterThan(0);
   });
 });
 

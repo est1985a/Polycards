@@ -360,12 +360,16 @@ export default {
   "collection.viewLarge": "View {nameEn} large", // DRAFT
   "collection.viewerLabel": "Polyavatar", // DRAFT
   "collection.obtainedOn": ({ year, month, day } = {}) => `Unlocked: ${MONTHS[Number(month) - 1] ?? month} ${day}, ${year}`,
+  "collection.specialSeries": "Special", // DRAFT
+  "collection.specialIntro": "One every 10 Ranks from Rank 80", // DRAFT
+  "collection.specialHow": "Reach Rank {n} to unlock", // DRAFT
 
   // Rarity names
   "rarity.normal": "Normal",
   "rarity.rare": "Rare",
   "rarity.superRare": "Super Rare",
   "rarity.secret": "Secret",
+  "rarity.special": "Special", // DRAFT
 
   // Settings screen
   "settings.back": "Back",
@@ -408,6 +412,18 @@ export default {
   "themes.useNow": "Use it now",
   "themes.saving": "Saving…",
   "themes.later": "Later",
+  // Rank-up pop-up (RankUpSheet.jsx); DRAFT
+  "rankUp.title": "Rank Up!",
+  "rankUp.congrats": "Congratulations! Your Rank went up.",
+  "rankUp.newTheme": "You got a new theme!",
+  "rankUp.newThemeName": "Theme: {name}",
+  "rankUp.moreThemes": plural("You also got {n} more theme.", "You also got {n} more themes."),
+  "rankUp.newSpecial": "You got a Special Polyavatar!",
+  "rankUp.nextReward": plural("{n} more Rank to your next reward", "{n} more Ranks to your next reward"),
+  "rankUp.nextTheme": "Theme: {name} (Rank {rank})",
+  "rankUp.nextSpecial": "Special Polyavatar (Rank {rank})",
+  "rankUp.allDone": "You have every reward! Keep it up!",
+  "rankUp.saving": "Saving…",
 
   // "What is Polyvo?" pop-up
   "about.button": "What is Polyvo?",
@@ -439,6 +455,7 @@ export default {
   "about.exp.p2": "A higher Rank unlocks new themes (change them in Settings → Themes).",
   "about.tickets.heading": "Tickets and Polyavatars",
   "about.tickets.p1": "You get a gacha ticket every 100 reviews (up to 1 a day), every 150 spelling bonus EXP, and every 10 Ranks. Your teacher can give you tickets too. Spin the gacha and collect Polyavatars!",
+  "about.tickets.p2": "Special Polyavatars unlock every 10 ranks from Rank 80.", // DRAFT
   "about.training.heading": "Training",
   "about.training.p1": "Practice writing the alphabet in the Training tab.",
   "about.class.heading": "Class",

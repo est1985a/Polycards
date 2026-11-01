@@ -390,6 +390,33 @@ describe('seen theme unlocks (saved on the account)', () => {
   });
 });
 
+describe('rank-up pop-up (rank_rewards / mark_rank_seen)', () => {
+  it('reads the rank rewards and saves the seen rank through the database functions', async () => {
+    result = { data: { rank: 12, last_seen_rank: 11, specials: [{ id: 1, unlock_rank: 80 }] }, error: null };
+    expect(await api.fetchRankRewards()).toEqual({ rank: 12, last_seen_rank: 11, specials: [{ id: 1, unlock_rank: 80 }] });
+    result = { data: 12, error: null };
+    await api.markRankSeen(12);
+    expect(calls).toEqual([
+      ['rpc', 'rank_rewards', undefined],
+      ['rpc', 'mark_rank_seen', { p_rank: 12 }],
+    ]);
+  });
+
+  it('never throws: an error or missing data means no pop-up', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    result = { data: null, error: { message: 'function does not exist' } };
+    expect(await api.fetchRankRewards()).toBeNull();
+    await expect(api.markRankSeen(3)).resolves.toBeUndefined();
+    result = { data: { rank: 3 }, error: null };
+    expect(await api.fetchRankRewards()).toBeNull();
+    result = { data: { rank: 3, last_seen_rank: 2 }, error: null };
+    expect((await api.fetchRankRewards()).specials).toEqual([]);
+    warn.mockRestore();
+    err.mockRestore();
+  });
+});
+
 describe('training progress', () => {
   it('reads own rows from user_training_progress', async () => {
     result = { data: [{ practice_id: 'abc-upper-b', times_completed: 2 }], error: null };

@@ -1,7 +1,8 @@
 // Tests for the ポリアバター図鑑 (collection). Run with: npm test
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import GachaCollection, { CollectionTile } from './GachaCollection';
+import { setLang } from '../i18n';
 
 const owned = { id: 2, slug: 'shiba', rarity: 'normal', series: 'Series 1', owned: true, equipped: false, name_ja: '柴犬', name_en: 'Shiba Inu', image_url: null };
 const unowned = { id: 3, slug: null, rarity: 'rare', series: 'Series 1', owned: false, equipped: false, name_ja: null, name_en: null, image_url: null };
@@ -83,5 +84,35 @@ describe('worn Polyavatar in the summary panel', () => {
     const html = renderToStaticMarkup(<GachaCollection rows={[{ ...owned }]} onEquip={() => {}} onBack={() => {}} />);
     expect(html).not.toContain('大きく見る');
     expect(html).not.toContain('タップで大きく');
+  });
+});
+
+describe('Special Polyavatars in the collection', () => {
+  afterEach(() => setLang('ja'));
+  const lockedSpecial = { id: 50, slug: null, rarity: 'special', series: 'Special', owned: false, equipped: false, name_ja: null, name_en: null, image_url: null, unlock_rank: 80 };
+  const ownedSpecial = { id: 51, slug: 'special-silver', rarity: 'special', series: 'Special', owned: true, equipped: false, name_ja: 'ポリボ シルバー', name_en: 'Polyvo Silver', image_url: null, unlock_rank: 90 };
+
+  it('a locked Special: silhouette and the rank that gives it', () => {
+    const html = tile(lockedSpecial);
+    expect(html).toContain('data-tile="special"');
+    expect(html).toContain('filter:brightness(0)');
+    expect(html).toContain('ランク80になるとゲット！');
+    expect(html).not.toMatch(/^<button/);
+    setLang('en');
+    expect(tile(lockedSpecial)).toContain('Reach Rank 80 to unlock');
+  });
+
+  it('an owned Special works like any owned avatar (tap to wear it)', () => {
+    const html = tile(ownedSpecial);
+    expect(html).toContain('data-tile="owned"');
+    expect(html).toMatch(/^<button/);
+    expect(html).toContain('Polyvo Silver');
+  });
+
+  it('gets its own スペシャル section with the how-to line', () => {
+    const html = renderToStaticMarkup(<GachaCollection rows={[owned, lockedSpecial, ownedSpecial]} onEquip={() => {}} onBack={() => {}} />);
+    expect(html).toContain('ランク80から10ランクごとにゲット');
+    expect(html).toContain('>スペシャル</h3>');
+    expect(html).not.toContain('>Special</h3>');
   });
 });

@@ -233,6 +233,21 @@ p {
 @media (min-width: 900px) {
   .about-sheet { max-width: 680px; }
 }
+/* Rank-up pop-up (RankUpSheet.jsx): one column on phones; on landscape iPads the rank on the left
+   and what was unlocked on the right, so it fits without scrolling. */
+.rankup-sheet { max-height: 94vh; }
+.rankup-body { display: grid; gap: 16px; }
+.rankup-rank { font-size: 52px; }
+@media (min-width: 600px) {
+  .rankup-sheet { max-width: 460px; }
+}
+@media (min-width: 900px) {
+  .rankup-sheet.rankup-wide { max-width: 760px; }
+  .rankup-two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 24px; }
+}
+@media (max-height: 820px) {
+  .rankup-rank { font-size: 42px; }
+}
 /* もっと詳しく (AboutSheet.jsx): our own chevron instead of the browser's triangle. */
 .about-more > summary { list-style: none; }
 .about-more > summary::-webkit-details-marker { display: none; }

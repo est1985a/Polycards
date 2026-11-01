@@ -355,12 +355,16 @@ export default {
   "collection.viewLarge": "{nameJa} ({nameEn}) を大きく見る", // read aloud for the worn Polyavatar: tap to see it large
   "collection.viewerLabel": "ポリアバターを大きく見る", // read aloud for the large-view pop-up
   "collection.obtainedOn": "入手日：{year}年{month}月{day}日", // date the Polyavatar was obtained (Japan time); {month} is 1–12
+  "collection.specialSeries": "スペシャル", // heading of the Special Polyavatars section
+  "collection.specialIntro": "ランク80から10ランクごとにゲット", // next to the Special heading
+  "collection.specialHow": "ランク{n}になるとゲット！", // a Special not reached yet
 
   // Rarity names (gacha screen, result, collection)
   "rarity.normal": "ノーマル",
   "rarity.rare": "レア",
   "rarity.superRare": "スーパーレア",
   "rarity.secret": "シークレット",
+  "rarity.special": "スペシャル", // Special Polyavatars (Rank 80, 90 … 120; never from the gacha)
 
   // Settings screen (設定)
   "settings.back": "戻る",
@@ -402,6 +406,18 @@ export default {
   "themes.useNow": "今すぐ使う",
   "themes.saving": "保存中…",
   "themes.later": "あとで",
+  // Rank-up pop-up (RankUpSheet.jsx)
+  "rankUp.title": "ランクアップ！",
+  "rankUp.congrats": "おめでとう！ランクが上がりました",
+  "rankUp.newTheme": "新しいテーマをゲット！",
+  "rankUp.newThemeName": "テーマ「{name}」",
+  "rankUp.moreThemes": "ほかにも {n} つのテーマをゲット",
+  "rankUp.newSpecial": "スペシャルポリアバターをゲット！",
+  "rankUp.nextReward": "あと{n}ランクで次のごほうび",
+  "rankUp.nextTheme": "テーマ「{name}」（ランク{rank}）",
+  "rankUp.nextSpecial": "スペシャルポリアバター（ランク{rank}）",
+  "rankUp.allDone": "すべてのごほうびをゲットしました！これからも続けよう",
+  "rankUp.saving": "保存中…",
 
   // "What is Polyvo?" pop-up (button at the top of My Cards; also 使い方 in the account menu)
   "about.button": "Polyvoとは？",
@@ -435,6 +451,7 @@ export default {
   // gacha_setting('spelling_points_per_ticket') or the rank tickets change in Supabase.
   "about.tickets.heading": "ガチャ券とポリアバター",
   "about.tickets.p1": "ガチャ券は、100レビューごと（1日1枚まで）、スペルボーナス150 EXPごと、ランクが10上がるごとにもらえます。先生からもらえることもあります。ガチャを回して、ポリアバターを集めよう！",
+  "about.tickets.p2": "スペシャルポリアバターはランク80から10ランクごとにゲット", // DRAFT
   "about.training.heading": "トレーニング",
   "about.training.p1": "「トレーニング」タブで、アルファベットの書き方を練習できます。",
   "about.class.heading": "クラス",
