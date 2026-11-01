@@ -200,3 +200,11 @@ export function deckSource(path, textbooks, collections) {
   if (path?.screen === "collection") return findCollection(collections, path.collectionId)?.name ?? '';
   return '';
 }
+
+// The title of the Card Sets list screen a path points to (the unit for a textbook deck list,
+// the collection for a collection), used as the word list's back label ('' if unknown).
+export function pathTitle(path, textbooks, collections) {
+  if (path?.screen === "decks") return resolvePath(textbooks, path).unit?.name ?? '';
+  if (path?.screen === "collection") return findCollection(collections, path.collectionId)?.name ?? '';
+  return '';
+}

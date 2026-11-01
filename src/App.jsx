@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { supabase } from './lib/supabaseClient';
 import * as api from './lib/api';
 import { buildCards, buildReviewCards } from './lib/drill';
-import { loadSchoolLevel, saveSchoolLevel } from './lib/library';
+import { loadSchoolLevel, saveSchoolLevel, pathTitle } from './lib/library';
 import { packWords, packSummary } from './lib/packOpening';
 import { levelCounts, playerRank } from './lib/points';
 import { MASTERED, dueByDeck, sessionCardKeys, moreDueCount, nextSetRows } from './lib/srs';
@@ -1322,7 +1322,8 @@ function App() {
                 {view !== "study" && (
                   <div style={{ marginBottom: 14, textAlign: "left" }}>
                     <BackButton
-                      label={t(view === "wordList" && wordListFrom === "class" ? "common.backToClass" : "common.backToDashboard")}
+                      label={view === "wordList" && wordListFrom === "class" ? t("common.backToClass")
+                        : (view === "wordList" && pathTitle(cardSetsPath, libraryData, collectionsData)) || t("common.backToDashboard")}
                       onClick={() => setView("dashboard")}
                     />
                   </div>

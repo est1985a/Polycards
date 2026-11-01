@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   shapeLibrary, findTextbook, findUnit, parentPath, resolvePath, schoolLabel,
   levelOf, levelOptions, textbooksForLevel, pickLevel, loadSchoolLevel, saveSchoolLevel, isDeckAdded,
-  shapeCollections, findCollection, collectionParentPath, ownedCounts,
+  shapeCollections, findCollection, collectionParentPath, ownedCounts, pathTitle,
 } from './library';
 
 const ROWS = [
@@ -266,5 +266,21 @@ describe('ownedCounts (add button counts)', () => {
 
   it('knows when every word is owned', () => {
     expect(ownedCounts(cards, ['a', 'b', 'c'])).toEqual({ newCount: 0, ownedCount: 3, allOwned: true });
+  });
+});
+
+describe('pathTitle', () => {
+  const textbooks = shapeLibrary(ROWS);
+  const collections = [{ id: 'c1', name: 'EIKEN', parentId: null, children: [{ id: 'c2', name: 'Grade 3', parentId: 'c1', children: [], decks: [] }], decks: [] }];
+  it('names the unit of a textbook deck list', () => {
+    expect(pathTitle({ screen: 'decks', textbookId: 1, unitId: 10 }, textbooks, collections)).toBe('Lesson 5');
+  });
+  it('names the collection, nested ones included', () => {
+    expect(pathTitle({ screen: 'collection', collectionId: 'c2' }, textbooks, collections)).toBe('Grade 3');
+  });
+  it('is empty when unknown', () => {
+    expect(pathTitle({ screen: 'decks', textbookId: 9, unitId: 9 }, textbooks, collections)).toBe('');
+    expect(pathTitle({ screen: 'collection', collectionId: 'x' }, textbooks, null)).toBe('');
+    expect(pathTitle({ screen: 'hub' }, textbooks, collections)).toBe('');
   });
 });
