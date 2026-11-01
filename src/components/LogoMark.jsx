@@ -1,7 +1,7 @@
 import { colors, mix, tintLight, tintDark } from '../styles/theme';
 import { themes, themeVars } from '../themes';
 
-// Polycards logo: two low-poly landscape cards. Front card = accent, back card = danger.
+// Polyvo logo: two low-poly landscape cards. Front card = accent, back card = danger.
 // Always in Midnight colors (mint + pink), whatever the theme: Midnight's CSS variables are set on
 // the svg itself (like ThemePreview's box). 16 facets, light from the top left. Same picture as public/favicon.svg.
 const FACETS = [

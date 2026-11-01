@@ -220,7 +220,7 @@ p {
     border-radius: 20px;
     border-bottom: 2px solid var(--line) !important;
   }
-  /* "What is Polycards?" (AboutSheet.jsx) is a longer read, so its box is wider. */
+  /* "What is Polyvo?" (AboutSheet.jsx) is a longer read, so its box is wider. */
   .about-sheet { max-width: 560px; }
   /* Card reports (ReportHost.jsx): wide enough for the reasons in two columns, each on one line. */
   .report-sheet { max-width: 520px; }

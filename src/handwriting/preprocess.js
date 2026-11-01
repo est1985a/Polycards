@@ -1,4 +1,4 @@
-// Polycards handwriting: turn one letter box into the 28x28 input the model expects.
+// Polyvo handwriting: turn one letter box into the 28x28 input the model expects.
 // JavaScript port of preprocess_drawing() from the training notebook, checked against
 // the Python output in preprocess_test/expected.json.
 //

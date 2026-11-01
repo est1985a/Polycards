@@ -167,7 +167,7 @@ function App() {
   const [now, setNow] = useState(() => Date.now()); // for the "2時間後" wording; updated every minute
   const [planRows, setPlanRows] = useState(null); // review plan pop-up rows (null while loading)
   const [planOpen, setPlanOpen] = useState(false);
-  const [aboutOpen, setAboutOpen] = useState(false); // "What is Polycards?" pop-up: true, or "teacher" = opened at the 先生用ガイド
+  const [aboutOpen, setAboutOpen] = useState(false); // "What is Polyvo?" pop-up: true, or "teacher" = opened at the 先生用ガイド
   const [savingDeck, setSavingDeck] = useState(false);
   const [packResult, setPackResult] = useState(null); // pack opening after Add to My Cards (packSummary)
   const [packFromClass, setPackFromClass] = useState(false); // the pack was added from the クラス tab (課題)

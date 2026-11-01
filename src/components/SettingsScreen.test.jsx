@@ -148,7 +148,7 @@ describe('ThemePreview', () => {
 
   it('draws the mini app: header, rank, 8 level bars, card back and answer buttons', () => {
     expect(html).toContain('background:var(--backdrop), var(--bg)');
-    expect(html).toContain('Polycards');
+    expect(html).toMatch(/color:var\(--accentText\)[^>]*>Poly<\/span><span[^>]*color:var\(--text\)[^>]*>vo</);
     expect(html).toMatch(/ランク<\/span><span[^>]*color:var\(--accentText\)[^>]*>7</);
     for (let i = 0; i < 8; i++) expect(html).toContain(`background:var(--lv${i})`);
     expect(html).toContain('EN → JP');

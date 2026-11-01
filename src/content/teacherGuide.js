@@ -1,4 +1,4 @@
-// Layout of the 先生用ガイド / Teacher Guide, shown below the student part of the "What is Polycards?"
+// Layout of the 先生用ガイド / Teacher Guide, shown below the student part of the "What is Polyvo?"
 // pop-up (AboutSheet.jsx), only for teacher accounts. Every entry is an i18n key; the wording is in
 // src/i18n/ja.js (the teacherGuide.* keys). Same section shape as src/content/aboutPolycards.js, plus:
 //   steps: a numbered list (what to tap, in order)

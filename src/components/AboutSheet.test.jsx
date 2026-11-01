@@ -1,4 +1,4 @@
-// Tests for the "What is Polycards?" pop-up. Run with: npm test
+// Tests for the "What is Polyvo?" pop-up. Run with: npm test
 import { describe, it, expect, afterEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import AboutSheet from './AboutSheet';
@@ -27,8 +27,8 @@ describe('AboutSheet', () => {
 
   it('shows the title, subtitle, the intro and the nine numbered sections ①–⑨ in order', () => {
     const html = render();
-    expect(html).toContain('Polycardsとは？');
-    expect(html).toContain('ポリカードのしくみ');
+    expect(html).toContain('Polyvoとは？');
+    expect(html).toContain('ポリボのしくみ');
     expect(html).toContain('英単語をカードで覚えるアプリです');
     expect(ABOUT.sections).toHaveLength(9);
     const headings = ['パックを選ぶ', 'マイデッキで復習', '正直に答えよう', '答え方を選ぶ', 'EXPとランク', 'ガチャ券とポリアバター', 'トレーニング', 'クラス', '自分の記録'];
@@ -114,7 +114,7 @@ describe('AboutSheet', () => {
   it('is all English in English mode, teacher guide included', () => {
     setLang('en');
     const html = text(render({ isTeacher: true }));
-    expect(html).toContain('What is Polycards?');
+    expect(html).toContain('What is Polyvo?');
     expect(html).toContain('Teacher Guide');
     expect(html).toContain('Learn more');
     expect(html).not.toMatch(/[\u3040-\u30ff\u4e00-\u9fff]/);

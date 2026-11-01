@@ -25,6 +25,18 @@ const TRIANGLES = [
   ["320,90 390,115 390,230", mix(colors.surface2, colors.bg, 40)],
 ];
 
+// The app name: "Poly" in the theme's accentText + "vo" in its text color, so it reads on every theme
+// (mint + white in Midnight). The logo mark next to it stays in Midnight colors (LogoMark).
+// Also used by ThemePreview's mini header.
+export function Wordmark() {
+  return (
+    <span>
+      <span style={{ color: colors.accentText }}>Poly</span>
+      <span style={{ color: colors.text }}>vo</span>
+    </span>
+  );
+}
+
 // The logo is also the "home" button: it goes back to the My Cards dashboard.
 function Logo({ onHome }) {
   return (
@@ -39,7 +51,7 @@ function Logo({ onHome }) {
         }}
       >
         <LogoMark height={24} />
-        Polycards
+        <Wordmark />
       </button>
     </h1>
   );

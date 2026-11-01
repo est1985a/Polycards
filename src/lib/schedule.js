@@ -95,7 +95,7 @@ export function waitLabel(hours) {
   return t("time.waitMonths", { n: Math.round(days / 30) });
 }
 
-// The level ladder in the "What is Polycards?" pop-up: Lv1 to Lv7 and their waits, from LEVEL_HOURS
+// The level ladder in the "What is Polyvo?" pop-up: Lv1 to Lv7 and their waits, from LEVEL_HOURS
 // (Lv0 is a new card, so it isn't a step). Mastered comes after the last step.
 export function levelLadder() {
   return LEVEL_HOURS.slice(1).map((hours, i) => ({ level: i + 1, label: waitLabel(hours) }));

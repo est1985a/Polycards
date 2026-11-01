@@ -73,7 +73,7 @@ export function PosSheetBox({ highlight, onClose, closeRef = null, rowRef = null
 }
 
 // 品詞 pop-up: all 12 parts of speech, the tapped one highlighted and scrolled into view.
-// Same pattern and classes as the review plan / "What is Polycards?" pop-ups, but drawn into
+// Same pattern and classes as the review plan / "What is Polyvo?" pop-ups, but drawn into
 // <body> (a portal): the study card has a 3D transform, which would trap a fixed box inside it.
 // Closes with ×, Escape or a tap on the backdrop. Focus goes to × when it opens; PosChip puts it
 // back (to the chip, or to the typing box) when it closes.

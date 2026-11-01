@@ -409,11 +409,11 @@ export default {
   "themes.saving": "Saving…",
   "themes.later": "Later",
 
-  // "What is Polycards?" pop-up
-  "about.button": "What is Polycards?",
-  "about.buttonLabel": "What is Polycards?",
-  "about.title": "What is Polycards?",
-  "about.subtitle": "How Polycards works",
+  // "What is Polyvo?" pop-up
+  "about.button": "What is Polyvo?",
+  "about.buttonLabel": "What is Polyvo?",
+  "about.title": "What is Polyvo?",
+  "about.subtitle": "How Polyvo works",
   // DRAFT (Andre to check): every about.* key below except the ladder, forgetting and science ones.
   "about.intro.p1": "Learn English words with cards. Collect packs and build your own deck!",
   "about.packs.heading": "Choose packs",
@@ -453,7 +453,7 @@ export default {
   "about.forgetting.heading": "Forgetting is normal",
   "about.forgetting.p1": "If you do nothing, you forget most new words in a few days. This is called the \"forgetting curve,\" and it happens to everyone. But if you remember a word again when you are about to forget it, the memory stays much longer.",
   "about.science.heading": "The science",
-  "about.science.p1": "Polycards uses two ways of studying that research shows really work.",
+  "about.science.p1": "Polyvo uses two ways of studying that research shows really work.",
   "about.science.spaced": "Spaced repetition: Review a few times, with breaks in between. You remember better than when you study a lot at once.",
   "about.science.retrieval": "Retrieval practice: Try to remember the answer before you look. You remember more than when you only read.",
 
