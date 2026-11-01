@@ -183,7 +183,7 @@ export default {
   // Training tab (トレーニング)
   "training.title": "トレーニング",
   "training.abc.title": "ABCを書こう",
-  "training.abc.description": "アルファベットを書く練習", // DRAFT
+  "training.abc.description": "アルファベットを書く練習",
   "training.abc.pencil": "Apple Pencil で書こう", // DRAFT
   "training.abc.capitals": "大文字",
   "training.abc.small": "小文字",
