@@ -35,4 +35,10 @@ describe('AvatarViewerBox', () => {
   it('no date: no date line', () => {
     expect(box({ ...shiba, obtained_at: null })).not.toContain('入手日');
   });
+
+  it('marks Halloween 2026 Polyavatars with a small 2026 next to 入手日, and nothing on others', () => {
+    const html = box({ ...shiba, rarity: 'rare', series: 'Halloween 2026', slug: 'halloween-ghost', name_en: 'Ghost', name_ja: 'おばけ' });
+    expect(html).toMatch(/入手日：2026年10月27日[^]*data-event-mark[^]*aria-label="ハロウィン 2026 イベントのポリアバター"[^]*2026<\/span>/);
+    expect(box(shiba)).not.toContain('data-event-mark');
+  });
 });

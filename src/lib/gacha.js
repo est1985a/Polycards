@@ -1,5 +1,5 @@
 // Gacha helpers for the screens (pure functions, no database calls).
-import { colors, metalColors } from '../styles/theme';
+import { colors, metalColors, mix } from '../styles/theme';
 import { t } from '../i18n';
 import { jstDateKey } from './schedule';
 
@@ -80,20 +80,79 @@ export function spellingProgress(status) {
   return { toNext, per, fraction: Math.min(1, Math.max(0, (per - toNext) / per)) };
 }
 
-// Collection rows → [{ series, groups: [{ rarity, avatars }] }], keeping the order from the database.
+// Limited-time event sets: avatars.series → its i18n key (heading) and the small event mark
+// shown in the large viewer. The database decides when an event is on (gacha_status().event).
+export const EVENT_SERIES = {
+  'Halloween 2026': { key: 'halloween2026', mark: '2026' },
+};
+
+// The Halloween orange (gold mixed with danger: there is no orange theme role), for the pumpkin
+// and the borders of the event sign, the odds box and the event mark.
+export const pumpkinColor = mix(colors.gold, colors.danger, 72);
+
+// The event info of an avatar (or a series name), or null for ordinary series.
+export function eventSeries(avatarOrSeries) {
+  const series = typeof avatarOrSeries === 'string' ? avatarOrSeries : avatarOrSeries?.series;
+  return (series && EVENT_SERIES[series]) || null;
+}
+
+// The heading of a collection section: Special and event sets have translated names.
+export function seriesTitle(series) {
+  if (series === 'Special') return t('collection.specialSeries');
+  const ev = eventSeries(series);
+  return ev ? t(`collection.series.${ev.key}`) : series;
+}
+
+// True while the gacha event is on: the database says so and its end time hasn't passed
+// (so the sign also goes away on a screen left open past the end). now: ms.
+export function eventActive(status, now = Date.now()) {
+  const ev = status?.event;
+  if (!ev || ev.active !== true) return false;
+  const end = Date.parse(ev.ends_at);
+  return Number.isNaN(end) || now <= end;
+}
+
+// The last day of the event in Japan time, as { month (1–12), day }, or null.
+export function eventEndDate(status) {
+  const end = status?.event?.ends_at ? Date.parse(status.event.ends_at) : NaN;
+  if (Number.isNaN(end)) return null;
+  const [, month, day] = jstDateKey(end).split('-').map(Number);
+  return { month, day };
+}
+
+// The Halloween share in the odds (percent), 0 when there is no boost.
+export function eventShare(status) {
+  const n = Number(status?.event?.share ?? 0);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+// Series order in the collection: ordinary series first, then event sets, Special last.
+function seriesRank(series) {
+  if (series === 'Special') return 2;
+  return eventSeries(series) ? 1 : 0;
+}
+
+// Collection rows → [{ series, owned, total, groups: [{ rarity, avatars }] }], keeping the database
+// order inside each part. Rarities go ★ → Secret, except event sets: ★★★ / ★★ / ★ (best first).
 export function groupCollection(rows) {
   const series = [];
   for (const row of rows || []) {
     let s = series.find((x) => x.series === row.series);
-    if (!s) series.push((s = { series: row.series, groups: [] }));
+    if (!s) series.push((s = { series: row.series, owned: 0, total: 0, groups: [] }));
+    s.total += 1;
+    if (row.owned) s.owned += 1;
     let g = s.groups.find((x) => x.rarity === row.rarity);
     if (!g) s.groups.push((g = { rarity: row.rarity, avatars: [] }));
     g.avatars.push(row);
   }
   for (const s of series) {
-    s.groups.sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
+    const dir = eventSeries(s.series) ? -1 : 1;
+    s.groups.sort((a, b) => dir * (RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity)));
   }
-  return series;
+  return series
+    .map((s, i) => ({ s, i }))
+    .sort((a, b) => seriesRank(a.s.series) - seriesRank(b.s.series) || a.i - b.i)
+    .map(({ s }) => s);
 }
 
 // Owned / total per rarity. The Secret total is null (shown as "?") so students can't count them.

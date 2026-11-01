@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import GachaScreen, { GachaOdds, PullButton } from './GachaScreen';
 import GachaMachine from './GachaMachine';
 import { themes } from '../themes';
+import { setLang } from '../i18n';
 
 // The percentage shown in one rarity box.
 const boxText = (html, rarity) => html.match(new RegExp(`data-rarity="${rarity}"[^>]*>(.*?)</div></div>`))[1];
@@ -85,6 +86,49 @@ describe('GachaScreen', () => {
       expect(html).toContain('aria-valuemax="150" aria-valuenow="120"');
       expect(html).toContain('width:80%');
     }
+  });
+});
+
+describe('Halloween 2026 event', () => {
+  // Far-future end so the test never expires; the end date shown comes from ends_at.
+  const event = { series: 'Halloween 2026', ends_at: '2099-11-08T14:59:59+00:00', active: true, share: 50, owned: 1, total: 6 };
+  const base = {
+    tickets: 2, owned: 4, total: 61, reviews_per_ticket: 100, reviews_to_next_ticket: 40,
+    spelling_points_per_ticket: 150, spelling_to_next_ticket: 100,
+    odds: { normal: 69.3, rare: 25.1, super_rare: 5, secret: 0.5 },
+  };
+  const screen = (status, wide = false) => renderToStaticMarkup(<GachaScreen status={status} onPull={() => {}} onOpenCollection={() => {}} wide={wide} />);
+
+  it('shows the 期間限定 sign with the last day and the Halloween share while the event is on', () => {
+    for (const wide of [false, true]) {
+      const html = screen({ ...base, event }, wide);
+      expect(html).toContain('data-event-sign');
+      expect(html).toContain('期間限定');
+      expect(html).toContain('ハロウィンのポリアバターが11月8日までガチャに登場中！');
+      expect(html).toMatch(/data-event-odds[^]*ハロウィン 2026[^]*50%/);
+    }
+  });
+
+  it('shows no sign and no share once the event is over, or before the SQL is run', () => {
+    for (const status of [{ ...base, event: { ...event, active: false, share: 0 } }, { ...base, event: { ...event, ends_at: '2020-01-01T00:00:00Z' } }, base]) {
+      const html = screen(status);
+      expect(html).not.toContain('data-event-sign');
+      expect(html).not.toContain('data-event-odds');
+    }
+  });
+
+  it('hides the share box when the student already has the whole set (share 0)', () => {
+    const html = screen({ ...base, event: { ...event, share: 0, owned: 6 } });
+    expect(html).toContain('data-event-sign');
+    expect(html).not.toContain('data-event-odds');
+  });
+
+  it('has the English text too', () => {
+    setLang('en');
+    const html = screen({ ...base, event });
+    setLang('ja');
+    expect(html).toContain('Limited time');
+    expect(html).toContain('Halloween Polyavatars are in the gacha until Nov 8!');
   });
 });
 

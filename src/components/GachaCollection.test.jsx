@@ -116,3 +116,23 @@ describe('Special Polyavatars in the collection', () => {
     expect(html).not.toContain('>Special</h3>');
   });
 });
+
+describe('GachaCollection: Halloween 2026', () => {
+  const h = (id, rarity, isOwned) => ({
+    id, slug: isOwned ? `halloween-${id}` : null, rarity, series: 'Halloween 2026', owned: isOwned, equipped: false,
+    name_ja: isOwned ? 'おばけ' : null, name_en: isOwned ? 'Ghost' : null, image_url: `/avatars/halloween-${id}.svg`,
+  });
+  const halloween = [h(51, 'super_rare', false), h(52, 'rare', true), h(53, 'rare', false), h(54, 'normal', true), h(55, 'normal', false), h(56, 'normal', false)];
+
+  it('has its own section after Series 1 with a translated heading, N / 6, and ★★★ / ★★ / ★', () => {
+    const html = renderToStaticMarkup(<GachaCollection rows={[...halloween, owned, unowned]} onEquip={() => {}} onBack={() => {}} />);
+    expect(html.indexOf('Series 1')).toBeLessThan(html.indexOf('ハロウィン 2026'));
+    expect(html).toMatch(/ハロウィン 2026<\/h3><span data-series-count=""[^>]*>2 \/ 6</);
+    const section = html.slice(html.indexOf('ハロウィン 2026'));
+    expect(section.indexOf('★★★')).toBeLessThan(section.indexOf('★★<'));
+    expect(section.indexOf('★★<')).toBeLessThan(section.indexOf('★<'));
+    // Not owned yet: an ordinary silhouette (not the locked ??? tile)
+    expect(section).toContain('data-tile="silhouette"');
+    expect(section).not.toContain('???');
+  });
+});

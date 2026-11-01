@@ -20,7 +20,7 @@ describe('ja.js and en.js', () => {
   });
 
   // Date formatters are functions too, but have no {n}.
-  const DATE_KEYS = ['time.monthDay', 'stats.date', 'stats.monthTitle', 'collection.obtainedOn'];
+  const DATE_KEYS = ['time.monthDay', 'stats.date', 'stats.monthTitle', 'collection.obtainedOn', 'gacha.event.halloween'];
 
   it('English plural functions return text that still has {n} (the date is plain text)', () => {
     for (const [key, entry] of Object.entries(en)) {

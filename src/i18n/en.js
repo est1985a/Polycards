@@ -334,6 +334,10 @@ export default {
   "gacha.odds": "Chances",
   "gacha.percent": "{n}%",
   "gacha.noRepeats": "You never get the same Polyavatar twice. It's always a new one!",
+  "gacha.event.limited": "Limited time", // DRAFT
+  "gacha.event.halloween": ({ month, day } = {}) => `Halloween Polyavatars are in the gacha until ${MONTHS[Number(month) - 1] ?? month} ${day}!`, // DRAFT
+  "gacha.event.share": "Halloween 2026", // DRAFT
+  "gacha.event.shareNote": "Chance of a Halloween Polyavatar", // DRAFT
   "gacha.result": "Gacha result",
   "gacha.tapToSkip": "Tap to skip",
   "gacha.new": "NEW!",
@@ -363,6 +367,9 @@ export default {
   "collection.specialSeries": "Special", // DRAFT
   "collection.specialIntro": "One every 10 Ranks from Rank 80", // DRAFT
   "collection.specialHow": "Reach Rank {n} to unlock", // DRAFT
+  "collection.series.halloween2026": "Halloween 2026", // DRAFT
+  "collection.eventMark": "2026",
+  "collection.eventMarkLabel": "Halloween 2026 event Polyavatar", // DRAFT
 
   // Rarity names
   "rarity.normal": "Normal",

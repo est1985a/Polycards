@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { colors, fontBody } from '../styles/theme';
-import { rarityInfo, rarityGlow, obtainedDate } from '../lib/gacha';
+import { colors, fontBody, fontDisplay } from '../styles/theme';
+import { rarityInfo, rarityGlow, obtainedDate, eventSeries, pumpkinColor } from '../lib/gacha';
 import { shouldCloseSheet } from '../lib/sheet';
 import AvatarShowcase from './AvatarShowcase';
+import { PumpkinIcon } from './GachaIcons';
 import { t } from '../i18n';
 
 // The card itself (without the portal, so tests can render it as plain markup).
@@ -11,6 +12,7 @@ import { t } from '../i18n';
 export function AvatarViewerBox({ avatar, onClose, closeRef = null }) {
   const info = rarityInfo(avatar.rarity);
   const date = obtainedDate(avatar.obtained_at);
+  const event = eventSeries(avatar);
   return (
     <div
       className="gacha-reveal-in"
@@ -35,7 +37,27 @@ export function AvatarViewerBox({ avatar, onClose, closeRef = null }) {
         ×
       </button>
       <AvatarShowcase avatar={avatar} />
-      {date && <div style={{ fontSize: 14, color: colors.muted }}>{t("collection.obtainedOn", date)}</div>}
+      {(date || event) && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", gap: 8 }}>
+          {date && <span style={{ fontSize: 14, color: colors.muted }}>{t("collection.obtainedOn", date)}</span>}
+          {/* Event Polyavatars (Halloween 2026): a small mark with the event year. */}
+          {event && (
+            <span
+              data-event-mark=""
+              role="img"
+              aria-label={t("collection.eventMarkLabel")}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px 2px 4px", borderRadius: 10,
+                border: `2px solid ${pumpkinColor}`, background: colors.surface2,
+                fontFamily: fontDisplay, fontWeight: 700, fontSize: 13, color: colors.text,
+              }}
+            >
+              <PumpkinIcon size={16} />
+              {t("collection.eventMark")}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

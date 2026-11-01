@@ -1,3 +1,6 @@
+import { colors, mix } from '../styles/theme';
+import { pumpkinColor } from '../lib/gacha';
+
 // Small gacha icons, drawn with the current text color (currentColor).
 
 // Capsule: a pill split in two halves, the top half solid.
@@ -20,6 +23,23 @@ export function TicketIcon({ size = 22 }) {
         fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"
       />
       <path d="M15 8v8" stroke="currentColor" strokeWidth="2" strokeDasharray="2 2" />
+    </svg>
+  );
+}
+
+// Pumpkin for the Halloween event (sign, odds, event mark). Theme colors only: the body is
+// gold mixed with danger (there is no orange role), the stem and leaf accent.
+export function PumpkinIcon({ size = 22 }) {
+  const body = pumpkinColor;
+  const shade = mix(colors.gold, colors.danger, 50);
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 6.5c-1-1.8-1.2-3-.6-4.5l1.8.5c-.5 1.2-.3 2.3.3 3.6z" fill={colors.accent} />
+      <path d="M13.2 5.5c1.6-1.6 3.6-1.8 5-1-1.2 1.6-3 2.2-5 1.6z" fill={colors.accent} />
+      <ellipse cx="7.5" cy="14" rx="5.5" ry="7" fill={shade} />
+      <ellipse cx="16.5" cy="14" rx="5.5" ry="7" fill={shade} />
+      <ellipse cx="12" cy="14" rx="5" ry="7.5" fill={body} />
+      <path d="M8 12.5l1.6-2 1.6 2zM12.8 12.5l1.6-2 1.6 2zM8.5 16c1.5 1.4 5.5 1.4 7 0l-1.2 1.6-1.1-.8-1.2 1-1.2-1-1.1.8z" fill={colors.bg} />
     </svg>
   );
 }

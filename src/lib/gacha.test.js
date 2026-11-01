@@ -1,6 +1,7 @@
 // Tests for the gacha helpers. Run with: npm test
 import { describe, it, expect, vi } from 'vitest';
-import { ticketProgress, spellingProgress, groupCollection, rarityCounts, tileState, singleFlight, sparkleLayout, obtainedDate, specialTier, specialColor, RARITY_ORDER } from './gacha';
+import { ticketProgress, spellingProgress, groupCollection, rarityCounts, tileState, singleFlight, sparkleLayout, obtainedDate, specialTier, specialColor, RARITY_ORDER, eventSeries, eventActive, eventEndDate, eventShare, seriesTitle } from './gacha';
+import { setLang } from '../i18n';
 import { metalColors } from '../styles/theme';
 
 describe('ticketProgress', () => {
@@ -153,5 +154,60 @@ describe('obtainedDate (入手日, Japan time)', () => {
     expect(obtainedDate(null)).toBeNull();
     expect(obtainedDate(undefined)).toBeNull();
     expect(obtainedDate('not a date')).toBeNull();
+  });
+});
+
+describe('Halloween 2026 event', () => {
+  const halloween = [
+    { id: 20, series: 'Halloween 2026', rarity: 'normal', owned: true },
+    { id: 21, series: 'Halloween 2026', rarity: 'rare', owned: false },
+    { id: 22, series: 'Halloween 2026', rarity: 'super_rare', owned: false },
+    { id: 23, series: 'Halloween 2026', rarity: 'normal', owned: false },
+  ];
+  const special = [{ id: 10, series: 'Special', rarity: 'special', owned: false, unlock_rank: 80 }];
+  const ends = '2026-11-08T14:59:59+00:00'; // 2026-11-08 23:59:59 Japan time
+
+  it('is its own section after the ordinary series and before Special, best rarity first', () => {
+    // The database sorts series by name, so Halloween comes first there.
+    const groups = groupCollection([...halloween, ...rows, ...special]);
+    expect(groups.map((s) => s.series)).toEqual(['Series 1', 'Series 2', 'Halloween 2026', 'Special']);
+    expect(groups[2].groups.map((g) => g.rarity)).toEqual(['super_rare', 'rare', 'normal']);
+    expect(groups[2].groups[2].avatars.map((a) => a.id)).toEqual([20, 23]);
+    expect(groups[2]).toMatchObject({ owned: 1, total: 4 });
+    expect(groups[0].groups.map((g) => g.rarity)).toEqual(['normal', 'rare', 'secret']);
+  });
+
+  it('knows which avatars belong to an event', () => {
+    expect(eventSeries(halloween[0])).toEqual({ key: 'halloween2026', mark: '2026' });
+    expect(eventSeries('Halloween 2026')?.key).toBe('halloween2026');
+    expect(eventSeries(rows[0])).toBeNull();
+    expect(eventSeries(null)).toBeNull();
+  });
+
+  it('translates the section headings', () => {
+    setLang('ja');
+    expect(seriesTitle('Halloween 2026')).toBe('ハロウィン 2026');
+    expect(seriesTitle('Special')).toBe('スペシャル');
+    expect(seriesTitle('Series 1')).toBe('Series 1');
+    setLang('en');
+    expect(seriesTitle('Halloween 2026')).toBe('Halloween 2026');
+    setLang('ja');
+  });
+
+  it('is on only while the database says so and the end time has not passed', () => {
+    const status = { event: { active: true, ends_at: ends, share: 50 } };
+    expect(eventActive(status, Date.parse('2026-11-08T14:00:00Z'))).toBe(true);
+    expect(eventActive(status, Date.parse('2026-11-08T15:00:00Z'))).toBe(false);
+    expect(eventActive({ event: { ...status.event, active: false } }, Date.parse('2026-11-02T00:00:00Z'))).toBe(false);
+    expect(eventActive({})).toBe(false);
+    expect(eventActive(null)).toBe(false);
+  });
+
+  it('gives the last day in Japan time and the Halloween share', () => {
+    expect(eventEndDate({ event: { ends_at: ends } })).toEqual({ month: 11, day: 8 });
+    expect(eventEndDate({})).toBeNull();
+    expect(eventShare({ event: { share: 50 } })).toBe(50);
+    expect(eventShare({ event: { share: 0 } })).toBe(0);
+    expect(eventShare({})).toBe(0);
   });
 });

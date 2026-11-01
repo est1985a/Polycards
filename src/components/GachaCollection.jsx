@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { colors, fontDisplay, panel } from '../styles/theme';
 import BackButton from './BackButton';
-import { rarityInfo, rarityGlow, groupCollection, rarityCounts, tileState, specialColor } from '../lib/gacha';
+import { rarityInfo, rarityGlow, groupCollection, rarityCounts, tileState, specialColor, seriesTitle, eventSeries } from '../lib/gacha';
 import AvatarPicture from './AvatarPicture';
 import AvatarViewer from './AvatarViewer';
 import { t } from '../i18n';
@@ -166,7 +166,15 @@ export default function GachaCollection({ rows, equippingId, onEquip, onBack, fr
     <div style={{ display: "grid", gap: 20, textAlign: "left" }}>
       {groupCollection(rows).map((s) => (
         <section key={s.series} style={{ display: "grid", gap: 12 }}>
-          <h3 style={{ margin: 0, fontSize: 18 }}>{s.series === "Special" ? t("collection.specialSeries") : s.series}</h3>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12 }}>
+            <h3 style={{ margin: 0, fontSize: 18 }}>{seriesTitle(s.series)}</h3>
+            {/* Event sets show how many of the set the student has (e.g. 2 / 6). */}
+            {eventSeries(s.series) && (
+              <span data-series-count="" style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 16, color: colors.gold }}>
+                {s.owned} / {s.total}
+              </span>
+            )}
+          </div>
           {s.groups.map((g) => {
               const r = rarityInfo(g.rarity);
               return (

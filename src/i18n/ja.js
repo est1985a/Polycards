@@ -329,6 +329,10 @@ export default {
   "gacha.odds": "出る確率", // heading of the chance boxes
   "gacha.percent": "{n}%",
   "gacha.noRepeats": "同じポリアバターは出ません。毎回新しいポリアバター！",
+  "gacha.event.limited": "期間限定", // pill on the event sign by the gacha machine
+  "gacha.event.halloween": "ハロウィンのポリアバターが{month}月{day}日までガチャに登場中！", // event sign; {month} is 1–12, the last day (Japan time)
+  "gacha.event.share": "ハロウィン 2026", // odds box: chance the Polyavatar comes from the Halloween set
+  "gacha.event.shareNote": "ハロウィンのポリアバターが出る確率", // under that box
   "gacha.result": "ガチャの結果", // read aloud for the result pop-up
   "gacha.tapToSkip": "タップでスキップ", // under the capsule animation
   "gacha.new": "NEW!",
@@ -358,6 +362,9 @@ export default {
   "collection.specialSeries": "スペシャル", // heading of the Special Polyavatars section
   "collection.specialIntro": "ランク80から10ランクごとにゲット", // next to the Special heading
   "collection.specialHow": "ランク{n}になるとゲット！", // a Special not reached yet
+  "collection.series.halloween2026": "ハロウィン 2026", // heading of the Halloween 2026 event section
+  "collection.eventMark": "2026", // small event mark next to 入手日 in the large view (Halloween 2026)
+  "collection.eventMarkLabel": "ハロウィン 2026 イベントのポリアバター", // read aloud for that mark
 
   // Rarity names (gacha screen, result, collection)
   "rarity.normal": "ノーマル",
