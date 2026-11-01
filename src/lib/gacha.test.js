@@ -88,8 +88,8 @@ describe('Special Polyavatars', () => {
     expect(specialColor({ rarity: 'normal' })).toBeNull();
   });
 
-  it('sparkle like the other high rarities', () => {
-    expect(sparkleLayout('special').length).toBeGreaterThan(0);
+  it('get no app sparkles (their art has its own)', () => {
+    expect(sparkleLayout('special')).toEqual([]);
   });
 });
 

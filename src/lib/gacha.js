@@ -57,7 +57,9 @@ export const SPARKLES = {
   rare: [[8, 14, 0.16, 0], [90, 30, 0.12, 0.6], [78, 88, 0.13, 1.2]],
   super_rare: [[6, 10, 0.22, 0], [92, 16, 0.16, 0.5], [96, 64, 0.2, 1.0], [4, 70, 0.14, 1.4], [60, -4, 0.12, 0.8]],
   secret: [[4, 8, 0.22, 0], [94, 10, 0.18, 0.4], [98, 58, 0.22, 0.8], [2, 62, 0.16, 1.2], [54, -6, 0.14, 0.3], [70, 98, 0.14, 1.0]],
-  special: [[6, 10, 0.2, 0], [94, 14, 0.16, 0.5], [96, 66, 0.2, 1.0], [4, 70, 0.14, 1.4], [58, -4, 0.12, 0.8]],
+  // Specials get no app sparkles: their art has its own (Gold, Diamond), so stars on top would clash.
+  // AvatarPicture gives them a soft glow in their metal color instead.
+  special: [],
 };
 
 export function sparkleLayout(rarity) {

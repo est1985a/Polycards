@@ -56,3 +56,20 @@ describe('AvatarPicture sparkles', () => {
     expect(html({ avatar: null })).not.toContain('rarity-');
   });
 });
+
+describe('Special Polyavatars', () => {
+  const gold = { slug: 'special-gold', name_en: 'Polyvo Gold', rarity: 'special', unlock_rank: 100, image_url: '/avatars/special-gold.svg' };
+
+  it('show their own art with no app sparkles, only a soft glow', () => {
+    const s = html({ avatar: gold });
+    expect(s).toContain('src="/avatars/special-gold.svg"');
+    expect(s).not.toContain('rarity-sparkle');
+    expect(s).toContain('data-special-glow');
+  });
+
+  it('a locked one is a silhouette of its art, with no glow', () => {
+    const s = html({ avatar: { ...gold, slug: null, name_en: null }, silhouette: true });
+    expect(s).toContain('filter:brightness(0)');
+    expect(s).not.toContain('data-special-glow');
+  });
+});

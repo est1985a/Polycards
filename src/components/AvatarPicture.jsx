@@ -19,7 +19,7 @@ const BLOB = [
 
 // 4-point star for the rarity sparkles (viewBox 0 0 20 20).
 const STAR = "M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z";
-const GLOW = { super_rare: "rarity-glow-super", secret: "rarity-glow-secret", special: "rarity-glow-super" };
+const GLOW = { super_rare: "rarity-glow-super", secret: "rarity-glow-secret" };
 
 // Placeholder for a Special Polyavatar with no picture yet: a low-poly plate in its metal
 // (bronze, silver, gold, platinum, diamond), lit from the top left, with the Polyvo logo on it.
@@ -105,12 +105,19 @@ export default function AvatarPicture({ avatar, size = 80, silhouette = false, s
   const rarity = avatar?.rarity;
   const stars = silhouette || !sparkles ? [] : sparkleLayout(rarity);
   const glow = stars.length > 0 ? GLOW[rarity] : null;
-  const color = specialColor(avatar) || rarityInfo(rarity).color;
+  const metal = specialColor(avatar);
+  // A Special: no stars (its art has its own), only a soft still glow in its metal color.
+  const metalGlow = metal && !silhouette && sparkles
+    ? `radial-gradient(circle, color-mix(in srgb, ${metal} 30%, transparent) 0%, transparent 68%)` : null;
+  const color = metal || rarityInfo(rarity).color;
 
   return (
     <span style={{ position: "relative", display: "block", width: size, height: size, flexShrink: 0 }}>
       {glow && (
         <span aria-hidden="true" className={glow} style={{ position: "absolute", inset: "-8%", borderRadius: "50%", pointerEvents: "none" }} />
+      )}
+      {metalGlow && (
+        <span aria-hidden="true" data-special-glow="" style={{ position: "absolute", inset: "-8%", borderRadius: "50%", pointerEvents: "none", background: metalGlow }} />
       )}
       <Picture avatar={avatar} size={size} silhouette={silhouette} label={label ?? undefined} />
       {stars.map(([x, y, f, delay]) => (
