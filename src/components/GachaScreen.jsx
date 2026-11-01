@@ -43,7 +43,7 @@ export function GachaOdds({ odds = {}, eventPct = 0 }) {
               background: colors.surface2, border: `2px solid ${pumpkinColor}`, borderRadius: 14, padding: "10px 12px",
             }}
           >
-            <PumpkinIcon size={30} />
+            <PumpkinIcon size={32} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, color: colors.text }}>{t("gacha.event.share")}</div>
               <div style={{ fontSize: 12, color: colors.muted }}>{t("gacha.event.shareNote")}</div>
@@ -68,7 +68,7 @@ export function EventSign({ status }) {
         background: colors.surface2, border: `2px solid ${pumpkinColor}`, borderRadius: 16, padding: "10px 14px",
       }}
     >
-      <PumpkinIcon size={40} />
+      <PumpkinIcon size={32} />
       <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
         <span
           style={{

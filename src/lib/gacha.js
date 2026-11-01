@@ -1,5 +1,6 @@
 // Gacha helpers for the screens (pure functions, no database calls).
 import { colors, metalColors, mix } from '../styles/theme';
+import { themes } from '../themes';
 import { t } from '../i18n';
 import { jstDateKey } from './schedule';
 
@@ -86,9 +87,9 @@ export const EVENT_SERIES = {
   'Halloween 2026': { key: 'halloween2026', mark: '2026' },
 };
 
-// The Halloween orange (gold mixed with danger: there is no orange theme role), for the pumpkin
-// and the borders of the event sign, the odds box and the event mark.
-export const pumpkinColor = mix(colors.gold, colors.danger, 72);
+// The Halloween orange: Midnight's gold mixed with its danger (there is no orange theme role), the
+// same in every theme. Used for the pumpkin and the borders of the event sign, odds box and mark.
+export const pumpkinColor = mix(themes.midnight.colors.gold, themes.midnight.colors.danger, 72);
 
 // The event info of an avatar (or a series name), or null for ordinary series.
 export function eventSeries(avatarOrSeries) {

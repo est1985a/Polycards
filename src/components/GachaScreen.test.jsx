@@ -3,6 +3,8 @@ import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import GachaScreen, { GachaOdds, PullButton } from './GachaScreen';
 import GachaMachine from './GachaMachine';
+import { PumpkinIcon } from './GachaIcons';
+import { pumpkinColor } from '../lib/gacha';
 import { themes } from '../themes';
 import { setLang } from '../i18n';
 
@@ -129,6 +131,17 @@ describe('Halloween 2026 event', () => {
     setLang('ja');
     expect(html).toContain('Limited time');
     expect(html).toContain('Halloween Polyavatars are in the gacha until Nov 8!');
+  });
+});
+
+describe('PumpkinIcon', () => {
+  it('is always drawn in Midnight colors, never squashed, and both pumpkins are the same size', () => {
+    const html = renderToStaticMarkup(<PumpkinIcon size={32} />);
+    expect(html).toContain(`--gold:${themes.midnight.colors.gold}`);
+    expect(html).toContain(`--danger:${themes.midnight.colors.danger}`);
+    expect(html).toContain('flex-shrink:0');
+    expect(pumpkinColor).toContain(themes.midnight.colors.gold);
+    expect(pumpkinColor).not.toContain('var(');
   });
 });
 

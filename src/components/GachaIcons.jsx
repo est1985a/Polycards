@@ -1,4 +1,5 @@
 import { colors, mix } from '../styles/theme';
+import { themes, themeVars } from '../themes';
 import { pumpkinColor } from '../lib/gacha';
 
 // Small gacha icons, drawn with the current text color (currentColor).
@@ -27,13 +28,14 @@ export function TicketIcon({ size = 22 }) {
   );
 }
 
-// Pumpkin for the Halloween event (sign, odds, event mark). Theme colors only: the body is
-// gold mixed with danger (there is no orange role), the stem and leaf accent.
+// Pumpkin for the Halloween event (sign, odds, event mark). Always in Midnight colors, whatever
+// the theme (like LogoMark): the body is Midnight's gold mixed with its danger (there is no orange
+// role), the stem and leaf its accent. flexShrink 0 so a flex row never squashes it.
 export function PumpkinIcon({ size = 22 }) {
   const body = pumpkinColor;
   const shade = mix(colors.gold, colors.danger, 50);
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{ ...themeVars(themes.midnight), flexShrink: 0 }}>
       <path d="M12 6.5c-1-1.8-1.2-3-.6-4.5l1.8.5c-.5 1.2-.3 2.3.3 3.6z" fill={colors.accent} />
       <path d="M13.2 5.5c1.6-1.6 3.6-1.8 5-1-1.2 1.6-3 2.2-5 1.6z" fill={colors.accent} />
       <ellipse cx="7.5" cy="14" rx="5.5" ry="7" fill={shade} />
