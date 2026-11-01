@@ -181,12 +181,12 @@ describe('Halloween 2026 event', () => {
   const special = [{ id: 10, series: 'Special', rarity: 'special', owned: false, unlock_rank: 80 }];
   const ends = '2026-11-08T14:59:59+00:00'; // 2026-11-08 23:59:59 Japan time
 
-  it('is its own section after the ordinary series and before Special, best rarity first', () => {
+  it('is its own section after the ordinary series and before Special, ★ first like the other series', () => {
     // The database sorts series by name, so Halloween comes first there.
     const groups = groupCollection([...halloween, ...rows, ...special]);
     expect(groups.map((s) => s.series)).toEqual(['Series 1', 'Series 2', 'Halloween 2026', 'Special']);
-    expect(groups[2].groups.map((g) => g.rarity)).toEqual(['super_rare', 'rare', 'normal']);
-    expect(groups[2].groups[2].avatars.map((a) => a.id)).toEqual([20, 23]);
+    expect(groups[2].groups.map((g) => g.rarity)).toEqual(['normal', 'rare', 'super_rare']);
+    expect(groups[2].groups[0].avatars.map((a) => a.id)).toEqual([20, 23]);
     expect(groups[2]).toMatchObject({ owned: 1, total: 4 });
     expect(groups[0].groups.map((g) => g.rarity)).toEqual(['normal', 'rare', 'secret']);
   });

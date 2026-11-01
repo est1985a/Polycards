@@ -166,7 +166,7 @@ export function collectionTotals(rows) {
 }
 
 // Collection rows → [{ series, owned, total, groups: [{ rarity, avatars }] }], keeping the database
-// order inside each part. Rarities go ★ → Secret, except event sets: ★★★ / ★★ / ★ (best first).
+// order inside each part. Rarities go ★ → Secret in every series (event sets too).
 // Missing Secrets become one ??? per series (collectionRows) and don't count in the series total.
 export function groupCollection(rows) {
   const series = [];
@@ -180,8 +180,7 @@ export function groupCollection(rows) {
     g.avatars.push(row);
   }
   for (const s of series) {
-    const dir = eventSeries(s.series) ? -1 : 1;
-    s.groups.sort((a, b) => dir * (RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity)));
+    s.groups.sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
   }
   return series
     .map((s, i) => ({ s, i }))
