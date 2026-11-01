@@ -376,7 +376,7 @@ $$;
 
 -- ---------------------------------------------------------------------
 -- 5. Rank now includes spelling bonus points
---    rank = floor(sqrt((peak points + bonus points) / 20)) + 1
+--    rank = floor(sqrt((peak points + bonus points) / 10)) + 1
 --    (keep in step with playerRank() in src/lib/points.js)
 -- ---------------------------------------------------------------------
 -- Rank curve changed to / 10 on 2026-11-01 (see polycards-rank-curve-10.sql)
