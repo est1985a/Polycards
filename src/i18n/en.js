@@ -189,7 +189,7 @@ export default {
   // Training tab. "Training" and "Write the ABCs" are Andre's; the rest are DRAFTS for Andre to check.
   "training.title": "Training",
   "training.abc.title": "Write the ABCs",
-  "training.abc.description": "Practice writing letters on the four lines",
+  "training.abc.description": "Practice writing the alphabet",
   "training.abc.pencil": "Write with your Apple Pencil",
   "training.abc.capitals": "Capital letters",
   "training.abc.small": "Small letters",
