@@ -361,16 +361,21 @@ Roughly in order. Ask me before starting any of these.
 
 ### Launch and hosting (after the November 2026 pilot, all done together)
 - Pilot: a few teachers and two JHS classes from 2026-11-04, signing in with school Google accounts (@ryukokurg.ed.jp). Students are placed in classes by the pre-filled roster (名簿を貼り付け); join codes are the backup.
-- Google sign-in stays in **Testing** for the pilot (decided 2026-10-31). The OAuth client is "Polycards Web client" (836079428828-…) in the Polycards Google Cloud project, the same ID as in Supabase → Auth → Google. It has no test users, yet Google accounts, students included, sign in normally, apparently because Polyvo only asks for name and email. Branding page: app name Polycards, support and developer email est1985a@gmail.com, authorized domain erhudovlvqynpkmtgsef.supabase.co (needed for sign-in: never remove it), no logo, no links. Publish app stays greyed out until the branding page has a home page and a privacy policy link.
-- Custom domain (e.g. polycards.com), in one go:
-  1. Buy the domain and add it to the Vercel project; the vercel.app address keeps working.
-  2. Supabase → Authentication → URL Configuration: new Site URL and redirect URLs.
+- Google sign-in stays in **Testing** for the pilot (decided 2026-10-31). The OAuth client is "Polycards Web client" (836079428828-…) in the Polycards Google Cloud project, the same ID as in Supabase → Auth → Google. It has no test users, yet Google accounts, students included, sign in normally, apparently because Polyvo only asks for name and email. Branding page: app name Polyvo, support and developer email est1985a@gmail.com, home page https://www.polyvocards.com, authorized domains erhudovlvqynpkmtgsef.supabase.co (needed for sign-in: never remove it) and polyvocards.com (added 2026-11-01), no logo, no privacy policy link yet. Publish app stays greyed out until the branding page also has a privacy policy link. Supabase → Authentication → URL Configuration: Site URL https://www.polyvocards.com, with https://www.polyvocards.com/** added to Redirect URLs (the vercel.app entries kept).
+- Custom domain (polyvocards.com):
+  1. **Done:** buy the domain and add it to the Vercel project; the vercel.app address keeps working.
+  2. **Done (2026-11-01):** Supabase → Authentication → URL Configuration: new Site URL and redirect URLs (see above).
   3. A privacy policy page in the app (/privacy, Japanese and English): what Polyvo stores (Google name and email, the real name and 出席番号 teachers enter, study records), who can see it, how to ask for deletion.
   4. Google branding page: home page, privacy policy link, the new domain under authorized domains (Google may ask to verify it in Search Console), then Audience → Publish app.
   5. Optional: logo (the favicon as a 120×120 PNG) and brand verification, so the sign-in screen shows Polyvo instead of the Supabase address. Uploading a logo starts verification, and branding can't change while it's pending.
-  6. Update the QR code and address on the student はじめかた sheet and the teacher quick-start.
+  6. Update the QR code and address on the student はじめかた sheet (**done**, new QR code) and the teacher quick-start (still to do).
   - The Google screen will still mention erhudovlvqynpkmtgsef.supabase.co unless Supabase's custom domain add-on (paid plan) is added.
 - Before rolling out beyond the pilot:
   - Get the school's approval: Polyvo stores students' real names, 出席番号 and school emails.
-  - `user_cards` still allows direct client writes (a student could raise their own EXP / rank; the weekly ranking is safe because it counts server-recorded reviews). Move card writes into server functions and revoke direct UPDATE.
+  - `user_cards` direct writes can no longer raise a level or set `mastered_at` (trigger `user_cards_guard_level`), and peak points are computed by the database only (`supabase/polycards-server-peak-points.sql`), so EXP / rank can't be inflated. What a student can still do directly: lower their own levels (rank never drops) or change their own `next_review_at`, which at most earns the 1 review ticket a day; the weekly ranking counts `record_answer` reviews only. Moving all card writes into server functions is optional hardening, not a blocker.
   - Supabase free plan: a project pauses after about a week with no activity (risk over winter break), and the database limit is 500 MB (21 MB on 2026-10-31; answer_log is about 0.5 KB per answer).
+- Pilot status (2026-11-01):
+  - Rollout clean-up SQL done and checked live: an old test class archived, EXECUTE on `rls_auto_enable()` revoked, `user_stats_keep_peak()` has `search_path = ''`.
+  - "Test Class 1" stays active on purpose: Aiden's and Amaya's test accounts are in it.
+  - Supabase security advisor (2026-11-01): only expected findings ("RLS enabled, no policy" on function-only tables; SECURITY DEFINER RPCs callable by signed-in users, which check the caller themselves).
+  - To do on 2026-11-02: add the pilot teachers (each signs in once with their school Google account, then Andre runs the insert into `teachers` with `display_name`).
