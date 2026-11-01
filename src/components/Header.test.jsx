@@ -11,7 +11,8 @@ describe('Header', () => {
       const html = renderToStaticMarkup(<Header variant={variant} user={null} onHome={() => {}} />);
       expect(html).toMatch(/<h1[^>]*><button[^>]*aria-label="マイデッキ"/);
       expect(html).toContain('min-height:44px');
-      expect(html).toContain('Polycards');
+      expect(html).toMatch(/color:var\(--accentText\)[^>]*>Poly<\/span><span[^>]*color:var\(--text\)[^>]*>vo</);
+      expect(html).not.toContain('Polycards');
     }
   });
 

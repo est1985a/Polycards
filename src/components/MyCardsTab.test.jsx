@@ -139,19 +139,19 @@ describe('answer mode switch タップ / タイピング / 手書き', () => {
   });
 });
 
-describe('What is Polycards? button', () => {
+describe('What is Polyvo? button', () => {
   it('is a pill with an accent outline, accent-colored text and an aria-label', () => {
     const html = renderToStaticMarkup(<AboutButton onOpen={() => {}} />);
-    expect(html).toContain('aria-label="Polycardsとは？"');
+    expect(html).toContain('aria-label="Polyvoとは？"');
     expect(html).toContain('aria-haspopup="dialog"');
     expect(html).toContain('border:2px solid var(--accent)');
     expect(html).toContain('color:var(--accentText)');
-    expect(html).toContain('Polycardsとは？</button>');
+    expect(html).toContain('Polyvoとは？</button>');
   });
 
   it('sits on the My Cards dashboard', () => {
     const html = renderToStaticMarkup(<MyCardsTab decks={[]} dueRows={[]} stats={null} onReview={() => {}} />);
-    expect(html).toContain('Polycardsとは？');
+    expect(html).toContain('Polyvoとは？');
   });
 });
 

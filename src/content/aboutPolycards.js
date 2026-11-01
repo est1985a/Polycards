@@ -1,4 +1,4 @@
-// Layout of the "What is Polycards?" pop-up (AboutSheet.jsx). Every entry here is an i18n key;
+// Layout of the "What is Polyvo?" pop-up (AboutSheet.jsx). Every entry here is an i18n key;
 // the wording itself is in src/i18n/ja.js (the about.* keys). The layout stays the same.
 //
 // Each section can have:
@@ -72,7 +72,7 @@ export const ABOUT = {
     heading: 'about.tips.heading',
     list: ['about.tips.1', 'about.tips.2', 'about.tips.3'],
   },
-  // Closed by default (a <details>): the forgetting curve and the research behind Polycards.
+  // Closed by default (a <details>): the forgetting curve and the research behind Polyvo.
   more: {
     summary: 'about.more.summary',
     sections: [

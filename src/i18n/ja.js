@@ -14,7 +14,7 @@ export default {
   "common.backToDashboard": "マイデッキにもどる", // back button above the Mastered list, the word list and the review
 
   // Header at the top of every screen: logo button and gacha button (read aloud only)
-  "header.home": "マイデッキ", // the Polycards logo, which goes back to My Cards
+  "header.home": "マイデッキ", // the Polyvo logo, which goes back to My Cards
   "header.gacha": "ガチャ",
   "header.gachaTickets": "ガチャ (券 {n}枚)", // gacha button when the student has {n} tickets
 
@@ -25,7 +25,7 @@ export default {
   "menu.stats": "学習の記録", // opens the stats page
   "menu.joinClass": "クラスに参加", // opens the join-a-class pop-up
   "menu.settings": "設定",
-  "menu.help": "使い方", // opens the "What is Polycards?" pop-up
+  "menu.help": "使い方", // opens the "What is Polyvo?" pop-up
   "menu.signOut": "ログアウト",
   "menu.signOutConfirm": "ログアウトしますか？",
 
@@ -403,11 +403,11 @@ export default {
   "themes.saving": "保存中…",
   "themes.later": "あとで",
 
-  // "What is Polycards?" pop-up (button at the top of My Cards; also 使い方 in the account menu)
-  "about.button": "Polycardsとは？",
-  "about.buttonLabel": "Polycardsとは？", // read aloud for the button
-  "about.title": "Polycardsとは？",
-  "about.subtitle": "ポリカードのしくみ",
+  // "What is Polyvo?" pop-up (button at the top of My Cards; also 使い方 in the account menu)
+  "about.button": "Polyvoとは？",
+  "about.buttonLabel": "Polyvoとは？", // read aloud for the button
+  "about.title": "Polyvoとは？",
+  "about.subtitle": "ポリボのしくみ",
   "about.intro.p1": "英単語をカードで覚えるアプリです。パックを集めて、自分だけのデッキを育てよう！",
   "about.packs.heading": "パックを選ぶ",
   "about.packs.p1": "「単語パック」タブで単語のパックを選びます。教科書パックは教科書の単元ごと、セレクトパックはテーマや目的別の単語です。",
@@ -449,7 +449,7 @@ export default {
   "about.forgetting.heading": "忘れるのはふつうのこと",
   "about.forgetting.p1": "新しく覚えた単語は、何もしないと数日でほとんど忘れてしまいます。これは「忘却曲線」と言って、だれにでも起こることです。でも、忘れそうになったときにもう一度思い出すと、記憶は前よりずっと長く残ります。",
   "about.science.heading": "研究でわかっていること",
-  "about.science.p1": "Polycardsは、研究で効果が確かめられている2つの方法を使っています。",
+  "about.science.p1": "Polyvoは、研究で効果が確かめられている2つの方法を使っています。",
   "about.science.spaced": "時間をあけて復習する（Spaced repetition）：時間をあけて何回か復習する。一度にたくさんやるより、よく覚えられます。",
   "about.science.retrieval": "思い出す練習（Retrieval practice）：答えを見る前に、頭の中で思い出す。ただ読むだけより、記憶に残ります。",
 

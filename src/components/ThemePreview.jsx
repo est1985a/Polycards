@@ -1,6 +1,7 @@
 import { colors, fontDisplay, fontBody } from '../styles/theme';
 import { themeVars } from '../themes';
 import LogoMark from './LogoMark';
+import { Wordmark } from './Header';
 import { t } from '../i18n';
 
 // A tiny live copy of the app in one theme (settings tiles and the unlock pop-up).
@@ -22,7 +23,7 @@ function MiniHeader() {
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: `${u(3.5)} ${u(4)} 0` }}>
       <span style={{ display: "flex", alignItems: "center", gap: u(1.6), fontFamily: fontDisplay, fontWeight: 700, fontSize: u(5), color: colors.text }}>
         <LogoMark style={{ width: u(6), height: u(5.2) }} />
-        Polycards
+        <Wordmark />
       </span>
       <span
         style={{

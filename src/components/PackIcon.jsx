@@ -28,7 +28,7 @@ function Emblem({ kind }) {
     );
   }
   if (kind === "logo") {
-    // The Polycards logo on a dark plate. The plate and the logo are always in Midnight colors
+    // The Polyvo logo on a dark plate. The plate and the logo are always in Midnight colors
     // (Midnight's variables are set on the group, like LogoMark does on its own svg), so the
     // mint / pink logo stands out on the gold pack in every theme.
     return (

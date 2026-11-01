@@ -123,7 +123,7 @@ function More({ sessionSize }) {
   );
 }
 
-// "What is Polycards?" pop-up: how the app works, for students, plus the 先生用ガイド for teachers.
+// "What is Polyvo?" pop-up: how the app works, for students, plus the 先生用ガイド for teachers.
 // Layout in src/content/aboutPolycards.js and teacherGuide.js, wording in src/i18n/ja.js (about.*, teacherGuide.*).
 // Same layout as the review plan pop-up (classes in src/index.css), a little wider on big screens.
 // Focus moves to × when it opens and goes back to the button that opened it when it closes.

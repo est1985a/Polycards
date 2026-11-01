@@ -105,7 +105,7 @@ export function AnswerModeSwitch({ mode = "off", onChange, handwritingEnabled = 
   );
 }
 
-// Small pill at the top right of My Cards: opens the "What is Polycards?" pop-up (AboutSheet).
+// Small pill at the top right of My Cards: opens the "What is Polyvo?" pop-up (AboutSheet).
 // Also the 先生用ガイド pill on the teacher class list (labelKey / ariaKey = its i18n keys).
 export function AboutButton({ onOpen, labelKey = "about.button", ariaKey = "about.buttonLabel" }) {
   return (
