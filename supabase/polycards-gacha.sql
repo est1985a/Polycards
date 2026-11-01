@@ -106,6 +106,7 @@ $$;
 -- ---------------------------------------------------------------------
 
 -- Player level from the student's saved peak points (same formula as src/lib/points.js).
+-- Rank curve changed to / 10 on 2026-11-01 (see polycards-rank-curve-10.sql)
 create or replace function public.gacha_player_level(p_user uuid)
 returns int
 language sql stable
@@ -114,7 +115,7 @@ set search_path = ''
 as $$
   select floor(sqrt(coalesce(
            (select s.peak_points from public.user_stats s where s.user_id = p_user), 0
-         ) / 20.0))::int + 1
+         ) / 10.0))::int + 1
 $$;
 
 -- Tickets the student can use right now.
