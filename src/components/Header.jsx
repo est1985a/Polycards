@@ -62,6 +62,10 @@ const menuItem = {
   textAlign: "left", fontFamily: fontBody, fontSize: 16, fontWeight: 700, color: colors.text, cursor: "pointer",
 };
 
+// ログアウト / キャンセル buttons. nowrap: the menu is only as wide as its narrowest layout (it hangs off the
+// 44 px account button), so without it ログアウト broke after ウ and キャンセル after セ.
+const confirmBtn = { flex: 1, minHeight: 44, padding: "0 12px", whiteSpace: "nowrap" };
+
 // The menu under the account button: name and rank, 学習の記録, 設定, 使い方, then ログアウト (asks first,
 // inside the menu). confirming: the ログアウトしますか？ step is showing.
 export function AccountMenu({ user, rank = null, confirming = false, onStats, onJoinClass, onSettings, onHelp, onAskSignOut, onSignOut, onCancelSignOut }) {
@@ -88,8 +92,8 @@ export function AccountMenu({ user, rank = null, confirming = false, onStats, on
         <div role="alertdialog" aria-label={t("menu.signOutConfirm")} style={{ display: "grid", gap: 8, padding: "4px 4px 4px" }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: colors.text, padding: "0 8px" }}>{t("menu.signOutConfirm")}</div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={onSignOut} style={{ ...btnDanger, flex: 1, minHeight: 44, padding: "0 12px" }}>{t("menu.signOut")}</button>
-            <button onClick={onCancelSignOut} style={{ ...btnGhost, flex: 1, minHeight: 44, padding: "0 12px" }}>{t("common.cancel")}</button>
+            <button onClick={onSignOut} style={{ ...btnDanger, ...confirmBtn }}>{t("menu.signOut")}</button>
+            <button onClick={onCancelSignOut} style={{ ...btnGhost, ...confirmBtn }}>{t("common.cancel")}</button>
           </div>
         </div>
       ) : (
