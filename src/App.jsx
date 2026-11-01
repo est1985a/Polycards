@@ -542,7 +542,10 @@ function App() {
   }
 
   // Due cards, plus the next review after now (for the 次の復習 line when nothing is due).
+  // Waits for answers still saving first: the last answer of a review that just ended is sent as the
+  // review closes, and counting before it lands showed that card as still due (復習を始める 1枚 → alert).
   async function loadDueRows() {
+    await api.waitForPendingSaves();
     const [due, next] = await Promise.allSettled([api.fetchDueRows(), api.fetchNextReview()]);
     setNow(Date.now());
     if (due.status === "fulfilled") setDueRows(due.value); else console.error(due.reason);
@@ -896,6 +899,7 @@ function App() {
       const rows = await api.fetchReviewRows(deck?.id, sessionSize);
       if (rows.length === 0) {
         alert(t("myCards.nothingDueAlert"));
+        loadDueRows(); // the count was out of date (e.g. reviewed on another device): fix the button
       } else {
         beginSession(reviewSet(deck, rows));
       }
