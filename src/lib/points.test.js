@@ -4,7 +4,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { CARD_POINTS, MASTERED } from './srs';
-import { cardPoints, totalPoints, levelCounts, playerRank, pointsForRank } from './points';
+import { cardPoints, totalPoints, levelCounts, playerRank, pointsForRank, RANK_DIVISOR } from './points';
 
 describe('points per card', () => {
   it('uses the agreed values for levels 0 to 7 and Mastered', () => {
@@ -53,23 +53,37 @@ describe('cards per level', () => {
 });
 
 describe('rank', () => {
+  it('uses the divisor 10 (same as gacha_player_level() in the database)', () => {
+    expect(RANK_DIVISOR).toBe(10);
+  });
+
   it('starts at rank 1', () => {
     expect(playerRank(0)).toBe(1);
-    expect(playerRank(19)).toBe(1);
+    expect(playerRank(9)).toBe(1);
   });
 
-  it('goes up at 20, 80, 180 points ...', () => {
-    expect(playerRank(20)).toBe(2);
-    expect(playerRank(79)).toBe(2);
-    expect(playerRank(80)).toBe(3);
-    expect(playerRank(180)).toBe(4);
+  it('goes up at 10, 40, 90 points ...', () => {
+    expect(playerRank(10)).toBe(2);
+    expect(playerRank(39)).toBe(2);
+    expect(playerRank(40)).toBe(3);
+    expect(playerRank(90)).toBe(4);
   });
 
-  it('matches the approved example table', () => {
-    expect(playerRank(120)).toBe(3);    // 20 words at level 3
-    expect(playerRank(1000)).toBe(8);   // 100 words at level 4
-    expect(playerRank(4200)).toBe(15);  // 100 words at level 7
-    expect(playerRank(21000)).toBe(33); // 500 words at level 7
+  it('matches the fixed checks', () => {
+    expect(playerRank(0)).toBe(1);
+    expect(playerRank(10)).toBe(2);
+    expect(playerRank(1000)).toBe(11);
+    expect(playerRank(47610)).toBe(70);
+    expect(playerRank(47609)).toBe(69);
+  });
+});
+
+describe('rank curve SQL', () => {
+  it('gacha_player_level() in the SQL record uses RANK_DIVISOR', () => {
+    const sql = readFileSync(join(import.meta.dirname, '../../supabase/polycards-rank-curve-10.sql'), 'utf8');
+    const match = sql.match(/\)\s*\/\s*([\d.]+)\)\)::int \+ 1/);
+    expect(match).not.toBeNull();
+    expect(Number(match[1])).toBe(RANK_DIVISOR);
   });
 });
 
@@ -87,13 +101,14 @@ describe('server peak points', () => {
 describe('points needed for a rank', () => {
   it('matches the agreed steps', () => {
     expect(pointsForRank(1)).toBe(0);
-    expect(pointsForRank(2)).toBe(20);
-    expect(pointsForRank(3)).toBe(80);
-    expect(pointsForRank(9)).toBe(1280);
+    expect(pointsForRank(2)).toBe(10);
+    expect(pointsForRank(3)).toBe(40);
+    expect(pointsForRank(9)).toBe(640);
+    expect(pointsForRank(70)).toBe(47610);
   });
 
   it('is exactly where playerRank goes up', () => {
-    for (let n = 1; n <= 20; n++) {
+    for (let n = 1; n <= 100; n++) {
       expect(playerRank(pointsForRank(n))).toBe(n);
       if (n > 1) expect(playerRank(pointsForRank(n) - 1)).toBe(n - 1);
     }

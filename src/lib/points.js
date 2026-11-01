@@ -25,15 +25,17 @@ export function levelCounts(levels) {
 }
 
 // Rank from rank points = peak points + spelling bonus points (typing mode, user_study_totals).
-// Change this formula to make ranks go up faster or slower, and change gacha_player_level() in
-// supabase/polycards-answers.sql to match.
-// Rank 2 at 20 points, 3 at 80, 4 at 180, 5 at 320 ... (points needed = 20 × (rank − 1)²).
+// The only place the rank curve lives in the app. It must match gacha_player_level() in the database
+// (supabase/polycards-rank-curve-10.sql, live since 2026-11-01; it was 20 before).
+export const RANK_DIVISOR = 10;
+
+// Rank 2 at 10 points, 3 at 40, 4 at 90, 5 at 160 ... (points needed = RANK_DIVISOR × (rank − 1)²).
 export function playerRank(rankPoints) {
-  return Math.floor(Math.sqrt(rankPoints / 20)) + 1;
+  return Math.floor(Math.sqrt(rankPoints / RANK_DIVISOR)) + 1;
 }
 
-// Rank points (peak + spelling bonus) needed to reach a rank (the reverse of playerRank): 20 × (rank − 1)².
-// Used for the "points to the next rank" bar. Keep in step with playerRank above.
+// Rank points (peak + spelling bonus) needed to reach a rank (the reverse of playerRank):
+// RANK_DIVISOR × (rank − 1)². Used for the "points to the next rank" bar.
 export function pointsForRank(rank) {
-  return 20 * (rank - 1) ** 2;
+  return RANK_DIVISOR * (rank - 1) ** 2;
 }

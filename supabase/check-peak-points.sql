@@ -38,8 +38,8 @@ people as (
 compared as (
   select p.*,
          greatest(coalesce(p.saved_peak, 0), p.card_total) as new_peak,
-         floor(sqrt((coalesce(p.saved_peak, 0) + p.bonus) / 20.0))::int + 1 as rank_now,
-         floor(sqrt((greatest(coalesce(p.saved_peak, 0), p.card_total) + p.bonus) / 20.0))::int + 1 as rank_after
+         floor(sqrt((coalesce(p.saved_peak, 0) + p.bonus) / 10.0))::int + 1 as rank_now,
+         floor(sqrt((greatest(coalesce(p.saved_peak, 0), p.card_total) + p.bonus) / 10.0))::int + 1 as rank_after
   from people p
 )
 select coalesce(u.raw_user_meta_data->>'username', u.email, c.user_id::text) as account,
