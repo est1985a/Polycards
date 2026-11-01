@@ -3,27 +3,27 @@ import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import PlayerStats from './PlayerStats';
 
-const stats = { playerRank: 3, peakPoints: 100, levelCounts: [] };
+const stats = { playerRank: 4, peakPoints: 100, levelCounts: [] };
 
 describe('PlayerStats', () => {
   it('calls the player level "Rank", so it is not confused with card levels', () => {
     const html = renderToStaticMarkup(<PlayerStats stats={stats} />);
     expect(html).toContain('ランク');
-    expect(html).toContain('>Rank 3<');
+    expect(html).toContain('>Rank 4<');
     expect(html).not.toContain('プレイヤーレベル');
     expect(html).not.toContain('Lv ');
   });
 
   it('shows the points still needed for the next rank', () => {
     const html = renderToStaticMarkup(<PlayerStats stats={stats} />);
-    // Rank 4 starts at 180 peak points: 180 − 100 = 80.
-    expect(html).toMatch(/80 EXP → Rank 4</);
+    // 100 EXP is Rank 4 (90–159); Rank 5 starts at 10 × 4² = 160: 160 − 100 = 60.
+    expect(html).toMatch(/60 EXP → Rank 5</);
   });
 
   it('counts the spelling bonus toward the next rank and shows it', () => {
-    // 100 peak + 30 bonus = 130 → still Rank 2 in the bar; Rank 3 needs 80, Rank 4 needs 180: 180 − 130 = 50.
+    // 100 peak + 30 bonus = 130, still Rank 4; Rank 5 needs 160: 160 − 130 = 30.
     const html = renderToStaticMarkup(<PlayerStats stats={{ ...stats, bonusPoints: 30 }} />);
-    expect(html).toMatch(/50 EXP → Rank 4</);
+    expect(html).toMatch(/30 EXP → Rank 5</);
     expect(html).toContain('スペルボーナス 30 EXP');
   });
 
