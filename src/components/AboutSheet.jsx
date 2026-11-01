@@ -4,7 +4,7 @@ import { levelLadder } from '../lib/schedule';
 import { shouldCloseSheet } from '../lib/sheet';
 import { showTrainingTab } from '../lib/training';
 import { HANDWRITING_ENABLED } from '../handwriting/config';
-import { ABOUT } from '../content/aboutPolycards';
+import { ABOUT, CEFRJ_CITATION } from '../content/aboutPolycards';
 import { TEACHER_GUIDE } from '../content/teacherGuide';
 import { DEFAULT_SESSION_SIZE } from '../lib/srs';
 import { t } from '../i18n';
@@ -106,6 +106,17 @@ function Sections({ guide, sessionSize }) {
   );
 }
 
+// Word list credit (CEFR-J): the very last thing in the pop-up, small and muted.
+// The label follows the language; the citation itself is always the same English text.
+function Credits() {
+  return (
+    <footer style={{ borderTop: `2px solid ${colors.line}`, paddingTop: 12, display: "grid", gap: 2 }}>
+      <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: colors.muted }}>{t("about.wordListSource")}</p>
+      <p lang="en" style={{ margin: 0, fontSize: 12, lineHeight: 1.5, color: colors.muted }}>{CEFRJ_CITATION}</p>
+    </footer>
+  );
+}
+
 // もっと詳しく / Learn more: closed by default.
 function More({ sessionSize }) {
   return (
@@ -198,6 +209,7 @@ export default function AboutSheet({ onClose, sessionSize = DEFAULT_SESSION_SIZE
               <Sections guide={TEACHER_GUIDE} sessionSize={sessionSize} />
             </section>
           )}
+          <Credits />
         </div>
       </div>
     </div>

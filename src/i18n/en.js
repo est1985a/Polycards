@@ -414,6 +414,7 @@ export default {
   "about.buttonLabel": "What is Polyvo?",
   "about.title": "What is Polyvo?",
   "about.subtitle": "How Polyvo works",
+  "about.wordListSource": "Word list source", // label above the CEFR-J citation at the bottom of the pop-up
   // DRAFT (Andre to check): every about.* key below except the ladder, forgetting and science ones.
   "about.intro.p1": "Learn English words with cards. Collect packs and build your own deck!",
   "about.packs.heading": "Choose packs",

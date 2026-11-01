@@ -2,7 +2,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import AboutSheet from './AboutSheet';
-import { ABOUT } from '../content/aboutPolycards';
+import { ABOUT, CEFRJ_CITATION } from '../content/aboutPolycards';
 import { TEACHER_GUIDE } from '../content/teacherGuide';
 import { setLang } from '../i18n';
 import { levelLadder } from '../lib/schedule';
@@ -129,6 +129,39 @@ describe('AboutSheet', () => {
       expect(html).not.toContain('My Cards');
       expect(html).not.toMatch(/\bpt\b/);
       expect(html).not.toMatch(/(?<!Poly)avatar/i);
+    });
+  });
+
+  describe('CEFR-J word list credit', () => {
+    const citation = 'The CEFR-J Wordlist Version 1.5. Compiled by Yukio Tono, Tokyo University of Foreign Studies.';
+
+    it('is the exact required citation, with no Japanese', () => {
+      expect(CEFRJ_CITATION).toBe(citation);
+    });
+
+    it('shows the Japanese label and the English citation at the very bottom, after the teacher guide', () => {
+      const html = render({ isTeacher: true });
+      expect(html).toContain('単語リストの出典');
+      expect(html).toContain(citation);
+      const at = html.indexOf(citation);
+      expect(at).toBeGreaterThan(html.indexOf('もっと詳しく'));
+      expect(at).toBeGreaterThan(html.indexOf('id="teacher-guide"'));
+      expect(text(html.slice(at + citation.length)).trim()).toBe('');
+    });
+
+    it('is also last without the teacher guide', () => {
+      const html = render();
+      const at = html.indexOf(citation);
+      expect(at).toBeGreaterThan(html.indexOf('もっと詳しく'));
+      expect(text(html.slice(at + citation.length)).trim()).toBe('');
+    });
+
+    it('uses the English label and the same citation in English mode', () => {
+      setLang('en');
+      const html = render({ isTeacher: true });
+      expect(html).toContain('Word list source');
+      expect(html).not.toContain('単語リストの出典');
+      expect(html).toContain(citation);
     });
   });
 });

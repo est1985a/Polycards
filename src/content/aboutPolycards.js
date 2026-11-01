@@ -81,3 +81,8 @@ export const ABOUT = {
     ],
   },
 };
+
+// Credit line for the CEFR-J Wordlist (used by the Core packs; its terms require a citation).
+// Shown at the very bottom of the pop-up in both languages; never translated, so it is not an i18n key.
+// Keep it while the Core packs use the CEFR-J Wordlist. The label above it is about.wordListSource.
+export const CEFRJ_CITATION = 'The CEFR-J Wordlist Version 1.5. Compiled by Yukio Tono, Tokyo University of Foreign Studies.';

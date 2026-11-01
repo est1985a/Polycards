@@ -408,6 +408,7 @@ export default {
   "about.buttonLabel": "Polyvoとは？", // read aloud for the button
   "about.title": "Polyvoとは？",
   "about.subtitle": "ポリボのしくみ",
+  "about.wordListSource": "単語リストの出典", // label above the CEFR-J citation at the bottom of the pop-up
   "about.intro.p1": "英単語をカードで覚えるアプリです。パックを集めて、自分だけのデッキを育てよう！",
   "about.packs.heading": "パックを選ぶ",
   "about.packs.p1": "「単語パック」タブで単語のパックを選びます。教科書パックは教科書の単元ごと、セレクトパックはテーマや目的別の単語です。",
