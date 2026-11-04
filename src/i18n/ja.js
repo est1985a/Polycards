@@ -191,6 +191,18 @@ export default {
   "training.abc.doneAria": "{letter}（できた）", // read aloud for a completed letter
   "training.prev": "前の文字",
   "training.next": "次の文字",
+  // ABC ticket rewards (supabase/polycards-training-rewards.sql): one for A–Z, one for a–z
+  "training.reward.locked": "26文字ぜんぶできたら ガチャ券1枚！",
+  "training.reward.ready": "26文字ぜんぶできた！",
+  "training.reward.claim": "ガチャ券をもらう",
+  "training.reward.claiming": "もらっています…",
+  "training.reward.claimed": "ガチャ券ゲット済み！",
+  "training.reward.justGot": "+1 ガチャ券！",
+  "training.reward.toGacha": "ガチャへ",
+  "training.reward.pill": "ガチャ券×{n}", // Training menu: tickets still to win
+  "training.reward.pillDone": "ゲット済み",
+  "training.reward.pillAria": "ガチャ券があと{n}枚もらえます",
+  "training.reward.pillDoneAria": "ガチャ券はぜんぶゲット済みです",
   "practice.hint.shape": "お手本をよく見て、もう一度書いてみよう",
   "practice.hint.ascender": "{letter} のたて線は、いちばん上の線までのばそう",
   "practice.hint.tail": "下の線までのばそう",
@@ -461,6 +473,7 @@ export default {
   "about.tickets.p2": "スペシャルポリアバターはランク80から10ランクごとにゲット", // DRAFT
   "about.training.heading": "トレーニング",
   "about.training.p1": "「トレーニング」タブで、アルファベットの書き方を練習できます。",
+  "about.training.p2": "大文字・小文字をそれぞれ26文字ぜんぶ書けたら、ガチャ券が1枚ずつもらえます。",
   "about.class.heading": "クラス",
   "about.class.p1": "メニューの「クラスに参加」で、先生から聞いた参加コードを入力すると、先生のクラスに入れます。",
   "about.class.p2": "「クラス」タブで、今週のクラスランキング（ニックネームで表示、月曜日にリセット）や、先生からの課題が見られます。",
@@ -882,6 +895,8 @@ export default {
 
   // Error messages (pop-ups and red text)
   "errors.saveFailed": "保存できませんでした", // a review answer couldn't be saved
+  "errors.trainingRewardNotComplete": "まだ26文字ぜんぶ保存されていません。少し待ってからもう一度おしてね",
+  "errors.trainingRewardFailed": "ガチャ券をもらえませんでした。もう一度おしてね",
   "errors.reportLimit": "今日はもう報告できません。また明日お願いします！", // DRAFT: 20 reports a day
   "errors.reportFailed": "報告を送れませんでした。もう一度ためしてください", // DRAFT
   "errors.reportOpenFailed": "報告の画面を開けませんでした。もう一度ためしてください", // DRAFT: the sheet's code couldn't download

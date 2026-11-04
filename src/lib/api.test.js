@@ -1096,3 +1096,36 @@ describe('word details columns (phase 3)', () => {
     expect(calls.filter((c) => c[0] === 'select').map((c) => c[1])).toContainEqual('id, example_en, example_ja, audio_path');
   });
 });
+
+describe('training rewards', () => {
+  it('reads the claimed ids from training_rewards as a Set', async () => {
+    result = { data: [{ reward_id: 'abc-upper' }], error: null };
+    const rewards = await api.fetchTrainingRewards();
+    expect([...rewards]).toEqual(['abc-upper']);
+    expect(calls).toEqual([['from', 'training_rewards'], ['select', 'reward_id']]);
+  });
+
+  it('null (never throws) when the table can\'t be read, so the reward stays hidden', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    result = { data: null, error: { message: 'relation "training_rewards" does not exist' } };
+    expect(await api.fetchTrainingRewards()).toBeNull();
+    err.mockRestore();
+  });
+
+  it('claims only through claim_training_reward', async () => {
+    result = { data: { claimed: true, already: false }, error: null };
+    expect(await api.claimTrainingReward('abc-lower')).toEqual({ claimed: true, already: false });
+    expect(calls).toEqual([['rpc', 'claim_training_reward', { p_reward_id: 'abc-lower' }]]);
+    result = { data: { claimed: true, already: true }, error: null };
+    expect((await api.claimTrainingReward('abc-lower')).already).toBe(true);
+  });
+
+  it('throws with .code and a friendly message', async () => {
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    result = { data: null, error: { message: 'not_complete' } };
+    await expect(api.claimTrainingReward('abc-upper')).rejects.toMatchObject({ code: 'not_complete' });
+    result = { data: null, error: { message: 'network down' } };
+    await expect(api.claimTrainingReward('abc-upper')).rejects.toMatchObject({ code: null });
+    err.mockRestore();
+  });
+});

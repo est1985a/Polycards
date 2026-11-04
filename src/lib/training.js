@@ -59,3 +59,41 @@ export function trainingParent(path) {
   if (path.screen === "letter") return { ...path, screen: "abc", letter: null };
   return { ...TRAINING_START, lowercase: path.lowercase };
 }
+
+// Gacha ticket rewards (supabase/polycards-training-rewards.sql): one for all 26 capitals,
+// one for all 26 small letters, each claimed once with claim_training_reward().
+export const ABC_REWARD_IDS = ["abc-upper", "abc-lower"];
+
+export function abcRewardId(lowercase) {
+  return lowercase ? "abc-lower" : "abc-upper";
+}
+
+// The reward of one case: 'hidden' (rewards unknown, e.g. the SQL isn't run yet), 'claimed',
+// 'ready' (all 26 letters done, not claimed yet) or 'locked'.
+// done: completed letters (a Set like { "B", "b" }); rewards: a Set of claimed ids, or null.
+export function abcRewardState(done, lowercase, rewards) {
+  if (!rewards) return "hidden";
+  if (rewards.has(abcRewardId(lowercase))) return "claimed";
+  return alphabet(lowercase).every((l) => done.has(l)) ? "ready" : "locked";
+}
+
+// How many ABC tickets are still to win (for the menu pill), or null when rewards are unknown.
+export function abcRewardsLeft(rewards) {
+  if (!rewards) return null;
+  return ABC_REWARD_IDS.filter((id) => !rewards.has(id)).length;
+}
+
+// The order of ガチャ券をもらう (App's claimAbcReward): wait for letter saves still sending, claim
+// (only this step's error reaches the screen), mark it claimed at once (also when it was claimed
+// before), then refresh the gacha status on its own: a failed refresh is only logged.
+export async function claimRewardSteps(rewardId, { pending = [], claim, markClaimed, refresh, log = console.error }) {
+  await Promise.all(pending);
+  const result = await claim(rewardId);
+  markClaimed(rewardId);
+  try {
+    await refresh();
+  } catch (e) {
+    log(e);
+  }
+  return result;
+}

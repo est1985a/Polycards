@@ -197,6 +197,18 @@ export default {
   "training.abc.doneAria": "{letter} (done)",
   "training.prev": "Previous letter",
   "training.next": "Next letter",
+  // ABC ticket rewards: all English below is a DRAFT (Andre to check)
+  "training.reward.locked": "Finish all 26 letters to win 1 gacha ticket!",
+  "training.reward.ready": "You finished all 26 letters!",
+  "training.reward.claim": "Get your gacha ticket",
+  "training.reward.claiming": "Getting it…",
+  "training.reward.claimed": "Gacha ticket won!",
+  "training.reward.justGot": "+1 gacha ticket!",
+  "training.reward.toGacha": "Go to the gacha",
+  "training.reward.pill": "Gacha ticket ×{n}",
+  "training.reward.pillDone": "Won",
+  "training.reward.pillAria": plural("{n} gacha ticket left to win", "{n} gacha tickets left to win"),
+  "training.reward.pillDoneAria": "You won all the gacha tickets here",
   "practice.hint.shape": "Look at the example and try again.",
   "practice.hint.ascender": "Make the tall line of {letter} reach the top line.",
   "practice.hint.tail": "Make the tail reach the bottom line.",
@@ -465,6 +477,7 @@ export default {
   "about.tickets.p2": "Special Polyavatars unlock every 10 ranks from Rank 80.", // DRAFT
   "about.training.heading": "Training",
   "about.training.p1": "Practice writing the alphabet in the Training tab.",
+  "about.training.p2": "Write all 26 capital letters and all 26 small letters, and you get 1 gacha ticket for each.", // DRAFT
   "about.class.heading": "Class",
   "about.class.p1": "To join your teacher's class, open the menu, tap \"Join a class,\" and enter the join code from your teacher.",
   "about.class.p2": "In the Class tab, you can see this week's class ranking (with nicknames, reset every Monday) and assignments from your teacher.",
@@ -886,6 +899,8 @@ export default {
 
   // Error messages
   "errors.saveFailed": "Couldn't save",
+  "errors.trainingRewardNotComplete": "Not all 26 letters are saved yet. Wait a moment and try again.", // DRAFT
+  "errors.trainingRewardFailed": "Couldn't get the gacha ticket. Please try again.", // DRAFT
   "errors.reportLimit": "You can't send more reports today. Please try again tomorrow!", // DRAFT
   "errors.reportFailed": "The report couldn't be sent. Please try again.", // DRAFT
   "errors.reportOpenFailed": "The report screen couldn't open. Please try again.", // DRAFT

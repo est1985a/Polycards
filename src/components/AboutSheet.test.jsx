@@ -87,7 +87,7 @@ describe('AboutSheet', () => {
   it('shows list items as a list, without the ・ mark', () => {
     const html = render();
     expect(html).toMatch(/<li[^>]*>毎日少しずつやろう/);
-    expect(html).not.toContain('・');
+    expect(html).not.toMatch(/>\s*・/); // no line or list item starts with ・ (大文字・小文字 inside a sentence is fine)
   });
 
   it('shows the teacher guide only for teachers', () => {

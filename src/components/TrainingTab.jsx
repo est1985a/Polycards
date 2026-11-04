@@ -1,5 +1,6 @@
-import { colors, fontDisplay, panel } from '../styles/theme';
-import { trainingActivities } from '../lib/training';
+import { colors, fontBody, fontDisplay, panel } from '../styles/theme';
+import { trainingActivities, abcRewardsLeft } from '../lib/training';
+import { TicketIcon } from './GachaIcons';
 import { t } from '../i18n';
 
 // Icons for the activity cards (current text color).
@@ -14,8 +15,28 @@ const ICONS = {
 
 // The トレーニング tab: one card per training activity (from TRAINING_ACTIVITIES in lib/training.js).
 // More activities only add cards; the grid is 1 column on phones, 2 on wide screens.
-// onOpen(id): an activity card was tapped.
-export default function TrainingTab({ onOpen, wide = false, activities = trainingActivities() }) {
+// The gacha tickets an activity can still win: ガチャ券×N (gold), or ゲット済み (muted) when all won.
+// left: a number, or null = unknown (nothing shown).
+export function RewardPill({ left }) {
+  if (left == null) return null;
+  const done = left === 0;
+  return (
+    <span
+      role="img"
+      aria-label={done ? t("training.reward.pillDoneAria") : t("training.reward.pillAria", { n: left, count: left })}
+      style={{
+        justifySelf: "start", display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 999,
+        border: `2px solid ${done ? colors.line : colors.gold}`, color: done ? colors.muted : colors.gold,
+        fontFamily: fontBody, fontWeight: 700, fontSize: 13, whiteSpace: "nowrap",
+      }}
+    >
+      {done ? `✓ ${t("training.reward.pillDone")}` : <><TicketIcon size={16} />{t("training.reward.pill", { n: left, count: left })}</>}
+    </span>
+  );
+}
+
+// onOpen(id): an activity card was tapped. rewards: the claimed ABC ticket rewards (a Set, null = unknown).
+export default function TrainingTab({ onOpen, wide = false, activities = trainingActivities(), rewards = null }) {
   return (
     <div style={{ display: "grid", gap: 16, paddingTop: 8 }}>
       <h2 style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 24, margin: 0, color: colors.text }}>{t("training.title")}</h2>
@@ -36,6 +57,7 @@ export default function TrainingTab({ onOpen, wide = false, activities = trainin
             <span style={{ display: "grid", gap: 4, minWidth: 0 }}>
               <span style={{ fontFamily: fontDisplay, fontWeight: 700, fontSize: 20 }}>{t(a.title)}</span>
               <span style={{ fontSize: 14, color: colors.muted }}>{t(a.description)}</span>
+              {a.id === "abc" && <RewardPill left={abcRewardsLeft(rewards)} />}
             </span>
             <span aria-hidden="true" style={{ marginLeft: "auto", fontSize: 24, color: colors.muted }}>›</span>
           </button>

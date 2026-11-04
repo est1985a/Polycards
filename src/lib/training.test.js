@@ -1,8 +1,8 @@
 // Tests for the Training tab's activity list and navigation (pure). Run with: npm test
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   TRAINING_ACTIVITIES, TRAINING_START, alphabet, showTrainingTab, stepLetter, trainingActivities, trainingParent,
-  letterPracticeId, doneLettersFromProgress,
+  letterPracticeId, doneLettersFromProgress, abcRewardId, abcRewardState, abcRewardsLeft, claimRewardSteps,
 } from './training';
 
 describe('activities', () => {
@@ -63,5 +63,83 @@ describe('saved progress ids', () => {
     for (const l of [...alphabet(), ...alphabet(true)]) {
       expect(doneLettersFromProgress([{ practice_id: letterPracticeId(l) }])).toEqual(new Set([l]));
     }
+  });
+});
+
+describe('ABC ticket rewards', () => {
+  const capitals = new Set(alphabet(false));
+  it('reward ids per case', () => {
+    expect(abcRewardId(false)).toBe('abc-upper');
+    expect(abcRewardId(true)).toBe('abc-lower');
+  });
+
+  it('hidden while the claimed list is unknown (null), even with every letter done', () => {
+    expect(abcRewardState(capitals, false, null)).toBe('hidden');
+    expect(abcRewardsLeft(null)).toBeNull();
+  });
+
+  it('locked at 25, ready at 26, in the same case only', () => {
+    const almost = new Set(capitals); almost.delete('Z'); almost.add('z');
+    expect(abcRewardState(almost, false, new Set())).toBe('locked');
+    almost.add('Z');
+    expect(abcRewardState(almost, false, new Set())).toBe('ready');
+    expect(abcRewardState(almost, true, new Set())).toBe('locked');
+  });
+
+  it('claimed once the id is in the set, whatever the letters', () => {
+    expect(abcRewardState(new Set(), false, new Set(['abc-upper']))).toBe('claimed');
+    expect(abcRewardState(new Set(), true, new Set(['abc-upper']))).toBe('locked');
+  });
+
+  it('tickets left for the menu pill', () => {
+    expect(abcRewardsLeft(new Set())).toBe(2);
+    expect(abcRewardsLeft(new Set(['abc-lower']))).toBe(1);
+    expect(abcRewardsLeft(new Set(['abc-upper', 'abc-lower']))).toBe(0);
+  });
+});
+
+describe('claimRewardSteps (ガチャ券をもらう)', () => {
+  it('waits for letter saves, claims, marks claimed, then refreshes', async () => {
+    const order = [];
+    let finishSave;
+    const save = new Promise((r) => { finishSave = r; }).then(() => order.push('save'));
+    const run = claimRewardSteps('abc-upper', {
+      pending: [save],
+      claim: async (id) => { order.push('claim ' + id); return { claimed: true, already: false }; },
+      markClaimed: (id) => order.push('mark ' + id),
+      refresh: async () => order.push('refresh'),
+    });
+    await Promise.resolve();
+    expect(order).toEqual([]);
+    finishSave();
+    expect(await run).toEqual({ claimed: true, already: false });
+    expect(order).toEqual(['save', 'claim abc-upper', 'mark abc-upper', 'refresh']);
+  });
+
+  it('marks claimed also when it was claimed before', async () => {
+    const markClaimed = vi.fn();
+    await claimRewardSteps('abc-lower', { claim: async () => ({ claimed: true, already: true }), markClaimed, refresh: async () => {} });
+    expect(markClaimed).toHaveBeenCalledWith('abc-lower');
+  });
+
+  it('a failed gacha refresh is only logged: the claim still counts', async () => {
+    const markClaimed = vi.fn();
+    const log = vi.fn();
+    await expect(claimRewardSteps('abc-upper', {
+      claim: async () => ({ claimed: true, already: false }), markClaimed,
+      refresh: async () => { throw new Error('offline'); }, log,
+    })).resolves.toEqual({ claimed: true, already: false });
+    expect(markClaimed).toHaveBeenCalledWith('abc-upper');
+    expect(log).toHaveBeenCalled();
+  });
+
+  it('a failed claim throws and marks nothing', async () => {
+    const markClaimed = vi.fn();
+    const refresh = vi.fn();
+    await expect(claimRewardSteps('abc-upper', {
+      claim: async () => { throw new Error('not_complete'); }, markClaimed, refresh,
+    })).rejects.toThrow('not_complete');
+    expect(markClaimed).not.toHaveBeenCalled();
+    expect(refresh).not.toHaveBeenCalled();
   });
 });

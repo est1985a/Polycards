@@ -643,6 +643,38 @@ export async function recordTrainingCompletion(practiceId) {
   if (error) throw new Error("Could not save training progress: " + error.message);
 }
 
+// ABC ticket rewards (supabase/polycards-training-rewards.sql): a Set of the reward ids the student
+// has claimed ('abc-upper' / 'abc-lower'). Never throws: null when they can't be read (e.g. the
+// SQL isn't run yet), and the Training screens then hide the reward.
+export async function fetchTrainingRewards() {
+  const { data, error } = await supabase.from('training_rewards').select('reward_id');
+  if (error) {
+    console.error("Could not load training rewards: " + error.message);
+    return null;
+  }
+  return new Set((data || []).map((row) => row.reward_id));
+}
+
+// Claim one reward: { claimed: true, already } (already = given before, no new ticket).
+// Throws an Error with a friendly message and .code ('not_complete', 'not_signed_in', ...).
+export async function claimTrainingReward(rewardId) {
+  const { data, error } = await supabase.rpc('claim_training_reward', { p_reward_id: rewardId });
+  if (error) {
+    console.error("claim_training_reward failed:", error.message);
+    const code = ['not_complete', 'not_signed_in', 'bad_reward'].find((c) => error.message?.includes(c)) ?? null;
+    const failure = new Error(trainingRewardErrorMessage(code));
+    failure.code = code;
+    throw failure;
+  }
+  return { claimed: true, already: Boolean(data?.already) };
+}
+
+export function trainingRewardErrorMessage(code) {
+  if (code === 'not_complete') return t("errors.trainingRewardNotComplete");
+  if (code === 'not_signed_in') return t("errors.notSignedIn");
+  return t("errors.trainingRewardFailed");
+}
+
 // ---- Teachers and classes (supabase/polycards-teachers.sql) ----
 // Every call goes through a database function that checks who is calling; hiding the 先生 tab is
 // only for convenience.

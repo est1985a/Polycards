@@ -1,11 +1,12 @@
-import { useEffect } from 'react';
-import { colors, fontBody, fontDisplay } from '../styles/theme';
-import { alphabet, stepLetter, trainingParent } from '../lib/training';
+import { useEffect, useState } from 'react';
+import { colors, fontBody, fontDisplay, mix } from '../styles/theme';
+import { alphabet, stepLetter, trainingParent, abcRewardId, abcRewardState } from '../lib/training';
 import LetterPractice from '../handwriting/LetterPractice.jsx';
 import LetterGlyph from '../handwriting/LetterGlyph.jsx';
 import { loadModel } from '../handwriting/model.js';
 import { HW_COLORS } from '../handwriting/config.js';
 import BackButton from './BackButton';
+import { TicketIcon } from './GachaIcons';
 import { t, tx } from '../i18n';
 
 // 大文字 (A–Z) | 小文字 (a–z), the same look as LevelSwitch.
@@ -56,11 +57,81 @@ function LetterTile({ letter, done, onClick }) {
   );
 }
 
+// The gacha ticket for finishing all 26 letters of one case (lib/training.js abcRewardState):
+// locked (what to do), ready (a button to claim it), claimed (won, with a link to the gacha).
+// Nothing while the claimed list is unknown. onClaim(rewardId) returns a promise (throws = error).
+export function RewardBanner({ state, rewardId, onClaim, onOpenGacha, initialJustGot = false }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(null);
+  const [justGot, setJustGot] = useState(initialJustGot);
+  if (state === "hidden") return null;
+
+  async function claim() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await onClaim(rewardId);
+      setJustGot(true);
+    } catch (e) {
+      setError(e?.message || t("errors.trainingRewardFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const ready = state === "ready";
+  const claimed = state === "claimed";
+  return (
+    <div style={{
+      display: "grid", gap: 10, padding: "12px 14px", borderRadius: 16,
+      background: ready ? mix(colors.gold, colors.surface, 14) : colors.surface,
+      border: `2px solid ${ready ? colors.gold : claimed ? colors.accent : colors.line}`,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ flex: "none", display: "grid", color: ready ? colors.gold : claimed ? colors.accentText : colors.muted }}>
+          <TicketIcon size={26} />
+        </span>
+        <span style={{ fontWeight: 700, fontSize: 15, color: state === "locked" ? colors.muted : colors.text }}>
+          {claimed ? `✓ ${t("training.reward.claimed")}` : t(ready ? "training.reward.ready" : "training.reward.locked")}
+        </span>
+        {claimed && onOpenGacha && (
+          <button type="button" onClick={onOpenGacha} style={{
+            marginLeft: "auto", flex: "none", minHeight: 44, padding: "0 14px", borderRadius: 999, cursor: "pointer",
+            background: "transparent", border: `2px solid ${colors.accent}`, color: colors.accentText,
+            fontFamily: fontBody, fontWeight: 700, fontSize: 14,
+          }}>
+            {t("training.reward.toGacha")} ›
+          </button>
+        )}
+      </div>
+      {ready && (
+        <button type="button" onClick={claim} disabled={busy} style={{
+          minHeight: 52, borderRadius: 999, border: "none", cursor: busy ? "default" : "pointer",
+          background: colors.gold, color: colors.bg, opacity: busy ? 0.7 : 1,
+          fontFamily: fontBody, fontWeight: 700, fontSize: 17,
+        }}>
+          {t(busy ? "training.reward.claiming" : "training.reward.claim")}
+        </button>
+      )}
+      <div role="status" style={justGot && claimed ? {} : { position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
+        {justGot && claimed && (
+          <span className="gacha-reveal-in" style={{ display: "inline-block", fontFamily: fontDisplay, fontWeight: 700, fontSize: 20, color: colors.gold }}>
+            {t("training.reward.justGot")}
+          </span>
+        )}
+      </div>
+      {error && <div role="alert" style={{ fontSize: 14, color: colors.danger }}>{error}</div>}
+    </div>
+  );
+}
+
 // ABCを書こう: the A–Z / a–z grid (path.screen "abc") and one letter's practice page ("letter").
 // path: the Training tab's trainingPath (lib/training.js); onNavigate(path) moves between screens.
 // done: letters completed this visit (case-sensitive, a Set); onComplete(letter): all 4 boxes green.
-// Practice saves nothing.
-export default function AbcPractice({ path, onNavigate, done, onComplete }) {
+// rewards: the claimed ticket rewards (a Set, null = unknown → no banner); onClaimReward(id) → promise;
+// onOpenGacha: the 「ガチャへ」 link.
+export default function AbcPractice({ path, onNavigate, done, onComplete, rewards = null, onClaimReward, onOpenGacha }) {
   // Load the letter model in the background, so the first letter can be checked straight away.
   useEffect(() => { loadModel().catch(() => {}); }, []);
 
@@ -116,6 +187,13 @@ export default function AbcPractice({ path, onNavigate, done, onComplete }) {
         <div style={{ fontSize: 13, color: colors.muted }}>{t("training.abc.pencil")}</div>
       </div>
       <CaseSwitch lowercase={path.lowercase} onChange={(lowercase) => onNavigate({ ...path, lowercase })} />
+      <RewardBanner
+        key={abcRewardId(path.lowercase)}
+        state={abcRewardState(done, path.lowercase, rewards)}
+        rewardId={abcRewardId(path.lowercase)}
+        onClaim={onClaimReward}
+        onOpenGacha={onOpenGacha}
+      />
       <div style={{ fontSize: 14, color: colors.muted, textAlign: "right" }}>
         {tx("training.abc.doneCount", {
           n: <span style={{ fontFamily: fontDisplay, fontWeight: 700, color: colors.gold }}>{doneCount}</span>,

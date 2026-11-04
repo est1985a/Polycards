@@ -53,7 +53,7 @@ export const ABOUT = {
     {
       icon: '🏋️',
       heading: 'about.training.heading',
-      paragraphs: ['about.training.p1'],
+      paragraphs: ['about.training.p1', 'about.training.p2'],
       when: 'training',
     },
     {

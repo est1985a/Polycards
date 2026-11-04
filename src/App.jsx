@@ -21,7 +21,7 @@ import { themes, applyTheme, getTheme, DEFAULT_THEME } from './themes';
 import { wrap, gutter, headerBand, tabBarHeight, wideLayout } from './styles/theme';
 import { useWide, useSideChip, useShort } from './lib/useWide';
 import BackButton from './components/BackButton';
-import { showTrainingTab, TRAINING_START, letterPracticeId, doneLettersFromProgress } from './lib/training';
+import { showTrainingTab, TRAINING_START, letterPracticeId, doneLettersFromProgress, claimRewardSteps } from './lib/training';
 import { speechAvailable } from './lib/speech';
 import { t } from './i18n';
 import Header from './components/Header';
@@ -98,6 +98,8 @@ function App() {
   // the tab opens, merged with the ones completed in this visit.
   const [trainingPath, setTrainingPath] = useState(TRAINING_START);
   const [trainingDone, setTrainingDone] = useState(() => new Set());
+  // Claimed ABC ticket rewards (a Set of ids); null until loaded or when they can't be read (hidden).
+  const [trainingRewards, setTrainingRewards] = useState(null);
   // Teacher area (supabase/polycards-teachers.sql): is this a teacher account (read once after
   // sign-in), which 先生 screen is open, the クラスに参加 pop-up, and the classes the student is in
   // (shown in settings; null while loading, "failed" if they couldn't be read).
@@ -863,6 +865,7 @@ function App() {
     resetSettings();
     goHome(); // the next sign-in starts on My Cards too
     setTrainingDone(new Set());
+    setTrainingRewards(null);
   };
 
   // Logo: back to the My Cards dashboard, with Card Sets reset to its hub (the school level is kept).
@@ -1151,9 +1154,12 @@ function App() {
 
   // A letter in ABCを書こう got all 4 boxes green: a ✓ on the grid at once, and saved on the account
   // (if saving fails, the ✓ only lasts for this visit).
+  const letterSaves = useRef(new Set()); // letter saves still sending (a claim waits for them)
   const completeLetter = useCallback((letter) => {
     setTrainingDone((done) => (done.has(letter) ? done : new Set(done).add(letter)));
-    api.recordTrainingCompletion(letterPracticeId(letter)).catch((e) => console.error(e));
+    const save = api.recordTrainingCompletion(letterPracticeId(letter)).catch((e) => console.error(e));
+    letterSaves.current.add(save);
+    save.finally(() => letterSaves.current.delete(save));
   }, []);
 
   // Opening the Training tab loads the saved progress and adds it to the ✓ marks (never removes
@@ -1168,8 +1174,19 @@ function App() {
         setTrainingDone((done) => (Array.from(saved).every((l) => done.has(l)) ? done : new Set([...done, ...saved])));
       })
       .catch((e) => console.error(e));
+    api.fetchTrainingRewards().then((rewards) => { if (current) setTrainingRewards(rewards); });
     return () => { current = false; };
   }, [userId, activeTab]);
+
+  // ガチャ券をもらう in ABCを書こう. Only the claim itself can fail on screen: the id is marked
+  // claimed straight away (also when it was claimed before), then the gacha status is refreshed
+  // on its own, so a failed refresh never looks like a failed claim.
+  const claimAbcReward = useCallback((rewardId) => claimRewardSteps(rewardId, {
+    pending: Array.from(letterSaves.current), // the 26th letter may still be saving
+    claim: api.claimTrainingReward,
+    markClaimed: (id) => setTrainingRewards((r) => new Set(r ?? []).add(id)),
+    refresh: async () => setGacha(await api.fetchGachaStatus()),
+  }), []);
 
   // Tapping Card Sets (or Training, or 先生) while already on it goes back to its first screen.
   function changeTab(id) {
@@ -1276,9 +1293,9 @@ function App() {
                 )}
                 {activeTab === "training" && (
                   trainingPath.screen === "menu" ? (
-                    <TrainingTab wide={wide} onOpen={(id) => { if (id === "abc") navigateTraining({ ...trainingPath, screen: "abc" }); }} />
+                    <TrainingTab wide={wide} rewards={trainingRewards} onOpen={(id) => { if (id === "abc") navigateTraining({ ...trainingPath, screen: "abc" }); }} />
                   ) : (
-                    <AbcPractice path={trainingPath} onNavigate={navigateTraining} done={trainingDone} onComplete={completeLetter} />
+                    <AbcPractice path={trainingPath} onNavigate={navigateTraining} done={trainingDone} onComplete={completeLetter} rewards={trainingRewards} onClaimReward={claimAbcReward} onOpenGacha={openGacha} />
                   )
                 )}
                 {activeTab === "class" && (
