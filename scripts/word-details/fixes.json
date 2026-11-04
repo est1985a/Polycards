@@ -333,6 +333,2721 @@
    "w": "care 世話、注意",
    "countable": "uncountable",
    "plural": null
+  },
+  "7f036c2b-2e7f-4a36-bbca-65e4774a6b3a": {
+   "w": "certainty 確実さ、確信",
+   "countable": "both"
+  },
+  "ae97c076-2dd0-43ce-a4d4-7fe4ab581227": {
+   "w": "change 変える、変わる；変化",
+   "countable": "both"
+  },
+  "5ce60169-e1b6-4032-85b8-b9e1bddb1dd0": {
+   "w": "chaos 大混乱",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a55e5d0a-15fb-462a-a45f-6353d08151c7": {
+   "w": "charity 慈善、慈善団体",
+   "countable": "both"
+  },
+  "79cfb0e4-d036-49a9-a8a0-883c0a289cb9": {
+   "w": "cheese チーズ",
+   "countable": "both"
+  },
+  "ca1b0f65-ea7d-4202-bff9-02e21df608cf": {
+   "w": "chemistry 化学",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "596cb0d9-33fb-4488-b50a-cb71abb0c669": {
+   "w": "chess チェス",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a0d69e5a-c6a8-4385-81bc-0da00601fd06": {
+   "w": "chewing gum チューインガム",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "ea9787f8-689d-48c7-9e34-5e33b289f512": {
+   "w": "chicken 鶏肉、ニワトリ",
+   "countable": "both"
+  },
+  "5be50962-2d8f-4bbc-b898-84e6c6d0d7c0": {
+   "w": "children 子どもたち",
+   "countable": null,
+   "plural": null
+  },
+  "4d7df838-4135-4df0-8c21-f5034e026de2": {
+   "w": "chili 唐辛子、チリ",
+   "countable": "countable",
+   "plural": "chilies"
+  },
+  "a65d8ad8-7a4d-4709-b547-3e52a3b70a4f": {
+   "w": "chocolate チョコレート",
+   "countable": "both"
+  },
+  "4c8de60c-e201-423b-b668-9288eae73fe5": {
+   "w": "citizenship 市民権、国籍",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "6a778acc-2b83-4bf5-8334-1d8501496dde": {
+   "w": "civilization 文明",
+   "countable": "both"
+  },
+  "95318eac-6f36-49b5-882e-ffe5b4473169": {
+   "w": "classical music クラシック音楽",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e9c66155-6cf9-49cc-9d99-d12c0d65ee05": {
+   "w": "climbing 登山、クライミング",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "13c26b43-5a91-4985-990e-0d6fb5f1990f": {
+   "w": "cloth 布",
+   "countable": "both"
+  },
+  "a02eb4e7-0a22-4b21-a766-89cd56e1b5af": {
+   "w": "clothes 衣服",
+   "countable": "plural",
+   "plural": null
+  },
+  "0cbbb554-2a20-43e8-b327-c3fbffae7208": {
+   "w": "clothing 衣類、衣料品",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "fc8d8f73-296e-4340-a56f-1e73b058d4ab": {
+   "w": "coal 石炭",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "832acfd8-448a-444f-b720-649aa292ca23": {
+   "w": "coffee コーヒー",
+   "countable": "both"
+  },
+  "9a493cf9-369a-4dc6-9950-67c1295be692": {
+   "w": "cola コーラ",
+   "countable": "both"
+  },
+  "b0b2f24e-2a16-405b-9cfa-db8c04e033fd": {
+   "w": "colorfulness 色の鮮やかさ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "9447da98-4dae-4f1c-95d1-f3104aa7d4b6": {
+   "w": "comedy 喜劇、コメディー",
+   "countable": "both"
+  },
+  "09f36275-b636-4918-bd34-8da1908515c2": {
+   "w": "common sense 常識",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "156b4a7d-fff8-4e66-92c4-0527c1702aac": {
+   "w": "communication コミュニケーション、伝達",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "4c6dc875-52a8-49b2-945c-2dbf1d63665f": {
+   "w": "concentration 集中",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "493bec7b-2eaa-4d03-82f7-84fdda15134e": {
+   "w": "conduct 行い、行動",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "7a2c0a3e-9560-419e-a3b8-994760356804": {
+   "w": "confidence 自信、信頼",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b2491171-d809-4903-b46f-9f971f796262": {
+   "w": "confirmation 確認",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b6016572-af11-4687-a823-ca1cf0e9ce93": {
+   "w": "confusion 混乱",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "89b2ebf5-8fe9-4c23-bdb5-cbc5f9c3c469": {
+   "w": "conservation 保護、保存",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "4ef4ca48-2d1f-41cb-8f55-ba84d009b9fb": {
+   "w": "consideration 考慮、思いやり",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "135c4930-4568-430d-87c2-c3916e9ec6db": {
+   "w": "construction 建設、工事",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "9d8e7705-e836-45e4-a777-bc795e07142d": {
+   "w": "consumption 消費",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e909913a-a50d-4f38-b167-753eba21bd95": {
+   "w": "contact 接触、連絡",
+   "countable": "both"
+  },
+  "97119564-fea4-41ee-9fb6-399f707ca681": {
+   "w": "convenience 便利なこと、便利なもの",
+   "countable": "both"
+  },
+  "71011c16-aef7-40f1-9aaf-11296ce3840b": {
+   "w": "cooking 料理（すること）",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "1ad15d1a-6e4f-407b-a114-b215afee7649": {
+   "w": "copyright 著作権",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "0ac2b5cb-2d4d-44ec-bab9-805f53db69c2": {
+   "w": "corn とうもろこし",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "03e76b9b-9b49-435e-bb2f-020b881b8938": {
+   "w": "cotton 綿、木綿",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "2b8d5cde-caad-4223-975b-7f3ce41c63b5": {
+   "w": "counseling カウンセリング、相談",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "ecf692ff-f908-49e8-a74c-43fdf9de9a4c": {
+   "w": "countryside いなか、田園地帯",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "334a8c82-18a2-42cf-b2a2-6954e079ea71": {
+   "w": "courage 勇気",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "99e70dae-cf07-4fa8-869f-13d549f48ed2": {
+   "w": "cream クリーム",
+   "countable": "both"
+  },
+  "6b28e464-1ded-4f46-8117-a1ff5871d7ce": {
+   "w": "creativity 創造力",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "ec4a0836-eea5-4b97-97d6-70b4703e3b34": {
+   "w": "crime 犯罪",
+   "countable": "both"
+  },
+  "7a1e4846-e8f6-428f-8288-4b7076883f10": {
+   "w": "crossroads 交差点、岐路",
+   "countable": "countable",
+   "plural": "crossroads"
+  },
+  "722c2d51-8a81-42bd-9261-3c5f8bf8dfe8": {
+   "w": "culture 文化",
+   "countable": "both"
+  },
+  "f95e411b-13d4-4809-8c37-c659265f2b25": {
+   "w": "curiosity 好奇心",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b5c93a6f-104c-48a0-9e2d-d5871dc2d7a4": {
+   "w": "curling カーリング",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "848b158a-b385-41c2-b771-d7f2380e8189": {
+   "w": "curry カレー",
+   "countable": "both"
+  },
+  "a04a9fc3-5bf2-45af-a279-2d6d06d1cc0d": {
+   "w": "curry and rice カレーライス",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "9fced9cd-ce70-44c9-8409-8ec5b8dd6ee8": {
+   "w": "customs 税関",
+   "countable": "plural",
+   "plural": null
+  },
+  "c08d69b6-eabb-42c1-8658-ce5bd259e440": {
+   "w": "cycling サイクリング",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "8de53777-3ff7-410e-b04a-27266310c559": {
+   "w": "dancing ダンス、踊ること",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c49b9b34-b22e-4caa-9faa-45529a4381f1": {
+   "w": "danger 危険",
+   "countable": "both"
+  },
+  "ee26d541-b19c-46bc-81da-a8bfeb417751": {
+   "w": "darkness 暗やみ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "7bf70bca-9bab-44cc-9695-3f16b19e5207": {
+   "w": "data データ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e180abec-e654-49db-bbd3-63252a06408d": {
+   "w": "death 死",
+   "countable": "both"
+  },
+  "3d67089e-e928-451b-9ce3-a3cd6f1711fb": {
+   "w": "debris 破片、がれき",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e5e93513-8f27-4781-912f-064146d7f669": {
+   "w": "debt 借金",
+   "countable": "both"
+  },
+  "a6e4521a-cafb-4e2c-8271-34e49998e780": {
+   "w": "defense 防御、防衛",
+   "countable": "both"
+  },
+  "f1a89546-145a-4df6-a620-ce193596a583": {
+   "w": "delight 大喜び",
+   "countable": "both"
+  },
+  "d5f0ddce-b0dc-4717-b8d0-ad217860223d": {
+   "w": "democracy 民主主義",
+   "countable": "both"
+  },
+  "d48b12a5-84a9-43f3-b1c8-2483dc5d34fe": {
+   "w": "depression うつ病、不況",
+   "countable": "both"
+  },
+  "f96bf5f1-0d48-4289-bde3-8b44bdc63003": {
+   "w": "design デザイン",
+   "countable": "both"
+  },
+  "acfaec62-6463-4154-b31a-7b972d37457f": {
+   "w": "despair 絶望",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a59a8b7e-2fd8-43ca-a2fb-2e057b249730": {
+   "w": "destruction 破壊",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f6d5beff-abbd-4038-a80b-e9f8e192dfb6": {
+   "w": "determination 決意",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e2ade7db-a521-48c1-9f8b-0328318b2792": {
+   "w": "development 発達、開発",
+   "countable": "both"
+  },
+  "0dc0645d-82fa-4a75-bd6f-20d58e66d2ef": {
+   "w": "dirt 泥、汚れ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "52506d19-ba4f-4461-96a0-cdeb5cae5546": {
+   "w": "discomfort 不快感",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b63e8ae1-c7a4-46ba-943f-fca69f49c0d5": {
+   "w": "discrimination 差別",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "2582fbb7-8692-47f8-8984-6568c40e7b97": {
+   "w": "disease 病気",
+   "countable": "both"
+  },
+  "cb90e84a-6d58-4c3f-a234-cebe5bdd32a3": {
+   "w": "distribution 配布、分配",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "2921018b-0ba7-45e7-bf13-3dba0f4b535a": {
+   "w": "diversity 多様性",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "3518d890-d9bb-4774-a86f-d0beb796e8b0": {
+   "w": "diving ダイビング、飛び込み",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "81c41eb9-0370-4aee-9068-8bf4c9ca5862": {
+   "w": "dodgeball ドッジボール",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "10841f5a-2c9f-44f6-99cb-f51883259f25": {
+   "w": "doubt 疑い、疑う",
+   "countable": "both"
+  },
+  "0bede751-5b79-49df-a507-9da8bbe3c7c4": {
+   "w": "drama ドラマ、劇",
+   "countable": "both"
+  },
+  "a6777a9a-82cb-4637-befa-910ecb68c0fe": {
+   "w": "dust ほこり、ちり",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "fabdc0bb-71cf-4ecb-9ca1-29624c890a1c": {
+   "w": "east 東、東の",
+   "countable": null,
+   "plural": null
+  },
+  "25f7c259-3438-4599-9323-95efbd9fd2a2": {
+   "w": "ecology 生態学、生態系",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "602cbbd0-de0f-4241-bb8b-f6c890b621a3": {
+   "w": "economics 経済学",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a88edd0c-ebf0-42a0-914a-b3c66a634bdd": {
+   "w": "charge 料金、責任",
+   "countable": "both"
+  },
+  "17338b69-385e-454d-9bf8-d93a7c8e51f3": {
+   "w": "education 教育",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "46c2e9ae-40d1-4d00-a8ba-b0ce1c33bc47": {
+   "w": "efficiency 効率",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "599e0c0e-d068-48f0-8503-04e6788e9d89": {
+   "w": "effort 努力",
+   "countable": "both"
+  },
+  "4284ef6d-7f1f-4023-b43b-2f5266da0710": {
+   "w": "electricity 電気、電力",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "df696419-6c56-44a4-88a4-e851b6b4782f": {
+   "w": "email Eメール",
+   "countable": "both"
+  },
+  "1083d88f-7007-4dea-94ca-33979b923744": {
+   "w": "embarrassment 恥ずかしさ、きまり悪さ",
+   "countable": "both"
+  },
+  "6e059f5a-d43f-4990-b1cc-927223560e59": {
+   "w": "emphasis 強調、重点",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "db160fdb-f376-48b1-9b6a-57ac68463347": {
+   "w": "employment 雇用、仕事",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d3e255f2-6ed4-4b24-b76e-f4dd38ef4dd1": {
+   "w": "encouragement 励まし",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "74f3170b-2566-4ab5-9ee7-6c94cd2d3b8e": {
+   "w": "energy エネルギー",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c06aca5a-7ac8-47ff-afd1-ab65f0a57829": {
+   "w": "engineering 工学",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "dacd7553-7464-45bc-9c8e-4ef1ee235fad": {
+   "w": "enjoyment 楽しみ、喜び",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "fcf2c1c2-553c-43b0-b17a-1dc5ad8a142b": {
+   "w": "entertainment 娯楽、エンターテインメント",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "08511751-0767-480b-8538-9ab98cebd360": {
+   "w": "enthusiasm 熱意、熱中",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a5bd2e40-e2e9-41f2-9574-9a11c22b1a20": {
+   "w": "equality 平等",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "53a94898-3c69-425a-bf9b-c4bbf303e14d": {
+   "w": "equipment 設備、用具",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "3cae4c81-774e-4e45-bb27-8e6a0b952320": {
+   "w": "essence 本質、エッセンス",
+   "countable": "both"
+  },
+  "833cab15-94e9-4e4f-b4e5-deab197289dd": {
+   "w": "eternity 永遠",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "0a685bf3-72f0-4f9e-ad42-05e3f3490869": {
+   "w": "evidence 証拠",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b57387f8-91bb-47c9-a91b-5329f5272969": {
+   "w": "excellence 優秀さ、卓越",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "429a9ca2-b23d-4c42-b66c-2c83b9d8db2a": {
+   "w": "excitement 興奮、わくわくする気持ち",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b22a94f0-8437-4148-b1cf-170f3954fcda": {
+   "w": "existence 存在",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "3b9c95a1-35b9-41eb-a6b4-31394e87a1cc": {
+   "w": "experience 経験",
+   "countable": "both"
+  },
+  "851ce71c-af25-4931-8984-b7720bc0752f": {
+   "w": "exploration 探検、探査",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "8fb4037c-6f29-4cf5-b886-68e9aa7ae363": {
+   "w": "extinction 絶滅",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d9ee374e-4c5d-4462-9569-b0b275bd6d02": {
+   "w": "extreme sports エクストリームスポーツ",
+   "countable": "plural",
+   "plural": null
+  },
+  "caa513ab-ffef-4c30-b2d4-ee6fb7dd86db": {
+   "w": "eyesight 視力",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b753ab45-9d1b-41b4-b2ca-36b1ed2a38f2": {
+   "w": "fall 秋",
+   "countable": "both"
+  },
+  "406afecc-a6c9-43b4-928f-c276617729bf": {
+   "w": "farming 農業、農作業",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "4c504732-aea0-4640-b5b7-29bca31c76b4": {
+   "w": "farmland 農地",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "310ba1d1-a882-47a3-9b70-9144e817b82b": {
+   "w": "fashion ファッション、流行",
+   "countable": "both"
+  },
+  "e86b2b35-9502-4d64-91cb-71b8192c55e1": {
+   "w": "fast food ファストフード",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "53bb5b13-2578-4426-afde-1883d6e4f22f": {
+   "w": "fear 恐怖",
+   "countable": "both"
+  },
+  "44ba12bc-1c4a-4bf3-87f3-7c406924b0ce": {
+   "w": "feedback フィードバック、意見",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f3bb792a-64bf-47be-a3ad-d3e880471a7f": {
+   "w": "fiber 繊維",
+   "countable": "both"
+  },
+  "e966a096-b464-4585-8325-225c0c59e39b": {
+   "w": "fiction 小説、作り話",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "546e933d-617c-41e1-8648-da8206cae2e3": {
+   "w": "fire 火",
+   "countable": "both"
+  },
+  "92d597ab-ea6c-463a-ac53-86e448f593b1": {
+   "w": "fireworks 花火",
+   "countable": "plural",
+   "plural": null
+  },
+  "8e17f5c8-7c0e-4c1d-9da0-41edc762fb32": {
+   "w": "fishing 魚つり",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e29f123a-277b-47ed-af4e-bd14f447266d": {
+   "w": "fitness 体力、健康状態",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "bfdd20c6-c6d6-443c-b103-b6ecb8e479e4": {
+   "w": "flour 小麦粉",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f8cb5e77-4a5d-40fa-9b1a-59b50d7be713": {
+   "w": "flu インフルエンザ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d2c43ab9-c764-4321-9825-0c5512fce4e7": {
+   "w": "fog 霧",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f10fb44d-e570-4ea8-b103-855ec3a09303": {
+   "w": "food 食べ物",
+   "countable": "both"
+  },
+  "1cb28269-778a-406d-a6c5-c974193dc57e": {
+   "w": "food poisoning 食中毒",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "77b4ef5c-e357-447b-87aa-115c2d08b45e": {
+   "w": "football フットボール、サッカー",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a8bb6577-b355-43d9-b82f-f9459573de5f": {
+   "w": "force 力",
+   "countable": "both"
+  },
+  "485ca802-4cc2-4d7f-a22f-c44f6a4aae6d": {
+   "w": "fortune 運、財産",
+   "countable": "both"
+  },
+  "4d559251-aba1-4a03-b13a-5cf2f332dd45": {
+   "w": "freedom 自由",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f5c2e217-9850-44bd-8f4e-3d79eea6d85f": {
+   "w": "French fries フライドポテト",
+   "countable": "plural",
+   "plural": null
+  },
+  "48eb4c51-bbd9-49bb-8af9-0f0c1a7dae2b": {
+   "w": "fried chicken フライドチキン、からあげ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e54d4f20-01ea-4997-9fcd-21c3023af7ed": {
+   "w": "friendship 友情",
+   "countable": "both"
+  },
+  "518d5875-8082-439b-9856-bba1053615b6": {
+   "w": "front 前、正面",
+   "countable": null,
+   "plural": null
+  },
+  "fb496bc0-1c37-4821-ab7a-5a9ecb6d68b1": {
+   "w": "frost 霜",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "684a75ee-2b50-4304-95e9-b85e73101994": {
+   "w": "fruit 果物",
+   "countable": "both"
+  },
+  "de8ade35-1db4-4a96-b9ac-57a0a747a638": {
+   "w": "frustration 欲求不満、いらだち",
+   "countable": "both"
+  },
+  "124788f2-89e5-400b-b6f9-53bf3716af58": {
+   "w": "fuel 燃料",
+   "countable": "both"
+  },
+  "897cafd6-4156-4422-bcae-bedbe73932fe": {
+   "w": "fun 楽しいこと；楽しい",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d702d4d5-5d3e-4e93-b3dd-7bc80bed926e": {
+   "w": "fur 毛皮",
+   "countable": "both"
+  },
+  "858fa275-bff5-43b0-8c49-245dba075c52": {
+   "w": "furniture 家具",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "3b4ebbea-d1a4-4ff7-873e-a07500f78b1e": {
+   "w": "future 未来、将来",
+   "countable": "both"
+  },
+  "0414b0e3-8960-49ce-9c5f-adca63fa1353": {
+   "w": "garbage ごみ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a5470567-7a75-4447-89c8-0a0247d01412": {
+   "w": "gardening 園芸、ガーデニング",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "600ee630-9e0b-4ba6-8a12-6fca7d024bb5": {
+   "w": "garlic にんにく",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "8ee09d14-b4a2-43e3-a558-9b76abba315a": {
+   "w": "gas ガス、ガソリン",
+   "countable": "both"
+  },
+  "fa8286ba-9459-4dc6-924c-32053339ab0d": {
+   "w": "gender 性別、ジェンダー",
+   "countable": "both"
+  },
+  "c919b292-23f5-4f3c-b87c-08b7860f941e": {
+   "w": "genetics 遺伝学",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "0ebb7262-7d03-4d15-b6ef-6abdeb4c856b": {
+   "w": "geography 地理、地理学",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "0d3c891d-ec21-4065-b68c-71d9e9c7bc32": {
+   "w": "geology 地質学",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "9ff0c9a7-eb57-447d-8e8b-c4da49453de1": {
+   "w": "glass コップ、ガラス",
+   "countable": "both"
+  },
+  "af614e1f-74d6-4779-b14b-2079c9431fa3": {
+   "w": "glasses めがね",
+   "countable": "plural",
+   "plural": null
+  },
+  "7b1ad961-23fd-4cf7-a414-b22df7b4101f": {
+   "w": "global warming 地球温暖化",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "623a1972-f17a-4dd4-b59d-d2717415c8a4": {
+   "w": "glory 栄光",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d46c35bb-7369-4551-961e-42266aa5a447": {
+   "w": "gloves 手袋",
+   "countable": "plural",
+   "plural": null
+  },
+  "6092358d-67dd-48c0-99ec-bb3f9c4f731a": {
+   "w": "glue のり",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "43c84648-193b-4efb-a0ed-81e8edef0fc7": {
+   "w": "gold 金、金色",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d940bb58-d83c-4488-852a-c048d385e1a7": {
+   "w": "golf ゴルフ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "648f9d0b-f663-4389-ba39-22015c9ca85d": {
+   "w": "goods 商品、品物",
+   "countable": "plural",
+   "plural": null
+  },
+  "c98bd4e6-d504-4b44-87a6-4a65583a9529": {
+   "w": "gossip うわさ話",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c50b0814-fdc8-4c50-87c9-e97c00e90001": {
+   "w": "grammar 文法",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d99cca1c-cb60-44ef-a920-396dacea6804": {
+   "w": "graphics 画像、グラフィックス",
+   "countable": "plural",
+   "plural": null
+  },
+  "dfc4fa24-308f-44d7-97b1-a6cbd401f0b8": {
+   "w": "grass 草、芝生",
+   "countable": "both"
+  },
+  "f8dff3d2-5b5c-49d4-82a0-88f527a70be8": {
+   "w": "gratitude 感謝の気持ち",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a6b9e35d-cb59-4273-8f65-1fa0f042d63d": {
+   "w": "green tea 緑茶",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "91ddb3df-0a72-4da4-a70b-374d2262d735": {
+   "w": "growth 成長、増加",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "14792645-2c24-4a42-a112-2f220987f1e2": {
+   "w": "guidance 指導、案内",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "434ddb95-3158-4d2b-9f6c-727081234ec8": {
+   "w": "guilt 罪悪感、罪",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f43f9586-b3a6-4a73-aa73-e3f05243c82e": {
+   "w": "gymnastics 体操",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "337d4081-c5d3-4928-b380-1e3e6e1f32ab": {
+   "w": "hair 髪、髪の毛",
+   "countable": "both"
+  },
+  "84accd86-da9f-49ed-a02e-254ef3587221": {
+   "w": "handball ハンドボール",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "98c88b75-24d0-4ad0-af68-b3dc078c61cb": {
+   "w": "handwriting 筆跡、手書き",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b34a40ef-e163-41ee-8bee-582e1b189430": {
+   "w": "happiness 幸せ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a9db7a4a-264a-4a06-b923-5d998b21dba0": {
+   "w": "hardship 苦難、困窮",
+   "countable": "both"
+  },
+  "56e7cc7b-95c6-4b98-a58f-70c661bdd386": {
+   "w": "harm 害を与える；害",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "fae9ca61-b7f6-4ef0-9f06-3e1ca386167f": {
+   "w": "harmony 調和、ハーモニー",
+   "countable": "both"
+  },
+  "d89b021d-d3fc-4bcb-ae19-e0c844024aeb": {
+   "w": "hatred 憎しみ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "ab7671f7-56db-412d-9e27-c9585d517c79": {
+   "w": "ham ハム",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "22d19f04-9ae1-44e3-9565-b32e85624d5d": {
+   "w": "health 健康",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "17e430a1-1665-4821-8098-2210a33c87c6": {
+   "w": "hearing 聴覚、公聴会",
+   "countable": "both"
+  },
+  "9258c0ac-13b0-404a-8437-45d519b1632d": {
+   "w": "heating 暖房",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "ae58ec8b-3db1-4b27-b490-95e3f245e248": {
+   "w": "heaven 天国",
+   "countable": null,
+   "plural": null
+  },
+  "a57e18e0-51e9-4e7e-b983-221e1b1673fd": {
+   "w": "heritage 遺産",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d7880533-75c9-46ad-a048-0b0f7dacc4db": {
+   "w": "hiking ハイキング",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "442d330f-9187-46e5-9c38-3acdf0828e9e": {
+   "w": "headphones ヘッドホン",
+   "countable": "plural",
+   "plural": null
+  },
+  "e35e760a-ec00-4a3f-afdc-6f8ec5386bf7": {
+   "w": "hip hop ヒップホップ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "49c8cd60-8b49-4a2b-bd75-8d49349029a4": {
+   "w": "history 歴史",
+   "countable": "both"
+  },
+  "76c23b2a-273a-4e28-8d0e-1db2a68560bd": {
+   "w": "hockey ホッケー",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c8b29254-1703-4282-968a-1b58baaa4985": {
+   "w": "home economics 家庭科",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b8ecd1c0-5d8a-4e6b-98f7-8f21c82e47a4": {
+   "w": "homework 宿題",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "568c479c-429e-4d1d-9245-e31e25b4255a": {
+   "w": "honesty 正直さ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "04cd19ff-e605-4e2c-8c33-228b4b00771a": {
+   "w": "honey はちみつ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "822ab66c-b808-4fe2-8e1e-8be125e2ad56": {
+   "w": "honor 名誉、光栄",
+   "countable": "both"
+  },
+  "24716235-d0dc-4098-8b18-c8efb194e6a3": {
+   "w": "horror 恐怖、ホラー",
+   "countable": "both"
+  },
+  "fa4c2f99-e178-4b79-b169-134dbf347953": {
+   "w": "housework 家事",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "59dc461d-9b99-47fe-83d8-9365765a17d5": {
+   "w": "human rights 人権",
+   "countable": "plural",
+   "plural": null
+  },
+  "99cb6724-3995-4800-aa38-d634aeec31e9": {
+   "w": "humanity 人類、人間らしさ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "41fdeaf6-2d4d-43cc-a0e5-19fb5c2abecf": {
+   "w": "humor ユーモア",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "5078f897-5e7a-4eee-bcfa-7059c312a445": {
+   "w": "hunger 空腹、飢え",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "2dd66629-fe52-46d2-a4a5-c0b34a268bd2": {
+   "w": "hunting 狩り、狩猟",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a4988920-4d76-477e-8b6b-9b20f0601f56": {
+   "w": "ice 氷",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c0229550-dc67-4ad0-9398-0ceb46dda0a4": {
+   "w": "ice cream アイスクリーム",
+   "countable": "both"
+  },
+  "7709dbf7-3d26-4de6-829f-9fa6461bcbd4": {
+   "w": "ice hockey アイスホッケー",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "dadfc1e6-019f-4070-80fc-89c4bf953269": {
+   "w": "ice skating アイススケート",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "3722571b-a152-4707-8e0d-4e95456ee058": {
+   "w": "imagination 想像力",
+   "countable": "both"
+  },
+  "43f63159-7e33-478f-9ca2-b594005f0698": {
+   "w": "immigration 移住、入国管理",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "afa3b739-7beb-4c77-86c5-777f4d03d40e": {
+   "w": "importance 重要性",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "fa6e57f3-9156-45c8-999a-c83541fc63f9": {
+   "w": "independence 独立",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f796a723-cb68-471e-9c47-807e30ff7b85": {
+   "w": "industry 産業",
+   "countable": "both"
+  },
+  "6fa25adc-043a-4d45-8f72-89f495173d54": {
+   "w": "infection 感染",
+   "countable": "both"
+  },
+  "b2060078-3f4b-439c-b388-7f3f082c1772": {
+   "w": "influence 影響を与える；影響",
+   "countable": "both"
+  },
+  "923b7034-8e52-483b-a4da-4f16e572e365": {
+   "w": "information 情報",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "7dbbaba7-26cd-4e9a-96a6-1ecf5d621564": {
+   "w": "ink インク",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "bbeada3f-b273-4298-b934-81a18e3a40e8": {
+   "w": "inspiration ひらめき、インスピレーション",
+   "countable": "both"
+  },
+  "d58d5b9a-9cf5-48e4-b567-87b2fa4968b1": {
+   "w": "insurance 保険",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f9ccd368-b976-429c-a0ef-9a36cd1b6fd7": {
+   "w": "intelligence 知能、知性",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "0441990e-3664-45d6-96df-40a23f5932ba": {
+   "w": "interest 興味、関心",
+   "countable": "both"
+  },
+  "883c9c0c-837b-4509-94cc-3c860c2e6c9b": {
+   "w": "internet インターネット",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "01362056-2680-4053-8777-7c31352c2788": {
+   "w": "iron 鉄、アイロン",
+   "countable": "both"
+  },
+  "025fbc93-136c-46c6-8adf-4e2e5f01b1cf": {
+   "w": "isolation 孤立",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "8ff49d61-0348-4a55-90f9-11b59086f81d": {
+   "w": "ivory 象牙",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f1914bf0-73ca-4679-b6ca-720d25077cdb": {
+   "w": "jam ジャム",
+   "countable": "both"
+  },
+  "922ff0ce-112a-4587-bb06-d13b1908d348": {
+   "w": "jazz ジャズ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "38026675-5dad-483e-b3b8-467c975b369d": {
+   "w": "jeans ジーンズ",
+   "countable": "plural",
+   "plural": null
+  },
+  "876ce248-aa7e-4d71-8794-9f66869f082d": {
+   "w": "jelly ゼリー",
+   "countable": "both"
+  },
+  "d858e84a-1531-4bcc-bef5-d182f0af108a": {
+   "w": "jewelry 宝石類、アクセサリー",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "3c3705c3-3b9e-4d39-850a-a2cc67f6e83b": {
+   "w": "jogging ジョギング",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "8eccb9d8-4e00-43eb-bc4c-6b2874410ac3": {
+   "w": "joy 喜び",
+   "countable": "both"
+  },
+  "ca1d2d5b-dc71-4b10-a3f6-31bb8d41446a": {
+   "w": "judgment 判断",
+   "countable": "both"
+  },
+  "96858419-a6a6-4d21-9b9a-1a16c72bf862": {
+   "w": "judo 柔道",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "76950fe7-f205-4394-8c94-b5058635565d": {
+   "w": "juice ジュース",
+   "countable": "both"
+  },
+  "0810d8ab-5b41-48ed-b381-897725dd6e5d": {
+   "w": "jump rope なわとび",
+   "countable": "both"
+  },
+  "31a6e1d0-1225-4de7-b603-1dce54e7c39c": {
+   "w": "justice 正義、公正",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "7c2ecfce-7e1b-4a82-8d33-2896e0834e18": {
+   "w": "karate 空手",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "af5213d6-f64d-4e81-9d1b-63e2b59d44b9": {
+   "w": "kendo 剣道",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f384c041-8cff-4db2-9281-ddb5f78279bf": {
+   "w": "kindness 親切",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "9723a370-4c53-4d2e-aa3a-b77e74b2bba9": {
+   "w": "knowledge 知識",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "bb3e24e0-85a0-4cfb-bde4-f76e45bfb7b0": {
+   "w": "labor 労働",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "708db079-2520-452a-8d74-bc6383b1b2ef": {
+   "w": "lack 不足",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "581a0830-4f8e-4a73-a3d1-848b1877374e": {
+   "w": "lamb 子羊、子羊の肉",
+   "countable": "both"
+  },
+  "8aa0584e-496f-41ea-9169-49e7d8762f68": {
+   "w": "laughter 笑い、笑い声",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "6344cb7d-3263-4f56-beba-e92b66c1a252": {
+   "w": "leadership リーダーシップ、指導力",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d7004eba-9bd6-420b-954b-b9709fbc1609": {
+   "w": "leather 革",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "94fc98f7-8fbd-488e-a867-fa8a111fbee1": {
+   "w": "leisure 余暇、レジャー",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "61882535-e4c2-4865-9f4e-4ecb5e1ee886": {
+   "w": "lemonade レモネード",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e2631b48-db0e-4478-af07-cb8a24eda43a": {
+   "w": "lightning 稲妻、雷",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "81bd0ce3-32f6-41f5-a84a-d8f5b82194c0": {
+   "w": "literature 文学",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f87e0da5-0a17-4213-9326-256e1d5a0893": {
+   "w": "life 生活、生命",
+   "countable": "both"
+  },
+  "e9b56c8c-d502-42a4-b592-ecd82bc9e9ac": {
+   "w": "lives 生活、命（lifeの複数形）",
+   "countable": null,
+   "plural": null
+  },
+  "451f7f7b-d03f-4c1f-966e-a8030758fec6": {
+   "w": "logging 森林伐採",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d732b091-15b6-48e9-834e-ac3063ce2af6": {
+   "w": "logic 論理",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "62c0cdb7-b14a-4a8f-bfc7-d96a14e56d37": {
+   "w": "lot たくさん",
+   "countable": null,
+   "plural": null
+  },
+  "000dab5b-6973-4d26-af94-3538fdbce0ae": {
+   "w": "luck 運",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "bb45b71a-ea2b-4a5c-8856-fa8430cf3e21": {
+   "w": "lunch 昼食、昼ごはん",
+   "countable": "both"
+  },
+  "46a1561b-62d2-4443-ab02-327dd493371b": {
+   "w": "luxury ぜいたく、高級",
+   "countable": "both"
+  },
+  "6db5ecfc-6c8c-4ebc-ba7c-3f2bb7939310": {
+   "w": "lyrics 歌詞",
+   "countable": "plural",
+   "plural": null
+  },
+  "be97fed0-95eb-4b27-8193-1927927ba55f": {
+   "w": "magic 魔法、手品",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "6569278c-54b5-4f33-a5f7-9380cac9240c": {
+   "w": "mail 郵便、メール",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "1d0b90ea-6443-490c-8376-728a61ca28c6": {
+   "w": "maintenance 整備、維持",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d12e896d-ae4a-4c40-abea-6e1fc90fe49f": {
+   "w": "makeup 化粧、メイク",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "afc9b87d-d496-4f0e-af74-ef8b0377445c": {
+   "w": "management 経営、管理",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e2c63ca0-ef33-44b2-a97e-8e415699ef52": {
+   "w": "mankind 人類",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f94ba7fa-85ab-43a8-9017-1bda9def6227": {
+   "w": "manners 行儀、マナー",
+   "countable": "plural",
+   "plural": null
+  },
+  "6607d446-3a30-4051-97e3-9111f7891b85": {
+   "w": "marble 大理石",
+   "countable": "both"
+  },
+  "e974141c-ec26-445a-a4f5-28de3dc17316": {
+   "w": "marriage 結婚",
+   "countable": "both"
+  },
+  "c1a716ac-1d3a-47e5-9748-d4df8436a929": {
+   "w": "martial arts 武道、格闘技",
+   "countable": "plural",
+   "plural": null
+  },
+  "d6341b7a-7bd9-4cab-826c-b73878644873": {
+   "w": "math 算数、数学",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "63a4e948-76e7-4cd3-9bfa-a89e7f59373f": {
+   "w": "mathematics 数学",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b71d2155-49b5-479f-b019-5118e44afe81": {
+   "w": "meat 肉",
+   "countable": "both"
+  },
+  "6b41cc61-c314-409a-a7f4-5e442c98add4": {
+   "w": "medicine 薬",
+   "countable": "both"
+  },
+  "c6e5f55c-f3a3-4d56-8150-9ab4daca4301": {
+   "w": "meditation 瞑想",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "86d9c7bf-134b-47b5-a56b-8a2530fe5994": {
+   "w": "membership 会員であること、会員資格",
+   "countable": "both"
+  },
+  "c1e33fee-1f8c-4623-8a90-3d7552a8f30c": {
+   "w": "midnight 真夜中、夜の12時",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d816d2b4-1f37-4950-924b-16a0648890e1": {
+   "w": "milk 牛乳、ミルク",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "56b5a31e-d5f3-4aa4-bb7a-23cff2050f5f": {
+   "w": "mineral water ミネラルウォーター",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "80a8d894-4606-4a12-8667-a5031ee368b0": {
+   "w": "mischief （子どもの）いたずら、悪さ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "44f4fa15-990e-4022-9502-1eb87d1fda19": {
+   "w": "misery みじめさ、苦しみ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "196f683a-80a3-4e7b-b574-105d396a0b1c": {
+   "w": "moisture 湿気、水分",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "7990a992-0d55-4299-a4cb-84f715419ac6": {
+   "w": "money お金",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e8f44e7d-7deb-428e-933a-a4232f87fa48": {
+   "w": "moral education 道徳",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "ae1193e5-b9d3-4548-839b-8d916a19167c": {
+   "w": "moss コケ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "2c64547f-a5ce-4082-a7b3-3eda4894b858": {
+   "w": "motivation やる気、動機",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "ef813caa-7ef9-40d4-941c-dc7783f67632": {
+   "w": "heat 熱",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "409ac1fa-6747-4904-b9b9-91981ae55efa": {
+   "w": "land 土地",
+   "countable": "both"
+  },
+  "bf532e9f-246d-4e14-a066-342efec4e9e4": {
+   "w": "love 愛",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "7bd5c1b7-29d4-4cb1-92aa-5ea930c90e75": {
+   "w": "light 明かり、電灯",
+   "countable": "both"
+  },
+  "c594f829-b63d-49a7-b4a1-0828d76e381a": {
+   "w": "mud 泥",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "924f792d-ce66-401d-9a6c-38f39d8d6586": {
+   "w": "murder 殺人",
+   "countable": "both"
+  },
+  "1a182ba0-6d45-4deb-91e5-5697f4363b9a": {
+   "w": "music 音楽",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "749669c5-3bdd-44ea-9260-2ed3ce948a10": {
+   "w": "mustard からし、マスタード",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "44835fdc-350b-4071-9244-5b2e9fac3646": {
+   "w": "nature 自然",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "63f9a1e5-d9e7-4287-988a-088cfc329463": {
+   "w": "natural gas 天然ガス",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "8a7c3e0f-b486-4f30-82d7-544142728051": {
+   "w": "negotiation 交渉",
+   "countable": "both"
+  },
+  "9b8c0647-41db-48b5-8a2e-8c1981264558": {
+   "w": "netball ネットボール",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "fd4282bc-616f-4d86-bbde-7d8b7dfaf5c2": {
+   "w": "news ニュース、知らせ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "3e1cfcb3-0b6f-4e32-b86a-fc35c6c87895": {
+   "w": "nightlife 夜の娯楽、ナイトライフ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "7e462d5f-8e8e-4341-b43d-3b837096628d": {
+   "w": "noise 騒音、物音",
+   "countable": "both"
+  },
+  "8eb42771-6ff5-414d-9d42-992de56b2c56": {
+   "w": "non-violence 非暴力",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "eceff28b-4c3f-47ad-876d-f8d77131e473": {
+   "w": "nonsense ばかげたこと",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "2ae26672-cfbe-467d-bfad-6c109be0a32f": {
+   "w": "noon 正午",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "772906bd-bd9e-4dc3-8980-67ab92c269e6": {
+   "w": "north 北、北の",
+   "countable": null,
+   "plural": null
+  },
+  "cca52ddd-ef92-416a-a8d4-1dca9a930260": {
+   "w": "northeast 北東、北東の",
+   "countable": null,
+   "plural": null
+  },
+  "c41603e7-db55-41bd-a331-aae724d5ee25": {
+   "w": "northwest 北西、北西の",
+   "countable": null,
+   "plural": null
+  },
+  "77491c2b-400a-49ca-904a-c6b54e473534": {
+   "w": "nutrition 栄養",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "3119feb9-e978-469e-acb3-243886e4603d": {
+   "w": "observation 観察",
+   "countable": "both"
+  },
+  "f680e39e-dcd8-4d21-9e25-b60a52c5814d": {
+   "w": "oil 油、石油",
+   "countable": "both"
+  },
+  "28bf3671-abed-4ae0-a38f-dfbfa342e48c": {
+   "w": "olive oil オリーブオイル",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b2ca6027-1f90-4099-a4ca-b2ddc03427bd": {
+   "w": "opera オペラ",
+   "countable": "both"
+  },
+  "dbc83feb-ee37-4620-bfdb-4bf069363b58": {
+   "w": "opposition 反対、対立",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "4b3db02f-2545-4964-8d69-cd99540106ac": {
+   "w": "origami 折り紙",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "8c13c024-a917-4a35-b2b5-a52a1d819228": {
+   "w": "overhunting 乱獲、狩りすぎ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b67a5057-de57-4b41-a516-844e05a3e620": {
+   "w": "oxygen 酸素",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "07f1dc88-e7b6-401a-bfb9-071a44d98f53": {
+   "w": "packing 荷造り",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "cc193620-2222-4a1d-b287-206c30496ed0": {
+   "w": "pain 痛み",
+   "countable": "both"
+  },
+  "56c72017-d295-4cad-ad76-766cdc2229eb": {
+   "w": "panic パニック",
+   "countable": "both"
+  },
+  "41e76fe0-e833-414e-b5e6-cd6ba48e8cf6": {
+   "w": "pants ズボン",
+   "countable": "plural",
+   "plural": null
+  },
+  "cf52aeb4-153f-442a-b432-8eab67814f65": {
+   "w": "paper 紙",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e4caf7e9-74e5-42e5-96d2-dc9857479c15": {
+   "w": "pardon 何と言いましたか、すみません",
+   "countable": null,
+   "plural": null
+  },
+  "53b0ceed-905c-4627-ad38-e149bfc32560": {
+   "w": "parking 駐車",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c9b2b359-59c1-4d3c-a279-529ef4ec0853": {
+   "w": "passion 情熱",
+   "countable": "both"
+  },
+  "1411802c-3b52-4a92-a46b-9df616c266b4": {
+   "w": "past 過去",
+   "countable": null,
+   "plural": null
+  },
+  "d1ec9108-ee3d-4f79-b1d0-8736e396cbfd": {
+   "w": "pasta パスタ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "886ae4f4-8a81-4b3a-88e6-605c5a298bb2": {
+   "w": "patience 忍耐、根気",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a978f4d7-ed01-463d-90b4-813c42c74573": {
+   "w": "peace 平和",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "cdfd3d54-3d74-451d-b4cb-06c617b24d3d": {
+   "w": "people 人々",
+   "countable": null,
+   "plural": null
+  },
+  "61b0f053-bfa0-44ba-b53c-da54abb78535": {
+   "w": "pepper コショウ",
+   "countable": "both"
+  },
+  "7061e32d-bd25-447d-ba4b-b446dda016b6": {
+   "w": "percent パーセント",
+   "countable": "countable",
+   "plural": "percent"
+  },
+  "53ce091f-e57d-4e6b-abc4-30ba87735210": {
+   "w": "permission 許可",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "70d5982c-42c7-4506-ad66-6faafe3b3ca8": {
+   "w": "perfume 香水",
+   "countable": "both"
+  },
+  "4088e2f9-e3ad-457e-b0a0-1080a9462682": {
+   "w": "philosophy 哲学",
+   "countable": "both"
+  },
+  "b48c7452-da21-4f6d-9824-517a42ba363c": {
+   "w": "photography 写真撮影",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "463dba56-122c-4403-8abf-595b346d4b17": {
+   "w": "physics 物理学",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "8e553a56-312c-4525-bb66-160273284b20": {
+   "w": "pity 残念なこと",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "9f27f2f1-ada0-4490-afaf-c9a3d196495d": {
+   "w": "pizza ピザ",
+   "countable": "both"
+  },
+  "7ed40d58-49da-45f9-8ff7-2b9ef2b61f0c": {
+   "w": "plastic プラスチック（の）",
+   "countable": "both"
+  },
+  "12817daa-4d71-4ccf-b3db-eeb21302f3f1": {
+   "w": "pleasure 喜び、楽しみ",
+   "countable": "both"
+  },
+  "12939eb1-79f0-460e-9701-b75f0bece02f": {
+   "w": "plenty 十分、たくさん",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c874cf4e-93d3-4240-9ce6-34ab27e61e1d": {
+   "w": "poetry 詩歌、詩",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "697dae07-dd55-49ca-975d-5b58f549adc6": {
+   "w": "poison 毒",
+   "countable": "both"
+  },
+  "a0c17c0b-eed5-4738-af42-fde47f23f6e9": {
+   "w": "police 警察",
+   "countable": "plural",
+   "plural": null
+  },
+  "97432b6c-33eb-4a65-b3de-26cca38f1cc5": {
+   "w": "politics 政治",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f68fd9e9-6bfe-4070-9f83-f8d95709f4e6": {
+   "w": "pollution 汚染",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "32efee66-2b10-49c8-9c8f-82412fd113fd": {
+   "w": "popcorn ポップコーン",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b5b92f44-5369-4bba-b94c-b8e22974c464": {
+   "w": "pork 豚肉",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "0e03f6db-9b32-47f8-92af-3e272307a9a6": {
+   "w": "post 投稿、郵便",
+   "countable": "both"
+  },
+  "ac0e7f83-a27d-4cee-bdef-5fad406caa60": {
+   "w": "potential 可能性、潜在能力",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "9ac2df82-a1d6-41a2-b103-72290e98c418": {
+   "w": "pottery 陶器、焼き物",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f1243de6-9c9c-4a34-8a51-d6f460a822fc": {
+   "w": "poverty 貧困",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "93541bec-9594-4dc7-a541-6d47c9bad03f": {
+   "w": "powder 粉",
+   "countable": "both"
+  },
+  "ec42167c-290e-4950-99cf-cd603c7e2dda": {
+   "w": "power …に動力を供給する；力",
+   "countable": "both"
+  },
+  "4860a3dd-8f65-4836-b28a-ccc6a5ff4315": {
+   "w": "praise ほめる；称賛",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "5f383818-eb91-412a-9084-7ee91ef71237": {
+   "w": "preparation 準備",
+   "countable": "both"
+  },
+  "3f303784-414d-4076-8405-7f0ed6253f1e": {
+   "w": "prejudice 偏見",
+   "countable": "both"
+  },
+  "a5b43c74-84bd-438c-bf65-6c0653148014": {
+   "w": "presence 存在、出席",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c4e0ceeb-563f-4223-909a-53de715e74d2": {
+   "w": "pressure 圧力、プレッシャー",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "2ffd6c44-7a17-47d4-9b91-df19b25c947e": {
+   "w": "pride 誇り",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "4ebded65-20c9-4d5d-8f9e-6f7195331f3a": {
+   "w": "privacy プライバシー",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c5e6ca42-4f1e-460d-8e9f-41f4dc1b0bbd": {
+   "w": "procrastination 先延ばし",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "3f7cb9df-f7a1-4eab-94a4-dae18ef8ee55": {
+   "w": "production 生産、制作",
+   "countable": "both"
+  },
+  "a2a9e407-af2a-4639-beac-daa88aa4c002": {
+   "w": "pronunciation 発音",
+   "countable": "both"
+  },
+  "74ec43f9-e8f4-4c88-979b-1cb0b5065b03": {
+   "w": "proof 証拠、証明",
+   "countable": "both"
+  },
+  "6b1cb623-ce3e-444b-bfa7-76469a6e2c44": {
+   "w": "property 財産、所有物",
+   "countable": "both"
+  },
+  "b8ee76be-0715-4fc4-b3c9-36205129a075": {
+   "w": "prosperity 繁栄",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "479e9233-30f3-4026-b2d4-d7833f6eca4e": {
+   "w": "protection 保護",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "5d0928b9-e8e4-40a9-8a36-dc697b3d6502": {
+   "w": "public transport 公共交通機関",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "077f3112-1a5b-497c-8355-91d212074789": {
+   "w": "pudding プリン",
+   "countable": "both"
+  },
+  "31e3b113-dc82-46c9-a6a4-3fde7c81fff5": {
+   "w": "punctuation 句読点",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d35adebb-d18f-45ce-a4c1-9c3539ae4c41": {
+   "w": "punishment 罰",
+   "countable": "both"
+  },
+  "12d21f1e-5678-4332-abb2-38e8f486f377": {
+   "w": "purple 紫、紫の",
+   "countable": null,
+   "plural": null
+  },
+  "94f6ad3f-e50e-4ff5-91bf-25d27e2c2fd5": {
+   "w": "quality 質、品質",
+   "countable": "both"
+  },
+  "17204620-0d2f-4d85-9dc4-b8de86eb016b": {
+   "w": "quiz クイズ",
+   "countable": "countable",
+   "plural": "quizzes"
+  },
+  "7c8384ff-2ad4-46be-be03-a624def0bbdf": {
+   "w": "radiation 放射能、放射線",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "6ab7a5dd-5f97-40d5-b504-1fda862981c1": {
+   "w": "rage 激怒",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d73a098d-e24e-44bd-846a-4ca32dfbc3ee": {
+   "w": "rain 雨",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "149d8ce8-3c12-4924-8958-00e05305fcd2": {
+   "w": "rainfall 降水量、雨",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "4dcef2aa-113a-4b55-94c8-4b39be8e8f7e": {
+   "w": "rainwater 雨水",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a4afb0ef-1580-41d5-ab07-c3de70170f66": {
+   "w": "ramen ラーメン",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e3bba25f-0663-4ffe-b338-6254be840d04": {
+   "w": "rap ラップ（音楽）",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "9b7501ee-82f3-4cde-a802-299ac10dc9d7": {
+   "w": "reading 読書",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "ad04460d-df32-4ef5-ac08-4da811b99578": {
+   "w": "reality 現実",
+   "countable": "both"
+  },
+  "1fb52b58-e792-413a-9d4f-500bad193495": {
+   "w": "recovery 回復",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "9893b14c-7116-42c0-8c7f-66e6ebb3a1d3": {
+   "w": "recycling リサイクル",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "59ad80a6-060a-44e8-a6c3-11e4c049c568": {
+   "w": "reflection 反射、映った姿、熟考",
+   "countable": "both"
+  },
+  "af032eca-8682-4eab-956d-2af452fe89e6": {
+   "w": "refreshments 軽い飲食物",
+   "countable": "plural",
+   "plural": null
+  },
+  "dad993f9-84a7-43b3-8a8f-904574a5c422": {
+   "w": "registration 登録",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "24962463-efdf-4fed-85cf-939a0b0dcf64": {
+   "w": "religion 宗教",
+   "countable": "both"
+  },
+  "8be78780-7356-4619-920e-a1684f465a3c": {
+   "w": "repair 修理する；修理",
+   "countable": "both"
+  },
+  "996d862d-c984-498a-b999-a1e2ad020f19": {
+   "w": "research 研究、調査",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c596058f-1e64-4988-a028-c7404a2fcf13": {
+   "w": "responsibility 責任",
+   "countable": "both"
+  },
+  "9d55820e-2d1e-48bf-84c6-efd465b6825c": {
+   "w": "rest 休息、休み",
+   "countable": "both"
+  },
+  "f31444c2-1be0-4338-9173-f7db6ea1cb5d": {
+   "w": "rest 残り",
+   "countable": null,
+   "plural": null
+  },
+  "289dfbdf-7e2c-4faa-92f5-4ce18cbb644e": {
+   "w": "retail 小売り",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a76aaa78-3e0d-4415-b1ed-756869302c2a": {
+   "w": "rice ご飯、米",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "6f1c892b-a7be-4d9d-97b0-2f7b5e13fe31": {
+   "w": "rock 岩、ロック（音楽）",
+   "countable": "both"
+  },
+  "0af4ede9-62c4-453f-ac2a-cc6f7551fb4d": {
+   "w": "romance 恋愛、ロマンス",
+   "countable": "both"
+  },
+  "972bd8c0-c739-44ff-b70b-5913aabb735b": {
+   "w": "rubber ゴム",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "bd5147db-b36a-4d72-8df6-e7496bda55ba": {
+   "w": "rugby ラグビー",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "11e98997-fc07-49b9-9338-2c9feb665afd": {
+   "w": "running ランニング、走ること",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "ce57eb06-0b8c-41fb-b38e-2b5e53821e07": {
+   "w": "sadness 悲しみ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "6418e3f4-41aa-41f2-a694-5584042b2edb": {
+   "w": "safety 安全",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b1aa7542-1054-4059-b036-4a30001fad88": {
+   "w": "sailing セーリング、航海",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "173e04ae-71d6-416b-b995-3840f766b3a9": {
+   "w": "salad サラダ",
+   "countable": "both"
+  },
+  "8214020f-da76-4f42-82e0-17b905e28175": {
+   "w": "salt 塩",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f05943ef-91db-4bad-92fd-4e2c1acc7e22": {
+   "w": "sand 砂",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f9a993af-b528-4e63-9dc3-098048a3e344": {
+   "w": "satisfaction 満足",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "161b7d08-407f-4b31-ad82-972ab81d6a5d": {
+   "w": "sauce ソース",
+   "countable": "both"
+  },
+  "e0e9eb2b-4f0d-4c3e-8ece-afb85fe67eb8": {
+   "w": "scenery 景色、眺め",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "527915f1-f1de-4962-9ffc-9ead3b1e5e46": {
+   "w": "schoolwork 学校の勉強、学業",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f126d4d2-c34c-408a-8d46-5d40cbd2a188": {
+   "w": "science 理科",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "80faf9d6-45a3-4e82-8219-e8255b4c6fa4": {
+   "w": "science fiction SF、空想科学小説",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "feaaa55a-c6b3-4ddb-aa6f-838c123db51d": {
+   "w": "scissors はさみ",
+   "countable": "plural",
+   "plural": null
+  },
+  "6b06fafd-fb38-4293-9f8c-09625bd47b22": {
+   "w": "seafood 海産物、シーフード",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "5a0197c8-b195-40da-b239-bb7f2e43a4e2": {
+   "w": "seawater 海水",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "7d1ee6a9-3289-4103-8d45-7510d0dcfead": {
+   "w": "seaweed 海藻、のり",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "7c15d184-4dc6-4ac1-9e51-338482bf8889": {
+   "w": "security 安全、警備",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "449950a1-82fe-415c-a8cd-a716517f4b7f": {
+   "w": "selection 選ぶこと、選択",
+   "countable": "both"
+  },
+  "5b25e531-b2a1-4159-9148-5fa51bccd637": {
+   "w": "sensation 感覚、大評判",
+   "countable": "both"
+  },
+  "84fd7660-861e-487f-a563-2c88c9c0c128": {
+   "w": "separation 分離、別れ",
+   "countable": "both"
+  },
+  "a631e05e-c1a7-498f-8466-0496e2e9ee47": {
+   "w": "service サービス",
+   "countable": "both"
+  },
+  "681eed8c-7598-4c23-a144-74df4a867f46": {
+   "w": "shade 陰、日陰",
+   "countable": "both"
+  },
+  "1fe524ab-1758-4d19-a8ea-76470fb52a30": {
+   "w": "shame 恥、残念なこと",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a0ad34e5-496a-4b14-a766-f1ff342532e9": {
+   "w": "shampoo シャンプー",
+   "countable": "both"
+  },
+  "1048127d-109c-442b-a76e-58ffc1959a94": {
+   "w": "shaved ice かき氷",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "df66f781-63ff-44ba-b305-3103c857042c": {
+   "w": "shoes くつ",
+   "countable": "plural",
+   "plural": null
+  },
+  "923bed1d-2400-47c5-997f-cb1e01448a63": {
+   "w": "shopping 買い物",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c1bab839-9251-4296-b67d-36d00d076600": {
+   "w": "shrimp エビ",
+   "countable": "countable",
+   "plural": "shrimp"
+  },
+  "a9c31bca-cf17-42c8-8f56-ed6d4e038bf9": {
+   "w": "sickness 病気、吐き気",
+   "countable": "both"
+  },
+  "c8f02b67-f637-419a-aeb0-e6a5e2354fde": {
+   "w": "sight 光景、視力",
+   "countable": "both"
+  },
+  "85277f4d-218f-46d1-beda-7147429bae1a": {
+   "w": "sightseeing 観光",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d844155d-c305-4549-ac8a-f4a71e62193b": {
+   "w": "significance 重要性、意義",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c1d0db13-c47b-4437-92e9-c7b395c6d624": {
+   "w": "silence 沈黙、静けさ",
+   "countable": "both"
+  },
+  "7af5b4e8-61b9-448f-b965-e8a8f7429919": {
+   "w": "silk 絹",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e811a1fd-e8f5-4a7f-8e68-7a1dc0620098": {
+   "w": "silver 銀、銀色",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "4a2abaac-d264-4929-88ce-164f8237f62b": {
+   "w": "singing 歌うこと",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "371cb492-4dce-4054-9ed6-b65133e4b9d6": {
+   "w": "skateboarding スケートボード",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "ecdd4493-bc34-4842-849f-9f54eedbcc68": {
+   "w": "skating スケート",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a44f2d33-9214-44b3-8b2c-bb1997c1062b": {
+   "w": "skiing スキー",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "2f07fb37-8a94-4670-b3bb-4e993c4460f4": {
+   "w": "skin 皮膚、肌",
+   "countable": "both"
+  },
+  "6a9cff88-0bd8-4d9c-a2d6-fa30878722c9": {
+   "w": "slavery 奴隷制度",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "1d12b90d-0f3a-42bc-9e21-5747ad21002e": {
+   "w": "snow 雪；雪が降る",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "0864e564-1715-49a6-b987-7d538dddf8ad": {
+   "w": "snowboarding スノーボード",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "519c2422-7575-415a-816c-40b15ebd6fb2": {
+   "w": "soap せっけん",
+   "countable": "both"
+  },
+  "eed15705-aaf3-4fc2-891b-b9af343512d6": {
+   "w": "soccer サッカー",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "04ee725b-72d8-4f78-8923-f716601ca0ec": {
+   "w": "social networking SNS（の利用）",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "22e37174-8697-40e7-82bb-6317e4b996f0": {
+   "w": "social studies 社会科",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "bfd3ca47-4fab-4f94-a52d-47c47d5efe69": {
+   "w": "socks くつ下",
+   "countable": "plural",
+   "plural": null
+  },
+  "d4c5b7fb-0bb5-440e-83ba-256ffb352944": {
+   "w": "soda 炭酸飲料、ソーダ",
+   "countable": "both"
+  },
+  "401a297e-aa8f-4288-966d-928ba01aa193": {
+   "w": "softball ソフトボール",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "0085e4a2-7ba8-40e8-9fd0-03e8b3a9232f": {
+   "w": "software ソフトウェア",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "5c4a1210-a925-4689-8d5e-e96ebf81d9f0": {
+   "w": "soil 土、土壌",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c241943a-9840-442b-90bd-98d74625bb8d": {
+   "w": "sorrow 悲しみ、悲哀",
+   "countable": "both"
+  },
+  "372a187e-906f-4718-920f-2b18c9ef5471": {
+   "w": "soup スープ",
+   "countable": "both"
+  },
+  "0c899cfe-9568-4256-a3a6-d02f41f58f7a": {
+   "w": "south 南、南の",
+   "countable": null,
+   "plural": null
+  },
+  "af0e71b4-0682-4372-8d44-274f5e46dbc1": {
+   "w": "southeast 南東、南東の",
+   "countable": null,
+   "plural": null
+  },
+  "f5a160f1-b0d4-4747-9452-1a9a8e00f629": {
+   "w": "southwest 南西、南西の",
+   "countable": null,
+   "plural": null
+  },
+  "c20c3023-c06d-44e7-a6f2-ef00df939d2a": {
+   "w": "soy sauce しょうゆ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "03a5d32e-b711-4dd0-804c-2e5f75e0a564": {
+   "w": "space 宇宙、空間",
+   "countable": "both"
+  },
+  "0ccb823d-9fb5-47ab-8120-65e0a42b8f7f": {
+   "w": "spaghetti スパゲッティ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "ef7f9ec9-f14b-4406-8a35-31f48832f5bb": {
+   "w": "speed 速さ、スピード",
+   "countable": "both"
+  },
+  "df4b2f0f-7f98-426d-882a-2f7e65d6476b": {
+   "w": "spelling つづり",
+   "countable": "both"
+  },
+  "29ba0d4a-37f5-48da-ba8f-7ed7ce80dec3": {
+   "w": "spinach ほうれん草",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "6e05c340-872c-47b7-9508-f5068e6e9d1c": {
+   "w": "spring 春",
+   "countable": "both"
+  },
+  "6801f9d8-ecf8-4e59-ac1c-164ed4b8d3b8": {
+   "w": "sportsmanship スポーツマンシップ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "dc4041b9-16c6-4b60-a995-10adbf2d7afc": {
+   "w": "staff 職員、スタッフ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "38bf19a5-3c04-4f0b-8e66-21e4024d7f5e": {
+   "w": "steam 蒸気",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "2aa5f1aa-ce77-4827-aa2c-83ad58539fdd": {
+   "w": "steel 鋼鉄、はがね",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "5d80954f-b686-48e0-801c-ec88b77a021b": {
+   "w": "stomach 胃、おなか",
+   "countable": "countable",
+   "plural": "stomachs"
+  },
+  "8d81d249-9d55-45b4-8ccc-e274c9cdb03d": {
+   "w": "storage 保管、収納",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "4f8438a9-bcd2-4656-9ba2-f919e6d4c049": {
+   "w": "strain 負担、緊張",
+   "countable": "both"
+  },
+  "a23ef789-5ffc-400f-9668-32354d6686d9": {
+   "w": "right 右、右に",
+   "countable": null,
+   "plural": null
+  },
+  "b2579eae-547a-4f24-bf4f-c72b65f341be": {
+   "w": "smoke 煙",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "830f0e21-689d-4f0b-a4a1-384d689617ef": {
+   "w": "strength 力、強さ",
+   "countable": "both"
+  },
+  "6e060aeb-de0e-4a77-bf84-c9cb957cb006": {
+   "w": "stress ストレス、圧迫",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f1f794d7-271b-46bf-a4ea-cff8770ce7db": {
+   "w": "stuff （いろいろな）もの、こと",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "15e7488f-6022-4168-984c-9bd887ef9f63": {
+   "w": "success 成功",
+   "countable": "both"
+  },
+  "3524f303-bc42-4b55-a3cc-5a2f8826b5dd": {
+   "w": "sugar 砂糖",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a9c7a0ea-ccf4-4b0c-b49e-ff2243f909e0": {
+   "w": "summer 夏",
+   "countable": "both"
+  },
+  "7436c380-3973-43a8-a898-0f6f89834b10": {
+   "w": "sumo すもう",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "9c679e33-4b33-4ea1-9783-703eba5f82ae": {
+   "w": "sun 太陽",
+   "countable": null,
+   "plural": null
+  },
+  "c2185590-c96b-438a-a1f8-569866075e6f": {
+   "w": "sunglasses サングラス",
+   "countable": "plural",
+   "plural": null
+  },
+  "a84fda14-4c47-4ae8-a1e5-ecbd938b368b": {
+   "w": "sunlight 日光",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "332b79e9-dd53-47cd-8d62-9d237d707774": {
+   "w": "sunshine 日光、日差し",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "20f52180-d63f-4837-886f-ff4810c87f01": {
+   "w": "supply 用品、供給",
+   "countable": "both"
+  },
+  "c4d25346-21bb-4e75-80e0-847bb761718e": {
+   "w": "surfing サーフィン",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "3530ae7f-e2e5-4f4f-b9f8-67b35ed0f36b": {
+   "w": "surgery 手術、外科",
+   "countable": "both"
+  },
+  "7659eb87-b4cd-4af7-b5b8-02dcfadde470": {
+   "w": "survival 存続、生き残ること",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "55bbf685-b065-4eb4-ab5a-f6a8aa91ab00": {
+   "w": "sushi すし",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "398ce7ca-e471-424d-b569-72c5f168c6bd": {
+   "w": "suspicion 疑い、疑念",
+   "countable": "both"
+  },
+  "2e78f2dc-f42b-430c-be5a-0df5d4b159d7": {
+   "w": "sweets お菓子",
+   "countable": "plural",
+   "plural": null
+  },
+  "190f30b8-a1d4-470d-9167-4aa18b836d68": {
+   "w": "swimming 水泳",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "8958960d-00b6-4fce-949d-25e0918ccc40": {
+   "w": "sympathy 同情、共感",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "7210be0e-8a1f-4ad4-95e0-c9b590c570dc": {
+   "w": "table tennis 卓球",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "0533a3da-4b5f-40d3-9da3-ca20910f6950": {
+   "w": "talent 才能",
+   "countable": "both"
+  },
+  "db27bb84-5155-4bf3-bd9b-9fe14ce21551": {
+   "w": "tape テープ",
+   "countable": "both"
+  },
+  "714d4b5f-9054-49eb-a87b-4a384e488cfa": {
+   "w": "tea お茶、紅茶",
+   "countable": "both"
+  },
+  "0cbd31a6-c13c-4c3d-a146-600c02c07720": {
+   "w": "teaching 教えること、教え",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "4e6ded36-e53e-4bdc-867b-6c310f6a1fb4": {
+   "w": "teamwork チームワーク",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "253e7792-0d60-43a6-b7fe-9452faee949c": {
+   "w": "technology （科学）技術",
+   "countable": "both"
+  },
+  "9a61ff63-9d4c-4337-8f4c-59168ab23727": {
+   "w": "telecommunications 電気通信",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "34fefaf1-ae18-4102-8c8d-6b9babafc13e": {
+   "w": "television テレビ",
+   "countable": "both"
+  },
+  "085eede1-8b7c-48be-a301-3d8f136bc5ab": {
+   "w": "temper 気性、かんしゃく",
+   "countable": "both"
+  },
+  "cab1b6d4-23a4-47e2-8d5e-c512638ae968": {
+   "w": "tennis テニス",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "ded6b8be-f1ed-43bd-9429-05e82b151c7a": {
+   "w": "tension 緊張",
+   "countable": "both"
+  },
+  "d8cd1d9d-9edc-4b2a-ba27-6bb01b57de32": {
+   "w": "terrorism テロ、テロリズム",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "bdee859a-2e09-4a82-a4ba-4992500fca27": {
+   "w": "the U.K. イギリス",
+   "countable": null,
+   "plural": null
+  },
+  "19b10b7a-5e4d-492c-9613-2566a084a142": {
+   "w": "the United States アメリカ合衆国",
+   "countable": null,
+   "plural": null
+  },
+  "27ef8a2b-2547-4682-8983-0abb17127c52": {
+   "w": "theft 盗み、窃盗",
+   "countable": "both"
+  },
+  "3c196d36-b172-41b8-9472-4d9d9d1765c1": {
+   "w": "therapy 療法、治療、ストレス解消",
+   "countable": "both"
+  },
+  "72d24f1d-0c07-4a45-8e33-b8800378f32e": {
+   "w": "thirst （のどの）渇き",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "aa34b16b-b490-48fd-88a5-33b5675dd44b": {
+   "w": "thunder 雷、雷鳴",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "7eda3100-3c53-4b03-bbd1-e1d35c2a997c": {
+   "w": "tights タイツ",
+   "countable": "plural",
+   "plural": null
+  },
+  "b5671a3d-6428-4aa2-aa06-388328ef2b31": {
+   "w": "time 時間、時刻",
+   "countable": "both"
+  },
+  "0af1ad44-f6f3-486e-82c7-f1409486b1c4": {
+   "w": "timekeeping 時間の計測",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "ac1c5b54-82fd-4982-b1f1-480facf426ca": {
+   "w": "tin すず、缶",
+   "countable": "both"
+  },
+  "f29b192e-f04a-443c-a9c5-a006d2752e87": {
+   "w": "tissue ティッシュ、（生物の）組織",
+   "countable": "both"
+  },
+  "648794db-75de-4cba-a556-199c2b3f392f": {
+   "w": "toast トースト",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "644b385a-c35c-409f-a8c8-be1aabb22a7b": {
+   "w": "tobacco タバコ、たばこの葉",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "fe4d3b6f-9b83-4cb0-80bc-d5bda9ca77ee": {
+   "w": "today 今日",
+   "countable": null,
+   "plural": null
+  },
+  "d32b6250-8e87-45a9-9fe5-ad3b9494694f": {
+   "w": "tomorrow 明日",
+   "countable": null,
+   "plural": null
+  },
+  "1900668e-0111-4812-9779-59b31812e4e1": {
+   "w": "toothpaste 歯みがき粉",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "9fedb7c5-feae-4633-b398-27a836832d57": {
+   "w": "tourism 観光業、観光",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "abc06061-5ca9-45b9-9d25-7ca599103537": {
+   "w": "track and field 陸上競技",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "93d5d533-892b-4b06-be28-a5b2be6f53eb": {
+   "w": "trade 貿易",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "156c61d7-ce2f-41a5-9ca5-559a27031ca3": {
+   "w": "traffic 交通",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "1e521100-1c88-42e9-a623-c57f8076c150": {
+   "w": "training 訓練、トレーニング",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "7f3ec2f3-6c9a-4fa1-a4b9-e6a59b1227bd": {
+   "w": "transport 輸送、交通機関",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "19fd7a79-562c-4ba0-a76b-418955a4d3fd": {
+   "w": "transportation 交通機関、輸送",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "fbb8f92f-f1a7-409a-9fef-50a4145a171b": {
+   "w": "trash ごみ、くず",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "314ecaaa-cb05-4852-9090-70636f6e4106": {
+   "w": "trivia 雑学、豆知識",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "3606697a-8784-455f-a38f-df8230fb99ae": {
+   "w": "trouble 困難、困ったこと",
+   "countable": "both"
+  },
+  "7f9edfb5-2dca-4fac-afc5-cbc0a7b61b11": {
+   "w": "truth 真実、本当のこと",
+   "countable": "both"
+  },
+  "88d50ab2-1aa1-47fa-9508-d069acb31347": {
+   "w": "tuna マグロ、ツナ",
+   "countable": "both",
+   "plural": "tuna"
+  },
+  "a9d8bdf2-a2a2-43e2-a79b-9041117b88f4": {
+   "w": "turbulence 乱気流",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e330a6a8-a2e1-4091-a37b-9908d5d0275c": {
+   "w": "turf 芝生、芝",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "7a7cf6b3-edfe-4ec8-8bfb-3117bc4cc567": {
+   "w": "uncertainty 不確かさ、不安",
+   "countable": "both"
+  },
+  "c3090bed-1599-4303-a83a-c88ecd1a7365": {
+   "w": "unemployment 失業",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "bac69fa1-21c9-403e-97f9-22ece1dac925": {
+   "w": "usage 使い方、使用",
+   "countable": "both"
+  },
+  "68d43535-cd83-476c-bc5f-5370554a035d": {
+   "w": "value 価値",
+   "countable": "both"
+  },
+  "b7402440-9f24-4afd-8370-e1c67a6caa63": {
+   "w": "variety 多様性、いろいろ",
+   "countable": "both"
+  },
+  "40de4c93-d6ed-4e40-844b-0488bab32cd3": {
+   "w": "violence 暴力",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "dcb53d16-0be6-4e35-a097-45ece20380ca": {
+   "w": "vision 視力、未来像",
+   "countable": "both"
+  },
+  "3cea89d3-7733-44b6-bc99-fb71e02fbf22": {
+   "w": "vocabulary 語彙、単語",
+   "countable": "both"
+  },
+  "e0a40da7-0c3c-4716-a759-5bd12255d521": {
+   "w": "volleyball バレーボール",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "0f6323c3-e642-415d-a7aa-0a45f476ef85": {
+   "w": "volume 音量、量、（本の）巻",
+   "countable": "both"
+  },
+  "7dab25b2-be4b-439b-b79f-5ce888ec0d20": {
+   "w": "walking 歩くこと、ウォーキング",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "2cacbd5a-578e-4bb8-b071-8fba0f4ca088": {
+   "w": "warmth 暖かさ、温かさ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "051ed0fc-410e-402a-a2e1-23b7a2feedee": {
+   "w": "waste ごみ、無駄；無駄にする",
+   "countable": "both"
+  },
+  "fa8c332c-329a-497f-855b-06dde3d03c58": {
+   "w": "water 水",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "beb1a644-a82e-4b2a-bfbe-62794b3b81af": {
+   "w": "wax ろう、ワックス",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "4d6bb733-73f2-43df-b0a0-3f30e0f54f89": {
+   "w": "wealth 富、財産",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "ec84930b-480c-4b94-ab7d-b1287ec2687b": {
+   "w": "weather 天気",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "56d36151-6099-40b9-a2d8-abf7db8a3009": {
+   "w": "weight おもり；重さ",
+   "countable": "both"
+  },
+  "6bea2040-56c8-4d65-b968-e9ce47a13c42": {
+   "w": "well-being 健康、幸福（な状態）",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "27ee1aa5-81ef-406a-954e-a7523ef57e34": {
+   "w": "west 西、西の",
+   "countable": null,
+   "plural": null
+  },
+  "97d5a20a-6885-4d9b-a3e8-966689e9f9c3": {
+   "w": "wildlife 野生生物",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "9e53e2e7-24c6-4b5a-9519-6458dca9767f": {
+   "w": "willingness 進んでやる気持ち",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "7b4a1e46-0e45-439f-8945-27f15a82788e": {
+   "w": "wind 風",
+   "countable": "both"
+  },
+  "14563255-904c-4d1b-a570-61dc9a7dd63b": {
+   "w": "windsurfing ウィンドサーフィン",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "767f6827-925b-4fbb-b15c-bd8ac7f1f31c": {
+   "w": "wine ワイン",
+   "countable": "both"
+  },
+  "072db415-1965-47c1-95b5-5ffc8534a805": {
+   "w": "winter 冬",
+   "countable": "both"
+  },
+  "a4781126-04b5-4151-9c5f-02b7a34ded90": {
+   "w": "wisdom 知恵、英知",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "619c3fee-78f5-4ede-a290-2470ca322149": {
+   "w": "wood 木材",
+   "countable": "both"
+  },
+  "58e595c0-05f4-4fee-8dfa-73e9f0008cc8": {
+   "w": "wool 羊毛、ウール",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "15a6ff9a-66f8-4f55-b167-9f9a44a1bf47": {
+   "w": "work 働く、仕事",
+   "countable": "both"
+  },
+  "b55b04f7-5639-44b9-9ab9-b29351513aad": {
+   "w": "writing 書くこと、文章",
+   "countable": "both"
+  },
+  "29238f44-edb2-4596-b3c7-7965bec740a6": {
+   "w": "yoga ヨガ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "2fd02aa7-adc1-4d5e-955b-0fd70b674b07": {
+   "w": "while しばらくの間",
+   "countable": null,
+   "plural": null
+  },
+  "fab41e6f-5977-471d-bd51-0926ea081efb": {
+   "w": "wheelchair basketball 車いすバスケットボール",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "3c3c545b-ae2b-4a44-92e9-88cd1e25eabb": {
+   "w": "thought 考え",
+   "countable": "both"
+  },
+  "371826ff-317b-422b-b2c1-3bc12c639ef7": {
+   "w": "yogurt ヨーグルト",
+   "countable": "both"
+  },
+  "f9376018-4a60-4437-a245-574472626305": {
+   "w": "youth 若さ、青年時代",
+   "countable": "both"
+  },
+  "b0652c4c-4b8b-4866-8b86-1629d46fa2a2": {
+   "w": "curriculum カリキュラム、教育課程",
+   "countable": "countable",
+   "plural": "curricula"
+  },
+  "8c9d1a50-5a8f-406f-83c8-9f5735fab9e0": {
+   "w": "TV テレビ",
+   "countable": "countable",
+   "plural": "TVs"
+  },
+  "54e06ed8-eb6f-488e-abb8-05bef42672ef": {
+   "w": "P.E. 体育",
+   "countable": "uncountable",
+   "plural": null
   }
  },
  "verbs": {}

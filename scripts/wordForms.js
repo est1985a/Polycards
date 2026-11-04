@@ -10,7 +10,7 @@ export const IRREGULAR_PLURALS = {
   life: 'lives', wife: 'wives', knife: 'knives', leaf: 'leaves', half: 'halves', wolf: 'wolves',
   shelf: 'shelves', thief: 'thieves', loaf: 'loaves', calf: 'calves', self: 'selves', elf: 'elves',
   potato: 'potatoes', tomato: 'tomatoes', hero: 'heroes', echo: 'echoes', volcano: 'volcanoes',
-  mosquito: 'mosquitoes', torpedo: 'torpedoes', veto: 'vetoes',
+  mosquito: 'mosquitoes', torpedo: 'torpedoes', veto: 'vetoes', tornado: 'tornadoes', scarf: 'scarves', hoof: 'hooves', wharf: 'wharves',
   crisis: 'crises', analysis: 'analyses', basis: 'bases', thesis: 'theses', hypothesis: 'hypotheses',
   diagnosis: 'diagnoses', oasis: 'oases', axis: 'axes',
   phenomenon: 'phenomena', criterion: 'criteria', medium: 'media', datum: 'data', bacterium: 'bacteria',

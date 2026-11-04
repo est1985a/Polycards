@@ -1,0 +1,351 @@
+-- =====================================================================
+-- Polycards: dictionary word details, nouns (batch 6 of 8), 337 words
+-- Run AFTER polycards-word-details.sql. Only fills empty columns, so it is safe to run twice
+-- and never overwrites a word fixed by hand. Readable list: the .csv file with the same name.
+-- Made by: node scripts/wordDetails.mjs nouns 6
+-- =====================================================================
+update public.words as w
+set countable = v.countable, plural = v.plural
+from (values
+  ('149d8ce8-3c12-4924-8958-00e05305fcd2'::uuid, 'uncountable', null),  -- rainfall
+  ('fba58d75-9e24-4ef4-92c5-3c288bd7b425'::uuid, 'countable', 'rainforests'),  -- rainforest
+  ('4dcef2aa-113a-4b55-94c8-4b39be8e8f7e'::uuid, 'uncountable', null),  -- rainwater
+  ('a4afb0ef-1580-41d5-ab07-c3de70170f66'::uuid, 'uncountable', null),  -- ramen
+  ('3a46eaba-79bc-457a-bbf9-0e20fa43315a'::uuid, 'countable', 'ramps'),  -- ramp
+  ('fb61df4d-1c2d-4b51-8dc8-504a9e1549b4'::uuid, 'countable', 'ranges'),  -- range
+  ('7b750e99-3b6b-4165-aba8-fa4804a72dca'::uuid, 'countable', 'ranks'),  -- rank
+  ('e3bba25f-0663-4ffe-b338-6254be840d04'::uuid, 'uncountable', null),  -- rap
+  ('95b05c3f-943b-4459-b34d-36c4a184af41'::uuid, 'countable', 'raspberries'),  -- raspberry
+  ('6394d7bc-a508-4ad7-b9c6-84cf275b1599'::uuid, 'countable', 'rates'),  -- rate
+  ('737e90fc-68f8-4de5-bdf3-bca7ec3a1785'::uuid, 'countable', 'razors'),  -- razor
+  ('2b7af6f7-74e7-4d06-badf-ec74e70c6848'::uuid, 'countable', 'readers'),  -- reader
+  ('9b7501ee-82f3-4cde-a802-299ac10dc9d7'::uuid, 'uncountable', null),  -- reading
+  ('ad04460d-df32-4ef5-ac08-4da811b99578'::uuid, 'both', 'realities'),  -- reality
+  ('20e27459-685b-4ebd-9df1-a02bf0bc8f53'::uuid, 'countable', 'reasons'),  -- reason
+  ('e831a906-dca3-442e-a1a3-730dfdc47c9f'::uuid, 'countable', 'receipts'),  -- receipt
+  ('471610cd-5f17-4562-8b6d-8ddc121cc6d0'::uuid, 'countable', 'receptions'),  -- reception
+  ('29e8a1e2-c286-46a4-ae39-203edc72856d'::uuid, 'countable', 'receptionists'),  -- receptionist
+  ('770b7241-f7ef-4a2f-8890-cfed075d3c5e'::uuid, 'countable', 'records'),  -- record
+  ('814fd173-2d0d-4a33-b02c-747c445860bb'::uuid, 'countable', 'recorders'),  -- recorder
+  ('43e92759-9278-4ce4-8385-63cadf4cde0d'::uuid, 'countable', 'recordings'),  -- recording
+  ('1fb52b58-e792-413a-9d4f-500bad193495'::uuid, 'uncountable', null),  -- recovery
+  ('9893b14c-7116-42c0-8c7f-66e6ebb3a1d3'::uuid, 'uncountable', null),  -- recycling
+  ('1349e68b-3087-4b87-b211-13ba48fff00d'::uuid, 'countable', 'reductions'),  -- reduction
+  ('09044f69-67b4-44e6-82fc-1fcc50c694ed'::uuid, 'countable', 'reefs'),  -- reef
+  ('cda9eed4-b557-4aa8-8476-91d201733bbf'::uuid, 'countable', 'referees'),  -- referee
+  ('59ad80a6-060a-44e8-a6c3-11e4c049c568'::uuid, 'both', 'reflections'),  -- reflection
+  ('af032eca-8682-4eab-956d-2af452fe89e6'::uuid, 'plural', null),  -- refreshments
+  ('54beb1e9-b9de-4ac5-8b60-909467c88851'::uuid, 'countable', 'refrigerators'),  -- refrigerator
+  ('bf3f3039-c519-4285-9c8f-15067a4ac842'::uuid, 'countable', 'refunds'),  -- refund
+  ('31d57839-6b9d-4c8b-8292-57f15d762283'::uuid, 'countable', 'refusals'),  -- refusal
+  ('9a333713-a0b4-4bf0-805e-47d4c3fe006c'::uuid, 'countable', 'regions'),  -- region
+  ('dad993f9-84a7-43b3-8a8f-904574a5c422'::uuid, 'uncountable', null),  -- registration
+  ('758ee3a6-7dbf-465e-8290-6f71b3abb00b'::uuid, 'countable', 'regulations'),  -- regulation
+  ('3f5aef7e-bbe0-4d73-a884-4d7c73287497'::uuid, 'countable', 'relationships'),  -- relationship
+  ('372525e7-c945-4d25-8f91-14c944126de0'::uuid, 'countable', 'relatives'),  -- relative
+  ('eae98e21-96e8-4107-88f7-09e273d41e1f'::uuid, 'countable', 'relays'),  -- relay
+  ('24962463-efdf-4fed-85cf-939a0b0dcf64'::uuid, 'both', 'religions'),  -- religion
+  ('cec5efe8-3adb-490b-9fac-b755bf5235f9'::uuid, 'countable', 'remainders'),  -- remainder
+  ('73fccaa6-8cb7-476a-aad3-3f4afaf649da'::uuid, 'countable', 'remarks'),  -- remark
+  ('0e29a6fd-a90a-422f-a18f-8fbe39fea86b'::uuid, 'countable', 'remedies'),  -- remedy
+  ('0a85fa73-b3bc-48da-b04e-912d4d90b7aa'::uuid, 'countable', 'remote controls'),  -- remote control
+  ('820bd31a-0db3-4052-8bbf-c7cd8c7c1d0b'::uuid, 'countable', 'rents'),  -- rent
+  ('8be78780-7356-4619-920e-a1684f465a3c'::uuid, 'both', 'repairs'),  -- repair
+  ('f83dcf7a-d821-4c27-9d18-01ac0859de5e'::uuid, 'countable', 'reports'),  -- report
+  ('e5af25fc-04ee-4f53-939b-9388c5fcc39a'::uuid, 'countable', 'reporters'),  -- reporter
+  ('1d3ee2ee-2ee6-4e1d-b9f6-9d2b01c142d9'::uuid, 'countable', 'representatives'),  -- representative
+  ('e155cbd8-a633-499e-81f0-f47949955f88'::uuid, 'countable', 'republics'),  -- republic
+  ('c48f6658-774c-4cca-b0a5-eef618859834'::uuid, 'countable', 'reputations'),  -- reputation
+  ('b9ad2763-50eb-4cc6-bcc3-cefb1298c3d0'::uuid, 'countable', 'requests'),  -- request
+  ('eb20a399-2096-4d79-9fae-318b68465d79'::uuid, 'countable', 'requirements'),  -- requirement
+  ('03c42059-ee99-4869-b222-8c144d94facc'::uuid, 'countable', 'rescues'),  -- rescue
+  ('996d862d-c984-498a-b999-a1e2ad020f19'::uuid, 'uncountable', null),  -- research
+  ('b99cf4db-5574-4e32-a3fb-7c720a03e4b0'::uuid, 'countable', 'researchers'),  -- researcher
+  ('5d228609-3c67-41c7-9380-6b34033950dd'::uuid, 'countable', 'reservations'),  -- reservation
+  ('8ef253a0-221e-40d0-a020-703d94cbca2e'::uuid, 'countable', 'residents'),  -- resident
+  ('78024bc3-d190-4760-a1a1-1b87579aabb3'::uuid, 'countable', 'resorts'),  -- resort
+  ('b2c2bddd-f879-494d-91fd-d87f4f30034f'::uuid, 'countable', 'resources'),  -- resource
+  ('44b1bf9d-2136-439c-b941-39b8cdd9537f'::uuid, 'countable', 'responses'),  -- response
+  ('c596058f-1e64-4988-a028-c7404a2fcf13'::uuid, 'both', 'responsibilities'),  -- responsibility
+  ('9d55820e-2d1e-48bf-84c6-efd465b6825c'::uuid, 'both', 'rests'),  -- rest
+  ('3bb7f3cd-328e-498e-ae42-8a30c024a116'::uuid, 'countable', 'restaurants'),  -- restaurant
+  ('fec37b10-671b-4a66-86ca-710510af0357'::uuid, 'countable', 'restrooms'),  -- restroom
+  ('f46f050b-12a4-4a45-895b-602e765374ef'::uuid, 'countable', 'results'),  -- result
+  ('289dfbdf-7e2c-4faa-92f5-4ce18cbb644e'::uuid, 'uncountable', null),  -- retail
+  ('d99ad00e-243a-4cdf-86df-466dcf50ecf9'::uuid, 'countable', 'reunions'),  -- reunion
+  ('b11d9496-2774-4913-9839-26f8d865ffbb'::uuid, 'countable', 'reviews'),  -- review
+  ('ee8573dd-4421-4746-bab4-53dd14457816'::uuid, 'countable', 'revisions'),  -- revision
+  ('c7ffe084-ff61-4c39-898c-0704e60de732'::uuid, 'countable', 'rewards'),  -- reward
+  ('a9f2d4d5-3e3b-48f1-beb3-bd845adac9e8'::uuid, 'countable', 'rhythms'),  -- rhythm
+  ('c0a8c78f-b2c4-4022-86e8-2e7bd08c7fe1'::uuid, 'countable', 'ribbons'),  -- ribbon
+  ('a76aaa78-3e0d-4415-b1ed-756869302c2a'::uuid, 'uncountable', null),  -- rice
+  ('04d9f3f4-8cd7-40b5-b462-ee31c92efced'::uuid, 'countable', 'rice balls'),  -- rice ball
+  ('4cca6568-7498-469b-8416-7ab238af214e'::uuid, 'countable', 'rice cakes'),  -- rice cake
+  ('aa8a4257-e028-4444-b925-e1d007686a0f'::uuid, 'countable', 'riddles'),  -- riddle
+  ('53a2bd74-eeb9-4034-844b-1758c03bbbf3'::uuid, 'countable', 'rings'),  -- ring
+  ('83d864d3-1e86-4b25-b46b-d703a3ea857e'::uuid, 'countable', 'risks'),  -- risk
+  ('929d9a9c-94fd-48ae-9a40-6a872f3a9351'::uuid, 'countable', 'rivers'),  -- river
+  ('17ced132-112f-4f9f-9e96-82fcebf14064'::uuid, 'countable', 'roads'),  -- road
+  ('1cc61dfa-7e38-4bca-807b-a75b9aa3fa91'::uuid, 'countable', 'roadsides'),  -- roadside
+  ('f8791199-4954-4b0e-a7cf-2d26e998bf3a'::uuid, 'countable', 'robots'),  -- robot
+  ('6f1c892b-a7be-4d9d-97b0-2f7b5e13fe31'::uuid, 'both', 'rocks'),  -- rock
+  ('60b105e7-7578-4a59-b86f-1e804ec1921e'::uuid, 'countable', 'roles'),  -- role
+  ('0af4ede9-62c4-453f-ac2a-cc6f7551fb4d'::uuid, 'both', 'romances'),  -- romance
+  ('3102b363-15a3-4402-8782-6b51085792d6'::uuid, 'countable', 'roofs'),  -- roof
+  ('45d08596-edfd-44fc-b773-de7d19db4954'::uuid, 'countable', 'rooms'),  -- room
+  ('bbda8573-d5f9-4718-8a46-c510465dc3b9'::uuid, 'countable', 'roots'),  -- root
+  ('ebcc3552-11d8-42f7-8f8f-0e033368ef6a'::uuid, 'countable', 'ropes'),  -- rope
+  ('a8e54d9d-9d18-4f9f-bb3d-e2e169217c1d'::uuid, 'countable', 'routines'),  -- routine
+  ('73c48705-9c8a-4365-9c9b-8466ff0347c7'::uuid, 'countable', 'rows'),  -- row
+  ('972bd8c0-c739-44ff-b70b-5913aabb735b'::uuid, 'uncountable', null),  -- rubber
+  ('bd5147db-b36a-4d72-8df6-e7496bda55ba'::uuid, 'uncountable', null),  -- rugby
+  ('0bd3ee92-426a-4796-b5a4-072f3fc9fee8'::uuid, 'countable', 'rules'),  -- rule
+  ('dddfb182-356c-4473-baef-2d0c24726456'::uuid, 'countable', 'rulers'),  -- ruler
+  ('e1d646ae-3673-401d-990b-721c0f730f64'::uuid, 'countable', 'rumors'),  -- rumor
+  ('c77b51c7-a7f6-413f-a89e-ad03fb24b18c'::uuid, 'countable', 'runners'),  -- runner
+  ('11e98997-fc07-49b9-9338-2c9feb665afd'::uuid, 'uncountable', null),  -- running
+  ('5d1a5250-a454-44d4-990f-e7eb8ba03c3f'::uuid, 'countable', 'runways'),  -- runway
+  ('ce57eb06-0b8c-41fb-b38e-2b5e53821e07'::uuid, 'uncountable', null),  -- sadness
+  ('f1072519-da5a-4dc6-8edd-f5d5c8410d9e'::uuid, 'countable', 'safaris'),  -- safari
+  ('6418e3f4-41aa-41f2-a694-5584042b2edb'::uuid, 'uncountable', null),  -- safety
+  ('b1aa7542-1054-4059-b036-4a30001fad88'::uuid, 'uncountable', null),  -- sailing
+  ('0e41abc6-5d26-4f40-a2e6-7c4ac3311ef0'::uuid, 'countable', 'sailors'),  -- sailor
+  ('173e04ae-71d6-416b-b995-3840f766b3a9'::uuid, 'both', 'salads'),  -- salad
+  ('0cf02fda-43b5-4590-9d0e-20b974c0d761'::uuid, 'countable', 'sales'),  -- sale
+  ('0c05eea7-a6b4-410f-9a3a-37e144884611'::uuid, 'countable', 'salmon'),  -- salmon
+  ('8214020f-da76-4f42-82e0-17b905e28175'::uuid, 'uncountable', null),  -- salt
+  ('0f23a5d3-02a6-41e0-af9d-bab24009da7a'::uuid, 'countable', 'samples'),  -- sample
+  ('f05943ef-91db-4bad-92fd-4e2c1acc7e22'::uuid, 'uncountable', null),  -- sand
+  ('36373635-dfe5-49a1-9f60-588309a5f36d'::uuid, 'countable', 'sandals'),  -- sandal
+  ('d19c9bd4-efe8-41ba-93d4-a77f1cdf0303'::uuid, 'countable', 'sandwiches'),  -- sandwich
+  ('9b8ccd90-be39-4d13-a098-d0fe6809b2ab'::uuid, 'countable', 'satellites'),  -- satellite
+  ('f9a993af-b528-4e63-9dc3-098048a3e344'::uuid, 'uncountable', null),  -- satisfaction
+  ('161b7d08-407f-4b31-ad82-972ab81d6a5d'::uuid, 'both', 'sauces'),  -- sauce
+  ('d68409b1-34e5-4e58-9ba0-901888c9ef7e'::uuid, 'countable', 'saucers'),  -- saucer
+  ('65fc0783-977c-4752-8fa6-9237112c1657'::uuid, 'countable', 'sausages'),  -- sausage
+  ('30d8b1cc-9d65-4f67-8474-73a21d0e7bd0'::uuid, 'countable', 'scarves'),  -- scarf
+  ('983e0a97-0864-410a-87ba-5fa6e0aa1399'::uuid, 'countable', 'scenes'),  -- scene
+  ('e0e9eb2b-4f0d-4c3e-8ece-afb85fe67eb8'::uuid, 'uncountable', null),  -- scenery
+  ('422eb356-96b1-475a-9213-83e39f3cd3ae'::uuid, 'countable', 'schedules'),  -- schedule
+  ('5636021d-fafa-489e-8daf-f33d20d2244a'::uuid, 'countable', 'scholars'),  -- scholar
+  ('e4c4a7bb-47ed-4c23-b585-886cbb8755ef'::uuid, 'countable', 'scholarships'),  -- scholarship
+  ('9d899366-e9ff-46ad-9e5a-f81e6782b36a'::uuid, 'countable', 'schools'),  -- school
+  ('f23b4bf2-2243-4116-b42d-e16ccbc832d3'::uuid, 'countable', 'school festivals'),  -- school festival
+  ('c896c6c4-e066-4640-b225-16ec0bd6f9e8'::uuid, 'countable', 'school gates'),  -- school gate
+  ('bbee5b64-604f-490e-91d7-c5ed6bdf8faf'::uuid, 'countable', 'school nurse''s offices'),  -- school nurse's office
+  ('6909c6c9-5347-4593-95d6-1ae7b6b064e6'::uuid, 'countable', 'school trips'),  -- school trip
+  ('b8631d46-dcb5-4a63-a2ad-f21fa270fbaa'::uuid, 'countable', 'schoolmates'),  -- schoolmate
+  ('527915f1-f1de-4962-9ffc-9ead3b1e5e46'::uuid, 'uncountable', null),  -- schoolwork
+  ('f126d4d2-c34c-408a-8d46-5d40cbd2a188'::uuid, 'uncountable', null),  -- science
+  ('80faf9d6-45a3-4e82-8219-e8255b4c6fa4'::uuid, 'uncountable', null),  -- science fiction
+  ('4a8c6852-9a93-4c5e-93ee-0deff21d8b1d'::uuid, 'countable', 'science rooms'),  -- science room
+  ('0c0bdd3d-c86c-4587-9475-cd404d19b4eb'::uuid, 'countable', 'scientists'),  -- scientist
+  ('feaaa55a-c6b3-4ddb-aa6f-838c123db51d'::uuid, 'plural', null),  -- scissors
+  ('d4d1ed93-5836-4f47-9aad-27e2bcd2e2f2'::uuid, 'countable', 'scores'),  -- score
+  ('6e129b0e-edf8-4fe0-8ded-90f6259f5755'::uuid, 'countable', 'screens'),  -- screen
+  ('0ecb37bf-4f23-4b96-8d57-5e7495896991'::uuid, 'countable', 'scripts'),  -- script
+  ('d400f5a1-7d43-443f-a0b4-a5a0b88b9668'::uuid, 'countable', 'scrolls'),  -- scroll
+  ('0c21f07d-0ed8-462c-bdb1-6be225ea4e95'::uuid, 'countable', 'sculptures'),  -- sculpture
+  ('e6ee19fb-dff5-4ead-ad83-cc8a3485cc43'::uuid, 'countable', 'seas'),  -- sea
+  ('722510da-51d4-4f21-99b9-ed9eac00d4f9'::uuid, 'countable', 'sea otters'),  -- sea otter
+  ('6b06fafd-fb38-4293-9f8c-09625bd47b22'::uuid, 'uncountable', null),  -- seafood
+  ('085bc424-e142-4637-9442-75d22cbef882'::uuid, 'countable', 'seasides'),  -- seaside
+  ('fa6ae207-cecb-4408-aff6-0abe51e95884'::uuid, 'countable', 'seasons'),  -- season
+  ('34a7b2e6-41d4-4a7a-a4f6-d91655312491'::uuid, 'countable', 'seats'),  -- seat
+  ('5a0197c8-b195-40da-b239-bb7f2e43a4e2'::uuid, 'uncountable', null),  -- seawater
+  ('7d1ee6a9-3289-4103-8d45-7510d0dcfead'::uuid, 'uncountable', null),  -- seaweed
+  ('36dc2265-3d5b-4a6b-8cbf-d31e3f4ffb00'::uuid, 'countable', 'seconds'),  -- second
+  ('563ea414-ccc5-45f7-9dd8-68802fa5b38e'::uuid, 'countable', 'secondary schools'),  -- secondary school
+  ('5e3e97b3-ae5d-4fd9-8459-d1942c6813c6'::uuid, 'countable', 'secrets'),  -- secret
+  ('a5ae7779-d38e-4709-a82d-a127a30903d1'::uuid, 'countable', 'secretaries'),  -- secretary
+  ('7e17949b-ccde-4885-889c-590eae16f703'::uuid, 'countable', 'sections'),  -- section
+  ('7c15d184-4dc6-4ac1-9e51-338482bf8889'::uuid, 'uncountable', null),  -- security
+  ('1047240e-2041-4215-a628-a04c2688c871'::uuid, 'countable', 'seeds'),  -- seed
+  ('449950a1-82fe-415c-a8cd-a716517f4b7f'::uuid, 'both', 'selections'),  -- selection
+  ('f8da98a3-ce79-4a64-a512-e065da8ef355'::uuid, 'countable', 'semesters'),  -- semester
+  ('5b25e531-b2a1-4159-9148-5fa51bccd637'::uuid, 'both', 'sensations'),  -- sensation
+  ('81cba0e7-3050-4b0c-9cf8-f023b0b7d130'::uuid, 'countable', 'senses'),  -- sense
+  ('169ec950-eb89-49c3-9d1f-8039150902df'::uuid, 'countable', 'sentences'),  -- sentence
+  ('84fd7660-861e-487f-a563-2c88c9c0c128'::uuid, 'both', 'separations'),  -- separation
+  ('9f1484bc-2d80-43f6-838e-b2ba76d61c2d'::uuid, 'countable', 'sequences'),  -- sequence
+  ('e0272003-3ffb-4d51-afda-2afb666e438e'::uuid, 'countable', 'series'),  -- series
+  ('a481b8a8-c794-4b42-9359-c3d1e90fee4d'::uuid, 'countable', 'servers'),  -- server
+  ('a631e05e-c1a7-498f-8466-0496e2e9ee47'::uuid, 'both', 'services'),  -- service
+  ('ba26cc5d-14bd-40d4-b799-bab508898547'::uuid, 'countable', 'sessions'),  -- session
+  ('bd6ec8b4-80f7-442c-86fc-1c0ee5ca5109'::uuid, 'countable', 'setters'),  -- setter
+  ('e2b47add-a43d-459d-863c-9182917a6643'::uuid, 'countable', 'settings'),  -- setting
+  ('95403d29-7cb4-46c6-afd2-7dfc84e39eb9'::uuid, 'countable', 'settlements'),  -- settlement
+  ('681eed8c-7598-4c23-a144-74df4a867f46'::uuid, 'both', 'shades'),  -- shade
+  ('9ac1dce8-2ae1-482d-abfa-f02efbeac836'::uuid, 'countable', 'shadows'),  -- shadow
+  ('1fe524ab-1758-4d19-a8ea-76470fb52a30'::uuid, 'uncountable', null),  -- shame
+  ('a0ad34e5-496a-4b14-a766-f1ff342532e9'::uuid, 'both', 'shampoos'),  -- shampoo
+  ('1cfb4695-bd22-421d-88fe-9f2c4d098879'::uuid, 'countable', 'shapes'),  -- shape
+  ('4e319c08-23d5-496b-9694-fc1dc9031990'::uuid, 'countable', 'sharks'),  -- shark
+  ('1048127d-109c-442b-a76e-58ffc1959a94'::uuid, 'uncountable', null),  -- shaved ice
+  ('7d2b128d-60ee-4f85-8956-2a80d2068852'::uuid, 'countable', 'sheep'),  -- sheep
+  ('eb6127e4-f5f2-4253-8e8d-8dda6cc8c10b'::uuid, 'countable', 'sheets'),  -- sheet
+  ('c40dcf95-5e08-4198-bc24-12264a763fde'::uuid, 'countable', 'shelves'),  -- shelf
+  ('6aee210b-86a5-4b9c-9d4e-45b148d79384'::uuid, 'countable', 'shells'),  -- shell
+  ('4177bcad-8a6a-4a51-b072-feaba27632a7'::uuid, 'countable', 'shelters'),  -- shelter
+  ('e72af433-87dc-4eba-ba6d-dc986deb1b44'::uuid, 'countable', 'ships'),  -- ship
+  ('4934dec3-ca2e-4af8-9ae5-b92b913d7275'::uuid, 'countable', 'shirts'),  -- shirt
+  ('41df6656-9580-40bb-bcf2-365d1747dc9b'::uuid, 'countable', 'shoes'),  -- shoe
+  ('df66f781-63ff-44ba-b305-3103c857042c'::uuid, 'plural', null),  -- shoes
+  ('97dbd6d2-5843-4118-ada5-eec9d8f4333c'::uuid, 'countable', 'shops'),  -- shop
+  ('426c9c34-5796-4bef-89c2-e0581f379a33'::uuid, 'countable', 'shoppers'),  -- shopper
+  ('923bed1d-2400-47c5-997f-cb1e01448a63'::uuid, 'uncountable', null),  -- shopping
+  ('2dfd6b6a-af22-49b6-b401-b1ed3ecad322'::uuid, 'countable', 'shores'),  -- shore
+  ('12d2810e-9efb-4230-bb5a-07aa51cdf6bc'::uuid, 'countable', 'shortages'),  -- shortage
+  ('238d3719-7511-4800-b574-a72a72a1d611'::uuid, 'countable', 'shoulders'),  -- shoulder
+  ('5a25e496-5a01-4963-aca5-f9477fee93a5'::uuid, 'countable', 'shows'),  -- show
+  ('f59dd731-2e5e-43a0-b2c6-e263a294d923'::uuid, 'countable', 'showers'),  -- shower
+  ('c1bab839-9251-4296-b67d-36d00d076600'::uuid, 'countable', 'shrimp'),  -- shrimp
+  ('c45b31d0-73e8-44d7-8a86-e51b52f1c06a'::uuid, 'countable', 'shrines'),  -- shrine
+  ('a9c31bca-cf17-42c8-8f56-ed6d4e038bf9'::uuid, 'both', 'sicknesses'),  -- sickness
+  ('6d357af3-7af4-4941-8058-40b8445f0da0'::uuid, 'countable', 'sides'),  -- side
+  ('5ae06b49-27e2-4b06-8c60-210e61f69dcd'::uuid, 'countable', 'sidewalks'),  -- sidewalk
+  ('30fc6d36-036a-4e60-b407-5e611ac25717'::uuid, 'countable', 'sighs'),  -- sigh
+  ('c8f02b67-f637-419a-aeb0-e6a5e2354fde'::uuid, 'both', 'sights'),  -- sight
+  ('85277f4d-218f-46d1-beda-7147429bae1a'::uuid, 'uncountable', null),  -- sightseeing
+  ('6d01bc4b-8f05-41b1-ab9b-d2cf13f98860'::uuid, 'countable', 'signs'),  -- sign
+  ('ac68d460-cec7-4125-919d-05cc7c9cc14b'::uuid, 'countable', 'signals'),  -- signal
+  ('5309411d-f36b-4d77-af58-ef28a3e78c27'::uuid, 'countable', 'signatures'),  -- signature
+  ('d844155d-c305-4549-ac8a-f4a71e62193b'::uuid, 'uncountable', null),  -- significance
+  ('c1d0db13-c47b-4437-92e9-c7b395c6d624'::uuid, 'both', 'silences'),  -- silence
+  ('7af5b4e8-61b9-448f-b965-e8a8f7429919'::uuid, 'uncountable', null),  -- silk
+  ('e811a1fd-e8f5-4a7f-8e68-7a1dc0620098'::uuid, 'uncountable', null),  -- silver
+  ('79d287a0-f40e-4b7d-ac95-774bed9ed014'::uuid, 'countable', 'similarities'),  -- similarity
+  ('bb03154f-360a-4793-bdb2-129272464f43'::uuid, 'countable', 'singers'),  -- singer
+  ('4a2abaac-d264-4929-88ce-164f8237f62b'::uuid, 'uncountable', null),  -- singing
+  ('c1b967bb-fc1c-4977-8cc8-d3b06698090a'::uuid, 'countable', 'singulars'),  -- singular
+  ('5bb737d3-7d11-4ff4-9582-f6064adcbca7'::uuid, 'countable', 'sinks'),  -- sink
+  ('a7b5db5b-fe90-4623-8aa8-ac11e0ae1fcc'::uuid, 'countable', 'sisters'),  -- sister
+  ('0b20bbd4-ef9e-4ca1-8f74-0efd7b13a901'::uuid, 'countable', 'sites'),  -- site
+  ('3b210526-3c8e-4e2f-b437-be0e6d57e634'::uuid, 'countable', 'situations'),  -- situation
+  ('08177fb1-7741-43d1-9190-16ee428eb7b0'::uuid, 'countable', 'sizes'),  -- size
+  ('371cb492-4dce-4054-9ed6-b65133e4b9d6'::uuid, 'uncountable', null),  -- skateboarding
+  ('ecdd4493-bc34-4842-849f-9f54eedbcc68'::uuid, 'uncountable', null),  -- skating
+  ('caf527bf-eced-49ef-b468-75c215c14c81'::uuid, 'countable', 'skeletons'),  -- skeleton
+  ('a44f2d33-9214-44b3-8b2c-bb1997c1062b'::uuid, 'uncountable', null),  -- skiing
+  ('1528668b-0935-4004-928c-0edd96f01271'::uuid, 'countable', 'skills'),  -- skill
+  ('2f07fb37-8a94-4670-b3bb-4e993c4460f4'::uuid, 'both', 'skins'),  -- skin
+  ('1bea29de-3137-444d-8980-becb0b28ceb7'::uuid, 'countable', 'skirts'),  -- skirt
+  ('a1ee72d3-9f79-4a34-9c44-7f75e3db5957'::uuid, 'countable', 'skies'),  -- sky
+  ('2bb64636-67c9-4fde-8faa-f597d36ebabd'::uuid, 'countable', 'skyscrapers'),  -- skyscraper
+  ('306eabe9-0764-4d7e-b018-01fe4da026b9'::uuid, 'countable', 'slaves'),  -- slave
+  ('6a9cff88-0bd8-4d9c-a2d6-fa30878722c9'::uuid, 'uncountable', null),  -- slavery
+  ('36f58720-e4d0-49cb-964e-0809c2a3a37c'::uuid, 'countable', 'sleeves'),  -- sleeve
+  ('192501be-3489-4fc1-9343-83396c8edbdc'::uuid, 'countable', 'slices'),  -- slice
+  ('b5fae032-29d1-42bb-b342-ab30397f309e'::uuid, 'countable', 'slides'),  -- slide
+  ('d8bd0f54-6734-47c2-a927-1862085d6f5b'::uuid, 'countable', 'slogans'),  -- slogan
+  ('60c2c7f3-0264-4bc1-816c-b9e06ede1789'::uuid, 'countable', 'slopes'),  -- slope
+  ('a8276722-bff6-42ce-9c96-dba373013ca3'::uuid, 'countable', 'slots'),  -- slot
+  ('0944e7e5-e55c-4ee4-8dec-ff39f02e20cc'::uuid, 'countable', 'smartphones'),  -- smartphone
+  ('8b0ae61b-72d4-49eb-803e-a08cf11b522c'::uuid, 'countable', 'smells'),  -- smell
+  ('4c0a8bfe-b774-47f3-87a8-dedab177b38e'::uuid, 'countable', 'smiles'),  -- smile
+  ('b2579eae-547a-4f24-bf4f-c72b65f341be'::uuid, 'uncountable', null),  -- smoke
+  ('e6874ae1-ba2f-4291-a881-a105b298538c'::uuid, 'countable', 'smokers'),  -- smoker
+  ('81676e17-9314-45cc-9821-e770b73b4aba'::uuid, 'countable', 'snacks'),  -- snack
+  ('10b0be98-0299-4a16-b28b-02769fda3547'::uuid, 'countable', 'snakes'),  -- snake
+  ('8577a312-2a8b-44fb-b001-7bad0ab16c41'::uuid, 'countable', 'sneezes'),  -- sneeze
+  ('1d12b90d-0f3a-42bc-9e21-5747ad21002e'::uuid, 'uncountable', null),  -- snow
+  ('d9eadcdc-c58d-4144-9d2d-b929149eccac'::uuid, 'countable', 'snowboards'),  -- snowboard
+  ('0864e564-1715-49a6-b987-7d538dddf8ad'::uuid, 'uncountable', null),  -- snowboarding
+  ('317a88db-5e72-47c2-92ca-0514a594f60e'::uuid, 'countable', 'snowstorms'),  -- snowstorm
+  ('519c2422-7575-415a-816c-40b15ebd6fb2'::uuid, 'both', 'soaps'),  -- soap
+  ('3481ccee-6012-4291-8b62-b631b8a1f459'::uuid, 'countable', 'soap operas'),  -- soap opera
+  ('eed15705-aaf3-4fc2-891b-b9af343512d6'::uuid, 'uncountable', null),  -- soccer
+  ('eba2bd36-df46-4e94-84b0-a6222204c794'::uuid, 'countable', 'soccer players'),  -- soccer player
+  ('04ee725b-72d8-4f78-8923-f716601ca0ec'::uuid, 'uncountable', null),  -- social networking
+  ('22e37174-8697-40e7-82bb-6317e4b996f0'::uuid, 'uncountable', null),  -- social studies
+  ('86173297-3c96-4840-b388-dc9753afb41a'::uuid, 'countable', 'societies'),  -- society
+  ('bfd3ca47-4fab-4f94-a52d-47c47d5efe69'::uuid, 'plural', null),  -- socks
+  ('d4c5b7fb-0bb5-440e-83ba-256ffb352944'::uuid, 'both', 'sodas'),  -- soda
+  ('7bb3a39c-ba35-405b-9399-fe9c1eda33e6'::uuid, 'countable', 'sofas'),  -- sofa
+  ('6edebb0b-3b62-4883-b523-11f1e1a477c2'::uuid, 'countable', 'soft drinks'),  -- soft drink
+  ('401a297e-aa8f-4288-966d-928ba01aa193'::uuid, 'uncountable', null),  -- softball
+  ('0085e4a2-7ba8-40e8-9fd0-03e8b3a9232f'::uuid, 'uncountable', null),  -- software
+  ('5c4a1210-a925-4689-8d5e-e96ebf81d9f0'::uuid, 'uncountable', null),  -- soil
+  ('f3ab58db-c0d4-41ad-9af9-ef5569546a47'::uuid, 'countable', 'soldiers'),  -- soldier
+  ('1d2b01ac-38b3-4165-b47b-ed7dbe2f68c6'::uuid, 'countable', 'solutions'),  -- solution
+  ('a7e8c2fb-cc70-4da9-a2e1-d7a2de346725'::uuid, 'countable', 'sons'),  -- son
+  ('642e6815-ad95-4f3d-a064-814bc73cbdc0'::uuid, 'countable', 'songs'),  -- song
+  ('606bb2d7-30cf-4bc4-828c-d4024ee7c0e2'::uuid, 'countable', 'sophomores'),  -- sophomore
+  ('c241943a-9840-442b-90bd-98d74625bb8d'::uuid, 'both', 'sorrows'),  -- sorrow
+  ('5e005864-a9d1-4106-9caa-b0c46bc0370c'::uuid, 'countable', 'sorts'),  -- sort
+  ('7a256ea9-df3b-4d2c-8f45-84eb220bdafe'::uuid, 'countable', 'souls'),  -- soul
+  ('adc9c981-0844-4d0b-81b9-360828e709f4'::uuid, 'countable', 'sounds'),  -- sound
+  ('372a187e-906f-4718-920f-2b18c9ef5471'::uuid, 'both', 'soups'),  -- soup
+  ('3736b818-2b1e-451d-a301-20fea80fbadf'::uuid, 'countable', 'sources'),  -- source
+  ('babb4e18-c016-4ff3-ba93-503c4ac0b657'::uuid, 'countable', 'souvenirs'),  -- souvenir
+  ('c20c3023-c06d-44e7-a6f2-ef00df939d2a'::uuid, 'uncountable', null),  -- soy sauce
+  ('03a5d32e-b711-4dd0-804c-2e5f75e0a564'::uuid, 'both', 'spaces'),  -- space
+  ('a4c9c44f-2073-4eb6-90d4-135fabbffc28'::uuid, 'countable', 'spaceships'),  -- spaceship
+  ('0ccb823d-9fb5-47ab-8120-65e0a42b8f7f'::uuid, 'uncountable', null),  -- spaghetti
+  ('1afba599-5ad3-4126-9f99-6bb024602cfa'::uuid, 'countable', 'speakers'),  -- speaker
+  ('a25b6870-0049-4e44-b7b1-c04d877d8a47'::uuid, 'countable', 'specialists'),  -- specialist
+  ('0ca01f74-4141-47a1-bfb0-1edc97592fbb'::uuid, 'countable', 'species'),  -- species
+  ('e4a2bb52-fa70-4659-bf4c-f93ea61bd0a4'::uuid, 'countable', 'spectators'),  -- spectator
+  ('6828e3c1-233d-4aad-b0e2-47d78afedbc9'::uuid, 'countable', 'speeches'),  -- speech
+  ('ef7f9ec9-f14b-4406-8a35-31f48832f5bb'::uuid, 'both', 'speeds'),  -- speed
+  ('df4b2f0f-7f98-426d-882a-2f7e65d6476b'::uuid, 'both', 'spellings'),  -- spelling
+  ('db51fc42-e346-4906-a675-e7a2f34a2192'::uuid, 'countable', 'spheres'),  -- sphere
+  ('a5dcc343-5e9c-4669-85d9-6ff17d1365c0'::uuid, 'countable', 'spices'),  -- spice
+  ('6a4a30c1-77ed-4577-b2f7-fb1729caa735'::uuid, 'countable', 'spiders'),  -- spider
+  ('974f8a09-1259-40fe-b5bb-247960fbdebe'::uuid, 'countable', 'spikers'),  -- spiker
+  ('91fa0320-9968-4097-b529-00c54e48540c'::uuid, 'countable', 'spills'),  -- spill
+  ('29ba0d4a-37f5-48da-ba8f-7ed7ce80dec3'::uuid, 'uncountable', null),  -- spinach
+  ('c7537625-f992-45e6-94c6-6714fc9f7b73'::uuid, 'countable', 'spirits'),  -- spirit
+  ('13e0207b-5bb8-4642-8181-00c918a2ab1b'::uuid, 'countable', 'sponges'),  -- sponge
+  ('ecdf92be-9dae-4128-b347-364209ee9edb'::uuid, 'countable', 'sponsors'),  -- sponsor
+  ('09a0ea6d-acdc-4cd5-8179-748cefe46a17'::uuid, 'countable', 'spoons'),  -- spoon
+  ('8023b976-e339-417d-9e48-96d9c8ac012c'::uuid, 'countable', 'sports'),  -- sport
+  ('c2a17a30-993f-4e70-b07f-b5d901d98bd9'::uuid, 'countable', 'sports days'),  -- sports day
+  ('6801f9d8-ecf8-4e59-ac1c-164ed4b8d3b8'::uuid, 'uncountable', null),  -- sportsmanship
+  ('5c4b0e5c-16af-4b02-9d0d-f089b40ffe7d'::uuid, 'countable', 'spots'),  -- spot
+  ('6e05c340-872c-47b7-9508-f5068e6e9d1c'::uuid, 'both', 'springs'),  -- spring
+  ('d3b4c55a-2027-4a65-b750-6aa15358ae07'::uuid, 'countable', 'spring vacations'),  -- spring vacation
+  ('24efa845-bfd7-48d5-93a5-30aa7f170de7'::uuid, 'countable', 'squares'),  -- square
+  ('e2e9f91e-22a4-4b42-b5bc-e5eb7de1c1a7'::uuid, 'countable', 'stadiums'),  -- stadium
+  ('dc4041b9-16c6-4b60-a995-10adbf2d7afc'::uuid, 'uncountable', null),  -- staff
+  ('35994a41-52a9-416d-ad22-6a7eb1b5bdcf'::uuid, 'countable', 'stages'),  -- stage
+  ('facd322c-c860-4a0f-a929-2d10b211d6f5'::uuid, 'countable', 'stairs'),  -- stair
+  ('f3201754-ae11-4a8f-9415-9c622a0279f2'::uuid, 'countable', 'stalls'),  -- stall
+  ('b1f5a2ca-070c-4e41-9fc5-3a4305cd56d0'::uuid, 'countable', 'stamps'),  -- stamp
+  ('97ee70c9-58c9-4fd7-b255-ca779a91c968'::uuid, 'countable', 'standards'),  -- standard
+  ('7dd6cefa-dece-4fa2-8c97-243993182a63'::uuid, 'countable', 'staplers'),  -- stapler
+  ('097f24e7-3d93-4573-b0b9-3af32c244bcd'::uuid, 'countable', 'stars'),  -- star
+  ('72bff4f1-41b9-460a-9a71-ee592e1662f3'::uuid, 'countable', 'starters'),  -- starter
+  ('6ad563a4-2038-46e3-803c-0a2374f34c96'::uuid, 'countable', 'states'),  -- state
+  ('df58c33e-df40-43c0-8a07-e710b7771a63'::uuid, 'countable', 'statements'),  -- statement
+  ('e0f2f1fd-2de3-45f1-accd-f88d8fde7fc3'::uuid, 'countable', 'stations'),  -- station
+  ('cd9ef409-3ee6-4836-9438-808368574cfb'::uuid, 'countable', 'statues'),  -- statue
+  ('1f713a2f-5c5d-4ad7-87ad-a029618b62cd'::uuid, 'countable', 'statuses'),  -- status
+  ('5cea387e-2fbd-468f-a162-7f29e281d5a0'::uuid, 'countable', 'steaks'),  -- steak
+  ('38bf19a5-3c04-4f0b-8e66-21e4024d7f5e'::uuid, 'uncountable', null),  -- steam
+  ('2aa5f1aa-ce77-4827-aa2c-83ad58539fdd'::uuid, 'uncountable', null),  -- steel
+  ('9438a3ec-ce35-4f4f-b50e-c93766bd59c3'::uuid, 'countable', 'stems'),  -- stem
+  ('5e5a4e86-710d-438e-aa85-2966098f3da3'::uuid, 'countable', 'steps'),  -- step
+  ('8865aecb-2ee7-4fb1-807e-670799c4fa8e'::uuid, 'countable', 'sticks'),  -- stick
+  ('ff555700-3605-42d5-b7be-e397bbf6d663'::uuid, 'countable', 'stickers'),  -- sticker
+  ('e834eb9c-3f2a-4100-9bc7-fb1167ff560b'::uuid, 'countable', 'stimuli'),  -- stimulus
+  ('5d80954f-b686-48e0-801c-ec88b77a021b'::uuid, 'countable', 'stomachs'),  -- stomach
+  ('47787314-a125-48b6-b59a-7926b6888b86'::uuid, 'countable', 'stomachaches'),  -- stomachache
+  ('42bd0373-3f84-403b-a671-83fd422eea53'::uuid, 'countable', 'stones'),  -- stone
+  ('8d81d249-9d55-45b4-8ccc-e274c9cdb03d'::uuid, 'uncountable', null),  -- storage
+  ('59a3fb67-ad65-448a-8b83-374d6b3c1057'::uuid, 'countable', 'stores'),  -- store
+  ('98e98f8b-4fbc-47d0-91ca-1fc19442b8af'::uuid, 'countable', 'storms'),  -- storm
+  ('5d6a76ec-1b4f-4dbc-b6fc-679d0049203f'::uuid, 'countable', 'stories'),  -- story
+  ('b5a2a815-55a1-4338-9a20-c6b9d776e878'::uuid, 'countable', 'storytellers'),  -- storyteller
+  ('1788a90b-4d49-42e8-86bf-dd2fe7a923ee'::uuid, 'countable', 'stoves'),  -- stove
+  ('4f8438a9-bcd2-4656-9ba2-f919e6d4c049'::uuid, 'both', 'strains'),  -- strain
+  ('e4b0e3a5-6e09-4653-aa92-65056ae1a429'::uuid, 'countable', 'strangers'),  -- stranger
+  ('7a154cd7-e6c2-4e2d-a9ae-3fdbb862c7b5'::uuid, 'countable', 'strategies'),  -- strategy
+  ('685e1b67-7e1f-49b7-ade3-64a717c2e936'::uuid, 'countable', 'straws'),  -- straw
+  ('214fd579-830b-4934-a9e6-2897d7f5654d'::uuid, 'countable', 'strawberries'),  -- strawberry
+  ('d93af4d1-84e7-45cb-aeea-0e0cb2b6234f'::uuid, 'countable', 'streams')  -- stream
+) as v(id, countable, plural)
+where w.id = v.id and w.countable is null and w.plural is null;
+
+-- Check (words_in_batch and with_countable should both be 337):
+select count(*) as words_in_batch, count(countable) as with_countable, count(plural) as with_plural from public.words where id in ('149d8ce8-3c12-4924-8958-00e05305fcd2'::uuid, 'fba58d75-9e24-4ef4-92c5-3c288bd7b425'::uuid, '4dcef2aa-113a-4b55-94c8-4b39be8e8f7e'::uuid, 'a4afb0ef-1580-41d5-ab07-c3de70170f66'::uuid, '3a46eaba-79bc-457a-bbf9-0e20fa43315a'::uuid, 'fb61df4d-1c2d-4b51-8dc8-504a9e1549b4'::uuid, '7b750e99-3b6b-4165-aba8-fa4804a72dca'::uuid, 'e3bba25f-0663-4ffe-b338-6254be840d04'::uuid, '95b05c3f-943b-4459-b34d-36c4a184af41'::uuid, '6394d7bc-a508-4ad7-b9c6-84cf275b1599'::uuid, '737e90fc-68f8-4de5-bdf3-bca7ec3a1785'::uuid, '2b7af6f7-74e7-4d06-badf-ec74e70c6848'::uuid, '9b7501ee-82f3-4cde-a802-299ac10dc9d7'::uuid, 'ad04460d-df32-4ef5-ac08-4da811b99578'::uuid, '20e27459-685b-4ebd-9df1-a02bf0bc8f53'::uuid, 'e831a906-dca3-442e-a1a3-730dfdc47c9f'::uuid, '471610cd-5f17-4562-8b6d-8ddc121cc6d0'::uuid, '29e8a1e2-c286-46a4-ae39-203edc72856d'::uuid, '770b7241-f7ef-4a2f-8890-cfed075d3c5e'::uuid, '814fd173-2d0d-4a33-b02c-747c445860bb'::uuid, '43e92759-9278-4ce4-8385-63cadf4cde0d'::uuid, '1fb52b58-e792-413a-9d4f-500bad193495'::uuid, '9893b14c-7116-42c0-8c7f-66e6ebb3a1d3'::uuid, '1349e68b-3087-4b87-b211-13ba48fff00d'::uuid, '09044f69-67b4-44e6-82fc-1fcc50c694ed'::uuid, 'cda9eed4-b557-4aa8-8476-91d201733bbf'::uuid, '59ad80a6-060a-44e8-a6c3-11e4c049c568'::uuid, 'af032eca-8682-4eab-956d-2af452fe89e6'::uuid, '54beb1e9-b9de-4ac5-8b60-909467c88851'::uuid, 'bf3f3039-c519-4285-9c8f-15067a4ac842'::uuid, '31d57839-6b9d-4c8b-8292-57f15d762283'::uuid, '9a333713-a0b4-4bf0-805e-47d4c3fe006c'::uuid, 'dad993f9-84a7-43b3-8a8f-904574a5c422'::uuid, '758ee3a6-7dbf-465e-8290-6f71b3abb00b'::uuid, '3f5aef7e-bbe0-4d73-a884-4d7c73287497'::uuid, '372525e7-c945-4d25-8f91-14c944126de0'::uuid, 'eae98e21-96e8-4107-88f7-09e273d41e1f'::uuid, '24962463-efdf-4fed-85cf-939a0b0dcf64'::uuid, 'cec5efe8-3adb-490b-9fac-b755bf5235f9'::uuid, '73fccaa6-8cb7-476a-aad3-3f4afaf649da'::uuid, '0e29a6fd-a90a-422f-a18f-8fbe39fea86b'::uuid, '0a85fa73-b3bc-48da-b04e-912d4d90b7aa'::uuid, '820bd31a-0db3-4052-8bbf-c7cd8c7c1d0b'::uuid, '8be78780-7356-4619-920e-a1684f465a3c'::uuid, 'f83dcf7a-d821-4c27-9d18-01ac0859de5e'::uuid, 'e5af25fc-04ee-4f53-939b-9388c5fcc39a'::uuid, '1d3ee2ee-2ee6-4e1d-b9f6-9d2b01c142d9'::uuid, 'e155cbd8-a633-499e-81f0-f47949955f88'::uuid, 'c48f6658-774c-4cca-b0a5-eef618859834'::uuid, 'b9ad2763-50eb-4cc6-bcc3-cefb1298c3d0'::uuid, 'eb20a399-2096-4d79-9fae-318b68465d79'::uuid, '03c42059-ee99-4869-b222-8c144d94facc'::uuid, '996d862d-c984-498a-b999-a1e2ad020f19'::uuid, 'b99cf4db-5574-4e32-a3fb-7c720a03e4b0'::uuid, '5d228609-3c67-41c7-9380-6b34033950dd'::uuid, '8ef253a0-221e-40d0-a020-703d94cbca2e'::uuid, '78024bc3-d190-4760-a1a1-1b87579aabb3'::uuid, 'b2c2bddd-f879-494d-91fd-d87f4f30034f'::uuid, '44b1bf9d-2136-439c-b941-39b8cdd9537f'::uuid, 'c596058f-1e64-4988-a028-c7404a2fcf13'::uuid, '9d55820e-2d1e-48bf-84c6-efd465b6825c'::uuid, '3bb7f3cd-328e-498e-ae42-8a30c024a116'::uuid, 'fec37b10-671b-4a66-86ca-710510af0357'::uuid, 'f46f050b-12a4-4a45-895b-602e765374ef'::uuid, '289dfbdf-7e2c-4faa-92f5-4ce18cbb644e'::uuid, 'd99ad00e-243a-4cdf-86df-466dcf50ecf9'::uuid, 'b11d9496-2774-4913-9839-26f8d865ffbb'::uuid, 'ee8573dd-4421-4746-bab4-53dd14457816'::uuid, 'c7ffe084-ff61-4c39-898c-0704e60de732'::uuid, 'a9f2d4d5-3e3b-48f1-beb3-bd845adac9e8'::uuid, 'c0a8c78f-b2c4-4022-86e8-2e7bd08c7fe1'::uuid, 'a76aaa78-3e0d-4415-b1ed-756869302c2a'::uuid, '04d9f3f4-8cd7-40b5-b462-ee31c92efced'::uuid, '4cca6568-7498-469b-8416-7ab238af214e'::uuid, 'aa8a4257-e028-4444-b925-e1d007686a0f'::uuid, '53a2bd74-eeb9-4034-844b-1758c03bbbf3'::uuid, '83d864d3-1e86-4b25-b46b-d703a3ea857e'::uuid, '929d9a9c-94fd-48ae-9a40-6a872f3a9351'::uuid, '17ced132-112f-4f9f-9e96-82fcebf14064'::uuid, '1cc61dfa-7e38-4bca-807b-a75b9aa3fa91'::uuid, 'f8791199-4954-4b0e-a7cf-2d26e998bf3a'::uuid, '6f1c892b-a7be-4d9d-97b0-2f7b5e13fe31'::uuid, '60b105e7-7578-4a59-b86f-1e804ec1921e'::uuid, '0af4ede9-62c4-453f-ac2a-cc6f7551fb4d'::uuid, '3102b363-15a3-4402-8782-6b51085792d6'::uuid, '45d08596-edfd-44fc-b773-de7d19db4954'::uuid, 'bbda8573-d5f9-4718-8a46-c510465dc3b9'::uuid, 'ebcc3552-11d8-42f7-8f8f-0e033368ef6a'::uuid, 'a8e54d9d-9d18-4f9f-bb3d-e2e169217c1d'::uuid, '73c48705-9c8a-4365-9c9b-8466ff0347c7'::uuid, '972bd8c0-c739-44ff-b70b-5913aabb735b'::uuid, 'bd5147db-b36a-4d72-8df6-e7496bda55ba'::uuid, '0bd3ee92-426a-4796-b5a4-072f3fc9fee8'::uuid, 'dddfb182-356c-4473-baef-2d0c24726456'::uuid, 'e1d646ae-3673-401d-990b-721c0f730f64'::uuid, 'c77b51c7-a7f6-413f-a89e-ad03fb24b18c'::uuid, '11e98997-fc07-49b9-9338-2c9feb665afd'::uuid, '5d1a5250-a454-44d4-990f-e7eb8ba03c3f'::uuid, 'ce57eb06-0b8c-41fb-b38e-2b5e53821e07'::uuid, 'f1072519-da5a-4dc6-8edd-f5d5c8410d9e'::uuid, '6418e3f4-41aa-41f2-a694-5584042b2edb'::uuid, 'b1aa7542-1054-4059-b036-4a30001fad88'::uuid, '0e41abc6-5d26-4f40-a2e6-7c4ac3311ef0'::uuid, '173e04ae-71d6-416b-b995-3840f766b3a9'::uuid, '0cf02fda-43b5-4590-9d0e-20b974c0d761'::uuid, '0c05eea7-a6b4-410f-9a3a-37e144884611'::uuid, '8214020f-da76-4f42-82e0-17b905e28175'::uuid, '0f23a5d3-02a6-41e0-af9d-bab24009da7a'::uuid, 'f05943ef-91db-4bad-92fd-4e2c1acc7e22'::uuid, '36373635-dfe5-49a1-9f60-588309a5f36d'::uuid, 'd19c9bd4-efe8-41ba-93d4-a77f1cdf0303'::uuid, '9b8ccd90-be39-4d13-a098-d0fe6809b2ab'::uuid, 'f9a993af-b528-4e63-9dc3-098048a3e344'::uuid, '161b7d08-407f-4b31-ad82-972ab81d6a5d'::uuid, 'd68409b1-34e5-4e58-9ba0-901888c9ef7e'::uuid, '65fc0783-977c-4752-8fa6-9237112c1657'::uuid, '30d8b1cc-9d65-4f67-8474-73a21d0e7bd0'::uuid, '983e0a97-0864-410a-87ba-5fa6e0aa1399'::uuid, 'e0e9eb2b-4f0d-4c3e-8ece-afb85fe67eb8'::uuid, '422eb356-96b1-475a-9213-83e39f3cd3ae'::uuid, '5636021d-fafa-489e-8daf-f33d20d2244a'::uuid, 'e4c4a7bb-47ed-4c23-b585-886cbb8755ef'::uuid, '9d899366-e9ff-46ad-9e5a-f81e6782b36a'::uuid, 'f23b4bf2-2243-4116-b42d-e16ccbc832d3'::uuid, 'c896c6c4-e066-4640-b225-16ec0bd6f9e8'::uuid, 'bbee5b64-604f-490e-91d7-c5ed6bdf8faf'::uuid, '6909c6c9-5347-4593-95d6-1ae7b6b064e6'::uuid, 'b8631d46-dcb5-4a63-a2ad-f21fa270fbaa'::uuid, '527915f1-f1de-4962-9ffc-9ead3b1e5e46'::uuid, 'f126d4d2-c34c-408a-8d46-5d40cbd2a188'::uuid, '80faf9d6-45a3-4e82-8219-e8255b4c6fa4'::uuid, '4a8c6852-9a93-4c5e-93ee-0deff21d8b1d'::uuid, '0c0bdd3d-c86c-4587-9475-cd404d19b4eb'::uuid, 'feaaa55a-c6b3-4ddb-aa6f-838c123db51d'::uuid, 'd4d1ed93-5836-4f47-9aad-27e2bcd2e2f2'::uuid, '6e129b0e-edf8-4fe0-8ded-90f6259f5755'::uuid, '0ecb37bf-4f23-4b96-8d57-5e7495896991'::uuid, 'd400f5a1-7d43-443f-a0b4-a5a0b88b9668'::uuid, '0c21f07d-0ed8-462c-bdb1-6be225ea4e95'::uuid, 'e6ee19fb-dff5-4ead-ad83-cc8a3485cc43'::uuid, '722510da-51d4-4f21-99b9-ed9eac00d4f9'::uuid, '6b06fafd-fb38-4293-9f8c-09625bd47b22'::uuid, '085bc424-e142-4637-9442-75d22cbef882'::uuid, 'fa6ae207-cecb-4408-aff6-0abe51e95884'::uuid, '34a7b2e6-41d4-4a7a-a4f6-d91655312491'::uuid, '5a0197c8-b195-40da-b239-bb7f2e43a4e2'::uuid, '7d1ee6a9-3289-4103-8d45-7510d0dcfead'::uuid, '36dc2265-3d5b-4a6b-8cbf-d31e3f4ffb00'::uuid, '563ea414-ccc5-45f7-9dd8-68802fa5b38e'::uuid, '5e3e97b3-ae5d-4fd9-8459-d1942c6813c6'::uuid, 'a5ae7779-d38e-4709-a82d-a127a30903d1'::uuid, '7e17949b-ccde-4885-889c-590eae16f703'::uuid, '7c15d184-4dc6-4ac1-9e51-338482bf8889'::uuid, '1047240e-2041-4215-a628-a04c2688c871'::uuid, '449950a1-82fe-415c-a8cd-a716517f4b7f'::uuid, 'f8da98a3-ce79-4a64-a512-e065da8ef355'::uuid, '5b25e531-b2a1-4159-9148-5fa51bccd637'::uuid, '81cba0e7-3050-4b0c-9cf8-f023b0b7d130'::uuid, '169ec950-eb89-49c3-9d1f-8039150902df'::uuid, '84fd7660-861e-487f-a563-2c88c9c0c128'::uuid, '9f1484bc-2d80-43f6-838e-b2ba76d61c2d'::uuid, 'e0272003-3ffb-4d51-afda-2afb666e438e'::uuid, 'a481b8a8-c794-4b42-9359-c3d1e90fee4d'::uuid, 'a631e05e-c1a7-498f-8466-0496e2e9ee47'::uuid, 'ba26cc5d-14bd-40d4-b799-bab508898547'::uuid, 'bd6ec8b4-80f7-442c-86fc-1c0ee5ca5109'::uuid, 'e2b47add-a43d-459d-863c-9182917a6643'::uuid, '95403d29-7cb4-46c6-afd2-7dfc84e39eb9'::uuid, '681eed8c-7598-4c23-a144-74df4a867f46'::uuid, '9ac1dce8-2ae1-482d-abfa-f02efbeac836'::uuid, '1fe524ab-1758-4d19-a8ea-76470fb52a30'::uuid, 'a0ad34e5-496a-4b14-a766-f1ff342532e9'::uuid, '1cfb4695-bd22-421d-88fe-9f2c4d098879'::uuid, '4e319c08-23d5-496b-9694-fc1dc9031990'::uuid, '1048127d-109c-442b-a76e-58ffc1959a94'::uuid, '7d2b128d-60ee-4f85-8956-2a80d2068852'::uuid, 'eb6127e4-f5f2-4253-8e8d-8dda6cc8c10b'::uuid, 'c40dcf95-5e08-4198-bc24-12264a763fde'::uuid, '6aee210b-86a5-4b9c-9d4e-45b148d79384'::uuid, '4177bcad-8a6a-4a51-b072-feaba27632a7'::uuid, 'e72af433-87dc-4eba-ba6d-dc986deb1b44'::uuid, '4934dec3-ca2e-4af8-9ae5-b92b913d7275'::uuid, '41df6656-9580-40bb-bcf2-365d1747dc9b'::uuid, 'df66f781-63ff-44ba-b305-3103c857042c'::uuid, '97dbd6d2-5843-4118-ada5-eec9d8f4333c'::uuid, '426c9c34-5796-4bef-89c2-e0581f379a33'::uuid, '923bed1d-2400-47c5-997f-cb1e01448a63'::uuid, '2dfd6b6a-af22-49b6-b401-b1ed3ecad322'::uuid, '12d2810e-9efb-4230-bb5a-07aa51cdf6bc'::uuid, '238d3719-7511-4800-b574-a72a72a1d611'::uuid, '5a25e496-5a01-4963-aca5-f9477fee93a5'::uuid, 'f59dd731-2e5e-43a0-b2c6-e263a294d923'::uuid, 'c1bab839-9251-4296-b67d-36d00d076600'::uuid, 'c45b31d0-73e8-44d7-8a86-e51b52f1c06a'::uuid, 'a9c31bca-cf17-42c8-8f56-ed6d4e038bf9'::uuid, '6d357af3-7af4-4941-8058-40b8445f0da0'::uuid, '5ae06b49-27e2-4b06-8c60-210e61f69dcd'::uuid, '30fc6d36-036a-4e60-b407-5e611ac25717'::uuid, 'c8f02b67-f637-419a-aeb0-e6a5e2354fde'::uuid, '85277f4d-218f-46d1-beda-7147429bae1a'::uuid, '6d01bc4b-8f05-41b1-ab9b-d2cf13f98860'::uuid, 'ac68d460-cec7-4125-919d-05cc7c9cc14b'::uuid, '5309411d-f36b-4d77-af58-ef28a3e78c27'::uuid, 'd844155d-c305-4549-ac8a-f4a71e62193b'::uuid, 'c1d0db13-c47b-4437-92e9-c7b395c6d624'::uuid, '7af5b4e8-61b9-448f-b965-e8a8f7429919'::uuid, 'e811a1fd-e8f5-4a7f-8e68-7a1dc0620098'::uuid, '79d287a0-f40e-4b7d-ac95-774bed9ed014'::uuid, 'bb03154f-360a-4793-bdb2-129272464f43'::uuid, '4a2abaac-d264-4929-88ce-164f8237f62b'::uuid, 'c1b967bb-fc1c-4977-8cc8-d3b06698090a'::uuid, '5bb737d3-7d11-4ff4-9582-f6064adcbca7'::uuid, 'a7b5db5b-fe90-4623-8aa8-ac11e0ae1fcc'::uuid, '0b20bbd4-ef9e-4ca1-8f74-0efd7b13a901'::uuid, '3b210526-3c8e-4e2f-b437-be0e6d57e634'::uuid, '08177fb1-7741-43d1-9190-16ee428eb7b0'::uuid, '371cb492-4dce-4054-9ed6-b65133e4b9d6'::uuid, 'ecdd4493-bc34-4842-849f-9f54eedbcc68'::uuid, 'caf527bf-eced-49ef-b468-75c215c14c81'::uuid, 'a44f2d33-9214-44b3-8b2c-bb1997c1062b'::uuid, '1528668b-0935-4004-928c-0edd96f01271'::uuid, '2f07fb37-8a94-4670-b3bb-4e993c4460f4'::uuid, '1bea29de-3137-444d-8980-becb0b28ceb7'::uuid, 'a1ee72d3-9f79-4a34-9c44-7f75e3db5957'::uuid, '2bb64636-67c9-4fde-8faa-f597d36ebabd'::uuid, '306eabe9-0764-4d7e-b018-01fe4da026b9'::uuid, '6a9cff88-0bd8-4d9c-a2d6-fa30878722c9'::uuid, '36f58720-e4d0-49cb-964e-0809c2a3a37c'::uuid, '192501be-3489-4fc1-9343-83396c8edbdc'::uuid, 'b5fae032-29d1-42bb-b342-ab30397f309e'::uuid, 'd8bd0f54-6734-47c2-a927-1862085d6f5b'::uuid, '60c2c7f3-0264-4bc1-816c-b9e06ede1789'::uuid, 'a8276722-bff6-42ce-9c96-dba373013ca3'::uuid, '0944e7e5-e55c-4ee4-8dec-ff39f02e20cc'::uuid, '8b0ae61b-72d4-49eb-803e-a08cf11b522c'::uuid, '4c0a8bfe-b774-47f3-87a8-dedab177b38e'::uuid, 'b2579eae-547a-4f24-bf4f-c72b65f341be'::uuid, 'e6874ae1-ba2f-4291-a881-a105b298538c'::uuid, '81676e17-9314-45cc-9821-e770b73b4aba'::uuid, '10b0be98-0299-4a16-b28b-02769fda3547'::uuid, '8577a312-2a8b-44fb-b001-7bad0ab16c41'::uuid, '1d12b90d-0f3a-42bc-9e21-5747ad21002e'::uuid, 'd9eadcdc-c58d-4144-9d2d-b929149eccac'::uuid, '0864e564-1715-49a6-b987-7d538dddf8ad'::uuid, '317a88db-5e72-47c2-92ca-0514a594f60e'::uuid, '519c2422-7575-415a-816c-40b15ebd6fb2'::uuid, '3481ccee-6012-4291-8b62-b631b8a1f459'::uuid, 'eed15705-aaf3-4fc2-891b-b9af343512d6'::uuid, 'eba2bd36-df46-4e94-84b0-a6222204c794'::uuid, '04ee725b-72d8-4f78-8923-f716601ca0ec'::uuid, '22e37174-8697-40e7-82bb-6317e4b996f0'::uuid, '86173297-3c96-4840-b388-dc9753afb41a'::uuid, 'bfd3ca47-4fab-4f94-a52d-47c47d5efe69'::uuid, 'd4c5b7fb-0bb5-440e-83ba-256ffb352944'::uuid, '7bb3a39c-ba35-405b-9399-fe9c1eda33e6'::uuid, '6edebb0b-3b62-4883-b523-11f1e1a477c2'::uuid, '401a297e-aa8f-4288-966d-928ba01aa193'::uuid, '0085e4a2-7ba8-40e8-9fd0-03e8b3a9232f'::uuid, '5c4a1210-a925-4689-8d5e-e96ebf81d9f0'::uuid, 'f3ab58db-c0d4-41ad-9af9-ef5569546a47'::uuid, '1d2b01ac-38b3-4165-b47b-ed7dbe2f68c6'::uuid, 'a7e8c2fb-cc70-4da9-a2e1-d7a2de346725'::uuid, '642e6815-ad95-4f3d-a064-814bc73cbdc0'::uuid, '606bb2d7-30cf-4bc4-828c-d4024ee7c0e2'::uuid, 'c241943a-9840-442b-90bd-98d74625bb8d'::uuid, '5e005864-a9d1-4106-9caa-b0c46bc0370c'::uuid, '7a256ea9-df3b-4d2c-8f45-84eb220bdafe'::uuid, 'adc9c981-0844-4d0b-81b9-360828e709f4'::uuid, '372a187e-906f-4718-920f-2b18c9ef5471'::uuid, '3736b818-2b1e-451d-a301-20fea80fbadf'::uuid, 'babb4e18-c016-4ff3-ba93-503c4ac0b657'::uuid, 'c20c3023-c06d-44e7-a6f2-ef00df939d2a'::uuid, '03a5d32e-b711-4dd0-804c-2e5f75e0a564'::uuid, 'a4c9c44f-2073-4eb6-90d4-135fabbffc28'::uuid, '0ccb823d-9fb5-47ab-8120-65e0a42b8f7f'::uuid, '1afba599-5ad3-4126-9f99-6bb024602cfa'::uuid, 'a25b6870-0049-4e44-b7b1-c04d877d8a47'::uuid, '0ca01f74-4141-47a1-bfb0-1edc97592fbb'::uuid, 'e4a2bb52-fa70-4659-bf4c-f93ea61bd0a4'::uuid, '6828e3c1-233d-4aad-b0e2-47d78afedbc9'::uuid, 'ef7f9ec9-f14b-4406-8a35-31f48832f5bb'::uuid, 'df4b2f0f-7f98-426d-882a-2f7e65d6476b'::uuid, 'db51fc42-e346-4906-a675-e7a2f34a2192'::uuid, 'a5dcc343-5e9c-4669-85d9-6ff17d1365c0'::uuid, '6a4a30c1-77ed-4577-b2f7-fb1729caa735'::uuid, '974f8a09-1259-40fe-b5bb-247960fbdebe'::uuid, '91fa0320-9968-4097-b529-00c54e48540c'::uuid, '29ba0d4a-37f5-48da-ba8f-7ed7ce80dec3'::uuid, 'c7537625-f992-45e6-94c6-6714fc9f7b73'::uuid, '13e0207b-5bb8-4642-8181-00c918a2ab1b'::uuid, 'ecdf92be-9dae-4128-b347-364209ee9edb'::uuid, '09a0ea6d-acdc-4cd5-8179-748cefe46a17'::uuid, '8023b976-e339-417d-9e48-96d9c8ac012c'::uuid, 'c2a17a30-993f-4e70-b07f-b5d901d98bd9'::uuid, '6801f9d8-ecf8-4e59-ac1c-164ed4b8d3b8'::uuid, '5c4b0e5c-16af-4b02-9d0d-f089b40ffe7d'::uuid, '6e05c340-872c-47b7-9508-f5068e6e9d1c'::uuid, 'd3b4c55a-2027-4a65-b750-6aa15358ae07'::uuid, '24efa845-bfd7-48d5-93a5-30aa7f170de7'::uuid, 'e2e9f91e-22a4-4b42-b5bc-e5eb7de1c1a7'::uuid, 'dc4041b9-16c6-4b60-a995-10adbf2d7afc'::uuid, '35994a41-52a9-416d-ad22-6a7eb1b5bdcf'::uuid, 'facd322c-c860-4a0f-a929-2d10b211d6f5'::uuid, 'f3201754-ae11-4a8f-9415-9c622a0279f2'::uuid, 'b1f5a2ca-070c-4e41-9fc5-3a4305cd56d0'::uuid, '97ee70c9-58c9-4fd7-b255-ca779a91c968'::uuid, '7dd6cefa-dece-4fa2-8c97-243993182a63'::uuid, '097f24e7-3d93-4573-b0b9-3af32c244bcd'::uuid, '72bff4f1-41b9-460a-9a71-ee592e1662f3'::uuid, '6ad563a4-2038-46e3-803c-0a2374f34c96'::uuid, 'df58c33e-df40-43c0-8a07-e710b7771a63'::uuid, 'e0f2f1fd-2de3-45f1-accd-f88d8fde7fc3'::uuid, 'cd9ef409-3ee6-4836-9438-808368574cfb'::uuid, '1f713a2f-5c5d-4ad7-87ad-a029618b62cd'::uuid, '5cea387e-2fbd-468f-a162-7f29e281d5a0'::uuid, '38bf19a5-3c04-4f0b-8e66-21e4024d7f5e'::uuid, '2aa5f1aa-ce77-4827-aa2c-83ad58539fdd'::uuid, '9438a3ec-ce35-4f4f-b50e-c93766bd59c3'::uuid, '5e5a4e86-710d-438e-aa85-2966098f3da3'::uuid, '8865aecb-2ee7-4fb1-807e-670799c4fa8e'::uuid, 'ff555700-3605-42d5-b7be-e397bbf6d663'::uuid, 'e834eb9c-3f2a-4100-9bc7-fb1167ff560b'::uuid, '5d80954f-b686-48e0-801c-ec88b77a021b'::uuid, '47787314-a125-48b6-b59a-7926b6888b86'::uuid, '42bd0373-3f84-403b-a671-83fd422eea53'::uuid, '8d81d249-9d55-45b4-8ccc-e274c9cdb03d'::uuid, '59a3fb67-ad65-448a-8b83-374d6b3c1057'::uuid, '98e98f8b-4fbc-47d0-91ca-1fc19442b8af'::uuid, '5d6a76ec-1b4f-4dbc-b6fc-679d0049203f'::uuid, 'b5a2a815-55a1-4338-9a20-c6b9d776e878'::uuid, '1788a90b-4d49-42e8-86bf-dd2fe7a923ee'::uuid, '4f8438a9-bcd2-4656-9ba2-f919e6d4c049'::uuid, 'e4b0e3a5-6e09-4653-aa92-65056ae1a429'::uuid, '7a154cd7-e6c2-4e2d-a9ae-3fdbb862c7b5'::uuid, '685e1b67-7e1f-49b7-ade3-64a717c2e936'::uuid, '214fd579-830b-4934-a9e6-2897d7f5654d'::uuid, 'd93af4d1-84e7-45cb-aeea-0e0cb2b6234f'::uuid);
