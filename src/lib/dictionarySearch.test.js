@@ -179,3 +179,25 @@ describe('index cache', () => {
     expect(() => saveCachedIndex(broken, WORDS)).not.toThrow();
   });
 });
+
+describe('word details (phase 3)', () => {
+  it('lists the verb forms, base form first, leaving out missing ones', async () => {
+    const { verbFormRows } = await import('./dictionary');
+    expect(verbFormRows('go', { verb_past: 'went', verb_pp: 'gone', verb_ing: 'going', verb_third: 'goes' })).toEqual([
+      { key: 'base', form: 'go' }, { key: 'past', form: 'went' }, { key: 'pp', form: 'gone' },
+      { key: 'ing', form: 'going' }, { key: 'third', form: 'goes' },
+    ]);
+    expect(verbFormRows('go', { verb_past: 'went', verb_pp: null })).toHaveLength(2);
+    expect(verbFormRows('go', {})).toEqual([]);
+    expect(verbFormRows('go', null)).toEqual([]);
+  });
+
+  it('shows a plural only for countable / both nouns', async () => {
+    const { pluralForm } = await import('./dictionary');
+    expect(pluralForm({ countable: 'countable', plural: 'dogs' })).toBe('dogs');
+    expect(pluralForm({ countable: 'both', plural: 'papers' })).toBe('papers');
+    expect(pluralForm({ countable: 'uncountable', plural: 'waters' })).toBe(null);
+    expect(pluralForm({ countable: 'plural', plural: 'jeans' })).toBe(null);
+    expect(pluralForm({ countable: 'countable', plural: null })).toBe(null);
+  });
+});

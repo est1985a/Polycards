@@ -1084,4 +1084,26 @@ export default {
   "myCards.singleWords": "追加した単語", // the My Deck row for words added from the dictionary
   "myCards.singleWordsCount": "{n}語・辞書から追加",
   "myCards.removeSingleWordsConfirm": "追加した単語（{n}語）をすべてマイデッキから外しますか？追加したパックに入っていない単語は、復習の記録が消えます。", // browser confirm
+  // Dictionary phase 3: countable / uncountable nouns and verb forms (CountableChip.jsx, WordSheet.jsx). DRAFT
+  "countable.label.countable": "数えられる",
+  "countable.label.uncountable": "数えられない",
+  "countable.label.both": "数えられる・数えられない",
+  "countable.label.plural": "常に複数形",
+  "countable.chipAria": "「{label}」の説明を見る", // the chip (read aloud)
+  "countable.title": "数えられる名詞・数えられない名詞",
+  "countable.desc.countable": "1つ、2つと数えられる名詞です。1つのときは a / an をつけ、2つ以上は複数形にします。",
+  "countable.desc.uncountable": "数えられない名詞です。a / an はつけず、複数形もありません。量は some や a lot of などで表します。",
+  "countable.desc.both": "意味によって、数えられるときと数えられないときがある名詞です。",
+  "countable.desc.plural": "いつも複数形で使う名詞です。1つ、2つと数えるときは a pair of を使います。",
+  "countable.example.countable": "a dog → two dogs",
+  "countable.example.uncountable": "water, information",
+  "countable.example.both": "paper（紙）／ a paper（新聞）",
+  "countable.example.plural": "jeans → a pair of jeans",
+  "dictionary.plural": "複数形",
+  "dictionary.verbForms": "動詞の形",
+  "verbForm.base": "原形",
+  "verbForm.past": "過去形",
+  "verbForm.pp": "過去分詞",
+  "verbForm.ing": "ing形",
+  "verbForm.third": "3単現",
 };

@@ -1076,3 +1076,23 @@ describe('single words (dictionary phase 2)', () => {
     expect((await api.fetchDictionaryWord('w1', 'u1')).single).toBe(false);
   });
 });
+
+describe('word details columns (phase 3)', () => {
+  it('asks for countable / plural / verb forms', async () => {
+    await api.fetchDictionaryWord('w1', 'u1');
+    expect(calls.filter((c) => c[0] === 'select').map((c) => c[1])).toContainEqual(
+      'id, example_en, example_ja, audio_path, countable, plural, verb_past, verb_pp, verb_ing, verb_third');
+  });
+
+  it('asks again without them before the SQL is run (error 42703)', async () => {
+    let first = true;
+    result = { data: null, count: 0 };
+    // The first answer read is the details query's (it is awaited first): the column is missing.
+    Object.defineProperty(result, 'error', { get: () => {
+      if (first) { first = false; return { code: '42703', message: 'column words.countable does not exist' }; }
+      return null;
+    } });
+    await api.fetchDictionaryWord('w1', 'u1');
+    expect(calls.filter((c) => c[0] === 'select').map((c) => c[1])).toContainEqual('id, example_en, example_ja, audio_path');
+  });
+});

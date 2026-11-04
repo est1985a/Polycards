@@ -1130,14 +1130,26 @@ export async function fetchDictionaryIndex() {
   return rows;
 }
 
-// The rest of one word for its pop-up: { word: { example_en, example_ja, audio_path }, deckIds,
+// One word's example, audio and (dictionary phase 3) countable / plural / verb forms. Before
+// polycards-word-details.sql is run those columns don't exist (error 42703): then it asks again
+// without them, so the pop-up still works.
+const WORD_BASICS = 'id, example_en, example_ja, audio_path';
+const WORD_DETAILS = `${WORD_BASICS}, countable, plural, verb_past, verb_pp, verb_ing, verb_third`;
+async function fetchWordDetails(wordId) {
+  const first = await supabase.from('words').select(WORD_DETAILS).eq('id', wordId).maybeSingle();
+  if (first.error?.code !== '42703') return first;
+  return supabase.from('words').select(WORD_BASICS).eq('id', wordId).maybeSingle();
+}
+
+// The rest of one word for its pop-up: { word: { example_en, example_ja, audio_path, countable,
+// plural, verb_past, verb_pp, verb_ing, verb_third }, deckIds,
 // cards: [{ direction, level }] (the student's own cards for it, [] when not owned),
 // single: true when the student added it on its own (null when that can't be told, e.g. before
 // polycards-user-words.sql is run: then the pop-up shows no add / remove button) }.
 export async function fetchDictionaryWord(wordId, userId) {
   const none = Promise.resolve({ data: [], error: null });
   const [details, decks, cards, single] = await Promise.all([
-    supabase.from('words').select('id, example_en, example_ja, audio_path').eq('id', wordId).maybeSingle(),
+    fetchWordDetails(wordId),
     supabase.from('deck_words').select('deck_id').eq('word_id', wordId),
     userId ? supabase.from('user_cards').select('direction, level').eq('user_id', userId).eq('word_id', wordId) : none,
     userId ? supabase.from('user_words').select('word_id').eq('user_id', userId).eq('word_id', wordId) : none,

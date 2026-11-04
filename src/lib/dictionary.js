@@ -301,3 +301,26 @@ export function saveCachedIndex(storage, words, now = Date.now()) {
 export function isImeKey(event, justComposed = false) {
   return Boolean(event?.nativeEvent?.isComposing || event?.isComposing || event?.keyCode === 229 || justComposed);
 }
+
+// --- Word details (dictionary phase 3: words.countable, plural, verb_* columns) ---
+
+// The values of words.countable, in the order the explanation lists them.
+export const COUNTABLE_KEYS = ['countable', 'uncountable', 'both', 'plural'];
+
+// The verb-form rows for the pop-up: [{ key, form }] (原形 first), or [] when the word has no
+// forms filled in. Missing forms are left out.
+export function verbFormRows(english, details) {
+  if (!details?.verb_past) return [];
+  return [
+    ['base', english],
+    ['past', details.verb_past],
+    ['pp', details.verb_pp],
+    ['ing', details.verb_ing],
+    ['third', details.verb_third],
+  ].filter(([, form]) => form).map(([key, form]) => ({ key, form }));
+}
+
+// The plural to show: only for countable / both nouns that have one.
+export function pluralForm(details) {
+  return (details?.countable === 'countable' || details?.countable === 'both') && details?.plural ? details.plural : null;
+}

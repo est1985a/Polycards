@@ -162,3 +162,35 @@ describe('WordSheetBody: adding one word to My Deck', () => {
     expect(body({ details, action: { error: '外せませんでした' } })).toContain('外せませんでした');
   });
 });
+
+describe('countable chip and word forms (phase 3)', async () => {
+  const { default: CountableChip, CountableList } = await import('./CountableChip');
+  const { WordForms } = await import('./WordSheet');
+
+  it('shows the countable chip, nothing when empty or unknown', () => {
+    expect(renderToStaticMarkup(<CountableChip countable="uncountable" />)).toContain('数えられない');
+    expect(renderToStaticMarkup(<CountableChip countable="plural" />)).toContain('常に複数形');
+    expect(renderToStaticMarkup(<CountableChip countable={null} />)).toBe('');
+    expect(renderToStaticMarkup(<CountableChip countable="proper" />)).toBe('');
+  });
+
+  it('explains all four kinds with the tapped one highlighted', () => {
+    const html = renderToStaticMarkup(<CountableList highlight="both" />);
+    expect(html.match(/<li/g)).toHaveLength(4);
+    expect(html).toMatch(/<li aria-current="true"[^>]*><div[^>]*>数えられる・数えられない/);
+    expect(html).toContain('a pair of jeans');
+  });
+
+  it('shows the plural and the verb-form table only when filled in', () => {
+    expect(renderToStaticMarkup(<WordForms english="dog" details={{ countable: 'countable', plural: 'dogs' }} />)).toContain('dogs');
+    const verbs = renderToStaticMarkup(<WordForms english="go" details={{ verb_past: 'went', verb_pp: 'gone', verb_ing: 'going', verb_third: 'goes' }} />);
+    for (const s of ['原形', '過去形', '過去分詞', 'ing形', '3単現', 'went', 'gone', 'going', 'goes']) expect(verbs).toContain(s);
+    expect(renderToStaticMarkup(<WordForms english="go" details={{ example_en: 'x' }} />)).toBe('');
+  });
+
+  it('English labels', () => {
+    setLang('en');
+    expect(renderToStaticMarkup(<CountableChip countable="countable" />)).toContain('countable');
+    expect(renderToStaticMarkup(<WordForms english="go" details={{ verb_past: 'went' }} />)).toContain('Past');
+  });
+});

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import SheetFrame from './SheetFrame';
 import PosChip from './PosChip';
+import CountableChip from './CountableChip';
 import SpeakerButton from './SpeakerButton';
 import WordInfo from './WordInfo';
 import { colors, fontDisplay, btnPrimary } from '../styles/theme';
-import { baseFormWords, sameEnglishWords, relatedWords, wordPackPaths } from '../lib/dictionary';
+import { baseFormWords, sameEnglishWords, relatedWords, wordPackPaths, verbFormRows, pluralForm } from '../lib/dictionary';
 import { directionLabel } from '../lib/drill';
 import { MASTERED } from '../lib/srs';
 import * as api from '../lib/api';
@@ -34,6 +35,37 @@ function WordChips({ title, words, onOpen }) {
   );
 }
 
+// 複数形: dogs, and the verb-form table (原形・過去形・過去分詞・ing形・3単現). Nothing until the data
+// for this word is filled in (polycards-word-details.sql and the batch files).
+export function WordForms({ english, details }) {
+  const plural = pluralForm(details);
+  const verbs = verbFormRows(english, details);
+  if (!plural && verbs.length === 0) return null;
+  return (
+    <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+      {plural && (
+        <div style={{ fontSize: 15, color: colors.text }}>
+          <span style={{ color: colors.muted, fontSize: 13, marginRight: 8 }}>{t("dictionary.plural")}</span>
+          <span lang="en" style={{ fontFamily: fontDisplay, fontWeight: 700 }}>{plural}</span>
+        </div>
+      )}
+      {verbs.length > 0 && (
+        <section>
+          <h3 style={{ ...sectionTitle, margin: "4px 0 8px" }}>{t("dictionary.verbForms")}</h3>
+          <dl style={{ margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 8 }}>
+            {verbs.map(({ key, form }) => (
+              <div key={key} style={{ padding: "8px 12px", borderRadius: 12, background: colors.surface2, border: `1px solid ${colors.line}` }}>
+                <dt style={{ fontSize: 12, color: colors.muted }}>{t(`verbForm.${key}`)}</dt>
+                <dd lang="en" style={{ margin: "2px 0 0", fontFamily: fontDisplay, fontWeight: 700, fontSize: 17, color: colors.text }}>{form}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
+    </div>
+  );
+}
+
 // What the pop-up shows; no loading or state, so tests can render it.
 // details: from fetchDictionaryWord (null while loading); failed: it couldn't load.
 // packs: wordPackPaths; inReview: pack links off (opening a pack would end the review) and no 外す
@@ -58,9 +90,11 @@ export function WordSheetBody({
       )}
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <PosChip pos={word.pos} fontSize={13} />
+        <CountableChip countable={details?.word?.countable} />
         {speech && <SpeakerButton text={word.english} audioPath={details?.word?.audio_path ?? null} slow={speech.slow} />}
       </div>
       <p style={{ margin: "10px 0 0", fontSize: 20, lineHeight: 1.5, color: colors.text }}>{word.japanese}</p>
+      <WordForms english={word.english} details={details?.word} />
 
       <div style={{ marginTop: 10, fontSize: 13, color: colors.muted }}>
         {details && (cards.length > 0 ? (
