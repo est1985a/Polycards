@@ -1074,4 +1074,14 @@ export default {
   "dictionary.inMyDeck": "マイデッキにあります",
   "dictionary.notInMyDeck": "まだマイデッキにありません",
   "dictionary.previous": "前の単語",
+  // Dictionary phase 2: adding one word to My Deck
+  "dictionary.adding": "追加中…",
+  "dictionary.singleTag": "辞書から追加", // small tag after ✓ マイデッキにあります for a word added on its own
+  "dictionary.removeWord": "外す", // removes a word added on its own
+  "dictionary.removeWordConfirm": "「{english}」をマイデッキから外しますか？追加したパックに入っていない単語は、復習の記録が消えます。",
+  "dictionary.addFailed": "追加できませんでした",
+  "dictionary.removeFailed": "外せませんでした",
+  "myCards.singleWords": "追加した単語", // the My Deck row for words added from the dictionary
+  "myCards.singleWordsCount": "{n}語・辞書から追加",
+  "myCards.removeSingleWordsConfirm": "追加した単語（{n}語）をすべてマイデッキから外しますか？追加したパックに入っていない単語は、復習の記録が消えます。", // browser confirm
 };

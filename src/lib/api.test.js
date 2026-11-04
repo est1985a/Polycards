@@ -999,3 +999,80 @@ describe('dictionary', () => {
     await expect(api.fetchDictionaryWord('w1', 'u1')).rejects.toThrow('boom');
   });
 });
+
+describe('single words (dictionary phase 2)', () => {
+  // A fake whose answer depends on the table of the latest query.
+  function answerByTable(answers) {
+    const last = () => [...calls].reverse().find((c) => c[0] === 'from')?.[1];
+    result = { error: null, count: 0 };
+    Object.defineProperty(result, 'data', { get: () => answers[last()] ?? [] });
+  }
+  const deletesOn = (table) => {
+    const out = [];
+    let current = null;
+    for (const c of calls) {
+      if (c[0] === 'from') current = c[1];
+      if (c[0] === 'delete' && current === table) out.push(c);
+    }
+    return out.length;
+  };
+  const inLists = (column) => calls.filter((c) => c[0] === 'in' && c[1] === column).map((c) => c[2]);
+
+  it('due rows say which words were added on their own', async () => {
+    await fetchDueRows();
+    expect(calls.find((c) => c[0] === 'select')[1]).toContain('user_words ( word_id )');
+  });
+
+  it('reviews the single words with an inner join on user_words and no deck filter', async () => {
+    await fetchReviewRows('single-words', 20);
+    const select = calls.find((c) => c[0] === 'select')[1];
+    expect(select).toContain('user_words!inner ( word_id )');
+    expect(select).not.toContain('deck_words');
+    expect(calls.some((c) => c[0] === 'eq' && c[1] === 'words.deck_words.deck_id')).toBe(false);
+  });
+
+  it('adding a word makes its two Lv0 cards (keeping existing ones) and a user_words row', async () => {
+    await api.addWordToMyCards('u1', 'w1');
+    expect(calls).toContainEqual(['from', 'user_cards']);
+    const upserts = calls.filter((c) => c[0] === 'upsert');
+    expect(upserts[0][1]).toEqual([
+      { user_id: 'u1', word_id: 'w1', direction: 'en2jp' },
+      { user_id: 'u1', word_id: 'w1', direction: 'jp2en' },
+    ]);
+    expect(upserts[0][2]).toMatchObject({ ignoreDuplicates: true });
+    expect(upserts[1][1]).toEqual({ user_id: 'u1', word_id: 'w1' });
+    expect(calls.some((c) => c[0] === 'update')).toBe(false);
+  });
+
+  it('removing single words keeps the progress of words still in an added pack', async () => {
+    answerByTable({ user_words: [{ word_id: 'a' }, { word_id: 'b' }], user_decks: [{ deck_id: 'd1' }], deck_words: [{ word_id: 'a' }] });
+    await api.removeSingleWords('u1');
+    expect(deletesOn('user_cards')).toBe(1);
+    expect(inLists('word_id')).toContainEqual(['b']); // only b loses its progress
+    expect(deletesOn('user_words')).toBe(1);
+    expect(inLists('word_id').at(-1)).toEqual(['a', 'b']);
+  });
+
+  it('removing one single word filters to that word', async () => {
+    answerByTable({ user_words: [{ word_id: 'a' }], user_decks: [] });
+    await api.removeSingleWords('u1', 'a');
+    expect(calls).toContainEqual(['eq', 'word_id', 'a']);
+    expect(deletesOn('user_cards')).toBe(1);
+    expect(deletesOn('user_words')).toBe(1);
+  });
+
+  it('removing a pack keeps words also added on their own', async () => {
+    answerByTable({ deck_words: [{ word_id: 'a' }, { word_id: 'b' }], user_decks: [], user_words: [{ word_id: 'a' }] });
+    // The fake's user_decks delete returns no row, so the function ends with its "not removed" error.
+    await expect(api.removeDeckFromMyCards('u1', 'd1')).rejects.toThrow('Deck was not removed');
+    expect(calls).toContainEqual(['from', 'user_words']);
+    expect(inLists('word_id').at(-1)).toEqual(['b']); // the user_cards delete: only b
+  });
+
+  it('the pop-up knows whether a word was added on its own', async () => {
+    answerByTable({ user_words: [{ word_id: 'w1' }], user_cards: [{ direction: 'en2jp', level: 0 }] });
+    expect((await api.fetchDictionaryWord('w1', 'u1')).single).toBe(true);
+    answerByTable({ user_words: [] });
+    expect((await api.fetchDictionaryWord('w1', 'u1')).single).toBe(false);
+  });
+});

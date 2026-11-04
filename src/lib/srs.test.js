@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   LEVEL_HOURS, MAX_LEVEL, MASTERED, DEFAULT_SESSION_SIZE, SESSION_SIZES, RESTORED_LEVEL, isMastered,
   levelAfterCorrect, levelAfterWrong, nextReviewDate, restoreUpdate, levelUpLabel, answerTiming, dueByDeck,
-  cardKey, sessionCardKeys, moreDueCount, nextSetRows,
+  cardKey, sessionCardKeys, moreDueCount, nextSetRows, SINGLE_WORDS_DECK, dueRowInDeck,
 } from './srs';
 
 describe('settings', () => {
@@ -200,5 +200,27 @@ describe('continue reviewing (moreDueCount, nextSetRows)', () => {
   it('next set: leaves out the session\'s cards, at most limit', () => {
     expect(nextSetRows(rows, skip, 2).map((r) => cardKey(r.word_id, r.direction))).toEqual(['w1:en2jp', 'w2:jp2en']);
     expect(nextSetRows(rows, skip, 20)).toHaveLength(3);
+  });
+});
+
+describe('single words (added from the dictionary)', () => {
+  const rows = [
+    { word_id: 'a', direction: 'en2jp', words: { deck_words: [{ deck_id: 'd1' }], user_words: [{ word_id: 'a' }] } },
+    { word_id: 'b', direction: 'en2jp', words: { deck_words: [{ deck_id: 'd1' }], user_words: [] } },
+    { word_id: 'c', direction: 'jp2en', words: { deck_words: [], user_words: [{ word_id: 'c' }] } },
+  ];
+
+  it('counts due cards under the single-words row too', () => {
+    expect(dueByDeck(rows)).toEqual({ d1: 2, [SINGLE_WORDS_DECK]: 2 });
+  });
+
+  it('knows which rows belong to the single words', () => {
+    expect(rows.map((r) => dueRowInDeck(r, SINGLE_WORDS_DECK))).toEqual([true, false, true]);
+    expect(rows.map((r) => dueRowInDeck(r, 'd1'))).toEqual([true, true, false]);
+  });
+
+  it('counts more due single-word cards for 続けて復習する', () => {
+    expect(moreDueCount(rows, SINGLE_WORDS_DECK, new Set(['a:en2jp']))).toBe(1);
+    expect(moreDueCount(rows, null, new Set())).toBe(3);
   });
 });

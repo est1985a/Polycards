@@ -23,15 +23,27 @@ export function extraDueTotal(dueCount, sessionSize = DEFAULT_SESSION_SIZE) {
   return dueCount > sessionSize ? dueCount : null;
 }
 // Due cards per deck, from fetchDueRows() rows ({ words: { deck_words: [{ deck_id }] } }):
-// { [deckId]: n }. A word can be in several decks, so a due card counts toward each of them.
+// { [deckId]: n }. A word can be in several decks, so a due card counts toward each of them; a word
+// the student added on its own also counts under SINGLE_WORDS_DECK.
 export function dueByDeck(dueRows) {
   const counts = {};
   (dueRows || []).forEach((r) => {
     r.words?.deck_words?.forEach(({ deck_id: d }) => {
       counts[d] = (counts[d] || 0) + 1;
     });
+    if (r.words?.user_words?.length) counts[SINGLE_WORDS_DECK] = (counts[SINGLE_WORDS_DECK] || 0) + 1;
   });
   return counts;
+}
+
+// The words a student added on their own (dictionary pop-up, user_words) are reviewed like one more
+// pack in My Deck; this is its id wherever a deck id goes (due counts, reviews, removing).
+export const SINGLE_WORDS_DECK = 'single-words';
+
+// True when a fetchDueRows() row belongs to this deck (or to the single words).
+export function dueRowInDeck(row, deckId) {
+  if (deckId === SINGLE_WORDS_DECK) return Boolean(row.words?.user_words?.length);
+  return Boolean(row.words?.deck_words?.some((d) => d.deck_id === deckId));
 }
 
 // Continue reviewing (the 全部クリア panel). A card's key: word id + direction.
@@ -47,7 +59,7 @@ export function sessionCardKeys(cards) {
 export function moreDueCount(dueRows, deckId, skipKeys) {
   return (dueRows || []).filter((r) =>
     !skipKeys.has(cardKey(r.word_id, r.direction))
-    && (!deckId || r.words?.deck_words?.some((d) => d.deck_id === deckId))
+    && (!deckId || dueRowInDeck(r, deckId))
   ).length;
 }
 // The next review's rows: fetchReviewRows() rows without the session's cards, at most limit.

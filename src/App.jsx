@@ -5,7 +5,7 @@ import { buildCards, buildReviewCards } from './lib/drill';
 import { loadSchoolLevel, saveSchoolLevel, pathTitle } from './lib/library';
 import { packWords, packSummary } from './lib/packOpening';
 import { levelCounts, playerRank } from './lib/points';
-import { MASTERED, dueByDeck, sessionCardKeys, moreDueCount, nextSetRows } from './lib/srs';
+import { MASTERED, SINGLE_WORDS_DECK, dueByDeck, sessionCardKeys, moreDueCount, nextSetRows } from './lib/srs';
 import { HANDWRITING_ENABLED } from './handwriting/config';
 import { nextReviewSummary, jstDateKey } from './lib/schedule';
 import { singleFlight } from './lib/gacha';
@@ -175,6 +175,7 @@ function App() {
   // My Cards
   const [myDeckIds, setMyDeckIds] = useState([]);
   const [myDecks, setMyDecks] = useState([]);
+  const [singleWordCount, setSingleWordCount] = useState(0); // words added on their own (dictionary)
   const [dueRows, setDueRows] = useState([]);
   const [nextReview, setNextReview] = useState(null); // { at, count } of the next review, from fetchNextReview
   const [now, setNow] = useState(() => Date.now()); // for the "2時間後" wording; updated every minute
@@ -552,6 +553,8 @@ function App() {
     } catch (e) {
       console.error(e);
     }
+    // The 追加した単語 row (0 = no row, also when polycards-user-words.sql isn't run yet).
+    api.fetchSingleWordCount().then(setSingleWordCount, (e) => { console.warn(e.message); setSingleWordCount(0); });
   }
 
   // Due cards, plus the next review after now (for the 次の復習 line when nothing is due).
@@ -1111,10 +1114,15 @@ function App() {
 
   async function removeDeck(deck) {
     if (!session) return;
-    if (!window.confirm(t("myCards.removeConfirm", { name: deck.name }))) return;
+    const single = deck.id === SINGLE_WORDS_DECK;
+    const question = single
+      ? t("myCards.removeSingleWordsConfirm", { n: singleWordCount, count: singleWordCount })
+      : t("myCards.removeConfirm", { name: deck.name });
+    if (!window.confirm(question)) return;
     setRemovingDeckId(deck.id);
     try {
-      await api.removeDeckFromMyCards(session.user.id, deck.id);
+      if (single) await api.removeSingleWords(session.user.id);
+      else await api.removeDeckFromMyCards(session.user.id, deck.id);
     } catch (e) {
       alert(e.message);
     }
@@ -1232,6 +1240,7 @@ function App() {
                 {activeTab === "myCards" && (
                   <MyCardsTab
                     decks={myDecks}
+                    singleWordCount={singleWordCount}
                     dueRows={dueRows}
                     nextReview={dueRows.length === 0 ? nextReviewSummary(nextReview, now) : null}
                     stats={stats}
@@ -1447,6 +1456,7 @@ function App() {
           inReview={!!activeSet && (view === "study" || reviewBehind)}
           speech={speech}
           onOpenPack={openPackFromDictionary}
+          onChanged={() => { loadMyDecks(); loadDueRows(); loadStats(); }}
           onClose={() => setDictWord(null)}
         />
       )}

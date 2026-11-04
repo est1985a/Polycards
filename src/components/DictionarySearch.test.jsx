@@ -125,3 +125,40 @@ describe('WordSheetBody', () => {
     expect(body({ inReview: true })).toContain("open packs during a review");
   });
 });
+
+describe('WordSheetBody: adding one word to My Deck', () => {
+  const base = { word: { example_en: null }, deckIds: [], cards: [] };
+  const body = (props) => renderToStaticMarkup(
+    <WordSheetBody word={EAT} onOpenWord={() => {}} onOpenPack={() => {}} onAdd={() => {}} onAskRemove={() => {}} {...props} />
+  );
+
+  it('offers ＋ マイデッキに追加 for a word not in My Deck', () => {
+    expect(body({ details: { ...base, single: false } })).toMatch(/<button[^>]*>＋ マイデッキに追加<\/button>/);
+    expect(body({ details: { ...base, single: false }, action: { busy: 'add' } })).toContain('追加中…');
+  });
+
+  it('no add button when it is unknown (table not there yet) or the word is owned', () => {
+    expect(body({ details: { ...base, single: null } })).not.toContain('＋ マイデッキに追加');
+    expect(body({ details: { ...base, single: false, cards: [{ direction: 'en2jp', level: 1 }] } })).not.toContain('＋ マイデッキに追加');
+  });
+
+  it('a word added on its own shows 辞書から追加 and 外す, but not during a review', () => {
+    const details = { ...base, single: true, cards: [{ direction: 'en2jp', level: 0 }] };
+    expect(body({ details })).toContain('辞書から追加');
+    expect(body({ details })).toMatch(/<button[^>]*>外す<\/button>/);
+    expect(body({ details, inReview: true })).not.toMatch(/<button[^>]*>外す<\/button>/);
+  });
+
+  it('a word owned only through a pack has no 外す', () => {
+    const details = { ...base, single: false, cards: [{ direction: 'en2jp', level: 2 }] };
+    expect(body({ details })).not.toContain('外す');
+  });
+
+  it('asks before removing, and shows errors', () => {
+    const details = { ...base, single: true, cards: [{ direction: 'en2jp', level: 0 }] };
+    const html = body({ details, action: { confirming: true } });
+    expect(html).toContain('「eat」をマイデッキから外しますか？');
+    expect(html).toContain('キャンセル');
+    expect(body({ details, action: { error: '外せませんでした' } })).toContain('外せませんでした');
+  });
+});

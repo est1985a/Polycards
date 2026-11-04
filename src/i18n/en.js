@@ -1075,4 +1075,14 @@ export default {
   "dictionary.inMyDeck": "In My Deck",
   "dictionary.notInMyDeck": "Not in My Deck yet",
   "dictionary.previous": "Previous word",
+  // Dictionary phase 2: adding one word to My Deck. DRAFT (Andre to check)
+  "dictionary.adding": "Adding…",
+  "dictionary.singleTag": "Added from the dictionary",
+  "dictionary.removeWord": "Remove",
+  "dictionary.removeWordConfirm": "Remove \"{english}\" from My Deck? If it isn't in one of your packs, its review progress will be deleted.",
+  "dictionary.addFailed": "Couldn't add this word",
+  "dictionary.removeFailed": "Couldn't remove this word",
+  "myCards.singleWords": "Added words",
+  "myCards.singleWordsCount": plural("{n} word from the dictionary", "{n} words from the dictionary"),
+  "myCards.removeSingleWordsConfirm": plural("Remove your {n} added word from My Deck? Words that aren't in one of your packs will lose their review progress.", "Remove all {n} added words from My Deck? Words that aren't in one of your packs will lose their review progress."),
 };

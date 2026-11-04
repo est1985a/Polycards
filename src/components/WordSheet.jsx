@@ -3,7 +3,7 @@ import SheetFrame from './SheetFrame';
 import PosChip from './PosChip';
 import SpeakerButton from './SpeakerButton';
 import WordInfo from './WordInfo';
-import { colors, fontDisplay } from '../styles/theme';
+import { colors, fontDisplay, btnPrimary } from '../styles/theme';
 import { baseFormWords, sameEnglishWords, relatedWords, wordPackPaths } from '../lib/dictionary';
 import { directionLabel } from '../lib/drill';
 import { MASTERED } from '../lib/srs';
@@ -36,11 +36,17 @@ function WordChips({ title, words, onOpen }) {
 
 // What the pop-up shows; no loading or state, so tests can render it.
 // details: from fetchDictionaryWord (null while loading); failed: it couldn't load.
-// packs: wordPackPaths; inReview: pack links off (opening a pack would end the review).
+// packs: wordPackPaths; inReview: pack links off (opening a pack would end the review) and no 外す
+// (a card of this review could disappear under it).
+// Adding one word (polycards-user-words.sql): ＋ マイデッキに追加 when the word isn't in My Deck; a word
+// added on its own gets 辞書から追加 and 外す (asks first). Nothing when details.single is null (unknown).
+// action: { busy: 'add' | 'remove' | null, error, confirming }; onAdd / onAskRemove / onRemove / onCancelRemove.
 export function WordSheetBody({
   word, details = null, failed = false, packs = [], baseWords = [], otherMeanings = [], related = [],
   inReview = false, speech = null, onOpenWord, onOpenPack, onBack = null,
+  action = {}, onAdd = null, onAskRemove = null, onRemove = null, onCancelRemove = null,
 }) {
+  const canAdd = Boolean(onAdd) && details?.single != null;
   const cards = details?.cards ?? [];
   const order = { jp2en: 0, en2jp: 1 };
   return (
@@ -60,13 +66,43 @@ export function WordSheetBody({
         {details && (cards.length > 0 ? (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
             <span style={{ color: colors.accentText, fontWeight: 700 }}>✓ {t("dictionary.inMyDeck")}</span>
+            {details.single && <span style={{ fontSize: 12 }}>{t("dictionary.singleTag")}</span>}
             {[...cards].sort((a, b) => order[a.direction] - order[b.direction]).map((c) => (
               <span key={c.direction} lang="en" style={{ border: `1px solid ${colors.line}`, borderRadius: 999, padding: "2px 10px", color: c.level >= MASTERED ? colors.gold : colors.text }}>
                 {directionLabel(c.direction)} · {c.level >= MASTERED ? "Mastered" : `Lv ${c.level}`}
               </span>
             ))}
+            {canAdd && details.single && !inReview && !action.confirming && (
+              <button type="button" onClick={onAskRemove} disabled={Boolean(action.busy)} style={{ ...chipButton, minHeight: 36, fontSize: 13, color: colors.muted }}>
+                {t("dictionary.removeWord")}
+              </button>
+            )}
           </div>
-        ) : t("dictionary.notInMyDeck"))}
+        ) : (
+          <div style={{ display: "grid", gap: 10 }}>
+            <span>{t("dictionary.notInMyDeck")}</span>
+            {canAdd && (
+              <button
+                type="button" onClick={onAdd} disabled={Boolean(action.busy)}
+                style={{ ...btnPrimary, minHeight: 48, padding: "0 20px", fontSize: 16, justifySelf: "start", opacity: action.busy ? 0.6 : 1 }}
+              >
+                {action.busy === "add" ? t("dictionary.adding") : t("cardSets.add")}
+              </button>
+            )}
+          </div>
+        ))}
+        {action.confirming && (
+          <div role="alertdialog" aria-label={t("dictionary.removeWord")} style={{ marginTop: 10, padding: 12, borderRadius: 14, border: `2px solid ${colors.line}`, background: colors.surface2, color: colors.text, fontSize: 14 }}>
+            <p style={{ margin: "0 0 10px" }}>{t("dictionary.removeWordConfirm", { english: word.english })}</p>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button type="button" onClick={onCancelRemove} disabled={Boolean(action.busy)} style={{ ...chipButton, minHeight: 44 }}>{t("common.cancel")}</button>
+              <button type="button" onClick={onRemove} disabled={Boolean(action.busy)} style={{ ...chipButton, minHeight: 44, color: colors.danger, borderColor: colors.danger }}>
+                {t("dictionary.removeWord")}
+              </button>
+            </div>
+          </div>
+        )}
+        {action.error && <p role="alert" style={{ margin: "8px 0 0", color: colors.danger }}>{action.error}</p>}
       </div>
 
       {details?.word?.example_en && (
@@ -114,10 +150,12 @@ export function WordSheetBody({
 // pop-up (‹ 前の単語 goes back). The pop-up is drawn over whatever is on screen and changes nothing
 // there: a review underneath keeps its pile, undo and held answer.
 // index: the search index (buildDictionaryIndex); textbooks / collections: App's library (for the pack paths).
-export default function WordSheet({ word, index, textbooks, collections, userId, inReview = false, speech = null, onOpenPack, onClose }) {
+export default function WordSheet({ word, index, textbooks, collections, userId, inReview = false, speech = null, onOpenPack, onChanged = null, onClose }) {
   const [history, setHistory] = useState([word]);
   const current = history[history.length - 1];
   const [loaded, setLoaded] = useState({ id: null, details: null, failed: false });
+  const [reload, setReload] = useState(0); // after adding or removing, the word loads again
+  const [action, setAction] = useState({ id: null, busy: null, error: null, confirming: false });
 
   useEffect(() => {
     let cancelled = false;
@@ -125,11 +163,27 @@ export default function WordSheet({ word, index, textbooks, collections, userId,
       .then((details) => { if (!cancelled) setLoaded({ id: current.id, details, failed: false }); })
       .catch((e) => { console.error(e); if (!cancelled) setLoaded({ id: current.id, details: null, failed: true }); });
     return () => { cancelled = true; };
-  }, [current.id, userId]);
+  }, [current.id, userId, reload]);
 
   const ready = loaded.id === current.id;
   const details = ready ? loaded.details : null;
   const bases = baseFormWords(index, current);
+  // Only the shown word's add / remove state counts (another word in the history starts clean).
+  const shownAction = action.id === current.id ? action : {};
+
+  async function run(kind, call, errorKey) {
+    const id = current.id;
+    setAction({ id, busy: kind, error: null, confirming: kind === "remove" });
+    try {
+      await call();
+      setAction({ id, busy: null, error: null, confirming: false });
+      setReload((r) => r + 1);
+      onChanged?.();
+    } catch (e) {
+      console.error(e);
+      setAction({ id, busy: null, error: t(errorKey), confirming: false });
+    }
+  }
 
   return (
     <SheetFrame titleId="word-sheet-title" title={<span lang="en">{current.english}</span>} onClose={onClose} className="about-sheet">
@@ -146,6 +200,11 @@ export default function WordSheet({ word, index, textbooks, collections, userId,
         onOpenWord={(w) => setHistory((h) => [...h, w])}
         onOpenPack={onOpenPack}
         onBack={history.length > 1 ? () => setHistory((h) => h.slice(0, -1)) : null}
+        action={shownAction}
+        onAdd={userId ? () => run("add", () => api.addWordToMyCards(userId, current.id), "dictionary.addFailed") : null}
+        onAskRemove={() => setAction({ id: current.id, busy: null, error: null, confirming: true })}
+        onRemove={() => run("remove", () => api.removeSingleWords(userId, current.id), "dictionary.removeFailed")}
+        onCancelRemove={() => setAction({ id: current.id, busy: null, error: null, confirming: false })}
       />
     </SheetFrame>
   );

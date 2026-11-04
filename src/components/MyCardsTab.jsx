@@ -1,5 +1,5 @@
 import { colors, fontBody, fontDisplay, panel, wideLayout, btnPrimary } from '../styles/theme';
-import { DEFAULT_SESSION_SIZE, MASTERED, extraDueTotal, dueByDeck as countDueByDeck } from '../lib/srs';
+import { DEFAULT_SESSION_SIZE, MASTERED, SINGLE_WORDS_DECK, extraDueTotal, dueByDeck as countDueByDeck } from '../lib/srs';
 import PlayerStats from './PlayerStats';
 import LevelChart from './LevelChart';
 import StarIcon from './StarIcon';
@@ -152,7 +152,7 @@ function MasteredButton({ count, loading, onOpen }) {
 
 // One deck in マイデッキ. Tapping the row reviews this deck's due cards; × removes it.
 function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
-  const source = [deck.units?.textbooks?.name, deck.units?.name].filter(Boolean).join(" · ");
+  const source = deck.source ?? [deck.units?.textbooks?.name, deck.units?.name].filter(Boolean).join(" · ");
   return (
     <div style={{ display: "flex", alignItems: "stretch", minHeight: 44, background: colors.surface, border: `2px solid ${colors.line}`, borderRadius: 16 }}>
       <button
@@ -193,9 +193,13 @@ function DeckRow({ deck, due, loading, removing, onReview, onRemove }) {
 }
 
 // wide: two columns (player card, review button, chart, Mastered | マイデッキ in a 2-column grid).
-export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, answerMode = "off", onAnswerModeChange = () => {}, handwritingEnabled = false, sessionSize = DEFAULT_SESSION_SIZE, onReview, onOpenPlan, onOpenAbout = () => {}, onOpenCardSets = () => {}, onRemove, onOpenMastered, onOpenCollection, onOpenStats, loading, removingDeckId, wide = false }) {
+export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar = null, answerMode = "off", onAnswerModeChange = () => {}, handwritingEnabled = false, sessionSize = DEFAULT_SESSION_SIZE, onReview, onOpenPlan, onOpenAbout = () => {}, onOpenCardSets = () => {}, onRemove, onOpenMastered, onOpenCollection, onOpenStats, loading, removingDeckId, wide = false, singleWordCount = 0 }) {
   // A word can be in several decks, so a due card counts toward each of them.
   const dueByDeck = countDueByDeck(dueRows);
+  // Words added on their own from the dictionary: one more row after the packs, reviewed like a pack.
+  const rows = singleWordCount > 0
+    ? [...decks, { id: SINGLE_WORDS_DECK, name: t("myCards.singleWords"), source: t("myCards.singleWordsCount", { n: singleWordCount, count: singleWordCount }), wordCount: singleWordCount }]
+    : decks;
 
   const overview = (
     <>
@@ -210,7 +214,7 @@ export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar =
   const myDecks = (
     <div style={{ display: "grid", gap: 10, alignContent: "start", gridTemplateColumns: wide ? "repeat(2, minmax(0, 1fr))" : undefined }}>
       <h2 style={{ fontSize: 16, fontWeight: 700, margin: wide ? 0 : "8px 0 0", color: colors.text, gridColumn: "1 / -1" }}>{t("myCards.myDecks")}</h2>
-      {decks.length === 0 ? (
+      {rows.length === 0 ? (
         <div style={{ ...panel, padding: 24, textAlign: "center", gridColumn: "1 / -1" }}>
           <h3 style={{ margin: "0 0 10px", color: colors.text }}>{t("myCards.empty.heading")}</h3>
           <p style={{ fontSize: 14, color: colors.text }}>{t("myCards.empty.body")}</p>
@@ -219,7 +223,7 @@ export default function MyCardsTab({ decks, dueRows, nextReview, stats, avatar =
           </button>
         </div>
       ) : (
-        decks.map((deck) => (
+        rows.map((deck) => (
           <DeckRow
             key={deck.id}
             deck={deck}

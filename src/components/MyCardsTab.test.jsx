@@ -168,3 +168,24 @@ describe('empty My Cards (no decks yet)', () => {
     expect(html).toMatch(/<button[^>]*>単語パックを見る<\/button>/);
   });
 });
+
+describe('追加した単語 row (words added from the dictionary)', () => {
+  const due = [{ word_id: 'w1', direction: 'en2jp', words: { deck_words: [{ deck_id: 'other' }], user_words: [{ word_id: 'w1' }] } }];
+
+  it('shows one row after the packs, with the word count and due cards', () => {
+    const html = renderToStaticMarkup(<MyCardsTab decks={[{ id: 'd1', name: 'Words 1' }]} singleWordCount={3} dueRows={due} stats={null} onReview={() => {}} />);
+    expect(html.indexOf('追加した単語')).toBeGreaterThan(html.indexOf('Words 1'));
+    expect(html).toContain('3語・辞書から追加');
+    expect(html).toMatch(/追加した単語[\s\S]*復習 <span[^>]*>1<\/span>枚/);
+  });
+
+  it('replaces the empty panel when there are only single words', () => {
+    const html = renderToStaticMarkup(<MyCardsTab decks={[]} singleWordCount={1} dueRows={[]} stats={null} onReview={() => {}} />);
+    expect(html).toContain('追加した単語');
+    expect(html).not.toContain('まだデッキがありません');
+  });
+
+  it('no row without single words', () => {
+    expect(renderToStaticMarkup(<MyCardsTab decks={[]} dueRows={[]} stats={null} onReview={() => {}} />)).not.toContain('追加した単語');
+  });
+});

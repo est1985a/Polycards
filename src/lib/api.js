@@ -1,7 +1,7 @@
 // Every Supabase query the app makes lives here.
 // Each function throws an Error if something goes wrong, so screens can show the message.
 import { supabase } from './supabaseClient';
-import { DEFAULT_SESSION_SIZE, MASTERED, restoreUpdate } from './srs';
+import { DEFAULT_SESSION_SIZE, MASTERED, SINGLE_WORDS_DECK, restoreUpdate } from './srs';
 import { shapeLibrary, shapeCollections } from './library';
 import { jstDayBounds, jstHourStart, jstDateTime } from './schedule';
 import { posKey } from './partsOfSpeech';
@@ -55,14 +55,15 @@ export async function fetchMyDecks() {
 }
 
 // Cards that are due now (used for the due counts). Mastered cards are never due.
-// Each row lists every deck its word belongs to, since words can be shared between decks.
+// Each row lists every deck its word belongs to, since words can be shared between decks, and
+// whether the student added the word on its own (user_words: only their own rows are visible).
 // Read in pages, so the totals stay right beyond 1,000 due cards.
 export async function fetchDueRows() {
   const now = new Date().toISOString();
   return fetchAllPages(
     (withCount) => supabase
       .from('user_cards')
-      .select('word_id, direction, words ( deck_words ( deck_id ) )', withCount ? { count: 'exact' } : undefined)
+      .select('word_id, direction, words ( deck_words ( deck_id ), user_words ( word_id ) )', withCount ? { count: 'exact' } : undefined)
       .lt('level', MASTERED)
       .lte('next_review_at', now)
       .order('word_id', { ascending: true })
@@ -140,7 +141,7 @@ export async function addDeckToMyCards(userId, deckId) {
 }
 
 // Removes a deck from My Cards. Progress is only deleted for words that are not
-// also in another deck the student still has.
+// also in another deck the student still has, or added on their own (user_words).
 export async function removeDeckFromMyCards(userId, deckId) {
   const wordIds = await fetchDeckWordIds(deckId);
 
@@ -160,6 +161,16 @@ export async function removeDeckFromMyCards(userId, deckId) {
       .in('word_id', wordIds);
     if (sharedError) throw new Error("Could not check shared words: " + sharedError.message);
     keep = new Set(shared.map((r) => r.word_id));
+  }
+  // Words the student also added on their own (the dictionary) stay too.
+  if (wordIds.length > 0) {
+    const { data: single, error: singleError } = await supabase
+      .from('user_words')
+      .select('word_id')
+      .eq('user_id', userId)
+      .in('word_id', wordIds);
+    if (singleError) throw new Error("Could not check your added words: " + singleError.message);
+    for (const r of single || []) keep.add(r.word_id);
   }
 
   const toDelete = wordIds.filter((id) => !keep.has(id));
@@ -185,12 +196,16 @@ export async function removeDeckFromMyCards(userId, deckId) {
   }
 }
 
-// Due cards for a review session (all decks, or one deck), oldest due first. Never Mastered cards.
+// Due cards for a review session (all decks, one deck, or SINGLE_WORDS_DECK = the words added on
+// their own), oldest due first. Never Mastered cards.
 // limit: the student's 1回の枚数 (10, 20 or 30).
 export async function fetchReviewRows(deckId = null, limit = DEFAULT_SESSION_SIZE) {
-  const select = deckId
-    ? 'word_id, direction, level, words!inner ( id, english, japanese, example_en, example_ja, alt_answers, audio_path, pos, deck_words!inner ( deck_id ) )'
-    : 'word_id, direction, level, words!inner ( id, english, japanese, example_en, example_ja, alt_answers, audio_path, pos )';
+  const fields = 'id, english, japanese, example_en, example_ja, alt_answers, audio_path, pos';
+  const select = deckId === SINGLE_WORDS_DECK
+    ? `word_id, direction, level, words!inner ( ${fields}, user_words!inner ( word_id ) )`
+    : deckId
+      ? `word_id, direction, level, words!inner ( ${fields}, deck_words!inner ( deck_id ) )`
+      : `word_id, direction, level, words!inner ( ${fields} )`;
   let query = supabase
     .from('user_cards')
     .select(select)
@@ -198,7 +213,7 @@ export async function fetchReviewRows(deckId = null, limit = DEFAULT_SESSION_SIZ
     .lte('next_review_at', new Date().toISOString())
     .order('next_review_at', { ascending: true })
     .limit(limit);
-  if (deckId) query = query.eq('words.deck_words.deck_id', deckId);
+  if (deckId && deckId !== SINGLE_WORDS_DECK) query = query.eq('words.deck_words.deck_id', deckId);
 
   const { data, error } = await query;
   if (error) throw new Error("Could not load reviews: " + error.message);
@@ -1116,21 +1131,92 @@ export async function fetchDictionaryIndex() {
 }
 
 // The rest of one word for its pop-up: { word: { example_en, example_ja, audio_path }, deckIds,
-// cards: [{ direction, level }] (the student's own cards for it, [] when not owned) }.
+// cards: [{ direction, level }] (the student's own cards for it, [] when not owned),
+// single: true when the student added it on its own (null when that can't be told, e.g. before
+// polycards-user-words.sql is run: then the pop-up shows no add / remove button) }.
 export async function fetchDictionaryWord(wordId, userId) {
-  const [details, decks, cards] = await Promise.all([
+  const none = Promise.resolve({ data: [], error: null });
+  const [details, decks, cards, single] = await Promise.all([
     supabase.from('words').select('id, example_en, example_ja, audio_path').eq('id', wordId).maybeSingle(),
     supabase.from('deck_words').select('deck_id').eq('word_id', wordId),
-    userId
-      ? supabase.from('user_cards').select('direction, level').eq('user_id', userId).eq('word_id', wordId)
-      : Promise.resolve({ data: [], error: null }),
+    userId ? supabase.from('user_cards').select('direction, level').eq('user_id', userId).eq('word_id', wordId) : none,
+    userId ? supabase.from('user_words').select('word_id').eq('user_id', userId).eq('word_id', wordId) : none,
   ]);
   for (const r of [details, decks, cards]) {
     if (r.error) throw new Error("Could not load this word: " + r.error.message);
   }
+  if (single.error) console.warn("Could not check the added words: " + single.error.message);
   return {
     word: details.data || null,
     deckIds: [...new Set((decks.data || []).map((r) => r.deck_id))],
     cards: cards.data || [],
+    single: single.error ? null : (single.data || []).length > 0,
   };
+}
+
+// --- Single words (added on their own from the dictionary pop-up) ---
+
+// How many words the student added on their own (the 追加した単語 row in My Deck).
+export async function fetchSingleWordCount() {
+  const { count, error } = await supabase
+    .from('user_words')
+    .select('word_id', { count: 'exact', head: true });
+  if (error) throw new Error("Could not load your added words: " + error.message);
+  return count ?? 0;
+}
+
+// Adds one word to My Deck: its two cards (Lv0, due now; a card the student already has is kept,
+// same as adding a pack) and the user_words row that says it was added on its own.
+export async function addWordToMyCards(userId, wordId) {
+  const { error: progressError } = await supabase
+    .from('user_cards')
+    .upsert([
+      { user_id: userId, word_id: wordId, direction: 'en2jp' },
+      { user_id: userId, word_id: wordId, direction: 'jp2en' },
+    ], { onConflict: 'user_id,word_id,direction', ignoreDuplicates: true });
+  if (progressError) throw new Error("Could not save card progress: " + progressError.message);
+  const { error } = await supabase
+    .from('user_words')
+    .upsert({ user_id: userId, word_id: wordId }, { onConflict: 'user_id,word_id', ignoreDuplicates: true });
+  if (error) throw new Error("Could not save the word: " + error.message);
+}
+
+// Removes words added on their own: one word (wordId) or all of them (null). Progress is only
+// deleted for words that are not in a pack the student still has (same rule as removing a pack).
+export async function removeSingleWords(userId, wordId = null) {
+  let query = supabase.from('user_words').select('word_id').eq('user_id', userId);
+  if (wordId) query = query.eq('word_id', wordId);
+  const { data: rows, error } = await query;
+  if (error) throw new Error("Could not load your added words: " + error.message);
+  const wordIds = (rows || []).map((r) => r.word_id);
+  if (wordIds.length === 0) return;
+
+  const { data: decks, error: decksError } = await supabase.from('user_decks').select('deck_id').eq('user_id', userId);
+  if (decksError) throw new Error("Could not load your decks: " + decksError.message);
+  const keep = new Set();
+  const deckIds = (decks || []).map((d) => d.deck_id);
+  for (const ids of chunks(wordIds, 150)) {
+    if (deckIds.length === 0) break;
+    const { data: shared, error: sharedError } = await supabase
+      .from('deck_words').select('word_id').in('deck_id', deckIds).in('word_id', ids);
+    if (sharedError) throw new Error("Could not check shared words: " + sharedError.message);
+    for (const r of shared || []) keep.add(r.word_id);
+  }
+
+  const toDelete = wordIds.filter((id) => !keep.has(id));
+  for (const ids of chunks(toDelete, 150)) {
+    const { error: progressError } = await supabase.from('user_cards').delete().eq('user_id', userId).in('word_id', ids);
+    if (progressError) throw new Error("Could not remove card progress: " + progressError.message);
+  }
+  for (const ids of chunks(wordIds, 150)) {
+    const { error: wordsError } = await supabase.from('user_words').delete().eq('user_id', userId).in('word_id', ids);
+    if (wordsError) throw new Error("Could not remove the words: " + wordsError.message);
+  }
+}
+
+// Splits a list into pieces of at most `size` (long .in() lists make the address too long).
+function chunks(list, size) {
+  const out = [];
+  for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size));
+  return out;
 }
