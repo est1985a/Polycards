@@ -3050,5 +3050,173 @@
    "plural": null
   }
  },
- "verbs": {}
+ "verbs": {
+  "91058ac8-5b7d-466e-a20d-a0a4a90b5087": {
+   "w": "armchair ひじかけいす",
+   "skip": true
+  },
+  "f4bb6748-a2b5-4d0d-bdaf-95b21018fb56": {
+   "w": "barrel たる",
+   "skip": true
+  },
+  "daebfa5f-2565-4d60-9d74-bb439e68ff5e": {
+   "w": "boot ブーツ、長ぐつ",
+   "skip": true
+  },
+  "c32dc96d-7865-4b2e-ab52-4f75c7fb29dd": {
+   "w": "brass 真ちゅう、金管楽器",
+   "skip": true
+  },
+  "438e1749-f058-4a45-9f99-c81070369c60": {
+   "w": "burglar （家に入る）どろぼう、強盗",
+   "skip": true
+  },
+  "bb5776a1-af3e-4fcd-bdac-366240b3bbb0": {
+   "w": "candle ろうそく",
+   "skip": true
+  },
+  "defef205-055c-489f-9c1a-5f517ff7090b": {
+   "w": "chair いす",
+   "skip": true
+  },
+  "9169af9e-8880-4c41-8d77-4258f0a10cae": {
+   "w": "chest of drawers たんす",
+   "skip": true
+  },
+  "d01ba426-c7c0-46db-9fe0-3d53458fe16d": {
+   "w": "diaper おむつ",
+   "skip": true
+  },
+  "56bd7c6e-6b91-419c-939d-88c2546955ad": {
+   "w": "eggplant なす",
+   "skip": true
+  },
+  "aaea44bb-01ab-4990-b9c6-c74c4002be94": {
+   "w": "feast ごちそう、祝宴",
+   "skip": true
+  },
+  "600ee630-9e0b-4ba6-8a12-6fca7d024bb5": {
+   "w": "garlic にんにく",
+   "skip": true
+  },
+  "4a5a343a-74ac-40ea-bde5-ea2389341958": {
+   "w": "grape ぶどう",
+   "skip": true
+  },
+  "21bc1816-b33f-4ed0-9417-acdc59174e43": {
+   "w": "greeting あいさつ",
+   "skip": true
+  },
+  "3b5d6f57-c09e-4025-8599-15a1c90cd2ff": {
+   "w": "guy 男の人、やつ",
+   "skip": true
+  },
+  "04cd19ff-e605-4e2c-8c33-228b4b00771a": {
+   "w": "honey はちみつ",
+   "skip": true
+  },
+  "95e6771c-7b68-411b-86f8-48316d709da5": {
+   "w": "are ～です、いる、ある",
+   "skip": true
+  },
+  "9ac90e24-9b94-4e8e-afaf-67c0d91613f0": {
+   "w": "does （疑問文・否定文をつくる）",
+   "skip": true
+  },
+  "17e2b340-6d8b-4302-adee-0856dd1f4c7a": {
+   "w": "has 持っている、飼っている（have の形）",
+   "skip": true
+  },
+  "763952c8-1a76-4c66-b743-e042dd455999": {
+   "w": "babysit 子守をする",
+   "past": "babysat",
+   "pp": "babysat",
+   "ing": "babysitting"
+  },
+  "b23fbf03-d463-4422-9456-572bedf9a579": {
+   "w": "fit （大きさ・形が）合う",
+   "past": "fit",
+   "pp": "fit"
+  },
+  "b4053d60-0c84-4d47-8d0f-970f91e46bef": {
+   "w": "lip くちびる",
+   "skip": true
+  },
+  "46a1561b-62d2-4443-ab02-327dd493371b": {
+   "w": "luxury ぜいたく、高級",
+   "skip": true
+  },
+  "adfb1d6d-a7c8-4d6b-bb41-0ed42c897b6a": {
+   "w": "monkey さる",
+   "skip": true
+  },
+  "8e0656de-9f6a-4d36-86d2-7c6fb7d4dbc3": {
+   "w": "pencil えんぴつ",
+   "skip": true
+  },
+  "12b5dde8-c390-432c-be3d-9d8ff14736d7": {
+   "w": "piece 1つ、1枚、かけら",
+   "skip": true
+  },
+  "df66f781-63ff-44ba-b305-3103c857042c": {
+   "w": "shoes くつ",
+   "skip": true
+  },
+  "81676e17-9314-45cc-9821-e770b73b4aba": {
+   "w": "snack 軽食、おやつ",
+   "skip": true
+  },
+  "7436c380-3973-43a8-a898-0f6f89834b10": {
+   "w": "sumo すもう",
+   "skip": true
+  },
+  "085eede1-8b7c-48be-a301-3d8f136bc5ab": {
+   "w": "temper 気性、かんしゃく",
+   "skip": true
+  },
+  "f8aa4fb5-4b73-443a-85e0-5d54b942e6b5": {
+   "w": "thief どろぼう",
+   "skip": true
+  },
+  "f3a2bd79-dbe6-4d79-a8cd-a0e2113a1b56": {
+   "w": "wardrobe 洋服だんす、持っている衣服",
+   "skip": true
+  },
+  "beb1a644-a82e-4b2a-bfbe-62794b3b81af": {
+   "w": "wax ろう、ワックス",
+   "skip": true
+  },
+  "073f8b2e-9013-40e0-9121-0c22750f2c26": {
+   "w": "wheelchair 車いす",
+   "skip": true
+  },
+  "91f3e303-44b5-4817-be72-a0c6cd44ba52": {
+   "w": "lie うそをつく；うそ",
+   "past": "lied",
+   "pp": "lied",
+   "ing": "lying",
+   "third": "lies"
+  },
+  "f6737cf3-f7c4-409c-8b92-c2b0a7ad8202": {
+   "w": "quit やめる",
+   "past": "quit",
+   "pp": "quit",
+   "ing": "quitting",
+   "third": "quits"
+  },
+  "c769012f-2b9d-48a3-9ee6-4108a23e0d28": {
+   "w": "rid （get rid of で）～を取り除く",
+   "past": "rid",
+   "pp": "rid",
+   "ing": "ridding",
+   "third": "rids"
+  },
+  "4206c668-9604-40f3-ab1b-a2f610bd0477": {
+   "w": "undo 元に戻す、ほどく",
+   "past": "undid",
+   "pp": "undone",
+   "ing": "undoing",
+   "third": "undoes"
+  }
+ }
 }
