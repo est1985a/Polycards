@@ -1,0 +1,339 @@
+{
+ "nouns": {
+  "4a763e5b-495a-4707-9bf9-d483dd156319": {
+   "w": "abundance 豊富さ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e626759a-0f22-4023-a2f7-d91b36a62fd3": {
+   "w": "acceptance 受け入れ、受諾",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "9e2f49c3-3315-46cb-8826-bcf276395fd1": {
+   "w": "access 利用、接近",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a834658f-c321-461b-8dc9-69c68517a707": {
+   "w": "accuracy 正確さ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "af1ecead-1e5f-4a4d-8cd4-7444521563a5": {
+   "w": "action 行動",
+   "countable": "both"
+  },
+  "0f07726e-dfa1-4b99-85af-f52dd0d782bf": {
+   "w": "addition 追加、付け加えること",
+   "countable": "both"
+  },
+  "504f9b4f-9418-4ff7-9893-811bb4529f44": {
+   "w": "administration 管理、行政",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "8495b02c-e9f5-4b38-b6e8-c229c5b5f4d5": {
+   "w": "admiration 称賛、感嘆",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c763fafc-0172-4e86-a7d3-511e15c2c457": {
+   "w": "admission 入場、入学",
+   "countable": "both"
+  },
+  "38cde472-ffe9-445d-9cd3-783c8deadeb2": {
+   "w": "advice 助言、アドバイス",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f7e59d0e-2357-490d-93d4-2dd0e77ba93b": {
+   "w": "aerobics エアロビクス",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b47948f8-017f-44f4-9d84-f3543727cc66": {
+   "w": "affection 愛情",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "9b401419-43bd-4c40-881e-1b5594d6b38c": {
+   "w": "after school 放課後",
+   "countable": null,
+   "plural": null
+  },
+  "ea73538a-8755-4786-b241-7b23334f8dd7": {
+   "w": "agriculture 農業",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "77237bc6-3497-4b22-aa7b-e5708d761683": {
+   "w": "aid 援助、助け",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "83586c0b-e0a7-4702-9079-23c928354539": {
+   "w": "air 空気",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b83229b5-e8f2-428f-b65c-ce92c381cef9": {
+   "w": "air conditioning エアコン、冷暖房",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "09e80870-bb0e-47d8-8cd6-c424b6620127": {
+   "w": "alcohol アルコール、酒",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "2e32c4ad-ec3a-4751-aafc-fe14143c4d2d": {
+   "w": "ambition 野心、大きな夢",
+   "countable": "both"
+  },
+  "c89a8e2a-3186-4e17-912f-daf40a6201fc": {
+   "w": "anger 怒り",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "8b06ec9f-d52a-4243-9485-2797e552bb7e": {
+   "w": "animation アニメーション、動画",
+   "countable": "both"
+  },
+  "62f21e06-1478-4a3f-9510-acd37b77d6b3": {
+   "w": "anime アニメ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "1d5d1a30-3a5d-496d-9cdf-a571c029e5ce": {
+   "w": "anxiety 不安、心配",
+   "countable": "both"
+  },
+  "0942869b-9831-4197-a3c7-03a67186e7dd": {
+   "w": "applause 拍手",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "afd8f045-c5ab-44a5-8d53-5911c371b1bc": {
+   "w": "appreciation 感謝、鑑賞",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d7ee0992-0e86-4b9e-86ef-569425706fb7": {
+   "w": "approval 承認、賛成",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "8796fb6e-64a9-44a5-b59c-7f2558871f05": {
+   "w": "architecture 建築、建築様式",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "6a2c24fe-40eb-492a-b204-377f14f46658": {
+   "w": "arithmetic 算数、計算",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "2de1ce58-edc5-468d-9340-49f03f19483b": {
+   "w": "art 美術、芸術",
+   "countable": "both"
+  },
+  "ed1acf77-073b-446a-8740-c6fbef00f578": {
+   "w": "arts and crafts 図画工作、図工",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "f212643b-6fc7-43ee-b83b-4dabe2933324": {
+   "w": "assistance 援助、手伝い",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a34be61e-78a6-4d8e-81ba-58e645068d62": {
+   "w": "attention 注意、注目",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "6842c0f9-4fce-4679-a8a6-a4adfe20b686": {
+   "w": "autumn 秋",
+   "countable": "both"
+  },
+  "7c92ab4d-9ac7-4a77-9388-5f298398de7f": {
+   "w": "awareness 意識、認識",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c74499ce-c756-4439-9d9d-06122e77a96c": {
+   "w": "backpacking バックパック旅行",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "177f2c29-e6c2-4e23-b1e8-647d38741c61": {
+   "w": "bacon ベーコン",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "1f855a97-0bbe-4341-b008-10f2dcf1f6cb": {
+   "w": "badminton バドミントン",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "3e2e8b30-c0c7-4ab6-8c2e-028faf23ed68": {
+   "w": "baggage 手荷物、荷物",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "03de9ca4-b0d2-4d01-a1cc-a84e43f53396": {
+   "w": "balance バランス、つり合い",
+   "countable": "both"
+  },
+  "055c325c-ddf3-4ada-b8e1-e26c9d9375a2": {
+   "w": "baseball 野球",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "8dd372f8-f528-4c53-978a-23832ed3d896": {
+   "w": "basketball バスケットボール",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "4122211e-9417-40d3-ba72-ef0688d078e4": {
+   "w": "beauty 美しさ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e41dc276-7529-46a2-bf60-746617ea36f0": {
+   "w": "beef 牛肉",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "25e627b2-78ea-40ff-8187-63ecd4469d12": {
+   "w": "beer ビール",
+   "countable": "both"
+  },
+  "59fc4913-e6b6-4c05-b5eb-fbd75b978255": {
+   "w": "behavior 行動、ふるまい",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c424f5d2-4b76-45ff-a906-2470c42d3936": {
+   "w": "biology 生物学",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d1f8f757-65cc-47d0-81e2-5b9338078e21": {
+   "w": "birth 誕生",
+   "countable": "both"
+  },
+  "9f6f14bc-f114-46d2-8893-e71dc74e5efc": {
+   "w": "blood 血",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "a1544d01-c9b2-4246-bb45-b55a7764e0a4": {
+   "w": "boredom 退屈",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "90e35d24-e9fb-4a8f-8482-b4cf4c7b20e8": {
+   "w": "boxing ボクシング",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "297558f0-73be-462f-8df7-2acedfc522c3": {
+   "w": "brainstorming ブレインストーミング、アイデア出し",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c32dc96d-7865-4b2e-ab52-4f75c7fb29dd": {
+   "w": "brass 真ちゅう、金管楽器",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "33cfe617-e189-4776-a9c4-4504dde5381b": {
+   "w": "bread パン",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "4c4e5077-6df7-41cc-82bb-9e03f8bed10b": {
+   "w": "breakfast 朝食、朝ごはん",
+   "countable": "both"
+  },
+  "65054b08-c426-41ce-8ca3-f1eee0356855": {
+   "w": "breath 息、呼吸",
+   "countable": "both"
+  },
+  "64874b03-88f5-4583-aba9-027c1450da82": {
+   "w": "broccoli ブロッコリー",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "c4a15854-cbcb-4720-8027-6e89056ee491": {
+   "w": "bronze 銅、ブロンズ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "b926601f-b9d8-478b-9882-2cd7cfa890d7": {
+   "w": "business 仕事、商売",
+   "countable": "both"
+  },
+  "11308d51-327e-42da-a1bb-6be62ba50fcd": {
+   "w": "butter バター",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "e132f348-7022-451b-94f8-bd657f0df052": {
+   "w": "calligraphy 書写、書道",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "7985f28b-5d47-48e7-8605-6f3d6378602b": {
+   "w": "camping キャンプ",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "d8bbe374-c2fe-4f22-b8b1-2dccd21eda84": {
+   "w": "cancer がん",
+   "countable": "both"
+  },
+  "585792b7-227d-4899-bcf6-e7a9a621ee74": {
+   "w": "carbon dioxide 二酸化炭素",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "4b1a3b60-11a3-4a92-bcf3-5e389da6b8d5": {
+   "w": "cash 現金",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "94b9dc03-af0a-4d24-ad02-fe703a95a62c": {
+   "w": "castanets カスタネット",
+   "countable": "plural",
+   "plural": null
+  },
+  "e2ef0a82-51aa-41d0-8cb7-d6d4a6adef4e": {
+   "w": "cattle 牛（集合的に）",
+   "countable": "plural",
+   "plural": null
+  },
+  "b6614ebd-a308-4d42-9ced-057f96693940": {
+   "w": "caution 用心、注意",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "02fe8c12-152a-40b3-b8c0-37ab864af9cc": {
+   "w": "central heating セントラルヒーティング",
+   "countable": "uncountable",
+   "plural": null
+  },
+  "99bfd624-4e12-4130-bdf9-24f8d8fa02dd": {
+   "w": "cereal シリアル",
+   "countable": "both"
+  },
+  "c27f8fae-201a-4ca2-b8e3-3aa2a089a9c8": {
+   "w": "care 世話、注意",
+   "countable": "uncountable",
+   "plural": null
+  }
+ },
+ "verbs": {}
+}
