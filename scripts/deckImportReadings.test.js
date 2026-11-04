@@ -80,7 +80,7 @@ describe('import tool: readings', () => {
   it('the example data checks without errors', () => {
     const r = tool.analyze(tool.TEMPLATE, null);
     expect(bySev(r, 'error')).toHaveLength(0);
-    expect(r.stats.withReading).toBe(6); // 5 typed + "...の1つ" from its own meaning
+    expect(r.stats.withReading).toBe(9); // 8 typed + "...の1つ" from its own meaning
   });
 
   it('uses an all-hiragana meaning as its own reading', () => {

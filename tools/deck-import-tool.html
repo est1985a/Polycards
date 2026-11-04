@@ -46,8 +46,9 @@
   <div class="card">
     <h2>1. Your word list</h2>
     <p class="muted" style="margin-top:0">Paste CSV text, or copy the cells straight from Google Sheets (including the header row). Columns:
-      <code>school_level, textbook, unit_order, unit, deck, collection, english, japanese, reading, alt_answers, example_en, example_ja, pos, speak_as, source, note</code>.
+      <code>school_level, textbook, unit_order, unit, deck, collection, english, japanese, reading, alt_answers, example_en, example_ja, pos, speak_as, countable, plural, verb_past, verb_pp, verb_ing, verb_third, source, note</code>.
       Only <code>english</code>, <code>japanese</code> and <code>deck</code> are always required. <code>reading</code> is the Japanese meaning written in hiragana, for kana search (for example <code>かりる</code> for 借りる): the same text with kanji and katakana in hiragana, punctuation kept. Every new word should have one. Katakana is saved as hiragana, and a word that already has a reading in the library keeps it. <code>alt_answers</code> is optional: other English answers that typing and handwriting mode should also accept, separated by <code>;</code> (for example <code>cute; beautiful</code>). Alternates are only ever added to a word, never removed. <code>example_en</code> and <code>example_ja</code> are an optional example sentence and its Japanese translation (give both or neither). <code>pos</code> is the optional part of speech: <code>noun, verb, adjective, adverb, preposition, pronoun, conjunction, auxiliary</code> (or <code>auxiliary verb</code>)<code>, article, interjection, number, phrase</code>, or the Japanese 名詞 動詞 形容詞 副詞 前置詞 代名詞 接続詞 助動詞 冠詞 間投詞 数詞 表現. A word that already has a part of speech in the library keeps it. <code>speak_as</code> is optional: what the recorded pronunciation should say instead of the English, for words spelled the same but said differently (for example <code>red</code> for read 読んだ). It is only filled in for words that don't have one yet. <code>source</code> and <code>note</code> are ignored.</p>
+    <p class="muted">Word details for the dictionary (all optional): <code>countable</code> for nouns is <code>countable, uncountable, both, plural</code> (always plural, like jeans), or the Japanese 数えられる 数えられない 両方 (or 数えられる・数えられない) 常に複数形; leave it blank for proper nouns like Japan. <code>plural</code> is the plural form (dogs, children) for countable / both nouns. <code>verb_past, verb_pp, verb_ing, verb_third</code> are a verb's four forms (went, gone, going, goes). They are only filled in where the word has none yet, never overwritten. For a new word with blank forms the tool suggests some in the Words list; they only go into the SQL if you press "Use suggestions". Details can also be left blank and filled in later with <code>node scripts/wordDetails.mjs nouns missing</code> and <code>node scripts/wordDetails.mjs verbs missing</code>.</p>
     <textarea id="input" rows="10" placeholder="Paste here..."></textarea>
     <div class="row">
       <input type="file" id="file" accept=".csv,.tsv,.txt,text/csv,text/plain">
@@ -103,7 +104,26 @@ const SUPABASE_KEY = 'sb_publishable_vR1WnHVHYOGklkoHAVPzvg_upyke-kS';
 
 const LEVELS = { jhs: 'JHS', hs: 'HS', other: 'Other' };
 const REQUIRED = ['english', 'japanese', 'deck'];
-const KNOWN = ['school_level', 'textbook', 'unit_order', 'unit', 'deck', 'collection', 'english', 'japanese', 'reading', 'alt_answers', 'example_en', 'example_ja', 'pos', 'speak_as', 'source', 'note'];
+const KNOWN = ['school_level', 'textbook', 'unit_order', 'unit', 'deck', 'collection', 'english', 'japanese', 'reading', 'alt_answers', 'example_en', 'example_ja', 'pos', 'speak_as', 'countable', 'plural', 'verb_past', 'verb_pp', 'verb_ing', 'verb_third', 'source', 'note'];
+// Word details for the dictionary (supabase/polycards-word-details.sql). countable: the keys allowed by
+// words_countable_check, and the Japanese labels the app shows (数えられる・数えられない = both).
+const COUNTABLE_KEYS = ['countable', 'uncountable', 'both', 'plural'];
+const COUNTABLE_ALIASES = { '数えられる': 'countable', '数えられない': 'uncountable', '両方': 'both', '数えられる・数えられない': 'both', '常に複数形': 'plural' };
+// A countable cell -> a key, '' for blank, or null when it is not one of them.
+function countableKey(raw) {
+  const v = clean(raw).toLowerCase();
+  if (!v) return '';
+  if (COUNTABLE_KEYS.indexOf(v) !== -1) return v;
+  return COUNTABLE_ALIASES[v] || null;
+}
+// The detail fields of a word (file column -> database column), in display order.
+const DETAILS = [
+  { key: 'countable', col: 'countable' }, { key: 'plural', col: 'plural' },
+  { key: 'past', col: 'verb_past' }, { key: 'pp', col: 'verb_pp' }, { key: 'ing', col: 'verb_ing' }, { key: 'third', col: 'verb_third' },
+];
+const FORM_KEYS = ['plural', 'past', 'pp', 'ing', 'third'];
+const VERB_KEYS = ['past', 'pp', 'ing', 'third'];
+const MAX_FORM = 80;
 // Parts of speech: the keys allowed by the CHECK constraint on words.pos (supabase/polycards-pos.sql),
 // and the other ways a file may write them (the app's Japanese labels, "auxiliary verb").
 const POS_KEYS = ['noun', 'verb', 'adjective', 'adverb', 'preposition', 'pronoun', 'conjunction', 'auxiliary', 'article', 'interjection', 'number', 'phrase'];
@@ -211,6 +231,151 @@ function readingFits(reading, japanese) {
     from = at + run.length;
   }
   return true;
+}
+
+// ---- Suggested word forms ---------------------------------------------------
+// KEEP IN SYNC with scripts/wordForms.js (a copy, because this page is opened as a plain file and
+// can't import it; scripts/deckImportDetails.test.js checks the two give the same answers).
+// formBase() is a copy of the one in scripts/wordDetailsPlan.js.
+const IRREGULAR_PLURALS = {
+  child: 'children', man: 'men', woman: 'women', person: 'people', foot: 'feet', tooth: 'teeth',
+  mouse: 'mice', goose: 'geese', ox: 'oxen', sheep: 'sheep', fish: 'fish', deer: 'deer',
+  series: 'series', species: 'species', aircraft: 'aircraft', salmon: 'salmon', means: 'means',
+  life: 'lives', wife: 'wives', knife: 'knives', leaf: 'leaves', half: 'halves', wolf: 'wolves',
+  shelf: 'shelves', thief: 'thieves', loaf: 'loaves', calf: 'calves', self: 'selves', elf: 'elves',
+  potato: 'potatoes', tomato: 'tomatoes', hero: 'heroes', echo: 'echoes', volcano: 'volcanoes',
+  mosquito: 'mosquitoes', torpedo: 'torpedoes', veto: 'vetoes', tornado: 'tornadoes', scarf: 'scarves', hoof: 'hooves', wharf: 'wharves',
+  crisis: 'crises', analysis: 'analyses', basis: 'bases', thesis: 'theses', hypothesis: 'hypotheses',
+  diagnosis: 'diagnoses', oasis: 'oases', axis: 'axes',
+  phenomenon: 'phenomena', criterion: 'criteria', medium: 'media', datum: 'data', bacterium: 'bacteria',
+  cactus: 'cacti', fungus: 'fungi', nucleus: 'nuclei', stimulus: 'stimuli', syllabus: 'syllabuses',
+  index: 'indexes', appendix: 'appendixes', matrix: 'matrices', vertex: 'vertices',
+  passerby: 'passersby', 'passer-by': 'passers-by',
+};
+const ES_ENDING = /(s|x|z|ch|sh)$/;
+function pluralWord(word) {
+  const lower = word.toLowerCase();
+  if (IRREGULAR_PLURALS[lower]) return matchCase(word, IRREGULAR_PLURALS[lower]);
+  const end = Object.keys(IRREGULAR_PLURALS).find((key) => key.length >= 4 && lower.endsWith(key));
+  if (end) return word.slice(0, -end.length) + IRREGULAR_PLURALS[end];
+  if (/(man|woman)$/.test(lower) && !/(human|german|roman|shaman)$/.test(lower)) return word.replace(/man$/i, 'men');
+  if (/[^aeiou]y$/.test(lower)) return word.slice(0, -1) + 'ies';
+  if (ES_ENDING.test(lower)) return word + 'es';
+  return word + 's';
+}
+function matchCase(original, form) {
+  return /^[A-Z]/.test(original) ? form[0].toUpperCase() + form.slice(1) : form;
+}
+function pluralOf(noun) {
+  const text = (noun || '').trim();
+  if (!text) return null;
+  const of = text.match(/^(\S+)( (of|in|on|to) .+)$/);
+  if (of) return pluralWord(of[1]) + of[2];
+  const inLaw = text.match(/^([a-z]+)(-in-law)$/i);
+  if (inLaw) return pluralWord(inLaw[1]) + inLaw[2];
+  const parts = text.split(' ');
+  parts[parts.length - 1] = pluralWord(parts[parts.length - 1]);
+  return parts.join(' ');
+}
+const IRREGULAR_VERBS = {
+  be: ['was / were', 'been'], have: ['had', 'had'], do: ['did', 'done'], go: ['went', 'gone'],
+  arise: ['arose', 'arisen'], awake: ['awoke', 'awoken'], bear: ['bore', 'born'], beat: ['beat', 'beaten'],
+  become: ['became', 'become'], begin: ['began', 'begun'], bend: ['bent', 'bent'], bet: ['bet', 'bet'],
+  bind: ['bound', 'bound'], bite: ['bit', 'bitten'], bleed: ['bled', 'bled'], blow: ['blew', 'blown'],
+  break: ['broke', 'broken'], breed: ['bred', 'bred'], bring: ['brought', 'brought'],
+  broadcast: ['broadcast', 'broadcast'], build: ['built', 'built'], burn: ['burned', 'burned'],
+  burst: ['burst', 'burst'], buy: ['bought', 'bought'], cast: ['cast', 'cast'], catch: ['caught', 'caught'],
+  choose: ['chose', 'chosen'], cling: ['clung', 'clung'], come: ['came', 'come'], cost: ['cost', 'cost'],
+  creep: ['crept', 'crept'], cut: ['cut', 'cut'], deal: ['dealt', 'dealt'], dig: ['dug', 'dug'],
+  draw: ['drew', 'drawn'], dream: ['dreamed', 'dreamed'], drink: ['drank', 'drunk'], drive: ['drove', 'driven'],
+  eat: ['ate', 'eaten'], fall: ['fell', 'fallen'], feed: ['fed', 'fed'], feel: ['felt', 'felt'],
+  fight: ['fought', 'fought'], find: ['found', 'found'], flee: ['fled', 'fled'], fly: ['flew', 'flown'],
+  forbid: ['forbade', 'forbidden'], forecast: ['forecast', 'forecast'], forget: ['forgot', 'forgotten'],
+  forgive: ['forgave', 'forgiven'], freeze: ['froze', 'frozen'], get: ['got', 'gotten'], give: ['gave', 'given'],
+  grind: ['ground', 'ground'], grow: ['grew', 'grown'], hang: ['hung', 'hung'], hear: ['heard', 'heard'],
+  hide: ['hid', 'hidden'], hit: ['hit', 'hit'], hold: ['held', 'held'], hurt: ['hurt', 'hurt'],
+  keep: ['kept', 'kept'], kneel: ['knelt', 'knelt'], know: ['knew', 'known'], lay: ['laid', 'laid'],
+  lead: ['led', 'led'], lean: ['leaned', 'leaned'], leap: ['leaped', 'leaped'], learn: ['learned', 'learned'],
+  leave: ['left', 'left'], lend: ['lent', 'lent'], let: ['let', 'let'], lie: ['lay', 'lain'],
+  light: ['lit', 'lit'], lose: ['lost', 'lost'], make: ['made', 'made'], mean: ['meant', 'meant'],
+  meet: ['met', 'met'], mislead: ['misled', 'misled'], mistake: ['mistook', 'mistaken'],
+  misunderstand: ['misunderstood', 'misunderstood'], overcome: ['overcame', 'overcome'],
+  overhear: ['overheard', 'overheard'], oversleep: ['overslept', 'overslept'], overtake: ['overtook', 'overtaken'],
+  pay: ['paid', 'paid'], prove: ['proved', 'proven'], put: ['put', 'put'], quit: ['quit', 'quit'],
+  read: ['read', 'read'], rebuild: ['rebuilt', 'rebuilt'], ride: ['rode', 'ridden'], ring: ['rang', 'rung'],
+  rise: ['rose', 'risen'], run: ['ran', 'run'], say: ['said', 'said'], see: ['saw', 'seen'],
+  seek: ['sought', 'sought'], sell: ['sold', 'sold'], send: ['sent', 'sent'], set: ['set', 'set'],
+  sew: ['sewed', 'sewn'], shake: ['shook', 'shaken'], shed: ['shed', 'shed'], shine: ['shone', 'shone'],
+  shoot: ['shot', 'shot'], show: ['showed', 'shown'], shrink: ['shrank', 'shrunk'], shut: ['shut', 'shut'],
+  sing: ['sang', 'sung'], sink: ['sank', 'sunk'], sit: ['sat', 'sat'], sleep: ['slept', 'slept'],
+  slide: ['slid', 'slid'], sow: ['sowed', 'sown'], speak: ['spoke', 'spoken'], speed: ['sped', 'sped'],
+  spend: ['spent', 'spent'], spin: ['spun', 'spun'], spit: ['spat', 'spat'], split: ['split', 'split'],
+  spread: ['spread', 'spread'], spring: ['sprang', 'sprung'], stand: ['stood', 'stood'], steal: ['stole', 'stolen'],
+  stick: ['stuck', 'stuck'], sting: ['stung', 'stung'], stink: ['stank', 'stunk'], strike: ['struck', 'struck'],
+  string: ['strung', 'strung'], strive: ['strove', 'striven'], swear: ['swore', 'sworn'], sweep: ['swept', 'swept'],
+  swell: ['swelled', 'swollen'], swim: ['swam', 'swum'], swing: ['swung', 'swung'], take: ['took', 'taken'],
+  teach: ['taught', 'taught'], tear: ['tore', 'torn'], tell: ['told', 'told'], think: ['thought', 'thought'],
+  throw: ['threw', 'thrown'], undergo: ['underwent', 'undergone'], understand: ['understood', 'understood'],
+  undertake: ['undertook', 'undertaken'], upset: ['upset', 'upset'], wake: ['woke', 'woken'],
+  wear: ['wore', 'worn'], weave: ['wove', 'woven'], weep: ['wept', 'wept'], win: ['won', 'won'],
+  wind: ['wound', 'wound'], withdraw: ['withdrew', 'withdrawn'], wring: ['wrung', 'wrung'], write: ['wrote', 'written'],
+  panic: ['panicked', 'panicked'], picnic: ['picnicked', 'picnicked'], mimic: ['mimicked', 'mimicked'],
+};
+const DOUBLE_STRESSED = new Set([
+  'admit', 'begin', 'commit', 'compel', 'concur', 'confer', 'control', 'deter', 'equip', 'excel', 'expel',
+  'forget', 'forbid', 'incur', 'occur', 'omit', 'patrol', 'permit', 'prefer', 'propel', 'rebel', 'recur',
+  'refer', 'regret', 'repel', 'submit', 'transfer', 'transmit', 'upset', 'acquit', 'abet', 'abhor',
+]);
+const NEVER_DOUBLE = /[wxy]$/;
+function doubles(verb) {
+  if (DOUBLE_STRESSED.has(verb)) return true;
+  if (NEVER_DOUBLE.test(verb)) return false;
+  const vowelGroups = verb.match(/[aeiou]+/g) || [];
+  if (vowelGroups.length !== 1) return false;
+  return /[^aeiou][aeiou][^aeiou]$/.test(verb);
+}
+function ingForm(verb) {
+  if (/ie$/.test(verb)) return verb.slice(0, -2) + 'ying';
+  if (/(ee|ye|oe)$/.test(verb) || verb === 'be') return verb + 'ing';
+  if (/[^aeiou]e$/.test(verb) || /ue$/.test(verb)) return verb.slice(0, -1) + 'ing';
+  if (/c$/.test(verb) && IRREGULAR_VERBS[verb]) return verb + 'king';
+  if (doubles(verb)) return verb + verb.slice(-1) + 'ing';
+  return verb + 'ing';
+}
+function edForm(verb) {
+  if (/e$/.test(verb)) return verb + 'd';
+  if (/[^aeiou]y$/.test(verb)) return verb.slice(0, -1) + 'ied';
+  if (doubles(verb)) return verb + verb.slice(-1) + 'ed';
+  return verb + 'ed';
+}
+function thirdForm(verb) {
+  if (verb === 'have') return 'has';
+  if (verb === 'be') return 'is';
+  if (verb === 'do' || verb === 'go') return verb + 'es';
+  if (/[^aeiou]y$/.test(verb)) return verb.slice(0, -1) + 'ies';
+  if (ES_ENDING.test(verb)) return verb + 'es';
+  return verb + 's';
+}
+function verbForms(verb) {
+  const text = (verb || '').trim().toLowerCase();
+  if (!text) return null;
+  const [head, ...rest] = text.split(' ');
+  const tail = rest.length ? ' ' + rest.join(' ') : '';
+  let pair = IRREGULAR_VERBS[head];
+  if (!pair) {
+    const prefix = head.match(/^(re|un|mis|over|under|out|with|for|fore)(.+)$/);
+    const root = prefix && IRREGULAR_VERBS[prefix[2]];
+    if (root && prefix[2].length >= 3) pair = root.map((f) => f.split(' / ').map((x) => prefix[1] + x).join(' / '));
+  }
+  const past = pair ? pair[0] : edForm(head);
+  const pp = pair ? pair[1] : edForm(head);
+  return { past: past + tail, pp: pp + tail, ing: ingForm(head) + tail, third: thirdForm(head) + tail };
+}
+// A past-form card (「Xの過去形」「Xの過去分詞」) gets no suggested verb forms (same rule as scripts/wordDetailsPlan.js).
+const PAST_FORM = /[A-Za-z][A-Za-z' ・]*?の過去(?:形|分詞)/;
+function isPastForm(japanese) { return PAST_FORM.test(String(japanese || '').normalize('NFKC')); }
+function formBase(english) {
+  return (english || '').replace(/\([^)]*\)/g, ' ').replace(/[~～]|\.{2,}|…/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 // ---- CSV / TSV parsing ----------------------------------------------------
@@ -332,12 +497,16 @@ async function loadDb() {
   // reading (supabase/polycards-word-readings.sql) the same way.
   let readingRows = null;
   try { readingRows = await fetchAll('words?select=english,japanese,reading&order=id'); } catch (e) { readingRows = null; }
-  return { words, textbooks, units, decks, collections, exampleCols, altCols, posCol, speakCol: !!speakRows, speakRows: speakRows || [], readingCol: !!readingRows, readingRows: readingRows || [] };
+  // the word details (supabase/polycards-word-details.sql) the same way.
+  let detailRows = null;
+  try { detailRows = await fetchAll('words?select=english,japanese,' + DETAILS.map(f => f.col).join(',') + '&order=id'); } catch (e) { detailRows = null; }
+  return { words, textbooks, units, decks, collections, exampleCols, altCols, posCol, speakCol: !!speakRows, speakRows: speakRows || [], readingCol: !!readingRows, readingRows: readingRows || [], detailsCol: !!detailRows, detailRows: detailRows || [] };
 }
 
 // ---- The main analysis ----------------------------------------------------
-function analyze(text, db) {
-  const res = { fatal: null, issues: [], decks: [], stats: {}, sql: '', checkSql: '' };
+function analyze(text, db, opts) {
+  const useSuggestions = !!(opts && opts.useSuggestions);
+  const res = { fatal: null, issues: [], decks: [], stats: {}, sql: '', checkSql: '', useSuggestions };
   const issues = res.issues;
   const add = (sev, row, msg, rec) => issues.push({
     sev, row, msg,
@@ -375,6 +544,8 @@ function analyze(text, db) {
       posRaw: o.pos || '',
       speakAs: o.speak_as || '',
       reading: hiraganaReading(o.reading || ''),
+      countableRaw: o.countable || '',
+      plural: o.plural || '', past: o.verb_past || '', pp: o.verb_pp || '', ing: o.verb_ing || '', third: o.verb_third || '',
     };
     let bad = false;
     const err = m => { add('error', rec.row, m, rec); bad = true; };
@@ -401,6 +572,13 @@ function analyze(text, db) {
     // an all-hiragana meaning (ほほえむ) is its own reading; not when the database has no reading column
     if (!rec.reading && autoReading && rec.japanese && !KANJI_OR_KATAKANA.test(rec.japanese)) { rec.reading = hiraganaReading(rec.japanese); rec.readingAuto = true; }
     if (rec.pos === null) err('pos "' + rec.posRaw + '" is not a part of speech. Use one of: ' + POS_KEYS.join(', ') + ' (or the Japanese 名詞, 動詞 …), or leave it blank.');
+    rec.countable = countableKey(rec.countableRaw);
+    if (rec.countable === null) err('countable "' + rec.countableRaw + '" is not allowed. Use one of: ' + COUNTABLE_KEYS.join(', ') + ' (or 数えられる, 数えられない, 両方 / 数えられる・数えられない, 常に複数形), or leave it blank.');
+    for (const f of FORM_KEYS) {
+      const col = DETAILS.find(d => d.key === f).col;
+      if (/[぀-ヿ㐀-鿿]/.test(rec[f])) err(col + ' contains Japanese. It is an English word form, e.g. ' + (f === 'plural' ? 'dogs' : 'went') + '.');
+      if (rec[f].length > MAX_FORM) err(col + ' is longer than ' + MAX_FORM + ' characters.');
+    }
 
     rec.path = rec.collectionRaw ? rec.collectionRaw.split('>').map(clean) : [];
     if (rec.path.some(p => !p)) err('The collection path has an empty part: "' + rec.collectionRaw + '". Use the form Parent > Child.');
@@ -507,6 +685,19 @@ function analyze(text, db) {
     const k = r.english.toLowerCase() + SEP + r.japanese;
     if (r.readingAuto && !readingByWord.has(k)) readingByWord.set(k, { reading: r.reading, row: r.row, auto: true });
   }
+  // word details: word key -> { countable, plural, past, … } merged from every row (blank cells don't count)
+  const detailsByWord = new Map();
+  for (const r of recs) {
+    const k = r.english.toLowerCase() + SEP + r.japanese;
+    if (!detailsByWord.has(k)) detailsByWord.set(k, {});
+    const got = detailsByWord.get(k);
+    for (const { key, col } of DETAILS) {
+      const v = r[key];
+      if (!v) continue;
+      if (!got[key]) got[key] = { v, row: r.row };
+      else if (got[key].v !== v) add('error', r.row, 'This word has ' + col + ' "' + v + '" here but "' + got[key].v + '" on row ' + got[key].row + '. Use the same one on both rows.', r);
+    }
+  }
   for (const r of recs) {
     const key = r.isUnit ? 'U' + SEP + r.textbook + SEP + r.unit + SEP + r.deck : 'C' + SEP + r.path.join(SEP) + SEP + r.deck;
     let d = deckMap.get(key);
@@ -526,7 +717,10 @@ function analyze(text, db) {
     const ps = posByWord.get(wk);
     const sp = speakByWord.get(wk);
     const rd = readingByWord.get(wk);
-    d.words.push({ english: r.english, japanese: r.japanese, row: r.row, deck: r.deck, exEn: ex ? ex.en : '', exJa: ex ? ex.ja : '', alts: altByWord.get(wk) || [], pos: ps ? ps.pos : '', speakAs: sp ? sp.speakAs : '', reading: rd ? rd.reading : '', readingAuto: rd ? rd.auto : false });
+    const dt = detailsByWord.get(wk);
+    const details = {};
+    for (const { key } of DETAILS) details[key] = dt[key] ? dt[key].v : '';
+    d.words.push({ english: r.english, japanese: r.japanese, row: r.row, deck: r.deck, exEn: ex ? ex.en : '', exJa: ex ? ex.ja : '', alts: altByWord.get(wk) || [], pos: ps ? ps.pos : '', speakAs: sp ? sp.speakAs : '', reading: rd ? rd.reading : '', readingAuto: rd ? rd.auto : false, ...details, suggested: {} });
   }
   res.decks = [...deckMap.values()];
   // look-alike deck names, only compared inside the same unit (or the same collection)
@@ -548,6 +742,15 @@ function analyze(text, db) {
   const firstReadingRec = recs.find(r => r.reading);
   if (firstReadingRec && db && !db.readingCol) add('error', firstReadingRec.row, 'Your file has readings, but the database does not have the words.reading column yet. Run supabase/polycards-word-readings.sql first, then press "Refresh database info" and check again.');
   if (firstReadingRec && !db) add('info', firstReadingRec.row, 'I could not read the database, so I cannot tell whether the words.reading column exists yet. If it does not, the SQL will stop with an error and change nothing.');
+  const firstDetailRec = recs.find(r => DETAILS.some(f => r[f.key]));
+  if (firstDetailRec && db && !db.detailsCol) add('error', firstDetailRec.row, 'Your file has word details (countable, plural, verb forms), but the database does not have those columns yet. Run supabase/polycards-word-details.sql first, then press "Refresh database info" and check again.');
+  if (firstDetailRec && !db) add('info', firstDetailRec.row, 'I could not read the database, so I cannot tell whether the word-detail columns exist yet. If they do not, the SQL will stop with an error and change nothing.');
+  const dbDetails = new Map();   // word key -> { countable, plural, past, … } ('' = empty)
+  if (db) for (const w of (db.detailRows || [])) {
+    const o = {};
+    for (const { key, col } of DETAILS) o[key] = clean(w[col]);
+    dbDetails.set(clean(w.english).toLowerCase() + SEP + clean(w.japanese), o);
+  }
   const firstExRec = recs.find(r => r.exEn);
   if (firstExRec && db && !db.exampleCols) add('error', firstExRec.row, 'Your file has example sentences, but the database does not have the example_en and example_ja columns yet. Run the "add example columns" SQL first, then press "Refresh database info" and check again.');
   if (firstExRec && !db) add('info', firstExRec.row, 'I could not read the database, so I cannot tell whether the example sentence columns exist yet. If they do not, the SQL will stop with an error and change nothing.');
@@ -654,14 +857,17 @@ function analyze(text, db) {
   const uniquePairs = new Set(); let newPairs = 0, reusedPairs = 0;
   const exampleWords = new Set(), altWords = new Set();
   const wordRows = new Map();    // word key -> one row of the Words preview
+  const suggestByWord = new Map(); // word key -> { plural | past | pp | ing | third: suggested form }
   for (const d of res.decks) {
     d.newWords = 0;
     d.withPos = 0;
+    d.withDetails = 0;
     for (const w of d.words) {
       const e = w.english.toLowerCase();
       const pk = e + SEP + w.japanese;
       const inDb = db ? dbWordKeys.has(pk) : false;
       if (w.pos) d.withPos++;
+      if (DETAILS.some(f => w[f.key])) d.withDetails++;
       if (!uniquePairs.has(pk)) {
         uniquePairs.add(pk); if (inDb) reusedPairs++; else newPairs++;
         // what happens to the part of speech (only ever added, never overwritten)
@@ -676,10 +882,50 @@ function analyze(text, db) {
           posAction = 'kept: database has ' + stored;
           add('warn', w.row, 'This word already has pos "' + stored + '" in the database, but your file says "' + w.pos + '". The existing one is kept (the SQL never overwrites a part of speech).', { deck: d.name, english: w.english, japanese: w.japanese });
         }
-        wordRows.set(pk, { english: w.english, japanese: w.japanese, decks: [d.name], pos: w.pos, posAction, inDb });
+        const wrec = { deck: d.name, english: w.english, japanese: w.japanese };
+        // word details (only ever filled in, never overwritten)
+        const storedDt = dbDetails.get(pk) || {};
+        const given = DETAILS.filter(f => w[f.key]);
+        const kept = [];
+        for (const { key, col } of given) {
+          if (storedDt[key] && storedDt[key] !== w[key]) {
+            kept.push(col);
+            add('warn', w.row, 'This word already has ' + col + ' "' + storedDt[key] + '" in the database, but your file says "' + w[key] + '". The existing one is kept (the SQL never overwrites word details).', wrec);
+          }
+        }
+        let detailsAction = '';
+        if (given.length) {
+          if (!db) detailsAction = 'not checked';
+          else if (!inDb) detailsAction = 'new word';
+          else if (kept.length) detailsAction = 'kept: database has ' + kept.join(', ');
+          else if (given.every(f => storedDt[f.key])) detailsAction = 'already set';
+          else detailsAction = 'will be set';
+        }
+        const effPos = w.pos || dbPos.get(pk) || '';
+        const effCountable = w.countable || storedDt.countable || '';
+        const posText = effPos ? 'pos is "' + effPos + '"' : 'it has no pos';
+        if (w.plural && (!effCountable || effCountable === 'uncountable')) add('warn', w.row, 'plural is filled in, but countable is ' + (effCountable ? '"uncountable"' : 'blank') + '. Only countable / both nouns have a plural.', wrec);
+        if (w.plural && effCountable === 'plural') add('warn', w.row, 'plural is filled in, but countable is "plural" (always plural, like jeans), so there is no separate plural form.', wrec);
+        if ((w.countable || w.plural) && effPos !== 'noun') add('warn', w.row, 'countable / plural are for nouns, but ' + posText + '.', wrec);
+        const verbGiven = VERB_KEYS.filter(k => w[k]);
+        if (verbGiven.length && effPos !== 'verb') add('warn', w.row, 'Verb forms are for verbs, but ' + posText + '.', wrec);
+        if (!inDb && effPos === 'noun' && !w.countable) add('warn', w.row, 'New noun with no countable.', wrec);
+        if (!inDb && effPos === 'verb' && verbGiven.length && verbGiven.length < 4) add('warn', w.row, 'New verb with only some of the four verb forms (' + VERB_KEYS.filter(k => !w[k]).map(k => DETAILS.find(f => f.key === k).col).join(', ') + ' missing).', wrec);
+        // suggested forms for a new word, where the file leaves them blank
+        const sug = {};
+        if (!inDb) {
+          const base = formBase(w.english);
+          if (effPos === 'noun' && (w.countable === 'countable' || w.countable === 'both') && !w.plural) sug.plural = pluralOf(base);
+          if (effPos === 'verb' && verbGiven.length < 4 && !isPastForm(w.japanese)) {
+            const forms = verbForms(base);
+            if (forms) for (const k of VERB_KEYS) if (!w[k]) sug[k] = forms[k];
+          }
+        }
+        for (const k of Object.keys(sug)) if (!sug[k]) delete sug[k];
+        if (Object.keys(sug).length) suggestByWord.set(pk, sug);
+        wordRows.set(pk, { english: w.english, japanese: w.japanese, decks: [d.name], pos: w.pos, posAction, inDb, detailsAction, suggested: sug, ...Object.fromEntries(DETAILS.map(f => [f.key, w[f.key]])) });
         // heteronyms: the recording can only guess which pronunciation this card means
         const storedSpeak = dbSpeak.get(pk) || '';
-        const wrec = { deck: d.name, english: w.english, japanese: w.japanese };
         if (w.speakAs && storedSpeak && storedSpeak !== w.speakAs) add('warn', w.row, 'This word already has speak_as "' + storedSpeak + '" in the database, but your file says "' + w.speakAs + '". The existing one is kept (the SQL never overwrites speak_as).', wrec);
         // reading (only ever filled in, never overwritten)
         const storedReading = dbReading.get(pk) || '';
@@ -740,6 +986,15 @@ function analyze(text, db) {
     }
   }
 
+  // suggestions: shown in the preview; only in the SQL after "Use suggestions"
+  for (const d of res.decks) for (const w of d.words) {
+    const sug = suggestByWord.get(w.english.toLowerCase() + SEP + w.japanese);
+    if (!sug) continue;
+    w.suggested = sug;
+    if (useSuggestions) for (const k of Object.keys(sug)) w[k] = sug[k];
+  }
+  if (useSuggestions) for (const [pk, sug] of suggestByWord) Object.assign(wordRows.get(pk), sug, { detailsAction: 'new word (suggested forms)' });
+
   const errors = issues.filter(i => i.sev === 'error').length;
   const warns = issues.filter(i => i.sev === 'warn').length;
   res.stats = {
@@ -752,6 +1007,8 @@ function analyze(text, db) {
     withAlts: altWords.size,
     withPos: [...wordRows.values()].filter(w => w.pos).length,
     withReading: [...readingByWord.keys()].filter(k => uniquePairs.has(k)).length,
+    withDetails: [...wordRows.values()].filter(w => DETAILS.some(f => w[f.key])).length,
+    suggestedWords: suggestByWord.size,
     errors, warns, dbChecked: !!db,
   };
   res.words = [...wordRows.values()];
@@ -760,6 +1017,7 @@ function analyze(text, db) {
 }
 
 // ---- SQL generation -------------------------------------------------------
+function hasDetails(w) { return DETAILS.some(f => w[f.key]); }
 function collExpr(path) {
   let expr = null;
   for (const name of path) {
@@ -780,6 +1038,7 @@ function generateSql(decks, overwriteExamples) {
   out.push('-- Safe to run more than once: existing items are reused and nothing is deleted.');
   if (decks.some(d => d.words.some(w => w.pos))) out.push('-- Needs the words.pos column (supabase/polycards-pos.sql). An existing part of speech is never overwritten.');
   if (decks.some(d => d.words.some(w => w.reading))) out.push('-- Needs the words.reading column (supabase/polycards-word-readings.sql). An existing reading is never overwritten.');
+  if (decks.some(d => d.words.some(hasDetails))) out.push('-- Needs the word-detail columns (supabase/polycards-word-details.sql). Existing word details are never overwritten.');
   if (overwriteExamples) out.push('-- NOTE: this version REPLACES example sentences that already exist for the words below.');
   out.push('begin;', '');
 
@@ -863,6 +1122,21 @@ function generateSql(decks, overwriteExamples) {
     out.push('');
   }
 
+  // Runs after the insert above too. Each column is filled only where it is still empty.
+  const detailList = list.filter(hasDetails);
+  if (detailList.length) {
+    out.push('-- Word details: countable, plural, verb forms (only fills in empty columns; never overwrites)');
+    const cols = DETAILS.map(f => f.col);
+    for (let i = 0; i < detailList.length; i += BATCH) {
+      out.push('update public.words w\nset ' + cols.map(c => c + ' = coalesce(w.' + c + ', v.' + c + ')').join(',\n    ') + '\nfrom (values\n'
+        // the first row's casts give every column a type, even one that is all null
+        + detailList.slice(i, i + BATCH).map((w, k) => '  (' + q(w.english) + ', ' + q(w.japanese) + ', ' + DETAILS.map(f => (w[f.key] ? q(w[f.key]) : 'null') + (k === 0 ? '::text' : '')).join(', ') + ')').join(',\n')
+        + '\n) as v(english, japanese, ' + cols.join(', ') + ')\nwhere lower(btrim(w.english)) = lower(btrim(v.english))\n  and btrim(w.japanese) = btrim(v.japanese)\n  and ('
+        + cols.map(c => '(w.' + c + ' is null and v.' + c + ' is not null)').join('\n    or ') + ');');
+    }
+    out.push('');
+  }
+
   const speakList = list.filter(w => w.speakAs);
   if (speakList.length) {
     out.push('-- Pronunciation text for the recordings (speak_as; only fills in words that have none yet; never overwrites)');
@@ -919,19 +1193,24 @@ function generateCheckSql(decks) {
   if (hasAlt) cols.push('count(*) filter (where cardinality(w.alt_answers) > 0) as with_alternates');
   if (hasPos) cols.push('count(w.pos) as with_pos');
   if (decks.some(d => d.words.some(w => w.reading))) cols.push('count(w.reading) as with_reading');
+  if (decks.some(d => d.words.some(w => w.countable || w.plural))) cols.push('count(w.countable) as with_countable');
+  if (decks.some(d => d.words.some(w => VERB_KEYS.some(k => w[k])))) cols.push('count(w.verb_past) as with_verb_forms');
   return 'select ' + cols.join(', ') + '\nfrom public.decks d\nleft join public.deck_words dw on dw.deck_id = d.id\nleft join public.words w on w.id = dw.word_id\nwhere d.name in (' + names.map(q).join(', ') + ')\ngroup by d.id, d.name\norder by d.name;';
 }
 
 // ---- Example / template ---------------------------------------------------
 const TEMPLATE = [
-  'school_level,textbook,unit_order,unit,deck,collection,english,japanese,reading,alt_answers,example_en,example_ja,pos,speak_as,source,note',
-  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,apple,りんご,りんご,,I eat an apple every day.,私は毎日りんごを食べます。,noun,,,',
-  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,pretty,かわいい、きれいな,かわいい、きれいな,cute; beautiful,,,形容詞,,,',
-  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,one of ...,...の1つ,,,,,phrase,,,',
-  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,read,読んだ（readの過去形）,よんだ（readのかこけい）,,,,動詞,red,,',
-  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-2,,familiar,見慣れた,みなれた,,,,形容詞,,,',
-  ',,,,Grade 3 Set 1,EIKEN > Grade 3,borrow,借りる,かりる,,"Can I borrow your pen, please?",ペンを借りてもいいですか。,動詞,,,check meaning',
-  ',,,,Grade 3 Set 1,EIKEN > Grade 3,familiar,見慣れた,,,,,,,,',
+  'school_level,textbook,unit_order,unit,deck,collection,english,japanese,reading,alt_answers,example_en,example_ja,pos,speak_as,countable,plural,verb_past,verb_pp,verb_ing,verb_third,source,note',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,apple,りんご,りんご,,I eat an apple every day.,私は毎日りんごを食べます。,noun,,countable,apples,,,,,,',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,pretty,かわいい、きれいな,かわいい、きれいな,cute; beautiful,,,形容詞,,,,,,,,,',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,one of ...,...の1つ,,,,,phrase,,,,,,,,,',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-1,,read,読んだ（readの過去形）,よんだ（readのかこけい）,,,,動詞,red,,,,,,,,',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-2,,familiar,見慣れた,みなれた,,,,形容詞,,,,,,,,,',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-2,,water,水,みず,,,,名詞,,数えられない,,,,,,,',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-2,,box,箱,はこ,,,,名詞,,countable,,,,,,,suggested plural',
+  'JHS,EXAMPLE Textbook,1,Lesson 1,L1-2,,stop,止まる,とまる,,,,動詞,,,,,,,,,suggested forms',
+  ',,,,Grade 3 Set 1,EIKEN > Grade 3,borrow,借りる,かりる,,"Can I borrow your pen, please?",ペンを借りてもいいですか。,動詞,,,,borrowed,borrowed,borrowing,borrows,,check meaning',
+  ',,,,Grade 3 Set 1,EIKEN > Grade 3,familiar,見慣れた,,,,,,,,,,,,,,',
 ].join('\n');
 
 // ---- Page wiring (only runs in a browser) ----------------------------------
@@ -952,6 +1231,7 @@ function el(tag, props) {
 if (typeof document !== 'undefined' && document.getElementById('btnCheck')) {
   const $ = id => document.getElementById(id);
   let dbCache = null, dbError = null, last = null;
+  let lastText = '', lastDb = null; // what "Use suggestions" checks again
 
   function setDbStatus() {
     $('dbStatus').textContent = dbCache
@@ -971,7 +1251,8 @@ if (typeof document !== 'undefined' && document.getElementById('btnCheck')) {
     $('btnCheck').disabled = true;
     showMessage('', 'Checking...');
     const db = await getDb(false);
-    last = analyze($('input').value, db);
+    lastText = $('input').value; lastDb = db;
+    last = analyze(lastText, lastDb);
     $('btnCheck').disabled = false;
     if (last.fatal) { $('results').classList.add('hidden'); showMessage('bad', last.fatal); return; }
     showMessage('', '');
@@ -992,6 +1273,8 @@ if (typeof document !== 'undefined' && document.getElementById('btnCheck')) {
       s.withAlts ? stat('words with alternate answers', s.withAlts) : null,
       s.withPos ? stat('words with pos', s.withPos) : null,
       s.withReading ? stat('words with readings', s.withReading) : null,
+      s.withDetails ? stat('words with details', s.withDetails) : null,
+      s.suggestedWords ? stat(r.useSuggestions ? 'words using suggested forms' : 'words with suggested forms', s.suggestedWords) : null,
       stat('errors', s.errors, s.errors ? 'bad' : ''), stat('warnings', s.warns, s.warns ? 'warn' : '')
     ].filter(Boolean));
 
@@ -1015,16 +1298,36 @@ if (typeof document !== 'undefined' && document.getElementById('btnCheck')) {
       el('td', { text: d.words.length }),
       el('td', { text: s.dbChecked ? d.newWords : '?' }),
       el('td', { text: d.withPos }),
+      el('td', { text: d.withDetails }),
       el('td', {}, el('span', { class: 'badge ' + d.status, text: d.status === 'unknown' ? 'not checked' : d.status }), d.status === 'exists' ? ' (' + d.existingWordCount + ' words there now)' : '')));
-    $('decks').replaceChildren(el('div', { class: 'scroll' }, el('table', {}, el('tr', {}, el('th', { text: 'Deck' }), el('th', { text: 'Where it goes' }), el('th', { text: 'Words' }), el('th', { text: 'New words' }), el('th', { text: 'With pos' }), el('th', { text: 'Status' })), deckRows)));
+    $('decks').replaceChildren(el('div', { class: 'scroll' }, el('table', {}, el('tr', {}, el('th', { text: 'Deck' }), el('th', { text: 'Where it goes' }), el('th', { text: 'Words' }), el('th', { text: 'New words' }), el('th', { text: 'With pos' }), el('th', { text: 'With details' }), el('th', { text: 'Status' })), deckRows)));
 
+    // a detail cell: the file's value, or a suggestion (in italics until "Use suggestions")
+    const detailCell = (w, key) => {
+      const sug = w.suggested && w.suggested[key];
+      if (sug && !r.useSuggestions) return el('td', {}, el('i', { class: 'muted', text: sug + ' (suggested)' }));
+      if (sug) return el('td', {}, sug, el('span', { class: 'muted', text: ' (suggested)' }));
+      return el('td', { text: w[key] });
+    };
     const wordRows = r.words.map(w => el('tr', {},
       el('td', { text: w.english }), el('td', { text: w.japanese }), el('td', { text: w.decks.join(', ') }),
       el('td', { text: w.pos }),
-      el('td', { text: w.posAction })));
-    $('words').replaceChildren(el('details', {},
-      el('summary', { text: 'Show all ' + r.words.length + ' words' + (s.withPos ? ' (' + s.withPos + ' with pos)' : '') }),
-      el('div', { class: 'scroll', style: 'margin-top:10px' }, el('table', {}, el('tr', {}, el('th', { text: 'English' }), el('th', { text: 'Japanese' }), el('th', { text: 'Deck' }), el('th', { text: 'pos' }), el('th', { text: 'What happens to pos' })), wordRows))));
+      el('td', { text: w.posAction }),
+      ...DETAILS.map(f => detailCell(w, f.key)),
+      el('td', { text: w.detailsAction })));
+    const wordsBox = $('words');
+    wordsBox.replaceChildren(el('details', {},
+      el('summary', { text: 'Show all ' + r.words.length + ' words' + (s.withPos ? ' (' + s.withPos + ' with pos)' : '') + (s.withDetails ? ' (' + s.withDetails + ' with details)' : '') }),
+      el('div', { class: 'scroll', style: 'margin-top:10px' }, el('table', {}, el('tr', {}, ...['English', 'Japanese', 'Deck', 'pos', 'What happens to pos', 'countable', 'plural', 'past', 'past participle', '-ing', '-s', 'What happens to details'].map(t => el('th', { text: t }))), wordRows))));
+    if (s.suggestedWords) {
+      const btn = el('button', { class: 'ghost', text: r.useSuggestions ? 'Undo: leave the suggestions out' : 'Use suggestions (' + s.suggestedWords + ' word' + (s.suggestedWords === 1 ? '' : 's') + ')' });
+      btn.addEventListener('click', () => { last = analyze(lastText, lastDb, { useSuggestions: !r.useSuggestions }); render(last); });
+      wordsBox.append(el('div', { class: 'note ' + (r.useSuggestions ? 'ok' : 'warn') },
+        r.useSuggestions
+          ? 'The suggested forms are in the SQL. Check them in the list above (open "Show all words").'
+          : 'Some new words have suggested plurals or verb forms (in italics in the list above). They are not in the SQL unless you press the button. Check them first.',
+        el('div', { class: 'row' }, btn)));
+    }
 
     const gate = $('sqlGate'); gate.replaceChildren(); $('sqlBox').classList.add('hidden');
     const ow = $('overwriteBox'); ow.replaceChildren();
