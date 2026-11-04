@@ -37,3 +37,11 @@ export function restoreState(undo) {
 export function chipLabelKey(knew) {
   return knew ? "review.gotIt" : "review.notYet";
 }
+
+// True while the card on screen still shows its question: not flipped and not answered yet
+// (typing / handwriting: no result yet). The header's dictionary search is switched off then, so
+// it can't give the answer away. After 元に戻す the card comes back on its answer side (revealed),
+// so this follows restoreState() automatically.
+export function questionShowing({ done, revealed, typedResult }) {
+  return !done && !revealed && !typedResult;
+}

@@ -205,18 +205,25 @@ export function GachaButton({ tickets = 0, pulse = false, onOpen }) {
 // gacha: the gacha status (null while loading); pulseGacha / onOpenGacha: for the gacha button.
 // rank, newTheme (the dot), onOpenStats, onOpenSettings, onOpenHelp, onOpenJoinClass: for the account menu.
 // tight: the review on a short screen (landscape iPad): less space above and below the row.
+// search: the dictionary search (DictionarySearch), signed in only: between the logo and the buttons
+// on wide screens, a magnifier before the gacha button on phones (its box drops down under the row).
 export default function Header({
   variant = "compact", user, onSignOut, onHome, wide = false, gacha = null, pulseGacha = false, onOpenGacha,
   rank = null, newTheme = false, onOpenStats, onOpenSettings, onOpenHelp, onOpenJoinClass, tight = false,
+  search = null,
 }) {
   const side = wide ? wideLayout.gutter : gutter;
   // zIndex 25: above everything sticky or fixed on the page (word list bar 5, drill button and tabs 10),
   // so the account menu and its close-on-tap-outside layer cover them; below the pop-ups (30, 40).
   const row = (
-    <div style={{ position: "relative", zIndex: 25, display: "flex", alignItems: "center", justifyContent: "space-between", padding: `${tight ? 6 : 16}px ${side}px` }}>
+    <div style={{ position: "relative", zIndex: 25, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: `${tight ? 6 : 16}px ${side}px`, "--dictionary-gutter": `${side}px` }}>
       <Logo onHome={onHome} />
+      {user && search && wide && (
+        <div style={{ flex: 1, minWidth: 0, display: "flex", justifyContent: "center", padding: "0 12px" }}>{search}</div>
+      )}
       {user && (
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {search && !wide && search}
           <GachaButton tickets={gacha?.tickets ?? 0} pulse={pulseGacha} onOpen={onOpenGacha} />
           <AccountButton user={user} rank={rank} dot={newTheme} onSignOut={onSignOut} onOpenStats={onOpenStats} onOpenSettings={onOpenSettings} onOpenHelp={onOpenHelp} onOpenJoinClass={onOpenJoinClass} />
         </div>

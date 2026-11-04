@@ -1056,4 +1056,23 @@ export default {
   "csv.yes": "yes",
   "csv.no": "no",
   "csv.nameSeparator": ", ",
+
+  // Dictionary: the search box in the header and the word pop-up. DRAFT (Andre to check)
+  "dictionary.open": "Dictionary",
+  "dictionary.label": "Search the dictionary",
+  "dictionary.placeholder": "Search words (English or Japanese)",
+  "dictionary.locked": "You can use this after you see the answer",
+  "dictionary.noResults": "No words found",
+  "dictionary.loadFailed": "Couldn't load the dictionary",
+  "dictionary.results": plural("{n} result", "{n} results"),
+  "dictionary.sheetLabel": "Word: {english}",
+  "dictionary.wordFailed": "Couldn't load more about this word",
+  "dictionary.baseForm": "Base form",
+  "dictionary.otherMeanings": "Other meanings",
+  "dictionary.related": "Words with the same meaning",
+  "dictionary.packs": "Packs with this word",
+  "dictionary.packsLocked": "You can't open packs during a review",
+  "dictionary.inMyDeck": "In My Deck",
+  "dictionary.notInMyDeck": "Not in My Deck yet",
+  "dictionary.previous": "Previous word",
 };

@@ -964,3 +964,38 @@ describe('settings saved on the account', () => {
     await expect(api.saveUserSettings('u1', { lang: 'ja' })).resolves.toBeUndefined();
   });
 });
+
+describe('dictionary', () => {
+  it('loads the slim search index in pages, without examples or audio', async () => {
+    result = { data: [{ id: 'a', english: 'eat' }], error: null, count: 1 };
+    expect(await api.fetchDictionaryIndex()).toEqual([{ id: 'a', english: 'eat' }]);
+    const select = calls.find((c) => c[0] === 'select');
+    expect(select[1]).toBe('id, english, japanese, reading, pos, alt_answers');
+    expect(calls).toContainEqual(['range', 0, 999]);
+  });
+
+  it('keeps reading pages until every word is loaded (no fixed page count)', async () => {
+    const pages = () => calls.filter((c) => c[0] === 'range').length; // pages asked for so far
+    const rows = (n, from) => Array.from({ length: n }, (_, i) => ({ id: `w${from + i}` }));
+    result = { error: null, count: 6500 };
+    Object.defineProperty(result, 'data', { get: () => (pages() === 1 ? rows(1000, 0) : rows(1000, 1000)) });
+    const words = await api.fetchDictionaryIndex();
+    expect(words).toHaveLength(7000); // 1 + 6 pages of the fake's 1,000 rows
+    expect(pages()).toBe(7);
+    expect(calls).toContainEqual(['range', 6000, 6999]);
+  });
+
+  it('loads one word with its decks and only my own cards', async () => {
+    result = { data: [{ deck_id: 'd1' }, { deck_id: 'd1' }], error: null };
+    const out = await api.fetchDictionaryWord('w1', 'u1');
+    expect(out.deckIds).toEqual(['d1']);
+    expect(calls).toContainEqual(['from', 'deck_words']);
+    expect(calls).toContainEqual(['eq', 'user_id', 'u1']);
+    expect(calls).toContainEqual(['eq', 'word_id', 'w1']);
+  });
+
+  it('throws when a part fails', async () => {
+    result = { data: null, error: { message: 'boom' } };
+    await expect(api.fetchDictionaryWord('w1', 'u1')).rejects.toThrow('boom');
+  });
+});

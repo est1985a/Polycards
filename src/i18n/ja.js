@@ -1055,4 +1055,23 @@ export default {
   "csv.yes": "はい",
   "csv.no": "いいえ",
   "csv.nameSeparator": "、",
+
+  // Dictionary: the search box in the header and the word pop-up (DictionarySearch.jsx, WordSheet.jsx)
+  "dictionary.open": "辞書", // the magnifier button on phones (read aloud)
+  "dictionary.label": "辞書で単語をさがす", // the search box (read aloud)
+  "dictionary.placeholder": "単語をさがす（英語・日本語）",
+  "dictionary.locked": "答えを見てから使えます", // during a review, while the question shows
+  "dictionary.noResults": "見つかりませんでした",
+  "dictionary.loadFailed": "辞書を読み込めませんでした",
+  "dictionary.results": "{n}件", // read aloud when suggestions change
+  "dictionary.sheetLabel": "単語：{english}", // the pop-up (read aloud)
+  "dictionary.wordFailed": "この単語のくわしい情報を読み込めませんでした",
+  "dictionary.baseForm": "もとの形",
+  "dictionary.otherMeanings": "ほかの意味",
+  "dictionary.related": "同じ意味の単語",
+  "dictionary.packs": "この単語が入っているパック",
+  "dictionary.packsLocked": "復習中はパックを開けません",
+  "dictionary.inMyDeck": "マイデッキにあります",
+  "dictionary.notInMyDeck": "まだマイデッキにありません",
+  "dictionary.previous": "前の単語",
 };

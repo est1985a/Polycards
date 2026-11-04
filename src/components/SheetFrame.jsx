@@ -36,13 +36,19 @@ export function SheetBox({ titleId, title, onClose, closeRef = null, className =
 // (the button that opened it) when it closes.
 export default function SheetFrame({ titleId, title, onClose, className, children }) {
   const closeRef = useRef(null);
+  const backdropRef = useRef(null);
   const latestClose = useRef(onClose);
   useEffect(() => { latestClose.current = onClose; });
 
   useEffect(() => {
     const opener = document.activeElement;
     closeRef.current?.focus({ preventScroll: true });
-    const onKey = (e) => { if (shouldCloseSheet(e)) latestClose.current(); };
+    // Escape closes only the top pop-up (e.g. the 品詞 pop-up opened from inside this one).
+    const onKey = (e) => {
+      const all = document.querySelectorAll('.review-plan-backdrop');
+      if (all.length && all[all.length - 1] !== backdropRef.current) return;
+      if (shouldCloseSheet(e)) latestClose.current();
+    };
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
@@ -52,6 +58,7 @@ export default function SheetFrame({ titleId, title, onClose, className, childre
 
   return createPortal(
     <div
+      ref={backdropRef}
       className="review-plan-backdrop"
       onClick={(e) => { if (shouldCloseSheet(e)) onClose(); }}
       style={{ background: `color-mix(in srgb, ${colors.bg} 75%, transparent)` }}

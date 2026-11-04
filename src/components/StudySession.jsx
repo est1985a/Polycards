@@ -5,7 +5,7 @@ import { srsAnswer, newSessionId, saveErrorReporter, answerTiming, DEFAULT_SESSI
 import { checkSpelling, ignoreNextKey, isAlternateAnswer, needsOtherMeaningCheck, cardAnswerMode } from '../lib/spelling';
 import { reduceMotionOn } from '../lib/settings';
 import { recordAnswer, checkOtherMeaning, holdAnswer, flushHeldAnswer, dropHeldAnswer } from '../lib/api';
-import { takeSnapshot, makeUndo, restoreState, chipLabelKey } from '../lib/undo';
+import { takeSnapshot, makeUndo, restoreState, chipLabelKey, questionShowing } from '../lib/undo';
 import AddDeckButton from './AddDeckButton';
 import { ownedCounts } from '../lib/library';
 import FlipCard from './FlipCard';
@@ -228,6 +228,8 @@ export function TypingArea({
 // fit: the review fills the screen height (App's .study-page): the card shrinks so the answer buttons
 // always fit. short: a short screen (landscape iPad), so tighter spacing, buttons and handwriting boxes.
 // onTypingOpen(open): the typing box is open (App then lets the page grow, for the on-screen keyboard).
+// onQuestionShowing(showing): the card on screen shows its question (questionShowing() in undo.js);
+// App switches the header's dictionary search off then, so it can't give the answer away.
 //
 // Undo: the last まだ / わかった answer is held (holdAnswer in api.js), not sent, so 元に戻す can throw
 // it away and put the session back as it was (src/lib/undo.js). It is sent when the next answer is
@@ -265,6 +267,7 @@ export default function StudySession({
   activeSet, isAdded, saving, onAddDeck, onBack, answerMode = "off", onAnswerModeChange = null,
   countMoreDue = null, onContinue = null, continuing = false, sessionSize = DEFAULT_SESSION_SIZE,
   wide = false, sideChip = false, speech = null, onAutoPlayChange = null, fit = false, short = false, onTypingOpen = null,
+  onQuestionShowing = null,
 }) {
   const isSrs = activeSet.mode === 'srs';
   const [pile, setPile] = useState(() => shuffle(activeSet.cards.map((c) => c.id)));
@@ -358,6 +361,14 @@ export default function StudySession({
     onTypingOpen?.(typingPhase === "typing");
   }, [typingPhase, onTypingOpen]);
   useEffect(() => () => onTypingOpen?.(false), [onTypingOpen]);
+
+  // Tell App while the question is showing (and that it isn't when the review ends). Undo puts a
+  // card back on its answer side, so the search comes back on with it.
+  const asking = questionShowing({ done, revealed, typedResult });
+  useEffect(() => {
+    onQuestionShowing?.(asking);
+  }, [asking, onQuestionShowing]);
+  useEffect(() => () => onQuestionShowing?.(false), [onQuestionShowing]);
 
   // Safety net: after a flip, an answer or a mode change, if the input / answer buttons aren't fully on
   // screen (a very short screen or a long handwriting answer), scroll just enough to show them. Not

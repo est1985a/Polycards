@@ -1088,3 +1088,49 @@ export async function sendReportScreenshot(reportId, blob) {
     return false;
   }
 }
+
+// --- Dictionary (search box in the header) ---
+
+// Every library word, slim fields only (no examples or audio), for the search index. The first
+// page also gives the total; the other pages are then read at the same time (faster on a school
+// iPad than one after another). No fixed page count, so it keeps working as the library grows.
+export async function fetchDictionaryIndex() {
+  const PAGE = 1000;
+  const page = (from, withCount) => supabase
+    .from('words')
+    .select('id, english, japanese, reading, pos, alt_answers', withCount ? { count: 'exact' } : undefined)
+    .order('id', { ascending: true })
+    .range(from, from + PAGE - 1);
+  const first = await page(0, true);
+  if (first.error) throw new Error("Could not load the dictionary: " + first.error.message);
+  const rows = [...(first.data || [])];
+  const total = first.count ?? rows.length;
+  const starts = [];
+  for (let from = PAGE; from < total; from += PAGE) starts.push(from);
+  const rest = await Promise.all(starts.map((from) => page(from, false)));
+  for (const r of rest) {
+    if (r.error) throw new Error("Could not load the dictionary: " + r.error.message);
+    rows.push(...(r.data || []));
+  }
+  return rows;
+}
+
+// The rest of one word for its pop-up: { word: { example_en, example_ja, audio_path }, deckIds,
+// cards: [{ direction, level }] (the student's own cards for it, [] when not owned) }.
+export async function fetchDictionaryWord(wordId, userId) {
+  const [details, decks, cards] = await Promise.all([
+    supabase.from('words').select('id, example_en, example_ja, audio_path').eq('id', wordId).maybeSingle(),
+    supabase.from('deck_words').select('deck_id').eq('word_id', wordId),
+    userId
+      ? supabase.from('user_cards').select('direction, level').eq('user_id', userId).eq('word_id', wordId)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  for (const r of [details, decks, cards]) {
+    if (r.error) throw new Error("Could not load this word: " + r.error.message);
+  }
+  return {
+    word: details.data || null,
+    deckIds: [...new Set((decks.data || []).map((r) => r.deck_id))],
+    cards: cards.data || [],
+  };
+}

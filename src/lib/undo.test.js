@@ -1,6 +1,6 @@
 // Tests for the undo snapshot helpers. Run with: npm test
 import { describe, it, expect } from 'vitest';
-import { takeSnapshot, makeUndo, restoreState, chipLabelKey } from './undo';
+import { takeSnapshot, makeUndo, restoreState, chipLabelKey, questionShowing } from './undo';
 import { reinsert } from './drill';
 
 const card = { id: "w1-j2e", front: "犬", back: "dog" };
@@ -68,5 +68,21 @@ describe('undo keeps the answer mode', () => {
   it('brings back the mode the card was answered in', () => {
     const restored = restoreState(makeUndo(takeSnapshot(before), card, false));
     expect(restored.mode).toBe("typing");
+  });
+});
+
+describe('questionShowing (the dictionary search is off while it is true)', () => {
+  it('is true for a card not answered yet, false once flipped or answered, false when done', () => {
+    expect(questionShowing({ done: false, revealed: false, typedResult: null })).toBe(true);
+    expect(questionShowing({ done: false, revealed: true, typedResult: null })).toBe(false);
+    expect(questionShowing({ done: false, revealed: false, typedResult: { spelling: 'wrong' } })).toBe(false);
+    expect(questionShowing({ done: true, revealed: false, typedResult: null })).toBe(false);
+  });
+
+  it('follows Undo: a restored card shows its answer side, a card restored to its question is locked again', () => {
+    const undo = makeUndo(takeSnapshot({ pile: ['a'], wrongCounts: {}, clearedCount: 0, typed: '', typedResult: null, retryUsed: false, mode: 'off' }), { id: 'a', front: 'dog' }, true);
+    const restored = restoreState(undo);
+    expect(questionShowing({ done: false, ...restored })).toBe(false);
+    expect(questionShowing({ done: false, ...restored, revealed: false })).toBe(true);
   });
 });

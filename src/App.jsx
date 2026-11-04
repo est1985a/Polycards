@@ -52,6 +52,9 @@ import JoinClassSheet from './components/JoinClassSheet';
 import AwardPopup from './components/AwardPopup';
 import RosterJoinPopup from './components/RosterJoinPopup';
 import { rosterJoinStart, rosterJoinNext } from './lib/rosterJoin';
+import DictionarySearch from './components/DictionarySearch';
+import WordSheet from './components/WordSheet';
+import { buildDictionaryIndex, loadCachedIndex, saveCachedIndex } from './lib/dictionary';
 
 // A theme key from the account or the device; unknown keys become the default theme.
 const knownTheme = (key) => (themes[key] ? key : DEFAULT_THEME);
@@ -181,7 +184,8 @@ function App() {
   const [savingDeck, setSavingDeck] = useState(false);
   const [packResult, setPackResult] = useState(null); // pack opening after Add to My Cards (packSummary)
   const [packFromClass, setPackFromClass] = useState(false); // the pack was added from the クラス tab (課題)
-  // Where the open word list came from: 'cardSets' (Word Packs) or 'class' (課題's 単語を見る: no drill,
+  // Where the open word list came from: 'cardSets' (Word Packs), 'dictionary' (the word pop-up: back = 戻る
+  // to where the search was used) or 'class' (課題's 単語を見る: no drill,
   // and its back button says クラスにもどる).
   const [wordListFrom, setWordListFrom] = useState("cardSets");
   const [removingDeckId, setRemovingDeckId] = useState(null);
@@ -230,6 +234,15 @@ function App() {
   const sideChip = useSideChip(); // room for the review's "previous card" chip beside the card
   const short = useShort(); // short screen (landscape iPad with browser bars): the review tightens up
   const [studyTyping, setStudyTyping] = useState(false); // the review's typing box is open
+  // Dictionary (search box in the header): the search index (null until first used), whether it
+  // failed to load, the word in the pop-up, the review's question showing (search off then), and
+  // where a pack opened from the pop-up goes back to ({ view, tab }).
+  const [dictIndex, setDictIndex] = useState(null);
+  const [dictFailed, setDictFailed] = useState(false);
+  const dictLoading = useRef(false);
+  const [dictWord, setDictWord] = useState(null);
+  const [questionShowing, setQuestionShowing] = useState(false);
+  const [dictReturn, setDictReturn] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
@@ -872,7 +885,7 @@ function App() {
   }
 
   // Card Sets: open a deck's word list; the "try it" drill starts from there.
-  // from: 'class' when opened with 単語を見る on a 課題 card.
+  // from: 'class' when opened with 単語を見る on a 課題 card, 'dictionary' from the word pop-up.
   async function startDeck(deck, from = "cardSets") {
     setLoadingDeck(true);
     try {
@@ -889,6 +902,41 @@ function App() {
       alert(t("cardSets.deckEmpty"));
     }
     setLoadingDeck(false);
+  }
+
+  // Dictionary: load the word list the first time the search box is used (or take this tab's copy).
+  async function loadDictionary() {
+    if (dictIndex || dictLoading.current) return;
+    dictLoading.current = true;
+    setDictFailed(false);
+    try {
+      let words = loadCachedIndex(window.sessionStorage);
+      if (!words) {
+        words = await api.fetchDictionaryIndex();
+        saveCachedIndex(window.sessionStorage, words);
+      }
+      setDictIndex(buildDictionaryIndex(words));
+    } catch (e) {
+      console.error(e);
+      setDictFailed(true);
+    }
+    dictLoading.current = false;
+  }
+
+  // Dictionary pop-up: a pack opens its word list; its back button returns to the screen the
+  // search was used on (a word list goes back to the Word Packs tab, since its pack was replaced).
+  function openPackFromDictionary(deck) {
+    setDictWord(null);
+    setDictReturn(view === "wordList" ? { view: "dashboard", tab: "cardSets" } : { view, tab: activeTab });
+    startDeck(deck, "dictionary");
+  }
+
+  function leaveDictionaryPack() {
+    const back = dictReturn || { view: "dashboard", tab: activeTab };
+    setDictReturn(null);
+    setActiveTab(back.tab);
+    setView(back.view);
+    window.scrollTo(0, 0);
   }
 
   // My Cards: SRS review of due cards (all decks, or one deck)
@@ -1160,6 +1208,12 @@ function App() {
           rank={rank} newTheme={hasNewTheme} onOpenStats={openStats} onOpenSettings={openSettings} onOpenHelp={() => setAboutOpen(true)}
           onOpenJoinClass={() => setJoinOpen(true)}
           tight={studyFit && short}
+          search={session && (
+            <DictionarySearch
+              wide={wide} index={dictIndex} failed={dictFailed} onNeedWords={loadDictionary} onPick={setDictWord}
+              disabled={view === "study" && questionShowing}
+            />
+          )}
         />
 
         <div
@@ -1323,8 +1377,9 @@ function App() {
                   <div style={{ marginBottom: 14, textAlign: "left" }}>
                     <BackButton
                       label={view === "wordList" && wordListFrom === "class" ? t("common.backToClass")
+                        : view === "wordList" && wordListFrom === "dictionary" ? t("settings.back")
                         : (view === "wordList" && pathTitle(cardSetsPath, libraryData, collectionsData)) || t("common.backToDashboard")}
-                      onClick={() => setView("dashboard")}
+                      onClick={view === "wordList" && wordListFrom === "dictionary" ? leaveDictionaryPack : () => setView("dashboard")}
                     />
                   </div>
                 )}
@@ -1366,6 +1421,7 @@ function App() {
                     fit={studyFit}
                     short={short}
                     onTypingOpen={setStudyTyping}
+                    onQuestionShowing={setQuestionShowing}
                   />
                 )}
               </div>
@@ -1380,6 +1436,20 @@ function App() {
       )}
       {showRosterJoin && <RosterJoinPopup state={rosterJoinState} onNext={nextRosterJoin} onSaveNickname={saveRosterNickname} />}
       {showAwards && <AwardPopup awards={awardRows} onGacha={() => closeAwards(true)} onClose={() => closeAwards(false)} />}
+      {session && dictWord && (
+        <WordSheet
+          key={dictWord.id}
+          word={dictWord}
+          index={dictIndex}
+          textbooks={libraryData}
+          collections={collectionsData}
+          userId={session.user.id}
+          inReview={!!activeSet && (view === "study" || reviewBehind)}
+          speech={speech}
+          onOpenPack={openPackFromDictionary}
+          onClose={() => setDictWord(null)}
+        />
+      )}
       {packResult && <PackOpening summary={packResult} onClose={closePack} onReview={reviewPack} onGoToMyDeck={goToMyDeck} />}
     </div>
   );
