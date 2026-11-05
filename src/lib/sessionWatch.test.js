@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { isSessionLostResponse, watchedFetch, onSessionLost, notifySessionLost, createSessionLostHandler } from './sessionWatch';
+import { isSessionLostResponse, watchedFetch, onSessionLost, notifySessionLost, createSessionLostHandler, isUnexpectedSignOut } from './sessionWatch';
 
 const REST = 'https://x.supabase.co/rest/v1/rpc/set_my_nickname';
 
@@ -89,5 +89,15 @@ describe('createSessionLostHandler', () => {
     const f = fakes({ session: null });
     f.getSession = vi.fn(async () => { throw new Error('storage blocked'); });
     expect(await createSessionLostHandler(f)()).toBe('signed_out');
+  });
+});
+
+describe('isUnexpectedSignOut', () => {
+  it('is true only for a SIGNED_OUT the student did not ask for', () => {
+    expect(isUnexpectedSignOut({ event: 'SIGNED_OUT', wasSignedIn: true, userChoseLogout: false })).toBe(true);
+    expect(isUnexpectedSignOut({ event: 'SIGNED_OUT', wasSignedIn: true, userChoseLogout: true })).toBe(false);
+    expect(isUnexpectedSignOut({ event: 'SIGNED_OUT', wasSignedIn: false, userChoseLogout: false })).toBe(false);
+    expect(isUnexpectedSignOut({ event: 'TOKEN_REFRESHED', wasSignedIn: true, userChoseLogout: false })).toBe(false);
+    expect(isUnexpectedSignOut({ event: 'INITIAL_SESSION', wasSignedIn: false, userChoseLogout: false })).toBe(false);
   });
 });

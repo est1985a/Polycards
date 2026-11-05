@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { notifySessionLost, watchedFetch } from './sessionWatch'
+import { notifySessionLost, watchedFetch } from './sessionWatch.js'
 
 // Also used for the public word-audio file URLs (src/lib/speech.js).
 export const supabaseUrl = 'https://erhudovlvqynpkmtgsef.supabase.co'

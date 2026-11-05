@@ -1,4 +1,12 @@
 {
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "polycards-eight.vercel.app" }],
+      "destination": "https://www.polyvocards.com/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/hw-test", "destination": "/index.html" },
     { "source": "/hw-test/", "destination": "/index.html" },

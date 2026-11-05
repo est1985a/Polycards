@@ -11,7 +11,7 @@ import { nextReviewSummary, jstDateKey } from './lib/schedule';
 import { singleFlight } from './lib/gacha';
 import { openScreen, leaveScreen, reviewKept } from './lib/screens';
 import { testLoginEmail, LOGIN_FAILED_MESSAGE, SESSION_EXPIRED_MESSAGE, OAUTH_NOTICES, oauthErrorFromUrl, cleanOAuthErrorUrl } from './lib/login';
-import { createSessionLostHandler, onSessionLost } from './lib/sessionWatch';
+import { createSessionLostHandler, onSessionLost, isUnexpectedSignOut } from './lib/sessionWatch';
 import { applyReduceMotion, applyLang, loadThemeCache, saveThemeCache, clearThemeCache, devThemeOverride } from './lib/settings';
 import {
   SETTING_DEFAULTS, mergeSettings, settingsPayload, sameSettings, loadDeviceSettings, saveDeviceSettings, clearDeviceSettings,
@@ -253,6 +253,10 @@ function App() {
   const [questionShowing, setQuestionShowing] = useState(false);
   const [dictReturn, setDictReturn] = useState(null);
 
+  // Signed in right now (updated after each render), and "the student pressed ログアウト", so a
+  // sign-out Supabase did by itself (dead refresh token) can show the "expired" message.
+  const signedInRef = useRef(false);
+  const loggingOutRef = useRef(false);
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -263,6 +267,9 @@ function App() {
       }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (isUnexpectedSignOut({ event, wasSignedIn: signedInRef.current, userChoseLogout: loggingOutRef.current })) {
+        setAuthError(SESSION_EXPIRED_MESSAGE);
+      }
       setSession(session);
       if (session) setOauthNotice(null);
       if (!session) {
@@ -287,7 +294,6 @@ function App() {
   // database, see sessionWatch.js): try one refresh; if that fails, sign out on this device only
   // (the refresh token is already dead, so no server call) and show the login screen with a message
   // instead of letting every button fail with a technical error.
-  const signedInRef = useRef(false);
   useEffect(() => { signedInRef.current = !!session; }, [session]);
   useEffect(() => {
     const handle = createSessionLostHandler({
@@ -887,7 +893,8 @@ function App() {
     // A review's held まだ / わかった answer must be saved while still signed in.
     api.flushHeldAnswer();
     await api.waitForPendingSaves();
-    await supabase.auth.signOut();
+    loggingOutRef.current = true;
+    try { await supabase.auth.signOut(); } finally { loggingOutRef.current = false; }
     clearThemeCache(window.localStorage); // also done on SIGNED_OUT; here too in case that event is missed
     setThemeKey(DEFAULT_THEME);
     resetSettings();

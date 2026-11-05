@@ -60,3 +60,10 @@ export function createSessionLostHandler({ getSession, refreshSession, signOutLo
     return busy;
   };
 }
+
+// Supabase signed the browser out by itself (e.g. its background refresh got
+// "refresh_token_not_found" / "refresh_token_already_used", logs 2026-11-05): show the
+// login screen with the "sign-in expired" message, unless the student pressed ログアウト.
+export function isUnexpectedSignOut({ event, wasSignedIn, userChoseLogout }) {
+  return event === "SIGNED_OUT" && !!wasSignedIn && !userChoseLogout;
+}
