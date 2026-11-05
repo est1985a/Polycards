@@ -10,7 +10,7 @@ import { HANDWRITING_ENABLED } from './handwriting/config';
 import { nextReviewSummary, jstDateKey } from './lib/schedule';
 import { singleFlight } from './lib/gacha';
 import { openScreen, leaveScreen, reviewKept } from './lib/screens';
-import { testLoginEmail, LOGIN_FAILED_MESSAGE, SESSION_EXPIRED_MESSAGE } from './lib/login';
+import { testLoginEmail, LOGIN_FAILED_MESSAGE, SESSION_EXPIRED_MESSAGE, OAUTH_NOTICES, oauthErrorFromUrl, cleanOAuthErrorUrl } from './lib/login';
 import { createSessionLostHandler, onSessionLost } from './lib/sessionWatch';
 import { applyReduceMotion, applyLang, loadThemeCache, saveThemeCache, clearThemeCache, devThemeOverride } from './lib/settings';
 import {
@@ -75,6 +75,11 @@ const TEACHER_TABS = [...TABS, { id: 'teacher', label: 'tabs.teacher' }];
 function App() {
   const [session, setSession] = useState(null);
   const [authError, setAuthError] = useState(null);
+  // A Google sign-in that came back with an error in the address (e.g. "OAuth state not found or
+  // expired"): read once when the app opens; shown on the login screen only (a student who is
+  // already signed in, e.g. one who went back to Google's page and chose the account again, just
+  // stays signed in and sees nothing).
+  const [oauthNotice, setOauthNotice] = useState(() => oauthErrorFromUrl(window.location.href));
 
   // Screens: 'dashboard', 'wordList' (Card Sets deck, before the drill), 'study', 'mastered',
   // 'gacha', 'collection' (ポリアバター図鑑), 'settings' (設定) or 'stats' (学習の記録)
@@ -249,9 +254,17 @@ function App() {
   const [dictReturn, setDictReturn] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      // Take the sign-in error out of the address (after Supabase has read it), so a reload or a
+      // bookmark doesn't show the notice again.
+      if (oauthErrorFromUrl(window.location.href)) {
+        window.history.replaceState(window.history.state, "", cleanOAuthErrorUrl(window.location.href));
+      }
+    });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
+      if (session) setOauthNotice(null);
       if (!session) {
         setMyDeckIds([]); setMyDecks([]); setStats(null);
         setGacha(null); setReveal(null); setCollection(null); pulseChecked.current = false;
@@ -852,6 +865,7 @@ function App() {
 
   const handleGoogleLogin = async () => {
     setAuthError(null);
+    setOauthNotice(null);
     // Come back to the site we started from (localhost in development, the live site in production).
     // Supabase only allows addresses listed under Authentication → URL Configuration → Redirect URLs.
     const { error } = await supabase.auth.signInWithOAuth({
@@ -864,6 +878,7 @@ function App() {
   // Test accounts: a username like "aiden" signs in as aiden@polycards.test.
   const handlePasswordLogin = async (username, password) => {
     setAuthError(null);
+    setOauthNotice(null);
     const { error } = await supabase.auth.signInWithPassword({ email: testLoginEmail(username), password });
     if (error) setAuthError(LOGIN_FAILED_MESSAGE);
   };
@@ -1264,7 +1279,7 @@ function App() {
         >
           <div className={fill} style={{ maxWidth: contentWidth, width: "100%", margin: "0 auto" }} data-page-space="">
             {!session ? (
-              <LoginScreen error={authError} onGoogleLogin={handleGoogleLogin} onPasswordLogin={handlePasswordLogin} />
+              <LoginScreen error={authError} notice={oauthNotice ? OAUTH_NOTICES[oauthNotice] : null} onGoogleLogin={handleGoogleLogin} onPasswordLogin={handlePasswordLogin} />
             ) : view === "dashboard" ? (
               <div style={{ paddingBottom: tabBarHeight + 32 }}>
                 {activeTab === "myCards" && (

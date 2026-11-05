@@ -12,7 +12,9 @@ const labelStyle = { display: "grid", gap: 6, textAlign: "left", fontSize: 13, c
 const noAutoFix = { autoCapitalize: "off", autoCorrect: "off", spellCheck: false };
 
 // initialOpen only lets the tests see the test-login form (they can't tap the link).
-export default function LoginScreen({ error, onGoogleLogin, onPasswordLogin, initialOpen = false }) {
+// notice = { title, body } (OAUTH_NOTICES in login.js): a Google sign-in that came back with an
+// error, e.g. it ran out of time. Shown calmly in gold above the Google button, not as a red error.
+export default function LoginScreen({ error, notice, onGoogleLogin, onPasswordLogin, initialOpen = false }) {
   const [open, setOpen] = useState(initialOpen);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -34,6 +36,18 @@ export default function LoginScreen({ error, onGoogleLogin, onPasswordLogin, ini
   return (
     <div style={{ ...cardStyle, padding: 30, textAlign: "center", marginTop: 40, display: "grid", gap: 16 }}>
       <h2 style={{ fontSize: 18, color: colors.text, margin: 0 }}>Sign in to start studying</h2>
+      {notice && (
+        <div
+          role="alert"
+          style={{
+            border: `2px solid ${colors.gold}`, borderRadius: 12, padding: "12px 14px",
+            background: colors.surface2, textAlign: "left", display: "grid", gap: 6,
+          }}
+        >
+          <p style={{ color: colors.gold, fontWeight: 700, fontSize: 15, margin: 0 }}>{notice.title}</p>
+          <p style={{ color: colors.text, fontSize: 14, lineHeight: 1.6, margin: 0 }}>{notice.body}</p>
+        </div>
+      )}
       {error && <p style={{ color: colors.danger, fontSize: 13, margin: 0 }}>{error}</p>}
       <button onClick={onGoogleLogin} style={{ ...btnGhost, width: "100%" }}>Sign In with Google</button>
 

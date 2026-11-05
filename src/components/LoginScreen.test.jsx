@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import LoginScreen from './LoginScreen';
+import { OAUTH_NOTICES } from '../lib/login';
 
 const noop = () => {};
 
@@ -55,5 +56,17 @@ describe('LoginScreen', () => {
   it('has no sign-up or password reset', () => {
     const html = renderToStaticMarkup(<LoginScreen onGoogleLogin={noop} onPasswordLogin={noop} initialOpen />);
     expect(html).not.toMatch(/sign up|新規登録|パスワードを忘れ|reset/i);
+  });
+
+  it('shows a sign-in notice above the Google button', () => {
+    const html = renderToStaticMarkup(<LoginScreen notice={OAUTH_NOTICES.expired} onGoogleLogin={noop} onPasswordLogin={noop} />);
+    expect(html).toContain('role="alert"');
+    expect(html).toContain(OAUTH_NOTICES.expired.title);
+    expect(html.indexOf(OAUTH_NOTICES.expired.title)).toBeLessThan(html.lastIndexOf('Sign In with Google'));
+  });
+
+  it('shows no notice by default', () => {
+    const html = renderToStaticMarkup(<LoginScreen onGoogleLogin={noop} onPasswordLogin={noop} />);
+    expect(html).not.toContain('role="alert"');
   });
 });
