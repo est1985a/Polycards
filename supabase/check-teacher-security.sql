@@ -109,6 +109,9 @@ begin
       ('call internal clean_join_code', format('select public.clean_join_code(%L)', 'X'),                                               'permission denied'),
       ('call internal class_week_ranks', format('select * from public.class_week_ranks(%L, current_date)', v_class),                    'permission denied'),
       ('call internal leaderboard_avatar', format('select public.leaderboard_avatar(%L)', v_student),                                    'permission denied'),
+      -- Ranking modes (polycards-class-ranking-modes.sql)
+      ('call internal class_week_board_ranks', format('select * from public.class_week_board_ranks(%L, current_date, %L)', v_class, 'typing'), 'permission denied'),
+      ('call internal class_board_json', format('select public.class_board_json(%L, current_date, %L, %L, true, 5, 7, true)', v_class, 'typing', v_student), 'permission denied'),
       -- Phase 4: assigned packs
       ('create_assignment',          format('select public.create_assignment(%L, gen_random_uuid())', v_class),                         'not_teacher'),
       ('update_assignment',          'select public.update_assignment(gen_random_uuid(), null, null)',                                  'not_teacher'),

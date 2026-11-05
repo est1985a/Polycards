@@ -65,3 +65,92 @@ describe('ClassLeaderboard', () => {
     expect(renderToStaticMarkup(<MyPlace me={{ rank: 3, reviews: 1 }} />)).toMatch(/You are #<span[^>]*>3<\/span> \(<span[^>]*>1<\/span> review\)/);
   });
 });
+
+// Ranking modes (polycards-class-ranking-modes.sql): typing and handwriting boards, reviews small.
+const row = (rank, nickname, count, is_me = false) => ({ rank, nickname, count, is_me, avatar: null });
+const BOARDS = {
+  typing: { top: [row(1, 'Sora', 12), row(2, 'Aiden', 7, true)], more: 0, me: { rank: 2, count: 7 }, last_week: [row(1, 'Momo', 9)] },
+  handwriting: {
+    top: [1, 2, 3, 4, 5, 6, 7].map((i) => row(1, `Tie${i}`, 3)), more: 2, me: { rank: null, count: 0 }, last_week: [],
+  },
+  reviews: { top: [row(1, 'Ken', 200), row(2, 'Aiden', 90, true), row(3, 'Sora', 40)], more: 0, me: { rank: 2, count: 90 } },
+};
+const MODE_BOARD = { ...BOARD, boards: BOARDS };
+const section = (h, kind) => h.match(new RegExp(`data-board="${kind}"[^]*?</section>(?=<section data-board|</div></section>$)`))?.[0] ?? '';
+
+describe('ClassLeaderboard: typing / handwriting boards', () => {
+  it('shows the typing and handwriting boards and a small reviews panel, in that order', () => {
+    const h = renderToStaticMarkup(<ClassLeaderboard board={MODE_BOARD} />);
+    const order = [...h.matchAll(/data-board="(\w+)"/g)].map((m) => m[1]);
+    expect(order).toEqual(['typing', 'handwriting', 'reviews']);
+    expect(h).toContain('タイピング');
+    expect(h).toContain('正しいスペルでタイプした数');
+    expect(h).toContain('手書き');
+    expect(h).toContain('復習回数');
+    expect(section(h, 'typing')).toContain('12語');
+    expect(section(h, 'reviews')).toContain('200回');
+    expect(h).not.toContain('120回'); // the old reviews board isn't drawn
+  });
+
+  it('shows ＋N人 同点 only when the database left tied students out', () => {
+    const h = renderToStaticMarkup(<ClassLeaderboard board={MODE_BOARD} />);
+    expect(section(h, 'handwriting')).toContain('＋2人 同点');
+    expect(section(h, 'typing')).not.toContain('同点');
+    expect([...section(h, 'handwriting').matchAll(/data-board-row/g)]).toHaveLength(7);
+  });
+
+  it('my place on each board (students), none for the teacher', () => {
+    const h = renderToStaticMarkup(<ClassLeaderboard board={MODE_BOARD} />);
+    expect(section(h, 'typing')).toMatch(/あなたは <span[^>]*>2<\/span>位（<span[^>]*>7<\/span>語）/);
+    expect(section(h, 'reviews')).toContain('あなた：2位（90回）');
+    const teacher = renderToStaticMarkup(<ClassLeaderboard board={{ ...MODE_BOARD, me: null }} viewer="teacher" />);
+    expect(teacher).not.toContain('あなたは');
+    expect(teacher).not.toContain('あなた：');
+    expect(teacher).not.toContain('今週はまだ0語');
+  });
+
+  it('the zero line names the real answer-mode switch (off by default)', () => {
+    const h = renderToStaticMarkup(<ClassLeaderboard board={MODE_BOARD} />);
+    expect(section(h, 'handwriting')).toContain('今週はまだ0語。「マイデッキ」の「答え方（日本語 → English）」で「手書き」をえらんで');
+    const zero = { ...BOARDS, typing: { ...BOARDS.typing, me: { rank: null, count: 0 } } };
+    const z = renderToStaticMarkup(<ClassLeaderboard board={{ ...MODE_BOARD, boards: zero }} />);
+    expect(section(z, 'typing')).toContain('「マイデッキ」の「答え方（日本語 → English）」で「タイピング」をえらんで');
+    expect(section(z, 'typing')).toContain('復習画面の右上でも切りかえられます');
+    setLang('en');
+    const en = renderToStaticMarkup(<ClassLeaderboard board={{ ...MODE_BOARD, boards: zero }} />);
+    expect(en).toContain('On My Deck, choose &quot;Typing&quot; under &quot;How to answer (Japanese → English)&quot;');
+    expect(en).toContain('7 words');
+    expect(en).toContain('+2 more tied');
+  });
+
+  it('each board has its own last-week strip (not the reviews panel)', () => {
+    const h = renderToStaticMarkup(<ClassLeaderboard board={MODE_BOARD} />);
+    expect(section(h, 'typing')).toContain('先週のトップ3');
+    expect(section(h, 'typing')).toContain('9語');
+    expect(section(h, 'handwriting')).not.toContain('先週のトップ3');
+    expect(section(h, 'reviews')).not.toContain('先週のトップ3');
+  });
+
+  it('empty boards', () => {
+    const empty = { top: [], more: 0, me: { rank: null, count: 0 }, last_week: [] };
+    const h = renderToStaticMarkup(<ClassLeaderboard board={{ enabled: true, boards: { typing: empty, handwriting: empty, reviews: empty } }} />);
+    expect(h).toContain('今週はまだだれもいません。最初の1人になろう！');
+    expect(h).toContain('まだだれもいません');
+    expect(h).toContain('あなた：今週はまだ0回');
+  });
+
+  it('handwriting switched off: the typing board and the reviews panel only', () => {
+    const h = renderToStaticMarkup(<ClassLeaderboard board={MODE_BOARD} wide handwritingEnabled={false} />);
+    expect([...h.matchAll(/data-board="(\w+)"/g)].map((m) => m[1])).toEqual(['typing', 'reviews']);
+    expect(h).toMatch(/data-board-grid=""[^>]*grid-template-columns:minmax\(0, 1fr\) 220px/);
+    const both = renderToStaticMarkup(<ClassLeaderboard board={MODE_BOARD} wide />);
+    expect(both).toMatch(/data-board-grid=""[^>]*grid-template-columns:minmax\(0, 1fr\) minmax\(0, 1fr\);/);
+    expect(both).toMatch(/data-board="reviews"[^>]*grid-column:1 \/ -1/); // a strip under both boards
+  });
+
+  it('without the new SQL (boards null) the old reviews board is shown', () => {
+    const h = renderToStaticMarkup(<ClassLeaderboard board={{ ...BOARD, boards: null }} />);
+    expect(h).toContain('120回');
+    expect(h).not.toContain('data-board="typing"');
+  });
+});

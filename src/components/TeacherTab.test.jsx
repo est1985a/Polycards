@@ -175,6 +175,17 @@ describe('class tab: nicknames and the ランキング view (teacher)', () => {
     expect(off).toContain('今週のランキング'); // still shown to the teacher
     expect(renderToStaticMarkup(<LeaderboardView cls={DETAIL.class} board={null} onSetEnabled={noop} />)).toContain('読み込み中');
   });
+
+  it('typing / handwriting boards: still shown to the teacher while off, with no "my place"', () => {
+    const b = { top: [{ rank: 1, nickname: 'Ichi', count: 4, is_me: false, avatar: null }], more: 0, me: null, last_week: [] };
+    const board = { enabled: false, top: [], me: null, last_week: [], boards: { typing: b, handwriting: b, reviews: b } };
+    const off = renderToStaticMarkup(<LeaderboardView cls={{ ...DETAIL.class, leaderboard_enabled: false }} board={board} onSetEnabled={noop} />);
+    expect(off).toContain('生徒には表示されていません');
+    expect(off).toContain('data-board="typing"');
+    expect(off).toContain('4語');
+    expect(off).toContain('タップの答えは入りません'); // the teacher note explains what counts
+    expect(off).not.toContain('今週はまだ0語');
+  });
 });
 
 describe('search pop-up parts', () => {

@@ -58,6 +58,8 @@ export const LENIENT_PAIRS = { i: "l", l: "i", g: "q", q: "g" };
 export const MIN_TARGET_PROB = 0.25;
 
 // false: a word with a lenient box still counts as わかった, but without the spelling bonus.
+// It would then also stop counting on the class's 手書き ranking (which counts answers saved with
+// spelling 'exact'; supabase/polycards-class-ranking-modes.sql).
 export const LENIENT_GIVES_BONUS = true;
 
 // Ink thickness relative to the box height (training used 18 px in a 280 px box).

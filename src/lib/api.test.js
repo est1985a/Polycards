@@ -818,9 +818,22 @@ describe('class tab', () => {
   it('fills in empty answers', async () => {
     result = { data: null, error: null };
     expect(await api.fetchMyClassInfo('c1')).toEqual({ teachers: [], nickname: null });
-    expect(await api.fetchClassLeaderboard('c1')).toEqual({ enabled: false, top: [], last_week: [], me: null });
+    expect(await api.fetchClassLeaderboard('c1')).toEqual({ enabled: false, top: [], last_week: [], me: null, boards: null });
     result = { data: { enabled: false }, error: null };
     expect((await api.fetchClassLeaderboard('c1')).enabled).toBe(false);
+    expect((await api.fetchClassLeaderboard('c1')).boards).toBe(null);
+  });
+
+  it('shapes the typing / handwriting / reviews boards', async () => {
+    const row = { rank: 1, nickname: 'Sora', count: 12, is_me: false, avatar: null };
+    result = {
+      data: { enabled: true, boards: { typing: { top: [row], more: 2, me: { rank: 1, count: 12 } }, reviews: {} } },
+      error: null,
+    };
+    const { boards } = await api.fetchClassLeaderboard('c1');
+    expect(boards.typing).toEqual({ top: [row], more: 2, me: { rank: 1, count: 12 }, last_week: [] });
+    expect(boards.handwriting).toEqual({ top: [], more: 0, me: null, last_week: [] });
+    expect(boards.reviews).toEqual({ top: [], more: 0, me: null, last_week: [] });
   });
 
   it('turns nickname errors into friendly messages', async () => {

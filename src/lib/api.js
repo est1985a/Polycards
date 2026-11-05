@@ -1006,10 +1006,27 @@ export function setMyNickname(classId, nickname) {
 
 // Student or teacher of the class: this week's leaderboard: { enabled, archived, week_start,
 // top: [{ rank, nickname, reviews, is_me, avatar }], me: { nickname, rank, reviews } | null,
-// last_week: [same as top] }. Switched off (students) or archived: { enabled: false } and nothing else.
+// last_week: [same as top], boards } (top / me / last_week = the old reviews board, kept for the
+// app before polycards-class-ranking-modes.sql). boards (that file): { typing, handwriting, reviews },
+// each { top: [{ rank, nickname, count, is_me, avatar }], more (tied students not shown),
+// me: { rank, count } | null, last_week (not on reviews) }; null when the SQL hasn't been run.
+// Switched off (students) or archived: { enabled: false } and nothing else.
 export async function fetchClassLeaderboard(classId) {
   const d = (await callClass('class_leaderboard', { p_class_id: classId })) || {};
-  return { ...d, enabled: d.enabled === true, top: d.top ?? [], last_week: d.last_week ?? [], me: d.me ?? null };
+  return {
+    ...d, enabled: d.enabled === true, top: d.top ?? [], last_week: d.last_week ?? [], me: d.me ?? null,
+    boards: shapeBoards(d.boards),
+  };
+}
+
+const BOARD_KEYS = ['typing', 'handwriting', 'reviews'];
+
+function shapeBoards(boards) {
+  if (!boards || typeof boards !== 'object') return null;
+  return Object.fromEntries(BOARD_KEYS.map((key) => {
+    const b = boards[key] || {};
+    return [key, { top: b.top ?? [], more: Number(b.more) || 0, me: b.me ?? null, last_week: b.last_week ?? [] }];
+  }));
 }
 
 // Teacher: the class's ランキング switch.

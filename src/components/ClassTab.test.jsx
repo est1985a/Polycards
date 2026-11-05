@@ -101,3 +101,21 @@ describe('the クラス tab button', () => {
     expect(renderToStaticMarkup(<Tabs tabs={five.slice(0, 4)} active="class" onChange={() => {}} />)).toContain('font-size:14px');
   });
 });
+
+describe('ClassTabView: the ranking switch with the typing / handwriting boards', () => {
+  const empty = { top: [], more: 0, me: null, last_week: [] };
+  const withBoards = { ...BOARD, boards: { typing: empty, handwriting: empty, reviews: empty } };
+
+  it('on: the boards are shown', () => {
+    expect(view({ board: withBoards })).toContain('data-board="typing"');
+  });
+
+  it('switched off: no board at all, only the お休み line', () => {
+    for (const h of [view({ board: { enabled: false } }), view({ info: { ...INFO, leaderboard_enabled: false }, board: withBoards })]) {
+      expect(h).toContain('今はランキングはお休みです');
+      expect(h).not.toContain('data-board=');
+      expect(h).not.toContain('タイピング');
+      expect(h).not.toContain('今週のランキング');
+    }
+  });
+});
