@@ -719,23 +719,25 @@ const CLASS_ERRORS = {
 };
 
 // The known code in a database error (e.g. "bad_code"), or null.
-function classErrorCode(error) {
+function classErrorCode(error, status = null) {
+  // 401 = the sign-in was lost (see sessionWatch.js): never show "permission denied for function …".
+  if (status === 401) return "not_signed_in";
   const text = error?.message || "";
   return Object.keys(CLASS_ERRORS).find((c) => text.includes(c)) ?? null;
 }
 
 // Turns a database error (e.g. "bad_code") into a friendly message.
-export function classErrorMessage(error) {
-  const code = classErrorCode(error);
+export function classErrorMessage(error, status = null) {
+  const code = classErrorCode(error, status);
   return code ? t(CLASS_ERRORS[code]) : t("errors.classFailed", { detail: error?.message || "unknown error" });
 }
 
 async function callClass(name, args) {
-  const { data, error } = await supabase.rpc(name, args);
+  const { data, error, status } = await supabase.rpc(name, args);
   if (error) {
     // The message is for the screen; .code (e.g. 'teacher_not_in_class') lets a screen react to it.
-    const failure = new Error(classErrorMessage(error));
-    failure.code = classErrorCode(error);
+    const failure = new Error(classErrorMessage(error, status));
+    failure.code = classErrorCode(error, status);
     throw failure;
   }
   return data;

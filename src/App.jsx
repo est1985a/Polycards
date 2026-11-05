@@ -10,7 +10,8 @@ import { HANDWRITING_ENABLED } from './handwriting/config';
 import { nextReviewSummary, jstDateKey } from './lib/schedule';
 import { singleFlight } from './lib/gacha';
 import { openScreen, leaveScreen, reviewKept } from './lib/screens';
-import { testLoginEmail, LOGIN_FAILED_MESSAGE } from './lib/login';
+import { testLoginEmail, LOGIN_FAILED_MESSAGE, SESSION_EXPIRED_MESSAGE } from './lib/login';
+import { createSessionLostHandler, onSessionLost } from './lib/sessionWatch';
 import { applyReduceMotion, applyLang, loadThemeCache, saveThemeCache, clearThemeCache, devThemeOverride } from './lib/settings';
 import {
   SETTING_DEFAULTS, mergeSettings, settingsPayload, sameSettings, loadDeviceSettings, saveDeviceSettings, clearDeviceSettings,
@@ -268,6 +269,25 @@ function App() {
     });
     return () => subscription.unsubscribe();
   }, [resetSettings]);
+
+  // The sign-in was lost while the app still showed the student as signed in (a 401 from the
+  // database, see sessionWatch.js): try one refresh; if that fails, sign out on this device only
+  // (the refresh token is already dead, so no server call) and show the login screen with a message
+  // instead of letting every button fail with a technical error.
+  const signedInRef = useRef(false);
+  useEffect(() => { signedInRef.current = !!session; }, [session]);
+  useEffect(() => {
+    const handle = createSessionLostHandler({
+      getSession: () => supabase.auth.getSession(),
+      refreshSession: () => supabase.auth.refreshSession(),
+      signOutLocal: () => supabase.auth.signOut({ scope: "local" }),
+      onSignedOut: () => {
+        setSession(null); // in case SIGNED_OUT doesn't come (the session was already gone from storage)
+        setAuthError(SESSION_EXPIRED_MESSAGE);
+      },
+    });
+    return onSessionLost(() => { if (signedInRef.current) handle(); });
+  }, []);
 
   // The rank each theme needs, read once after sign-in. If it can't be read, only Midnight is offered.
   const userId = session?.user?.id ?? null;

@@ -16,6 +16,7 @@ A vocabulary spaced-repetition (SRS) web app for Japanese junior high and high s
   - `src/themes.js`: color themes (values for each color role) and `applyTheme()`
 - Supabase: PostgreSQL, Auth, Row Level Security
 - Sign-in: Google OAuth, open to any Google account. Signing in is required; the old "Skip login (Test App)" bypass has been removed. Email/password is enabled in Supabase; the login screen's small テスト用ログイン link opens a username / password form for the test accounts (`polycards.test` emails). **It is kept visible on purpose for the pilot** (Andre uses it with the test accounts): don't hide, remove or restyle it without asking Andre.
+- Lost sign-in (`src/lib/sessionWatch.js`, 2026-11-05): the Supabase client's fetch is wrapped (`watchedFetch`), so any 401 from `/rest/v1/` (a signed-in user never gets one; it means the call went out without a user token) tells App, which tries one `refreshSession()` and otherwise signs out on this device (`scope: 'local'`) and shows `SESSION_EXPIRED_MESSAGE` (login.js) on the login screen; a burst of 401s runs it once. `callClass` turns a 401 into ログインしてください (never "permission denied for function …"). Tests: `sessionWatch.test.js`, `api.test.js`.
 - Deployed on Vercel at https://www.polyvocards.com (the old https://polycards-eight.vercel.app also serves Production). Vercel redeploys automatically on every push to `main`, so a push to `main` goes live. For now the live site is for teacher testing only; students don't have access yet.
 
 ## Database (Supabase)

@@ -3,6 +3,8 @@
 
 export const TEST_EMAIL_DOMAIN = 'polycards.test';
 export const LOGIN_FAILED_MESSAGE = 'ユーザー名かパスワードが違います';
+// Shown on the login screen when the sign-in was lost or ran out (sessionWatch.js).
+export const SESSION_EXPIRED_MESSAGE = 'ログインの期限が切れました。もう一度ログインしてください。';
 
 // Trimmed and lowercased; the test domain is added unless it is already a full email.
 export function testLoginEmail(username) {

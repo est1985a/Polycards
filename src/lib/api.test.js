@@ -840,6 +840,13 @@ describe('class tab', () => {
     rpcImpl = async () => ({ data: null, error: { message: 'bad_nickname' } });
     await expect(api.joinClass('ABC234', '山田', null, '')).rejects.toThrow('ニックネームは1〜12文字');
   });
+
+  it('a 401 (sign-in lost) says ログインしてください, never the technical message', async () => {
+    rpcImpl = async () => ({ data: null, status: 401, error: { code: '42501', message: 'permission denied for function set_my_nickname' } });
+    const failure = await api.setMyNickname('c1', 'Aiden').catch((e) => e);
+    expect(failure.message).toBe('ログインしてください');
+    expect(failure.code).toBe('not_signed_in');
+  });
 });
 
 describe('teacher area phase 4: assigned packs', () => {
