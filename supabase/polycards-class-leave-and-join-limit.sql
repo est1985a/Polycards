@@ -186,6 +186,8 @@ begin
 end;
 $$;
 revoke execute on function public.leave_class(uuid) from public, anon;
+-- Since 2026-11-05 students can't leave a class: polycards-no-student-leave.sql revokes this grant.
+-- If this file is ever run again, run polycards-no-student-leave.sql after it.
 grant execute on function public.leave_class(uuid) to authenticated;
 
 

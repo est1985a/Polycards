@@ -843,12 +843,6 @@ export function joinClass(code, realName, studentNumber, nickname) {
   return callJoin('join_class', { p_code: code, p_real_name: realName, p_student_number: studentNumber, p_nickname: nickname });
 }
 
-// Student: leave one of my classes. Only my membership goes; study data, My Deck, tickets and
-// Polyavatars stay. Rejoining works with the class code.
-export function leaveClass(classId) {
-  return callClass('leave_class', { p_class_id: classId });
-}
-
 // Teacher: students who left this class and haven't rejoined, newest first:
 // [{ student_id, real_name, student_number, nickname, left_at }]. Never throws: an error (e.g. the
 // SQL isn't run yet) only console.warns and gives [].

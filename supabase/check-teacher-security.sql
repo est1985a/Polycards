@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Polycards: check that a STUDENT can't use the teacher functions (2026-10-30)
--- Run AFTER polycards-teachers.sql (and polycards-teacher-phase2.sql, polycards-teacher-phase3.sql, polycards-class-tab.sql, polycards-teacher-phase4.sql, polycards-teacher-followups.sql, polycards-class-leave-and-join-limit.sql, polycards-roster-prefill.sql). Read-only: every check that could write
+-- Run AFTER polycards-teachers.sql (and polycards-teacher-phase2.sql, polycards-teacher-phase3.sql, polycards-class-tab.sql, polycards-teacher-phase4.sql, polycards-teacher-followups.sql, polycards-class-leave-and-join-limit.sql, polycards-roster-prefill.sql, polycards-no-student-leave.sql). Read-only: every check that could write
 -- something is undone straight away, so nothing in the database changes.
 --
 -- 1. Put a student's username (or full email) on the line marked  <-- STUDENT
@@ -128,8 +128,8 @@ begin
       ('call internal deck_source',  'select public.deck_source(gen_random_uuid())',                                                    'permission denied'),
       ('call internal clean_assignment_note', format('select public.clean_assignment_note(%L)', 'X'),                                   'permission denied'),
       -- Leaving a class and the join-code limit (polycards-class-leave-and-join-limit.sql)
-      ('leave_class: made-up class', format('select public.leave_class(%L)', v_fake),                                                   'not_member'),
-      ('leave_class: another class', format('select public.leave_class(%L)', coalesce(v_foreign, v_fake)),                             'not_member'),
+      ('leave_class: made-up class', format('select public.leave_class(%L)', v_fake),                                                   'permission denied'),
+      ('leave_class: another class', format('select public.leave_class(%L)', coalesce(v_foreign, v_fake)),                             'permission denied'),
       ('class_leavers',              format('select * from public.class_leavers(%L)', v_class),                                         'not_teacher'),
       ('read class_leaves',          'select count(*) from public.class_leaves',                                                        'permission denied'),
       ('insert into class_leaves',   format('insert into public.class_leaves (class_id, student_id, real_name) values (%L, %L, %L)', v_class, v_student, 'X'), 'permission denied'),
@@ -239,16 +239,35 @@ begin
                    || '  5 wrong codes lock joining (' || v_json || ')' || E'\n';
   end;
 
-  -- Leaving: the student's own membership goes, and a direct delete changes nothing. Undone.
+  -- Leaving (polycards-no-student-leave.sql): a student can't leave their own class, neither with
+  -- leave_class nor with a direct delete / update of their class_members row. Anything that did
+  -- get through is undone.
   if v_myclass is not null then
     begin
       perform public.leave_class(v_myclass);
-      select count(*) into v_n from public.my_classes() x where x.id = v_myclass;
-      raise exception 'undo';
+      raise exception 'no_error';
     exception when others then
-      v_out := v_out || (case when sqlerrm = 'undo' and v_n = 0 then 'PASS' else 'FAIL' end)
-                     || '  leave_class removes my own membership (' || sqlerrm || ')' || E'\n';
+      v_out := v_out || (case when position('permission denied' in sqlerrm) > 0 then 'PASS' else 'FAIL' end)
+                     || '  leave_class on my own class refused (' || sqlerrm || ')' || E'\n';
     end;
+    begin
+      delete from public.class_members m where m.class_id = v_myclass and m.student_id = v_student;
+      get diagnostics v_n = row_count;
+      raise exception 'rows=%', v_n;
+    exception when others then
+      v_out := v_out || (case when sqlerrm = 'rows=0' or position('permission denied' in sqlerrm) > 0 then 'PASS' else 'FAIL' end)
+                     || '  direct delete of my own class_members row refused (' || sqlerrm || ')' || E'\n';
+    end;
+    begin
+      update public.class_members m set class_id = gen_random_uuid() where m.class_id = v_myclass and m.student_id = v_student;
+      get diagnostics v_n = row_count;
+      raise exception 'rows=%', v_n;
+    exception when others then
+      v_out := v_out || (case when sqlerrm = 'rows=0' or position('permission denied' in sqlerrm) > 0 then 'PASS' else 'FAIL' end)
+                     || '  direct update of my own class_members row refused (' || sqlerrm || ')' || E'\n';
+    end;
+    select count(*) into v_n from public.my_classes() x where x.id = v_myclass;
+    v_out := v_out || (case when v_n = 1 then 'PASS' else 'FAIL' end) || '  still in my class after the leave attempts' || E'\n';
   end if;
 
   select public.is_teacher() into v_bool;

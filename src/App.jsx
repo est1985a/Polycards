@@ -308,13 +308,6 @@ function App() {
   }, [userId]);
   const chosenClassId = classChoice?.userId === userId ? classChoice.classId : loadLastClass(window.localStorage, userId);
 
-  // クラス tab: the student left a class. The list reloads (pickClass() then shows the first class
-  // left, or the no-class panel) and the 課題 dot is counted again.
-  const leftClass = useCallback(() => {
-    loadMyClasses();
-    api.fetchPendingAssignments().then(setPendingAssignments);
-  }, [loadMyClasses]);
-
   // Pre-filled rosters: once per sign-in (also when the app opens already signed in), join the classes
   // a teacher's roster put this account in. The database uses only the account's own Google email.
   // Any class joined (or still without a nickname) opens the pop-up; the first becomes the クラス tab's class.
@@ -1302,7 +1295,6 @@ function App() {
                   <ClassTab
                     key={classTabKey}
                     classes={myClasses} selectedId={chosenClassId} onSelect={chooseClass} onJoin={() => setJoinOpen(true)} wide={wide}
-                    onLeft={leftClass}
                     assignmentsVersion={assignmentsVersion}
                     dueFor={(deckId) => dueCounts[deckId] || 0}
                     busyDeckId={addingAssignedDeckId}

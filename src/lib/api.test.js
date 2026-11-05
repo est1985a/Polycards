@@ -585,7 +585,6 @@ describe('teachers and classes', () => {
     await api.checkJoinCode('ABC234');
     await api.joinClass('ABC234', '山田', 7, 'Yama');
     await api.fetchMyClasses();
-    await api.leaveClass('c1');
     await api.fetchClassLeavers('c1');
     expect(calls).toEqual([
       ['rpc', 'teacher_classes', { p_archived: true }],
@@ -602,7 +601,6 @@ describe('teachers and classes', () => {
       ['rpc', 'check_join_code', { p_code: 'ABC234' }],
       ['rpc', 'join_class', { p_code: 'ABC234', p_real_name: '山田', p_student_number: 7, p_nickname: 'Yama' }],
       ['rpc', 'my_classes', undefined],
-      ['rpc', 'leave_class', { p_class_id: 'c1' }],
       ['rpc', 'class_leavers', { p_class_id: 'c1' }],
     ]);
   });
