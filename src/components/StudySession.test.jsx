@@ -352,3 +352,55 @@ describe('全部クリア panel: continue reviewing (ContinueReview)', () => {
     }
   });
 });
+
+describe('keyboard shortcuts on the buttons (src/lib/reviewKeys.js)', () => {
+  const hintCount = (html) => (html.match(/data-key-hint/g) || []).length;
+  const undo = makeUndo(takeSnapshot({ pile: [], wrongCounts: {}, clearedCount: 0, typed: '', typedResult: null, retryUsed: false }), { id: 'w1-e2j', front: 'apple' }, true);
+  const typing = (props) => renderToStaticMarkup(
+    <TypingArea
+      phase="next" typed="" spelling="exact" answer="apple" onTypedChange={() => {}} onSubmit={() => {}} onDontKnow={() => {}}
+      onNext={() => {}} onAnswer={() => {}} answerSize={{ minHeight: 52 }} {...props}
+    />
+  );
+
+  it('every button names its keys for screen readers (aria-keyshortcuts), hints or not', () => {
+    expect(render()).toContain('aria-keyshortcuts="Enter Space"');
+    const answer = render({ revealed: true });
+    expect(answer).toContain('aria-keyshortcuts="ArrowLeft 1"');
+    expect(answer).toContain('aria-keyshortcuts="ArrowRight 2"');
+    expect(typing()).toContain('aria-keyshortcuts="Enter ArrowRight"');
+    expect(renderToStaticMarkup(<PreviousCardChip undo={undo} onUndo={() => {}} />)).toContain('aria-keyshortcuts="Meta+Z Control+Z Backspace"');
+    expect(renderToStaticMarkup(<PreviousCardChip undo={undo} onUndo={() => {}} backspace={false} />)).toContain('aria-keyshortcuts="Meta+Z Control+Z"');
+  });
+
+  it('keycaps show only when keyboard hints are on', () => {
+    expect(hintCount(render())).toBe(0);
+    expect(hintCount(render({ revealed: true }))).toBe(0);
+    expect(hintCount(typing())).toBe(0);
+    expect(hintCount(render({ hints: true }))).toBe(1);
+    const answer = render({ revealed: true, hints: true });
+    expect(hintCount(answer)).toBe(2);
+    expect(answer).toContain('←');
+    expect(answer).toContain('→');
+    expect(hintCount(typing({ hints: true }))).toBe(1);
+  });
+
+  it('the keycaps are hidden from screen readers and use ↵ (not "Enter")', () => {
+    const html = render({ hints: true });
+    expect(html).toMatch(/<span aria-hidden="true" data-key-hint="" style="[^"]*">↵<\/span>/);
+    expect(html).not.toMatch(/data-key-hint="" style="[^"]*">Enter/);
+  });
+
+  it('⌫ shows on 元に戻す only where Backspace undoes', () => {
+    expect(hintCount(renderToStaticMarkup(<PreviousCardChip undo={undo} onUndo={() => {}} hints />))).toBe(1);
+    expect(hintCount(renderToStaticMarkup(<PreviousCardChip undo={undo} onUndo={() => {}} hints backspace={false} />))).toBe(0);
+  });
+
+  it('the typing choose step (まだ / わかった after a close answer) gets the ← / → keycaps too', () => {
+    expect(hintCount(typing({ phase: 'choose', spelling: 'close', typed: 'aple', hints: true }))).toBe(2);
+  });
+
+  it('no keycap on わからない (Shift+↵ is explained in the Polyvoとは？ pop-up instead)', () => {
+    expect(hintCount(typing({ phase: 'typing', hints: true }))).toBe(0);
+  });
+});

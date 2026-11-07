@@ -4,6 +4,12 @@ import { shuffle, reinsert } from '../lib/drill';
 import { srsAnswer, newSessionId, saveErrorReporter, answerTiming, DEFAULT_SESSION_SIZE } from '../lib/srs';
 import { checkSpelling, ignoreNextKey, isAlternateAnswer, needsOtherMeaningCheck, cardAnswerMode } from '../lib/spelling';
 import { reduceMotionOn } from '../lib/settings';
+import { speakWord } from '../lib/speech';
+import {
+  KEY_HINTS, ARIA_KEYS, backspaceUndoes, reviewPhase, reviewBlocked, targetKind, dispatchReviewKey,
+  isPhysicalKey, initialKeyHints, rememberKeyHints, scheduleFocus,
+} from '../lib/reviewKeys';
+import KeyHint from './KeyHint';
 import { recordAnswer, checkOtherMeaning, holdAnswer, flushHeldAnswer, dropHeldAnswer } from '../lib/api';
 import { takeSnapshot, makeUndo, restoreState, chipLabelKey, questionShowing } from '../lib/undo';
 import AddDeckButton from './AddDeckButton';
@@ -31,20 +37,31 @@ function answerLabel(prefix) {
 }
 
 // 答えを見る before the flip; after it, the まだ / わかった buttons with a reassuring note below them
-// (below, so the buttons themselves never move).
-export function AnswerArea({ revealed, onReveal, onAnswer, answerSize, wide = false }) {
+// (below, so the buttons themselves never move). hints: show the keyboard keycaps (src/lib/reviewKeys.js).
+export function AnswerArea({ revealed, onReveal, onAnswer, answerSize, wide = false, hints = false }) {
   if (!revealed) {
     return (
-      <button style={{ ...btnPrimary, width: "100%", minHeight: 52, fontSize: 17, ...answerSize }} onClick={onReveal}>
+      <button
+        style={{ ...btnPrimary, position: "relative", width: "100%", minHeight: 52, fontSize: 17, ...answerSize }}
+        aria-keyshortcuts={ARIA_KEYS.flip}
+        onClick={onReveal}
+      >
         {t("review.showAnswer")}
+        {hints && <KeyHint glyph={KEY_HINTS.flip} />}
       </button>
     );
   }
   return (
     <div style={{ display: "grid", gap: 8 }}>
       <div style={{ display: "flex", gap: 10 }}>
-        <button style={{ ...btnDanger, flex: 1, ...answerSize }} onClick={() => onAnswer(false)}>{answerLabel("review.notYet")}</button>
-        <button style={{ ...btnPrimary, flex: 1, ...answerSize }} onClick={() => onAnswer(true)}>{answerLabel("review.gotIt")}</button>
+        <button style={{ ...btnDanger, position: "relative", flex: 1, ...answerSize }} aria-keyshortcuts={ARIA_KEYS.notYet} onClick={() => onAnswer(false)}>
+          {answerLabel("review.notYet")}
+          {hints && <KeyHint glyph={KEY_HINTS.notYet} />}
+        </button>
+        <button style={{ ...btnPrimary, position: "relative", flex: 1, ...answerSize }} aria-keyshortcuts={ARIA_KEYS.gotIt} onClick={() => onAnswer(true)}>
+          {answerLabel("review.gotIt")}
+          {hints && <KeyHint glyph={KEY_HINTS.gotIt} />}
+        </button>
       </div>
       <p style={{ fontSize: wide ? 15 : 13, color: colors.muted, margin: 0, textAlign: "center" }}>
         {t("review.notYetNote")}
@@ -58,7 +75,8 @@ export function AnswerArea({ revealed, onReveal, onAnswer, answerSize, wide = fa
 // fixed-width button (same size in Japanese and English); otherwise a slim row above the card.
 // The word is cut to 3 lines beside the card, 1 in the row, ending with "…"; a long word with no
 // spaces breaks anywhere, so nothing sticks out. Small and muted, with no animation.
-export function PreviousCardChip({ undo, onUndo, side = false }) {
+// backspace: Backspace undoes in this phase (⌘Z / Ctrl+Z always do); hints: show the ⌫ keycap then.
+export function PreviousCardChip({ undo, onUndo, side = false, backspace = true, hints = false }) {
   const prefix = chipLabelKey(undo.knew);
   const pressed = t(`${prefix}.ja`) || t(`${prefix}.en`); // English mode has no Japanese line
   const pressedColor = undo.knew ? colors.accentText : colors.danger;
@@ -84,13 +102,15 @@ export function PreviousCardChip({ undo, onUndo, side = false }) {
       </div>
       <button
         style={{
-          ...btnGhost, minHeight: 44, fontSize: 13, color: colors.muted, flexShrink: 0,
+          ...btnGhost, position: "relative", minHeight: 44, fontSize: 13, color: colors.muted, flexShrink: 0,
           ...(side ? { width: 96, padding: 0 } : { padding: "0 14px" }),
         }}
         aria-label={t("review.undoAria")}
+        aria-keyshortcuts={backspace ? ARIA_KEYS.undo : ARIA_KEYS.undoNoBackspace}
         onClick={onUndo}
       >
         {t("review.undo")}
+        {hints && backspace && <KeyHint glyph={KEY_HINTS.undo} outside />}
       </button>
     </div>
   );
@@ -107,7 +127,7 @@ export function PreviousCardChip({ undo, onUndo, side = false }) {
 // Give it a new `key` per card so the box is focused when each card appears.
 export function TypingArea({
   phase, typed, spelling = null, answer, onTypedChange, onSubmit, onDontKnow, onNext, onAnswer, answerSize,
-  checking = false, retryNote = false, textbookAnswer = null, alternateAnswer = null, wide = false,
+  checking = false, retryNote = false, textbookAnswer = null, alternateAnswer = null, wide = false, hints = false,
 }) {
   const inputRef = useRef(null);
   const nextRef = useRef(null);
@@ -194,11 +214,13 @@ export function TypingArea({
         )}
         <button
           ref={nextRef}
-          style={{ ...btnPrimary, width: "100%", fontSize: 17, ...answerSize }}
+          style={{ ...btnPrimary, position: "relative", width: "100%", fontSize: 17, ...answerSize }}
+          aria-keyshortcuts={ARIA_KEYS.next}
           onKeyDown={(e) => { if (ignoreNextKey(e, nextShownAt.current)) e.preventDefault(); }}
           onClick={onNext}
         >
           {t("review.next")}
+          {hints && <KeyHint glyph={KEY_HINTS.next} />}
         </button>
       </div>
     );
@@ -212,7 +234,7 @@ export function TypingArea({
         <div>{tx("review.yourAnswer", { answer: <span lang="en" style={{ fontWeight: 700 }}>{typed}</span> })}</div>
         <div>{tx("review.rightAnswer", { answer: <span lang="en" style={{ fontWeight: 700, color: colors.accentText }}>{answer}</span> })}</div>
       </div>
-      <AnswerArea revealed onReveal={() => {}} onAnswer={onAnswer} answerSize={answerSize} wide={wide} />
+      <AnswerArea revealed onReveal={() => {}} onAnswer={onAnswer} answerSize={answerSize} wide={wide} hints={hints} />
     </div>
   );
 }
@@ -239,7 +261,15 @@ export function TypingArea({
 // 全部クリア panel of an SRS review: how many cards are due now and 続けて復習する（N枚）, the next set
 // (at most the session size). moreDue: undefined while counting (the same height, so nothing jumps),
 // null if counting failed (nothing shown; the back button at the top still works), 0 = nothing due.
-export function ContinueReview({ moreDue, sessionSize, onContinue, busy = false }) {
+// focusOnShow: a keyboard is in use, so 続けて復習する gets focus (Enter starts the next set), after a short
+// delay so a double Enter on the last 次へ can't press it (scheduleFocus in src/lib/reviewKeys.js).
+export function ContinueReview({ moreDue, sessionSize, onContinue, busy = false, focusOnShow = false }) {
+  const buttonRef = useRef(null);
+  const ready = typeof moreDue === "number" && moreDue > 0;
+  useEffect(
+    () => scheduleFocus(focusOnShow && ready, () => buttonRef.current?.focus({ preventScroll: true })),
+    [focusOnShow, ready],
+  );
   if (moreDue === null) return null;
   if (moreDue === undefined) return <div aria-hidden="true" style={{ minHeight: 82 }} />;
   if (moreDue === 0) {
@@ -249,6 +279,7 @@ export function ContinueReview({ moreDue, sessionSize, onContinue, busy = false 
     <div style={{ display: "grid", gap: 10 }}>
       <p style={{ margin: 0, fontSize: 14, color: colors.text }}>{t("review.moreDue", { n: moreDue })}</p>
       <button
+        ref={buttonRef}
         style={{ ...btnPrimary, width: "100%", minHeight: 52, fontSize: 17, opacity: busy ? 0.6 : 1 }}
         onClick={onContinue}
         disabled={busy}
@@ -287,7 +318,9 @@ export default function StudySession({
   const [undo, setUndo] = useState(null); // the held まだ / わかった answer that can be undone (makeUndo)
   const [answeredOnce, setAnsweredOnce] = useState(false); // keeps the chip's row reserved after the first answer
   const [modeLock, setModeLock] = useState(null); // the answer mode of the card on screen once it is answered
+  const [keyHints, setKeyHints] = useState(initialKeyHints); // show the keyboard keycaps on the buttons
   const { openReport, reportUi } = useCardReport();
+  const rootRef = useRef(null); // the whole review (hidden while settings / stats is open over it)
   const promptRef = useRef(null);
   const actionsRef = useRef(null); // the input and answer buttons under the card
   const turnRef = useRef(turn); // the current turn, for answers that arrive after a wait
@@ -672,6 +705,56 @@ export default function StudySession({
     lockMode();
     setRevealed(true);
   };
+  // Keyboard shortcuts (src/lib/reviewKeys.js). The phase of the card on screen; busy while a typing
+  // answer is being checked or a handwriting answer read (their わからない is disabled then too).
+  const busy = checking || (handwritingCard && modeLock !== null && !typedResult);
+  const phase = reviewPhase({ done, typingPhase, revealed, busy });
+  const backspace = backspaceUndoes(phase);
+  // When the phase last changed (by a key, a tap or a click): keys wait PHASE_GUARD_MS after it.
+  const phaseAtRef = useRef(0);
+  useEffect(() => { phaseAtRef.current = performance.now(); }, [phase, turn]);
+  // The latest state and handlers, read by the one window listener below.
+  const keyRef = useRef(null);
+  useEffect(() => {
+    keyRef.current = {
+      phase,
+      canUndo: Boolean(undo),
+      canSpeak: Boolean(speech && card && (card.direction === "en2jp" || revealed)),
+      handlers: {
+        flip: reveal,
+        notYet: () => handleAnswer(false),
+        gotIt: () => handleAnswer(true),
+        next: handleNext,
+        dontKnow: handleDontKnow,
+        undo: handleUndo,
+        speak: () => speakWord(card.en, { slow: speech?.slow, audioPath: card.audioPath }),
+      },
+    };
+  });
+  useEffect(() => {
+    let remembered = false;
+    const onKey = (event) => {
+      const now = keyRef.current;
+      const root = rootRef.current;
+      if (!now || !root) return;
+      const hidden = root.getClientRects().length === 0; // settings / stats open over the review
+      const target = targetKind(event.target);
+      if (!hidden && !remembered && isPhysicalKey(event, target)) {
+        remembered = true;
+        setKeyHints(true);
+        rememberKeyHints();
+      }
+      dispatchReviewKey(
+        event,
+        { phase: now.phase, canUndo: now.canUndo, canSpeak: now.canSpeak, sincePhaseChangeMs: performance.now() - phaseAtRef.current, target },
+        now.handlers,
+        hidden || reviewBlocked(),
+      );
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const compactCard = typingPhase === "typing";
   // fit: the card takes the room left between the question and the buttons, between these heights.
   // After a handwriting answer (boxes, result lines and buttons under it) it may get smaller still.
@@ -682,7 +765,7 @@ export default function StudySession({
   const gap = fit && short ? 10 : 20;
 
   return (
-    <div style={fit ? { flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column", gap } : { display: "grid", gap }}>
+    <div ref={rootRef} style={fit ? { flex: "1 1 auto", minHeight: 0, display: "flex", flexDirection: "column", gap } : { display: "grid", gap }}>
       {/* Top row (.review-top in src/index.css): back, the session name and progress, the 自動再生 */}
       {/* switch (when the browser can speak) and (SRS) the 答え方 toggle. On phones the name and */}
       {/* progress go onto a second line, with the 自動再生 switch at its right. */}
@@ -716,7 +799,7 @@ export default function StudySession({
       {/* height even when there is nothing to undo, so the card doesn't jump between cards. */}
       {card && !sideChip && answeredOnce && (
         <div style={{ minHeight: 44, display: "flex", alignItems: "center" }}>
-          {undo && <PreviousCardChip undo={undo} onUndo={handleUndo} />}
+          {undo && <PreviousCardChip undo={undo} onUndo={handleUndo} backspace={backspace} hints={keyHints} />}
         </div>
       )}
 
@@ -732,7 +815,7 @@ export default function StudySession({
             {sideChip && undo && (
               <div style={{ position: "absolute", right: "100%", width: "calc(50vw - 50%)", top: "50%", transform: "translateY(-50%)", display: "flex", justifyContent: "center" }}>
                 <div style={{ maxWidth: 150 }}>
-                  <PreviousCardChip undo={undo} onUndo={handleUndo} side />
+                  <PreviousCardChip undo={undo} onUndo={handleUndo} side backspace={backspace} hints={keyHints} />
                 </div>
               </div>
             )}
@@ -771,11 +854,11 @@ export default function StudySession({
                     key={turn} phase="next" typed="" spelling={typedResult.spelling} answer={card.back}
                     textbookAnswer={typedResult.alternate ? card.en : null}
                     alternateAnswer={typedResult.alternate}
-                    onNext={handleNext} answerSize={answerSize} wide={wide}
+                    onNext={handleNext} answerSize={answerSize} wide={wide} hints={keyHints}
                   />
                 )}
                 {typingPhase === "choose" && (
-                  <AnswerArea revealed onReveal={() => {}} onAnswer={handleAnswer} answerSize={answerSize} wide={wide} />
+                  <AnswerArea revealed onReveal={() => {}} onAnswer={handleAnswer} answerSize={answerSize} wide={wide} hints={keyHints} />
                 )}
               </>
             ) : typingPhase ? (
@@ -802,6 +885,7 @@ export default function StudySession({
                   textbookAnswer={typedResult?.alternate ? card.en : null}
                   alternateAnswer={typedResult?.alternate ?? null}
                   wide={wide}
+                  hints={keyHints}
                 />
               </>
             ) : (
@@ -811,6 +895,7 @@ export default function StudySession({
                 onAnswer={handleAnswer}
                 answerSize={answerSize}
                 wide={wide}
+                hints={keyHints}
               />
             )}
           </div>
@@ -824,12 +909,12 @@ export default function StudySession({
           <div style={{ fontFamily: fontDisplay, fontSize: 22, color: colors.text }}>{t("review.allCleared")}</div>
           {undo && (
             <div style={{ display: "flex", justifyContent: "center" }}>
-              <PreviousCardChip undo={undo} onUndo={handleUndo} />
+              <PreviousCardChip undo={undo} onUndo={handleUndo} backspace={backspace} hints={keyHints} />
             </div>
           )}
           {addDeckControl}
           {isSrs && onContinue && (
-            <ContinueReview moreDue={moreDue} sessionSize={sessionSize} onContinue={onContinue} busy={continuing} />
+            <ContinueReview moreDue={moreDue} sessionSize={sessionSize} onContinue={onContinue} busy={continuing} focusOnShow={keyHints} />
           )}
         </div>
       )}

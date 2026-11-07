@@ -458,6 +458,7 @@ export default {
   "about.review.heading": "Review in My Deck",
   "about.review.before": "Review in My Deck every day. When you tap \"I knew it,\" the card goes up one level, and you wait longer before you see it again.",
   "about.review.after": "When you tap \"Still learning,\" the card goes down a little and comes back sooner. Mistakes are OK. Trying to remember is studying!",
+  "about.review.keys": "You can also review with a keyboard: ↵ or Space flips the card, ← or 1 is \"Still learning,\" → or 2 is \"I knew it,\" ⌫ or ⌘Z (Ctrl+Z) undoes, and P plays the word.", // DRAFT
   "about.ladderLabel": "Levels and the time until the next review",
   "about.ladderLevel": "Lv{n}",
   "about.ladderMastered": "Mastered!",
@@ -469,6 +470,7 @@ export default {
   "about.modes.typing": "Typing: type the English word",
   "about.modes.handwriting": "Handwriting: write the English word with an Apple Pencil (tap \"Practice?\" to practice a letter)",
   "about.modes.p2": "Spell it right for a +1 EXP bonus! Tap 🔊 to hear the word.",
+  "about.modes.keys": "When typing, ↵ answers, Shift+↵ is \"I don't know,\" and ↵ or → goes to the next card.", // DRAFT
   "about.exp.heading": "EXP and Rank",
   "about.exp.p1": "When your cards level up, you get EXP and your Rank goes up. Your Rank never goes down.",
   "about.exp.p2": "A higher Rank unlocks new themes (change them in Settings → Themes).",

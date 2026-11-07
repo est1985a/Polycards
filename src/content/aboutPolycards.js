@@ -26,7 +26,7 @@ export const ABOUT = {
       icon: '🔁',
       heading: 'about.review.heading',
       paragraphsBefore: ['about.review.before'],
-      paragraphsAfter: ['about.review.after'],
+      paragraphsAfter: ['about.review.after', 'about.review.keys'],
     },
     {
       icon: '🙆',
@@ -38,7 +38,7 @@ export const ABOUT = {
       heading: 'about.modes.heading',
       paragraphs: ['about.modes.p1'],
       list: ['about.modes.tap', 'about.modes.typing', { key: 'about.modes.handwriting', when: 'handwriting' }],
-      paragraphsEnd: ['about.modes.p2'],
+      paragraphsEnd: ['about.modes.p2', 'about.modes.keys'],
     },
     {
       icon: '⭐',

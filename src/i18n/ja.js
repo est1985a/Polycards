@@ -451,6 +451,7 @@ export default {
   "about.review.heading": "マイデッキで復習",
   "about.review.before": "毎日「マイデッキ」で復習しよう。「わかった」を押すとカードのレベルが上がり、次に出てくるまでの時間がのびます。", // above the level chips
   "about.review.after": "「まだ」を押すとレベルが少し下がって、早めにまた出てきます。まちがえても大丈夫。思い出そうとすること自体が勉強です。", // below the level chips
+  "about.review.keys": "キーボードでも復習できます：↵ か スペースでめくる、← か 1 で「まだ」、→ か 2 で「わかった」、⌫ か ⌘Z（Ctrl+Z）で元に戻す、P で発音。", // DRAFT (keyboard shortcuts, src/lib/reviewKeys.js)
   "about.ladderLabel": "レベルと次の復習まで", // read aloud for the row of level chips
   "about.ladderLevel": "Lv{n}", // one level chip (followed by its wait, a time.wait* text)
   "about.ladderMastered": "Mastered!", // last chip
@@ -462,6 +463,7 @@ export default {
   "about.modes.typing": "タイピング：英語をタイプして答える",
   "about.modes.handwriting": "手書き：Apple Pencil で英語を書いて答える（「れんしゅう？」で文字の練習もできます）",
   "about.modes.p2": "スペルが正しいとボーナス +1 EXP！🔊 をタップすると発音が聞けます。",
+  "about.modes.keys": "タイピングでは、↵ で答える、Shift+↵ で「わからない」、↵ か → で「次へ」。", // DRAFT (keyboard shortcuts)
   "about.exp.heading": "EXPとランク",
   "about.exp.p1": "復習してカードのレベルが上がると、EXPがたまってランクが上がります。ランクは下がりません。",
   "about.exp.p2": "ランクが上がると、新しいテーマが使えるようになります（設定 → テーマで変更）。",
