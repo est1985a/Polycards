@@ -890,9 +890,11 @@ function App() {
     setOauthNotice(null);
     // Come back to the site we started from (localhost in development, the live site in production).
     // Supabase only allows addresses listed under Authentication → URL Configuration → Redirect URLs.
+    // prompt: 'select_account' makes Google always show its account chooser, so on a shared iPad the
+    // next person never signs in to the previous person's Google account by accident.
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: window.location.origin, queryParams: { prompt: 'select_account' } },
     });
     if (error) setAuthError(error.message);
   };

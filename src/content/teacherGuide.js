@@ -64,6 +64,11 @@ export const TEACHER_GUIDE = {
       list: ['teacherGuide.csv.overview', 'teacherGuide.csv.assignment', 'teacherGuide.csv.awards'],
       paragraphsEnd: ['teacherGuide.csv.p2'],
     },
+    {
+      icon: '🏫',
+      heading: 'teacherGuide.school.heading',
+      paragraphs: ['teacherGuide.school.p1', 'teacherGuide.school.p2', 'teacherGuide.school.p3', 'teacherGuide.school.p4'],
+    },
   ],
   tips: {
     icon: '💡',
