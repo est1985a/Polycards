@@ -1224,7 +1224,7 @@ export default {
   "signup.title": "Register as a teacher", // DRAFT
   "signup.intro": "Find your school and request to join. When you're approved, the Teacher tab appears.", // DRAFT
   "signup.schoolSearch": "School name", // DRAFT
-  "signup.searchPlaceholder": "e.g. Ryukoku", // DRAFT
+  "signup.searchPlaceholder": "e.g. ABC Junior High School", // DRAFT
   "signup.prefecture": "Prefecture", // DRAFT
   "signup.anyPrefecture": "All prefectures", // DRAFT
   "signup.search": "Search", // DRAFT
@@ -1242,7 +1242,7 @@ export default {
   "signup.sending": "Sending…", // DRAFT
   "signup.back": "Back", // DRAFT
   "signup.schoolName": "School name", // DRAFT
-  "signup.schoolNameHint": "Use the official name.", // DRAFT
+  "signup.schoolNameHint": "Use the official name (e.g. ABC City Junior High School).", // DRAFT
   "signup.schoolKana": "Reading in kana (optional)", // DRAFT
   "signup.schoolType": "Type of school", // DRAFT
   "signup.choosePlaceholder": "Choose", // DRAFT
