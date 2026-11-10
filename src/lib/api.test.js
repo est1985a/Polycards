@@ -711,6 +711,75 @@ describe('teachers and classes', () => {
   });
 });
 
+describe('schools and teacher sign-up (polyvo-schools-phase1.sql)', () => {
+  it('calls each database function with the right arguments', async () => {
+    result = { data: [], error: null };
+    await api.searchSchools('龍谷', 'saga');
+    await api.searchSchools('龍谷');
+    await api.requestJoinSchool('s1', 'アンドレ先生');
+    await api.registerSchool({ name: '新しい中学校', kana: '', prefecture: 'saga', schoolType: 'jhs', displayName: 'A先生' });
+    await api.cancelSchoolRequest();
+    await api.fetchMySchool();
+    await api.decideSchoolRequest('u2', true);
+    await api.setSchoolAdmin('u2', false);
+    await api.removeSchoolTeacher('u2');
+    await api.setSchoolAutoApprove('s1', true);
+    await api.fetchAdminSchools();
+    await api.adminDecideSchool('s1', true, ['school.ed.jp']);
+    await api.adminSetSchoolDomains('s1', []);
+    expect(calls).toEqual([
+      ['rpc', 'search_schools', { p_query: '龍谷', p_prefecture: 'saga' }],
+      ['rpc', 'search_schools', { p_query: '龍谷', p_prefecture: null }],
+      ['rpc', 'request_join_school', { p_school_id: 's1', p_display_name: 'アンドレ先生' }],
+      ['rpc', 'register_school', { p_name: '新しい中学校', p_kana: null, p_prefecture: 'saga', p_school_type: 'jhs', p_display_name: 'A先生' }],
+      ['rpc', 'cancel_school_request', {}],
+      ['rpc', 'my_school', {}],
+      ['rpc', 'decide_school_request', { p_user: 'u2', p_approve: true }],
+      ['rpc', 'set_school_admin', { p_user: 'u2', p_admin: false }],
+      ['rpc', 'remove_school_teacher', { p_user: 'u2' }],
+      ['rpc', 'set_school_auto_approve', { p_school: 's1', p_on: true }],
+      ['rpc', 'admin_schools', {}],
+      ['rpc', 'admin_decide_school', { p_school: 's1', p_approve: true, p_domains: ['school.ed.jp'] }],
+      ['rpc', 'admin_set_school_domains', { p_school: 's1', p_domains: [] }],
+    ]);
+    expect(calls.filter((c) => c[0] === 'from')).toEqual([]);
+  });
+
+  it('my_school_status never throws (null on an error, e.g. before the SQL is run)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    rpcImpl = async () => ({ data: null, error: { message: 'function my_school_status() does not exist' } });
+    expect(await api.fetchMySchoolStatus()).toBe(null);
+    rpcImpl = async (name) => ({ data: { google: true, is_teacher: false, membership: null, name }, error: null });
+    expect(await api.fetchMySchoolStatus()).toMatchObject({ google: true, name: 'my_school_status' });
+    warn.mockRestore();
+  });
+
+  it('fills in an empty school', async () => {
+    result = { data: null, error: null };
+    expect(await api.fetchMySchool()).toEqual({ school: null, domains: [], is_admin: false, teachers: [], requests: [] });
+    expect(await api.searchSchools('x')).toEqual([]);
+    expect(await api.fetchAdminSchools()).toEqual([]);
+  });
+
+  it('school errors become friendly messages, with the code', async () => {
+    rpcImpl = async () => ({ data: null, error: { message: 'free_mail_domain' } });
+    await expect(api.adminDecideSchool('s1', true, ['gmail.com'])).rejects.toMatchObject({
+      code: 'free_mail_domain', message: 'Gmailや携帯電話会社などのドメインは、学校のドメインにできません。',
+    });
+    expect(api.classErrorMessage({ message: 'last_admin' })).toBe('最後の管理者は外せません。先に別の先生を管理者にしてください。');
+    expect(api.classErrorMessage({ message: 'student_not_in_school' })).toContain('参加コード');
+    expect(api.classErrorMessage({ message: 'google_only' })).toContain('Google');
+  });
+
+  it('the longest code wins: target_not_teacher is not read as not_teacher', async () => {
+    expect(api.classErrorMessage({ message: 'target_not_teacher' })).toBe(api.classErrorMessage({ message: 'xx target_not_teacher' }));
+    rpcImpl = async () => ({ data: null, error: { message: 'target_not_teacher' } });
+    await expect(api.addCoTeacher('c1', 't2')).rejects.toMatchObject({ code: 'target_not_teacher' });
+    rpcImpl = async () => ({ data: null, error: { message: 'not_teacher' } });
+    await expect(api.addCoTeacher('c1', 't2')).rejects.toMatchObject({ code: 'not_teacher' });
+  });
+});
+
 describe('teacher area phase 2', () => {
   it('calls each database function with the right arguments', async () => {
     result = { data: [], error: null };

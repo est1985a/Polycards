@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { colors, fontDisplay } from '../styles/theme';
-import { parseRosterPaste, rosterPayload, previewRows, previewSummary, ROSTER_MAX_ROWS, SCHOOL_EMAIL_DOMAIN } from '../lib/rosterPaste';
+import { parseRosterPaste, rosterPayload, previewRows, previewSummary, ROSTER_MAX_ROWS } from '../lib/rosterPaste';
+import { domainsLabel } from '../lib/schools';
 import SheetFrame from './SheetFrame';
 import { ErrorText, DuplicateNumberTag } from './ClassFields';
 import { inputStyle, ghostSmall, primarySmall, noAutoFix } from '../styles/forms';
@@ -29,8 +30,9 @@ export function StatusPill({ status }) {
 }
 
 // The preview list (one row per pasted line): number, name + email (+ warnings), status.
-// rows: previewRows(). Plain markup, so tests can render it.
-export function RosterPastePreview({ rows, headerSkipped = false }) {
+// rows: previewRows(). domains: the school's verified domains (for the outside-the-school reason).
+// Plain markup, so tests can render it.
+export function RosterPastePreview({ rows, headerSkipped = false, domains = [] }) {
   const summary = previewSummary(rows);
   return (
     <div style={{ display: "grid", gap: 10 }}>
@@ -56,9 +58,10 @@ export function RosterPastePreview({ rows, headerSkipped = false }) {
                 {r.sameNumber && <DuplicateNumberTag />}
               </span>
               {!unsplit && <span style={{ fontSize: 13, color: colors.muted }}>{r.email || "–"}</span>}
-              {r.status === 'error' && <span style={{ fontSize: 13, color: colors.danger }}>{t(`rosterPaste.reason.${r.reason}`)}</span>}
-              {r.status !== 'error' && r.outsideSchool && (
-                <span data-outside-school="" style={{ fontSize: 13, color: colors.gold }}>{t("rosterPaste.outsideSchool", { domain: SCHOOL_EMAIL_DOMAIN })}</span>
+              {r.status === 'error' && (
+                <span data-roster-reason={r.reason} style={{ fontSize: 13, color: colors.danger }}>
+                  {t(`rosterPaste.reason.${r.reason}`, { domains: domainsLabel(domains) })}
+                </span>
               )}
             </span>
             <StatusPill status={r.status} />
@@ -75,7 +78,8 @@ export function RosterPastePreview({ rows, headerSkipped = false }) {
 // without saving: onCheck) → the preview → 名簿に追加 (onSave) → done.
 // members / pending: the class's students and 未ログイン rows (for the same-number warning).
 // onCheck(rows) / onSave(rows): add_roster_entries() with and without p_dry_run; both return its results.
-export default function RosterPasteSheet({ members = [], pending = [], onCheck, onSave, onClose }) {
+// domains: the school's verified domains (my_school().domains); only addresses on them can be added.
+export default function RosterPasteSheet({ members = [], pending = [], domains = [], onCheck, onSave, onClose }) {
   const [text, setText] = useState("");
   const [step, setStep] = useState("paste"); // 'paste' | 'preview' | 'done'
   const [parsed, setParsed] = useState(null);
@@ -135,7 +139,7 @@ export default function RosterPasteSheet({ members = [], pending = [], onCheck, 
     const n = previewSummary(rows).add;
     body = (
       <div style={{ display: "grid", gap: 12 }}>
-        <RosterPastePreview rows={rows} headerSkipped={parsed.headerSkipped} />
+        <RosterPastePreview rows={rows} headerSkipped={parsed.headerSkipped} domains={domains} />
         <ErrorText>{error}</ErrorText>
         <div style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: 8 }}>
           <button onClick={() => { setStep("paste"); setError(null); }} disabled={busy} style={ghostSmall}>{t("rosterPaste.edit")}</button>

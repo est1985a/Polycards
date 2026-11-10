@@ -1,7 +1,7 @@
 // Tests for 名簿を貼り付け: reading a pasted roster and the preview statuses. Run with: npm test
 import { describe, it, expect } from 'vitest';
 import {
-  parseRosterPaste, splitRosterLine, rosterPayload, previewRows, previewSummary, cleanEmail, emailValid, isSchoolEmail,
+  parseRosterPaste, splitRosterLine, rosterPayload, previewRows, previewSummary, cleanEmail, emailValid,
   ROSTER_MAX_ROWS,
 } from './rosterPaste';
 
@@ -113,14 +113,11 @@ describe('parseRosterPaste', () => {
 });
 
 describe('emails', () => {
-  it('cleans, checks and recognizes the school domain', () => {
+  it('cleans and checks', () => {
     expect(cleanEmail('  A@B.JP ')).toBe('a@b.jp');
     expect(emailValid('a@b.jp')).toBe(true);
     expect(emailValid('a@b')).toBe(false);
     expect(emailValid('a b@c.jp')).toBe(false);
-    expect(isSchoolEmail('Taro@RyukokuRG.ed.jp')).toBe(true);
-    expect(isSchoolEmail('taro@gmail.com')).toBe(false);
-    expect(isSchoolEmail('taro@x.ryukokurg.ed.jp.evil.com')).toBe(false);
   });
 });
 
@@ -171,9 +168,11 @@ describe('previewRows', () => {
     expect(previewRows(parsed, null).map((r) => r.status)).toEqual(['unchecked', 'error', 'unchecked', 'unchecked', 'unchecked', 'unchecked', 'unchecked']);
   });
 
-  it('flags an address outside the school (allowed)', () => {
-    const rows = previewRows(parsed, results);
-    expect(rows.filter((r) => r.outsideSchool).map((r) => r.realName)).toEqual(['外部']);
+  it('an address outside the school is refused by the database: error / outsideSchool', () => {
+    const p = parseRosterPaste('1\tA\ta@gmail.com');
+    const [row] = previewRows(p, [{ status: 'error', reason: 'outside_school_domain' }]);
+    expect([row.status, row.reason]).toEqual(['error', 'outsideSchool']);
+    expect('outsideSchool' in previewRows(parsed, results)[0]).toBe(false);
   });
 
   it('an unknown database reason becomes "other"', () => {

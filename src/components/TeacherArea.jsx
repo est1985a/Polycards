@@ -42,6 +42,7 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
   const [pending, setPending] = useState(null); // { classId, rows }: class_roster_pending() (未ログイン rows)
   const [pendingCounts, setPendingCounts] = useState({}); // { [classId]: n } for the class list
   const [pasteOpen, setPasteOpen] = useState(false); // ＋ 名簿を貼り付け
+  const [schoolDomains, setSchoolDomains] = useState([]); // my_school().domains (roster paste)
   const [defaultYear] = useState(() => defaultSchoolYear(Date.now()));
   const classId = ["class", "student", "assignNew", "assignment"].includes(path.screen) ? path.classId : null;
   const studentId = path.screen === "student" ? path.studentId : null;
@@ -153,6 +154,17 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
   useEffect(() => {
     if (classId && path.screen === "class") loadPending(classId);
   }, [classId, path.screen, loadPending]);
+
+  // The school's verified domains, for the roster paste's "not a school address" reason.
+  // Loaded when the paste opens; a failure (e.g. before the SQL is run) just leaves [].
+  useEffect(() => {
+    if (!pasteOpen) return;
+    let current = true;
+    api.fetchMySchool()
+      .then((s) => { if (current) setSchoolDomains(s.domains); })
+      .catch((e) => console.warn("Could not load the school: " + e.message));
+    return () => { current = false; };
+  }, [pasteOpen]);
 
   useEffect(() => {
     if (classId && path.screen === "class") loadAwards(classId);
@@ -383,6 +395,7 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
           <RosterPasteSheet
             members={detail?.students ?? []}
             pending={classPending}
+            domains={schoolDomains}
             onCheck={(rows) => api.addRosterEntries(classId, rows, true)}
             onSave={async (rows) => {
               const results = await api.addRosterEntries(classId, rows);

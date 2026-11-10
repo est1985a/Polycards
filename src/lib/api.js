@@ -716,14 +716,40 @@ const CLASS_ERRORS = {
   bad_email: "errors.badEmail",
   roster_entry_not_found: "errors.rosterEntryNotFound",
   roster_email_taken: "errors.rosterEmailTaken",
+  // Schools (supabase/polyvo-schools-phase1.sql)
+  google_only: "errors.googleOnly",
+  already_in_school: "errors.alreadyInSchool",
+  school_not_found: "errors.schoolNotFound",
+  school_exists: "errors.schoolExists",
+  bad_school_name: "errors.badSchoolName",
+  bad_school_kana: "errors.badSchoolKana",
+  bad_prefecture: "errors.badPrefecture",
+  bad_school_type: "errors.badSchoolType",
+  bad_display_name: "errors.badDisplayName",
+  no_request: "errors.noRequest",
+  request_not_found: "errors.requestNotFound",
+  not_school_admin: "errors.notSchoolAdmin",
+  teacher_not_in_school: "errors.teacherNotInSchool",
+  last_admin: "errors.lastAdmin",
+  not_platform_admin: "errors.notPlatformAdmin",
+  school_not_pending: "errors.schoolNotPending",
+  bad_domain: "errors.badDomain",
+  free_mail_domain: "errors.freeMailDomain",
+  domain_taken: "errors.domainTaken",
+  school_not_verified: "errors.schoolNotVerified",
+  student_not_in_school: "errors.studentNotInSchool",
+  outside_school_domain: "errors.outsideSchoolDomain",
 };
 
-// The known code in a database error (e.g. "bad_code"), or null.
+// The known code in a database error (e.g. "bad_code"), or null. The LONGEST code found in the
+// message wins, so "target_not_teacher" is never read as "not_teacher".
 function classErrorCode(error, status = null) {
   // 401 = the sign-in was lost (see sessionWatch.js): never show "permission denied for function …".
   if (status === 401) return "not_signed_in";
   const text = error?.message || "";
-  return Object.keys(CLASS_ERRORS).find((c) => text.includes(c)) ?? null;
+  return Object.keys(CLASS_ERRORS)
+    .filter((c) => text.includes(c))
+    .sort((a, b) => b.length - a.length)[0] ?? null;
 }
 
 // Turns a database error (e.g. "bad_code") into a friendly message.
@@ -786,6 +812,8 @@ export async function fetchClassDetail(classId) {
 
 // Teachers only: accounts whose username, Google name or email contains the text (max 20):
 // [{ id, display_name, username, email, is_teacher }]. teachersOnly: for adding a co-teacher.
+// Since polyvo-schools-phase1.sql: only students already in a class of my school (archived too) /
+// teachers of my school, and email is always null.
 export async function searchUsers(query, teachersOnly = false) {
   return (await callClass('search_users', { p_query: query, p_teachers_only: teachersOnly })) || [];
 }
@@ -813,6 +841,94 @@ export function addCoTeacher(classId, teacherUserId) {
 // Remove a teacher (or myself) from a class. A class always keeps one teacher (last_teacher).
 export function removeCoTeacher(classId, teacherUserId) {
   return callClass('remove_co_teacher', { p_class_id: classId, p_teacher_user_id: teacherUserId });
+}
+
+// ---------------------------------------------------------------------
+// Schools and teacher sign-up (supabase/polyvo-schools-phase1.sql)
+// ---------------------------------------------------------------------
+
+// For the account menu: { google, is_teacher, is_platform_admin,
+//   membership: { status: 'pending'|'approved', role, new_school, school: { id, name, prefecture, school_type } } | null }.
+// Never throws: null on any error (also before the SQL is run), so the menu just shows nothing new.
+export async function fetchMySchoolStatus() {
+  const { data, error } = await supabase.rpc('my_school_status');
+  if (error) {
+    console.warn("Could not load school status: " + error.message);
+    return null;
+  }
+  return data ?? null;
+}
+
+// Approved schools by (part of) the name or reading, optionally one prefecture:
+// [{ id, name, prefecture, school_type }] (max 20; with only a prefecture, max 100).
+export async function searchSchools(query, prefecture = null) {
+  return (await callClass('search_schools', { p_query: query ?? '', p_prefecture: prefecture || null })) || [];
+}
+
+// Ask to join an approved school → { status: 'approved' | 'pending', school_name }.
+export function requestJoinSchool(schoolId, displayName) {
+  return callClass('request_join_school', { p_school_id: schoolId, p_display_name: displayName });
+}
+
+// Register a new school (waits for a Polyvo admin) → { status: 'pending', school_id }.
+export function registerSchool({ name, kana = null, prefecture, schoolType, displayName }) {
+  return callClass('register_school', {
+    p_name: name, p_kana: kana || null, p_prefecture: prefecture, p_school_type: schoolType, p_display_name: displayName,
+  });
+}
+
+// Cancel my waiting request (a school I registered that is still waiting is deleted with it).
+export function cancelSchoolRequest() {
+  return callClass('cancel_school_request', {});
+}
+
+// My school (teachers): { school: { id, name, name_kana, prefecture, school_type, auto_approve_domain },
+//   domains, is_admin, teachers: [{ user_id, display_name, role, is_me, class_count }],
+//   requests: [{ user_id, display_name, account_name, email, requested_at }] (admins only, else []) }
+export async function fetchMySchool() {
+  const data = await callClass('my_school', {});
+  return {
+    school: data?.school ?? null,
+    domains: data?.domains ?? [],
+    is_admin: data?.is_admin === true,
+    teachers: data?.teachers ?? [],
+    requests: data?.requests ?? [],
+  };
+}
+
+// School admins: approve (true) or decline (false) a join request.
+export function decideSchoolRequest(userId, approve) {
+  return callClass('decide_school_request', { p_user: userId, p_approve: approve });
+}
+
+// School admins: make a teacher of the school an admin (true) or a plain teacher (false).
+export function setSchoolAdmin(userId, admin) {
+  return callClass('set_school_admin', { p_user: userId, p_admin: admin });
+}
+
+// School admins remove a teacher; any teacher can pass their own id to leave the school.
+export function removeSchoolTeacher(userId) {
+  return callClass('remove_school_teacher', { p_user: userId });
+}
+
+// School admins (and the Polyvo admin): domain auto-approve on / off.
+export function setSchoolAutoApprove(schoolId, on) {
+  return callClass('set_school_auto_approve', { p_school: schoolId, p_on: on });
+}
+
+// Polyvo admin: every school, waiting ones first (see admin_schools() in the SQL).
+export async function fetchAdminSchools() {
+  return (await callClass('admin_schools', {})) || [];
+}
+
+// Polyvo admin: approve (with its verified domains, may be empty) or decline a waiting school.
+export function adminDecideSchool(schoolId, approve, domains = []) {
+  return callClass('admin_decide_school', { p_school: schoolId, p_approve: approve, p_domains: domains });
+}
+
+// Polyvo admin: replace a school's verified domains.
+export function adminSetSchoolDomains(schoolId, domains) {
+  return callClass('admin_set_school_domains', { p_school: schoolId, p_domains: domains });
 }
 
 // Join codes (supabase/polycards-class-leave-and-join-limit.sql): a wrong code, and too many wrong

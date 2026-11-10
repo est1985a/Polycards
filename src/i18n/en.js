@@ -760,7 +760,7 @@ export default {
   "rosterPaste.reason.duplicateEmail": "The same email appears more than once",
   "rosterPaste.reason.alreadyClaimed": "This row was already used (that account was deleted)",
   "rosterPaste.reason.other": "Can't be added",
-  "rosterPaste.outsideSchool": "Not a school address (@{domain})",
+  "rosterPaste.reason.outsideSchool": "Not a school address ({domains}), so it can't be added", // DRAFT
   "rosterPaste.errorsSkipped": "Rows with an error won't be added.",
   "rosterPaste.edit": "Edit the paste",
   "rosterPaste.save": "Add to roster ({n})",
@@ -998,6 +998,29 @@ export default {
   "errors.badEmail": "This email address doesn't look right",
   "errors.rosterEntryNotFound": "This row is gone (the student may have signed in)",
   "errors.rosterEmailTaken": "This email address is already on the roster",
+  // Schools (supabase/polyvo-schools-phase1.sql): all DRAFT
+  "errors.googleOnly": "To register as a teacher, sign in with a Google account.", // DRAFT
+  "errors.alreadyInSchool": "You're already in a school, or a request is waiting.", // DRAFT
+  "errors.schoolNotFound": "School not found.", // DRAFT
+  "errors.schoolExists": "A school with this name already exists in this prefecture. Search for it and request to join.", // DRAFT
+  "errors.badSchoolName": "Enter a school name of 2 to 60 characters.", // DRAFT
+  "errors.badSchoolKana": "Write the reading in hiragana or katakana (up to 60 characters).", // DRAFT
+  "errors.badPrefecture": "Choose a prefecture.", // DRAFT
+  "errors.badSchoolType": "Choose a type of school.", // DRAFT
+  "errors.badDisplayName": "Enter a display name of 1 to 20 characters.", // DRAFT
+  "errors.noRequest": "There is no request to cancel.", // DRAFT
+  "errors.requestNotFound": "This request is no longer there.", // DRAFT
+  "errors.notSchoolAdmin": "Only a school admin can do this.", // DRAFT
+  "errors.teacherNotInSchool": "This teacher is no longer in this school.", // DRAFT
+  "errors.lastAdmin": "You can't remove the last admin. Make another teacher an admin first.", // DRAFT
+  "errors.notPlatformAdmin": "Only a Polyvo admin can do this.", // DRAFT
+  "errors.schoolNotPending": "This school has already been approved or declined.", // DRAFT
+  "errors.badDomain": "This domain doesn't look right (for example: school.ed.jp).", // DRAFT
+  "errors.freeMailDomain": "Free email and phone company domains (like Gmail) can't be a school domain.", // DRAFT
+  "errors.domainTaken": "Another school already uses this domain.", // DRAFT
+  "errors.schoolNotVerified": "This school has no verified domain, so pasting a roster isn't available. Students can join with the class code.", // DRAFT
+  "errors.studentNotInSchool": "You can only add students who are already in a class at this school. New students can join with the class code.", // DRAFT
+  "errors.outsideSchoolDomain": "This isn't an email address on the school's domain.", // DRAFT
   "assignment.overdue": "Past due",
   "assignment.dueToday": "Due today",
   "assignment.dueIn": plural("{n} day left", "{n} days left"),
@@ -1131,4 +1154,58 @@ export default {
   "verbForm.pp": "Past participle",
   "verbForm.ing": "-ing form",
   "verbForm.third": "-s form",
+  // Schools (supabase/polyvo-schools-phase1.sql): prefectures and school types. English: DRAFT
+  "schools.pref.hokkaido": "Hokkaido",
+  "schools.pref.aomori": "Aomori",
+  "schools.pref.iwate": "Iwate",
+  "schools.pref.miyagi": "Miyagi",
+  "schools.pref.akita": "Akita",
+  "schools.pref.yamagata": "Yamagata",
+  "schools.pref.fukushima": "Fukushima",
+  "schools.pref.ibaraki": "Ibaraki",
+  "schools.pref.tochigi": "Tochigi",
+  "schools.pref.gunma": "Gunma",
+  "schools.pref.saitama": "Saitama",
+  "schools.pref.chiba": "Chiba",
+  "schools.pref.tokyo": "Tokyo",
+  "schools.pref.kanagawa": "Kanagawa",
+  "schools.pref.niigata": "Niigata",
+  "schools.pref.toyama": "Toyama",
+  "schools.pref.ishikawa": "Ishikawa",
+  "schools.pref.fukui": "Fukui",
+  "schools.pref.yamanashi": "Yamanashi",
+  "schools.pref.nagano": "Nagano",
+  "schools.pref.gifu": "Gifu",
+  "schools.pref.shizuoka": "Shizuoka",
+  "schools.pref.aichi": "Aichi",
+  "schools.pref.mie": "Mie",
+  "schools.pref.shiga": "Shiga",
+  "schools.pref.kyoto": "Kyoto",
+  "schools.pref.osaka": "Osaka",
+  "schools.pref.hyogo": "Hyogo",
+  "schools.pref.nara": "Nara",
+  "schools.pref.wakayama": "Wakayama",
+  "schools.pref.tottori": "Tottori",
+  "schools.pref.shimane": "Shimane",
+  "schools.pref.okayama": "Okayama",
+  "schools.pref.hiroshima": "Hiroshima",
+  "schools.pref.yamaguchi": "Yamaguchi",
+  "schools.pref.tokushima": "Tokushima",
+  "schools.pref.kagawa": "Kagawa",
+  "schools.pref.ehime": "Ehime",
+  "schools.pref.kochi": "Kochi",
+  "schools.pref.fukuoka": "Fukuoka",
+  "schools.pref.saga": "Saga",
+  "schools.pref.nagasaki": "Nagasaki",
+  "schools.pref.kumamoto": "Kumamoto",
+  "schools.pref.oita": "Oita",
+  "schools.pref.miyazaki": "Miyazaki",
+  "schools.pref.kagoshima": "Kagoshima",
+  "schools.pref.okinawa": "Okinawa",
+  "schools.pref.overseas_other": "Overseas / other",
+  "schools.type.jhs": "Junior high school", // DRAFT
+  "schools.type.hs": "High school", // DRAFT
+  "schools.type.jhs_hs": "Junior and senior high school", // DRAFT
+  "schools.type.elementary": "Elementary school", // DRAFT
+  "schools.type.other": "Other", // DRAFT
 };

@@ -4,8 +4,8 @@
 // supabase/polycards-roster-prefill.sql) checks every row again and decides the real status.
 import { cleanRealName, realNameValid, parseStudentNumber } from './classes';
 
-// The school's Google domain. Other addresses are allowed, only flagged in the preview.
-export const SCHOOL_EMAIL_DOMAIN = 'ryukokurg.ed.jp';
+// Since polyvo-schools-phase1.sql the school's verified domains come from the database
+// (my_school().domains), and the database refuses any other address (outside_school_domain).
 export const ROSTER_MAX_ROWS = 200; // same limit as add_roster_entries()
 
 // An email as stored: NFKC (full-width → half-width), trimmed, lower case.
@@ -17,10 +17,6 @@ export function cleanEmail(text) {
 export function emailValid(text) {
   const email = cleanEmail(text);
   return email.length <= 254 && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
-}
-
-export function isSchoolEmail(text) {
-  return cleanEmail(text).endsWith(`@${SCHOOL_EMAIL_DOMAIN}`);
 }
 
 // One pasted line → its cells. A line with a tab is split on tabs (Excel / Sheets); otherwise it is
@@ -121,14 +117,14 @@ export function rosterPayload(parsed) {
 // A database reason → the same keys as the problems above.
 const REASONS = {
   bad_email: 'email', bad_name: 'name', bad_number: 'number', duplicate_email: 'duplicateEmail',
-  already_claimed: 'alreadyClaimed',
+  already_claimed: 'alreadyClaimed', outside_school_domain: 'outsideSchool',
 };
 
 // The preview: every pasted row with
 //   status: 'unchecked' (not sent yet) | 'added_pending' | 'added_member' | 'already_member' | 'updated' | 'error'
 //   reason: the problem key when status is 'error'
 //   sameNumber: another student (in this paste, on the roster, or 未ログイン) has the same 出席番号
-//   outsideSchool: a valid address that isn't @ryukokurg.ed.jp (allowed, only flagged)
+// An address outside the school's verified domains comes back as error / 'outsideSchool'.
 // results: add_roster_entries()'s answer for rosterPayload(parsed) (same order), or null.
 // members / pending: the class's students (class_detail) and 未ログイン rows (class_roster_pending).
 export function previewRows(parsed, results = null, members = [], pending = []) {
@@ -156,7 +152,6 @@ export function previewRows(parsed, results = null, members = [], pending = []) 
   return rows.map((r) => ({
     ...r,
     sameNumber: r.status !== 'error' && r.studentNumber != null && (counts.get(r.studentNumber) ?? 0) > 1,
-    outsideSchool: emailValid(r.email) && !isSchoolEmail(r.email),
   }));
 }
 
