@@ -1208,4 +1208,89 @@ export default {
   "schools.type.jhs_hs": "Junior and senior high school", // DRAFT
   "schools.type.elementary": "Elementary school", // DRAFT
   "schools.type.other": "Other", // DRAFT
+  // Schools Phase 1: account menu, 先生として登録, 学校 page, Polyvo管理 (English: DRAFT)
+  "menu.registerTeacher": "Register as a teacher", // DRAFT
+  "menu.pendingSchool": "Waiting for approval: {name}", // DRAFT
+  "menu.cancelRequest": "Cancel", // DRAFT
+  "menu.cancelRequestConfirm": "Cancel your request?", // DRAFT
+  "menu.cancelRequestYes": "Cancel request", // DRAFT
+  "menu.back": "Back", // DRAFT
+  "menu.admin": "Polyvo admin", // DRAFT
+  "signup.title": "Register as a teacher", // DRAFT
+  "signup.intro": "Find your school and request to join. When you're approved, the Teacher tab appears.", // DRAFT
+  "signup.schoolSearch": "School name", // DRAFT
+  "signup.searchPlaceholder": "e.g. Ryukoku", // DRAFT
+  "signup.prefecture": "Prefecture", // DRAFT
+  "signup.anyPrefecture": "All prefectures", // DRAFT
+  "signup.search": "Search", // DRAFT
+  "signup.searching": "Searching…", // DRAFT
+  "signup.results": "Schools found", // DRAFT
+  "signup.noResults": "No schools found.", // DRAFT
+  "signup.choose": "Choose", // DRAFT
+  "signup.notFound": "Can't find your school?", // DRAFT
+  "signup.registerNew": "Register a new school", // DRAFT
+  "signup.schoolLine": "{prefecture} · {type}", // DRAFT
+  "signup.displayName": "Display name", // DRAFT
+  "signup.displayNameHint": "The name students see (e.g. Mr. Andre). Up to 20 characters.", // DRAFT
+  "signup.displayNamePlaceholder": "e.g. Mr. Andre", // DRAFT
+  "signup.request": "Request to join", // DRAFT
+  "signup.sending": "Sending…", // DRAFT
+  "signup.back": "Back", // DRAFT
+  "signup.schoolName": "School name", // DRAFT
+  "signup.schoolNameHint": "Use the official name.", // DRAFT
+  "signup.schoolKana": "Reading in kana (optional)", // DRAFT
+  "signup.schoolType": "Type of school", // DRAFT
+  "signup.choosePlaceholder": "Choose", // DRAFT
+  "signup.next": "Next", // DRAFT
+  "signup.similarTitle": "Is it one of these schools?", // DRAFT
+  "signup.similarNone": "None of these: register a new school", // DRAFT
+  "signup.registerSubmit": "Register the school", // DRAFT
+  "signup.newSchoolNote": "A new school can be used once a Polyvo admin has checked it. You become the school's admin.", // DRAFT
+  "signup.requestSent": "Request sent. When you're approved, the Teacher tab appears.", // DRAFT
+  "signup.approved": "You're now a teacher at {school}!", // DRAFT
+  "signup.schoolSent": "Your new school was sent. A Polyvo admin will check it. When it's approved, the Teacher tab appears.", // DRAFT
+  "signup.close": "Close", // DRAFT
+  "school.switchLabel": "Teacher screens", // DRAFT
+  "school.tabClasses": "Classes", // DRAFT
+  "school.tabSchool": "School", // DRAFT
+  "school.tabSchoolRequests": "School ({n})", // DRAFT
+  "school.domains": "Verified domain: {domains}", // DRAFT
+  "school.noDomains": "Verified domain: none (roster paste isn't available)", // DRAFT
+  "school.autoApprove": "Approve teachers on the school's domain automatically", // DRAFT
+  "school.autoApproveNote": "Turn this off if students use the same domain.", // DRAFT
+  "school.requests": "Join requests", // DRAFT
+  "school.noRequests": "No requests waiting.", // DRAFT
+  "school.requestedOn": "Requested {date}", // DRAFT
+  "school.approve": "Approve", // DRAFT
+  "school.decline": "Decline", // DRAFT
+  "school.declineConfirm": "Decline {name}'s request?", // DRAFT
+  "school.teachers": "Teachers ({n})", // DRAFT
+  "school.adminBadge": "Admin", // DRAFT
+  "school.me": "You", // DRAFT
+  "school.classCount": "Classes: {n}", // DRAFT
+  "school.makeAdmin": "Make admin", // DRAFT
+  "school.removeAdmin": "Remove admin", // DRAFT
+  "school.remove": "Remove from school", // DRAFT
+  "school.removeConfirm": "Remove {name} from the school? They will no longer see their classes.", // DRAFT
+  "school.adminNote": "Admins approve join requests and manage teachers.", // DRAFT
+  "admin.title": "Polyvo admin", // DRAFT
+  "admin.pending": "Schools waiting for approval", // DRAFT
+  "admin.noPending": "No schools waiting.", // DRAFT
+  "admin.all": "All schools", // DRAFT
+  "admin.registeredBy": "Registered by: {name}", // DRAFT
+  "admin.registeredOn": "Registered {date}", // DRAFT
+  "admin.domainsLabel": "Verified domains (optional)", // DRAFT
+  "admin.domainsHint": "e.g. school.ed.jp. Separate several with commas. Free email and phone domains can't be used.", // DRAFT
+  "admin.badDomains": "These domains don't look right: {list}", // DRAFT
+  "admin.approve": "Approve", // DRAFT
+  "admin.decline": "Decline", // DRAFT
+  "admin.declineConfirm": "Decline the school \"{name}\"?", // DRAFT
+  "admin.status.pending": "Waiting", // DRAFT
+  "admin.status.approved": "Approved", // DRAFT
+  "admin.status.declined": "Declined", // DRAFT
+  "admin.counts": "Teachers {teachers} · Classes {classes} · Requests {requests}", // DRAFT
+  "admin.editDomains": "Edit domains", // DRAFT
+  "admin.save": "Save", // DRAFT
+  "admin.noAdmin": "No admin", // DRAFT
+  "teacher.searchSchoolOnly": "Only students already in a class at this school can be found. New students can join with the class code.", // DRAFT
 };

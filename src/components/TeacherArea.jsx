@@ -10,6 +10,7 @@ import AwardSheet from './AwardSheet';
 import AssignPackPage from './AssignPackPage';
 import AssignmentPage from './AssignmentPage';
 import RosterPasteSheet from './RosterPasteSheet';
+import SchoolPage, { TeacherAreaSwitch } from './SchoolPage';
 import { downloadCsv } from '../lib/csv';
 import { overviewCsv, assignmentCsv, awardsCsv, classCsvName } from '../lib/classCsv';
 import { t } from '../i18n';
@@ -19,7 +20,7 @@ import { TEACHER_START } from '../lib/classes';
 
 // The 先生 tab (teacher accounts only): loads the class list or one class and runs every teacher
 // action through the database functions in api.js (which check that the caller teaches the class).
-// path: { screen: 'classes' | 'class' | 'student' | 'assignNew' | 'assignment', classId, studentId,
+// path: { screen: 'classes' | 'school' | 'class' | 'student' | 'assignNew' | 'assignment', classId, studentId,
 // assignmentId, archived } (kept in App, so tapping the tab again can go back to the list).
 // onNavigate(path): move to another screen. library / collections / libraryLoading: the Word Packs
 // data App already loaded (for choosing a pack to assign).
@@ -43,6 +44,7 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
   const [pendingCounts, setPendingCounts] = useState({}); // { [classId]: n } for the class list
   const [pasteOpen, setPasteOpen] = useState(false); // ＋ 名簿を貼り付け
   const [schoolDomains, setSchoolDomains] = useState([]); // my_school().domains (roster paste)
+  const [school, setSchool] = useState(null); // { data, error }: my_school() (学校 page, request count)
   const [defaultYear] = useState(() => defaultSchoolYear(Date.now()));
   const classId = ["class", "student", "assignNew", "assignment"].includes(path.screen) ? path.classId : null;
   const studentId = path.screen === "student" ? path.studentId : null;
@@ -154,6 +156,21 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
   useEffect(() => {
     if (classId && path.screen === "class") loadPending(classId);
   }, [classId, path.screen, loadPending]);
+
+  // My school (my_school()): loaded on the class list (for the 学校（N） request count) and the
+  // 学校 page. A failed reload keeps what was shown, with the error.
+  const loadSchool = useCallback(async () => {
+    try {
+      setSchool({ data: await api.fetchMySchool(), error: null });
+    } catch (e) {
+      console.error(e);
+      setSchool((old) => ({ data: old?.data ?? null, error: e.message }));
+    }
+  }, []);
+  useEffect(() => {
+    if (path.screen === "classes" || path.screen === "school") loadSchool();
+  }, [path.screen, loadSchool]);
+  const after = (fn) => async (...args) => { try { await fn(...args); } finally { await loadSchool(); } };
 
   // The school's verified domains, for the roster paste's "not a school address" reason.
   // Loaded when the paste opens; a failure (e.g. before the SQL is run) just leaves [].
@@ -412,21 +429,50 @@ export default function TeacherArea({ path, onNavigate, wide = false, library = 
     );
   }
 
-  return (
-    <TeacherTab
-      classes={classes}
-      error={listError}
-      archived={path.archived}
-      wide={wide}
-      defaultYear={defaultYear}
-      onOpenGuide={onOpenGuide}
-      pendingCounts={pendingCounts}
-      onToggleArchived={(archived) => onNavigate({ ...path, archived })}
-      onOpen={(id) => onNavigate({ ...path, screen: "class", classId: id, classView: TEACHER_START.classView, sort: TEACHER_START.sort })}
-      onCreate={async (name, year) => {
-        const created = await api.createClass(name, year);
-        onNavigate({ ...path, screen: "class", classId: created.id, classView: TEACHER_START.classView, sort: TEACHER_START.sort });
-      }}
+  const requestCount = school?.data?.is_admin ? school.data.requests.length : 0;
+  const areaSwitch = (
+    <TeacherAreaSwitch
+      value={path.screen === "school" ? "school" : "classes"}
+      requests={requestCount}
+      onChange={(v) => onNavigate({ ...path, screen: v === "school" ? "school" : "classes", classId: null })}
     />
+  );
+
+  if (path.screen === "school") {
+    return (
+      <div style={{ display: "grid", gap: 16, paddingTop: 8 }}>
+        {areaSwitch}
+        <SchoolPage
+          data={school?.data ?? null}
+          error={school?.error ?? null}
+          wide={wide}
+          onDecide={after(api.decideSchoolRequest)}
+          onSetAdmin={after(api.setSchoolAdmin)}
+          onRemove={after(api.removeSchoolTeacher)}
+          onAutoApprove={after((on) => api.setSchoolAutoApprove(school.data.school.id, on))}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "grid", gap: 8, paddingTop: 8 }}>
+      {areaSwitch}
+      <TeacherTab
+        classes={classes}
+        error={listError}
+        archived={path.archived}
+        wide={wide}
+        defaultYear={defaultYear}
+        onOpenGuide={onOpenGuide}
+        pendingCounts={pendingCounts}
+        onToggleArchived={(archived) => onNavigate({ ...path, archived })}
+        onOpen={(id) => onNavigate({ ...path, screen: "class", classId: id, classView: TEACHER_START.classView, sort: TEACHER_START.sort })}
+        onCreate={async (name, year) => {
+          const created = await api.createClass(name, year);
+          onNavigate({ ...path, screen: "class", classId: created.id, classView: TEACHER_START.classView, sort: TEACHER_START.sort });
+        }}
+      />
+    </div>
   );
 }

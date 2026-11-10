@@ -50,6 +50,9 @@ import TeacherArea from './components/TeacherArea';
 import { TEACHER_START } from './lib/classes';
 import { loadLastClass, saveLastClass } from './lib/classTab';
 import JoinClassSheet from './components/JoinClassSheet';
+import TeacherSignupSheet from './components/TeacherSignupSheet';
+import AdminScreen from './components/AdminScreen';
+import { schoolMenuState, pendingSchoolName } from './lib/schools';
 import AwardPopup from './components/AwardPopup';
 import RosterJoinPopup from './components/RosterJoinPopup';
 import { rosterJoinStart, rosterJoinNext } from './lib/rosterJoin';
@@ -112,6 +115,9 @@ function App() {
   const [isTeacher, setIsTeacher] = useState(false);
   const [teacherPath, setTeacherPath] = useState(TEACHER_START);
   const [joinOpen, setJoinOpen] = useState(false);
+  // Schools (supabase/polyvo-schools-phase1.sql): my_school_status() for the account menu, and 先生として登録.
+  const [schoolStatus, setSchoolStatus] = useState(null);
+  const [signupOpen, setSignupOpen] = useState(false);
   const [myClasses, setMyClasses] = useState(null);
   // クラス tab: the class shown, remembered per account on this device ({ userId, classId }).
   const [classChoice, setClassChoice] = useState(null);
@@ -276,7 +282,7 @@ function App() {
         setMyDeckIds([]); setMyDecks([]); setStats(null);
         setGacha(null); setReveal(null); setCollection(null); pulseChecked.current = false;
         setThemeRows(null); setThemesFailed(false); setSeenSaved(null);
-        setIsTeacher(false); setMyClasses(null); setJoinOpen(false); setAwardRows([]); setPendingAssignments(0);
+        setIsTeacher(false); setSchoolStatus(null); setSignupOpen(false); setMyClasses(null); setJoinOpen(false); setAwardRows([]); setPendingAssignments(0);
         setRosterJoin(null); rosterClaimedFor.current = null;
       }
       // Log-out: forget this account's theme and settings on the device and go back to Midnight
@@ -321,14 +327,24 @@ function App() {
       });
   }, [userId]);
 
-  // Teacher account? Read once after sign-in (an error counts as no; a late answer for another
-  // account is ignored).
+  // Teacher account? and the school status for the account menu (先生として登録 / 承認待ち / Polyvo管理).
+  // Read after sign-in, after a sign-up or cancel, and whenever the app comes back into view (so the
+  // 先生 tab appears once a school admin approves the request). An error counts as no / null; a late
+  // answer for another account is ignored.
+  const teacherCheck = useRef(0);
+  const forgetTeacherCheck = useCallback(() => { teacherCheck.current += 1; }, []);
+  const refreshTeacherStatus = useCallback(() => {
+    const ticket = ++teacherCheck.current;
+    api.fetchIsTeacher().then((yes) => { if (teacherCheck.current === ticket) setIsTeacher(yes); });
+    api.fetchMySchoolStatus().then((status) => { if (teacherCheck.current === ticket) setSchoolStatus(status); });
+  }, []);
   useEffect(() => {
     if (!userId) return;
-    let current = true;
-    api.fetchIsTeacher().then((yes) => { if (current) setIsTeacher(yes); });
-    return () => { current = false; };
-  }, [userId]);
+    refreshTeacherStatus();
+    const onVisible = () => { if (document.visibilityState === "visible") refreshTeacherStatus(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { forgetTeacherCheck(); document.removeEventListener("visibilitychange", onVisible); };
+  }, [userId, refreshTeacherStatus, forgetTeacherCheck]);
 
   // The classes the student is in, loaded each time settings opens (and after joining one).
   const loadMyClasses = useCallback(() => {
@@ -518,7 +534,7 @@ function App() {
   // The pre-filled roster pop-up (one class after another: joined, then the nickname). It comes
   // before the award and theme pop-ups, which wait until it is done.
   const rosterJoinState = rosterJoin?.userId === userId ? rosterJoin.state : null;
-  const showRosterJoin = !!session && !!rosterJoinState && view === "dashboard" && !planOpen && !aboutOpen && !packResult && !joinOpen;
+  const showRosterJoin = !!session && !!rosterJoinState && view === "dashboard" && !planOpen && !aboutOpen && !packResult && !joinOpen && !signupOpen;
   function nextRosterJoin() {
     setRosterJoin((old) => (old ? { ...old, state: rosterJoinNext(old.state) } : old));
   }
@@ -531,7 +547,7 @@ function App() {
       setClassTabKey((k) => k + 1);
     }
   }
-  const showAwards = !!session && view === "dashboard" && awardRows.length > 0 && !planOpen && !aboutOpen && !packResult && !joinOpen && !showRosterJoin;
+  const showAwards = !!session && view === "dashboard" && awardRows.length > 0 && !planOpen && !aboutOpen && !packResult && !joinOpen && !signupOpen && !showRosterJoin;
 
   // The header pulse plays once; switch it off so it doesn't replay when the header changes.
   useEffect(() => {
@@ -660,7 +676,7 @@ function App() {
   // saved as seen (mark_rank_seen; closing the app still counts as seen), and every theme unlocked at
   // that rank too, so the theme-unlock pop-up never follows it. Closing it updates the screen.
   const canShowRankUp = !!session && view === "dashboard" && activeTab === "myCards" && !planOpen && !aboutOpen
-    && !packResult && !joinOpen && !showAwards && !showRosterJoin;
+    && !packResult && !joinOpen && !signupOpen && !showAwards && !showRosterJoin;
   const rankUpShown = canShowRankUp ? rankUpCandidate : null;
   const rankUpThemeKeys = useMemo(
     () => (rankUpCandidate ? themesSeenAt(themeItems, rankUpCandidate.rank).filter((k) => k !== DEFAULT_THEME) : []),
@@ -1236,7 +1252,7 @@ function App() {
 
   // Wide screens: My Cards uses the full column, study is 780 px, other screens 720 px (centered).
   const gachaView = view === "gacha" || view === "collection";
-  const tabbedView = gachaView || view === "settings" || view === "stats"; // full screens that keep the bottom tabs
+  const tabbedView = gachaView || view === "settings" || view === "stats" || view === "admin"; // full screens that keep the bottom tabs
   // Settings or stats opened during a review: the review is kept (hidden) underneath and comes back on 戻る.
   const reviewBehind = tabbedView && !gachaView && reviewKept(screens, !!activeSet);
   // The review fills exactly one screen (.study-page in index.css), so its buttons always fit; while
@@ -1267,6 +1283,14 @@ function App() {
           gacha={gacha} pulseGacha={gachaPulse} onOpenGacha={openGacha}
           rank={rank} newTheme={hasNewTheme} onOpenStats={openStats} onOpenSettings={openSettings} onOpenHelp={() => setAboutOpen(true)}
           onOpenJoinClass={() => setJoinOpen(true)}
+          school={session ? {
+            state: schoolMenuState(schoolStatus),
+            pendingName: pendingSchoolName(schoolStatus),
+            isPlatformAdmin: !!schoolStatus?.is_platform_admin,
+            onRegister: () => setSignupOpen(true),
+            onCancel: async () => { await api.cancelSchoolRequest(); refreshTeacherStatus(); },
+            onAdmin: () => { setView("admin"); window.scrollTo(0, 0); },
+          } : null}
           tight={studyFit && short}
           search={session && (
             <DictionarySearch
@@ -1366,7 +1390,9 @@ function App() {
             ) : null}
             {session && tabbedView && (
               <div style={{ paddingBottom: tabBarHeight + 32 }}>
-                {view === "stats" ? (
+                {view === "admin" ? (
+                  <AdminScreen onBack={() => { setView("dashboard"); window.scrollTo(0, 0); }} wide={wide} />
+                ) : view === "stats" ? (
                   <StatsScreen data={statsData} error={statsError} today={jstDateKey(Date.now())} onBack={leaveScreenNow} masteredCount={stats?.levelCounts?.[MASTERED] ?? 0} wide={wide} />
                 ) : view === "settings" ? (
                   <SettingsScreen
@@ -1491,6 +1517,9 @@ function App() {
       </div>
       {/* 使い方 can be opened from the account menu on any screen. */}
       {aboutOpen && <AboutSheet onClose={closeAbout} sessionSize={sessionSize} isTeacher={isTeacher} focus={aboutOpen === "teacher" ? "teacher" : null} />}
+      {session && signupOpen && (
+        <TeacherSignupSheet onClose={() => setSignupOpen(false)} onFinished={refreshTeacherStatus} />
+      )}
       {session && joinOpen && (
         <JoinClassSheet onClose={() => setJoinOpen(false)} onJoined={(joined) => { if (joined?.id) chooseClass(joined.id); loadMyClasses(); }} />
       )}

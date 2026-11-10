@@ -88,6 +88,33 @@ describe('account menu', () => {
     expect(html).not.toContain('設定');
   });
 
+  it('schools: 先生として登録 only for a Google account that is not a teacher', () => {
+    expect(menu()).not.toContain('先生として登録');
+    expect(menu({ school: { state: 'hidden' } })).not.toContain('先生として登録');
+    expect(menu({ school: { state: 'teacher' } })).not.toContain('先生として登録');
+    const html = menu({ school: { state: 'register' } });
+    expect(html).toMatch(/role="menuitem"[^>]*>先生として登録</);
+    expect(html.indexOf('>先生として登録<')).toBeLessThan(html.indexOf('>設定<'));
+  });
+
+  it('schools: a waiting request shows 承認待ち：school with キャンセル, which asks first', () => {
+    const html = menu({ school: { state: 'pending', pendingName: '龍谷中学校・高等学校' } });
+    expect(html).toContain('data-school-pending');
+    expect(html).toContain('承認待ち：龍谷中学校・高等学校');
+    expect(html).toMatch(/role="menuitem"[^>]*>キャンセル</);
+    expect(html).not.toContain('先生として登録');
+    const ask = menu({ school: { state: 'pending', pendingName: 'X' }, cancelConfirming: true, cancelError: 'だめでした' });
+    expect(ask).toContain('リクエストを取り消しますか？');
+    expect(ask).toMatch(/>取り消す<\/button><button[^>]*>戻る</);
+    expect(ask).toContain('だめでした');
+    expect(ask).not.toContain('>設定<');
+  });
+
+  it('schools: Polyvo管理 only for a platform admin', () => {
+    expect(menu({ school: { state: 'teacher' } })).not.toContain('Polyvo管理');
+    expect(menu({ school: { state: 'teacher', isPlatformAdmin: true } })).toMatch(/role="menuitem"[^>]*>Polyvo管理</);
+  });
+
   it('picks the username, then the Google name, then the email', () => {
     expect(accountName(user)).toBe('aiden');
     expect(accountName({ email: 'x@y.z', user_metadata: { full_name: 'Andre K' } })).toBe('Andre K');

@@ -141,6 +141,7 @@ export default function UserSearchSheet({ mode = "student", existingIds, student
           <Field label={t("teacher.searchLabel")} hint={trimmed.length < 2 ? t("teacher.searchHint") : null}>
             <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} autoCapitalize="off" {...noAutoFix} style={inputStyle} />
           </Field>
+          {!teachersOnly && <div style={{ fontSize: 13, color: colors.muted }}>{t("teacher.searchSchoolOnly")}</div>}
           <ErrorText>{error}</ErrorText>
           <div role="status" style={{ fontSize: 14, color: colors.muted, minHeight: 20 }}>
             {searching ? t("teacher.searching")

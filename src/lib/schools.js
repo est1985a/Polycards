@@ -1,4 +1,5 @@
 // Schools and teacher sign-up (supabase/polyvo-schools-phase1.sql). Pure functions.
+import { t } from '../i18n';
 // The database checks everything again; these only shape the screens and give quick hints.
 
 // The 47 prefectures + overseas / other, in the usual north → south order. The SQL
@@ -17,6 +18,13 @@ export const PREFECTURES = [
 
 // Same as school_type_keys() in the SQL. Labels: schools.type.<key>.
 export const SCHOOL_TYPES = ['jhs', 'hs', 'jhs_hs', 'elementary', 'other'];
+
+// Labels ('' for none) and the line under a school's name: 佐賀県・中高一貫校.
+export const prefLabel = (key) => (key ? t(`schools.pref.${key}`) : '');
+export const typeLabel = (key) => (key ? t(`schools.type.${key}`) : '');
+export function schoolLine(school) {
+  return t('signup.schoolLine', { prefecture: prefLabel(school.prefecture), type: typeLabel(school.school_type) });
+}
 
 export const SCHOOL_NAME_MAX = 60;
 export const TEACHER_NAME_MAX = 20;

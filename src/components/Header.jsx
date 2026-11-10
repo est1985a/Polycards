@@ -66,9 +66,17 @@ const menuItem = {
 // 44 px account button), so without it ログアウト broke after ウ and キャンセル after セ.
 const confirmBtn = { flex: 1, minHeight: 44, padding: "0 12px", whiteSpace: "nowrap" };
 
-// The menu under the account button: name and rank, 学習の記録, 設定, 使い方, then ログアウト (asks first,
-// inside the menu). confirming: the ログアウトしますか？ step is showing.
-export function AccountMenu({ user, rank = null, confirming = false, onStats, onJoinClass, onSettings, onHelp, onAskSignOut, onSignOut, onCancelSignOut }) {
+// The menu under the account button: name and rank, 学習の記録, クラスに参加, (先生として登録 / 承認待ち),
+// 設定, 使い方, (Polyvo管理), then ログアウト (asks first, inside the menu). confirming: the
+// ログアウトしますか？ step is showing.
+// school (schools, supabase/polyvo-schools-phase1.sql), or null: { state ('register' | 'pending' |
+//   'teacher' | 'hidden', schoolMenuState()), pendingName, isPlatformAdmin }.
+// cancelConfirming: the リクエストを取り消しますか？ step is showing; cancelBusy / cancelError for it.
+export function AccountMenu({
+  user, rank = null, confirming = false, onStats, onJoinClass, onSettings, onHelp, onAskSignOut, onSignOut, onCancelSignOut,
+  school = null, cancelConfirming = false, cancelBusy = false, cancelError = null,
+  onRegisterTeacher, onAskCancelRequest, onCancelRequest, onBackFromCancel, onAdmin,
+}) {
   return (
     <div
       role="menu"
@@ -96,12 +104,39 @@ export function AccountMenu({ user, rank = null, confirming = false, onStats, on
             <button onClick={onCancelSignOut} style={{ ...btnGhost, ...confirmBtn }}>{t("common.cancel")}</button>
           </div>
         </div>
+      ) : cancelConfirming ? (
+        <div role="alertdialog" aria-label={t("menu.cancelRequestConfirm")} style={{ display: "grid", gap: 8, padding: "4px 4px 4px" }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: colors.text, padding: "0 8px" }}>{t("menu.cancelRequestConfirm")}</div>
+          {cancelError && <div role="alert" style={{ fontSize: 14, color: colors.danger, padding: "0 8px" }}>{cancelError}</div>}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={onCancelRequest} disabled={cancelBusy} style={{ ...btnDanger, ...confirmBtn, opacity: cancelBusy ? 0.6 : 1 }}>
+              {cancelBusy ? "…" : t("menu.cancelRequestYes")}
+            </button>
+            <button onClick={onBackFromCancel} disabled={cancelBusy} style={{ ...btnGhost, ...confirmBtn }}>{t("menu.back")}</button>
+          </div>
+        </div>
       ) : (
         <>
           <button role="menuitem" onClick={onStats} style={menuItem}>{t("menu.stats")}</button>
           <button role="menuitem" onClick={onJoinClass} style={menuItem}>{t("menu.joinClass")}</button>
+          {school?.state === "register" && (
+            <button role="menuitem" onClick={onRegisterTeacher} style={menuItem}>{t("menu.registerTeacher")}</button>
+          )}
+          {school?.state === "pending" && (
+            <div data-school-pending="" style={{ display: "grid", gap: 6, padding: "6px 4px 6px 12px" }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: colors.muted, overflowWrap: "anywhere" }}>
+                {t("menu.pendingSchool", { name: school.pendingName ?? "" })}
+              </span>
+              <button role="menuitem" onClick={onAskCancelRequest} style={{ ...btnGhost, justifySelf: "start", minHeight: 44, padding: "0 14px", fontSize: 14, whiteSpace: "nowrap" }}>
+                {t("menu.cancelRequest")}
+              </button>
+            </div>
+          )}
           <button role="menuitem" onClick={onSettings} style={menuItem}>{t("menu.settings")}</button>
           <button role="menuitem" onClick={onHelp} style={menuItem}>{t("menu.help")}</button>
+          {school?.isPlatformAdmin && (
+            <button role="menuitem" onClick={onAdmin} style={menuItem}>{t("menu.admin")}</button>
+          )}
           <div aria-hidden="true" style={{ height: 2, background: colors.line, margin: "4px 4px" }} />
           <button role="menuitem" onClick={onAskSignOut} style={{ ...menuItem, color: colors.danger }}>{t("menu.signOut")}</button>
         </>
@@ -112,12 +147,27 @@ export function AccountMenu({ user, rank = null, confirming = false, onStats, on
 
 // Round button with the user's initial; opens the account menu.
 // dot: a small accent dot when a newly unlocked theme hasn't been seen in settings yet.
-export function AccountButton({ user, rank = null, dot = false, onSignOut, onOpenStats, onOpenSettings, onOpenHelp, onOpenJoinClass }) {
+// school: see AccountMenu, plus onRegister(), onCancel() (a promise) and onAdmin().
+export function AccountButton({ user, rank = null, dot = false, onSignOut, onOpenStats, onOpenSettings, onOpenHelp, onOpenJoinClass, school = null }) {
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [cancelConfirming, setCancelConfirming] = useState(false);
+  const [cancelBusy, setCancelBusy] = useState(false);
+  const [cancelError, setCancelError] = useState(null);
   const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email || "?";
   const initial = (Array.from(name.trim())[0] || "?").toUpperCase();
-  const close = () => { setOpen(false); setConfirming(false); };
+  const close = () => { setOpen(false); setConfirming(false); setCancelConfirming(false); setCancelError(null); };
+  async function cancelRequest() {
+    setCancelBusy(true); setCancelError(null);
+    try {
+      await school?.onCancel?.();
+      close();
+    } catch (e) {
+      setCancelError(e.message);
+    } finally {
+      setCancelBusy(false);
+    }
+  }
 
   return (
     <div style={{ position: "relative" }}>
@@ -156,6 +206,15 @@ export function AccountButton({ user, rank = null, dot = false, onSignOut, onOpe
             onSettings={() => { close(); onOpenSettings?.(); }}
             onJoinClass={() => { close(); onOpenJoinClass?.(); }}
             onHelp={() => { close(); onOpenHelp?.(); }}
+            school={school}
+            cancelConfirming={cancelConfirming}
+            cancelBusy={cancelBusy}
+            cancelError={cancelError}
+            onRegisterTeacher={() => { close(); school?.onRegister?.(); }}
+            onAskCancelRequest={() => setCancelConfirming(true)}
+            onCancelRequest={cancelRequest}
+            onBackFromCancel={() => { setCancelConfirming(false); setCancelError(null); }}
+            onAdmin={() => { close(); school?.onAdmin?.(); }}
             onAskSignOut={() => setConfirming(true)}
             onCancelSignOut={() => setConfirming(false)}
             onSignOut={() => { close(); onSignOut(); }}
@@ -205,12 +264,13 @@ export function GachaButton({ tickets = 0, pulse = false, onOpen }) {
 // gacha: the gacha status (null while loading); pulseGacha / onOpenGacha: for the gacha button.
 // rank, newTheme (the dot), onOpenStats, onOpenSettings, onOpenHelp, onOpenJoinClass: for the account menu.
 // tight: the review on a short screen (landscape iPad): less space above and below the row.
+// school: the account menu's school items (see AccountButton), or null.
 // search: the dictionary search (DictionarySearch), signed in only: between the logo and the buttons
 // on wide screens, a magnifier before the gacha button on phones (its box drops down under the row).
 export default function Header({
   variant = "compact", user, onSignOut, onHome, wide = false, gacha = null, pulseGacha = false, onOpenGacha,
   rank = null, newTheme = false, onOpenStats, onOpenSettings, onOpenHelp, onOpenJoinClass, tight = false,
-  search = null,
+  search = null, school = null,
 }) {
   const side = wide ? wideLayout.gutter : gutter;
   // zIndex 25: above everything sticky or fixed on the page (word list bar 5, drill button and tabs 10),
@@ -225,7 +285,7 @@ export default function Header({
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {search && !wide && search}
           <GachaButton tickets={gacha?.tickets ?? 0} pulse={pulseGacha} onOpen={onOpenGacha} />
-          <AccountButton user={user} rank={rank} dot={newTheme} onSignOut={onSignOut} onOpenStats={onOpenStats} onOpenSettings={onOpenSettings} onOpenHelp={onOpenHelp} onOpenJoinClass={onOpenJoinClass} />
+          <AccountButton user={user} rank={rank} dot={newTheme} onSignOut={onSignOut} onOpenStats={onOpenStats} onOpenSettings={onOpenSettings} onOpenHelp={onOpenHelp} onOpenJoinClass={onOpenJoinClass} school={school} />
         </div>
       )}
     </div>
