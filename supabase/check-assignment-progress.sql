@@ -54,7 +54,7 @@ begin
       (v_c, v_w[5], 1);
 
     -- Made-up class with the student, and an assignment for each pack
-    insert into public.classes (name, school_year, join_code) values ('zz check', 2026, public.new_join_code())
+    insert into public.classes (name, school_year, join_code, school_id) values ('zz check', 2026, public.new_join_code(), 'f0000000-0000-4000-8000-000000000001')
     returning id into v_class;
     insert into public.class_members (class_id, student_id, real_name) values (v_class, v_student, 'Check');
     insert into public.class_assignments (class_id, deck_id) values (v_class, v_a), (v_class, v_b), (v_class, v_c);

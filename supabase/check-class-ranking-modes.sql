@@ -64,9 +64,9 @@ begin
     v_student := v_fake[14];
 
     -- Made-up classes
-    insert into public.classes (name, school_year, join_code) values ('zz rank check', 2026, public.new_join_code())
+    insert into public.classes (name, school_year, join_code, school_id) values ('zz rank check', 2026, public.new_join_code(), 'f0000000-0000-4000-8000-000000000001')
     returning id into v_class;
-    insert into public.classes (name, school_year, join_code) values ('zz rank check other', 2026, public.new_join_code())
+    insert into public.classes (name, school_year, join_code, school_id) values ('zz rank check other', 2026, public.new_join_code(), 'f0000000-0000-4000-8000-000000000001')
     returning id into v_other;
     insert into public.class_members (class_id, student_id, real_name, nickname) values (v_class, v_student, 'Check', 'zzme');
     for i in 1..9 loop
@@ -78,6 +78,9 @@ begin
       (v_class, v_nonick, 'No nickname', null),
       (v_other, v_outsider, 'Outsider', 'zzoutsider');
     insert into public.teachers (user_id) values (v_teacher) on conflict do nothing;
+    -- polyvo-schools-phase1.sql: a teacher also needs an approved membership in the class's school
+    insert into public.school_teachers (school_id, user_id, role, status)
+    values ('f0000000-0000-4000-8000-000000000001', v_teacher, 'teacher', 'approved');
     insert into public.class_teachers (class_id, teacher_id) values (v_class, v_teacher);
 
     -- Made-up words (w2 has an accepted alternate) and due Japanese → English cards for the student

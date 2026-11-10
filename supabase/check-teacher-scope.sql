@@ -25,6 +25,7 @@ declare
   v_other_teacher uuid; -- follow-ups: a teacher of v_other (else the outsider)
   v_co       uuid[];   -- follow-ups: the other teachers of v_class
   v_t        uuid;
+  v_stranger uuid;   -- schools: an account in no class of the teacher's school and not a teacher there
   v_out      text := '';
   v_n        int;
   v_check    record;
@@ -32,9 +33,15 @@ begin
   select u.id into v_teacher from auth.users u
   where lower(u.raw_user_meta_data->>'username') = lower(v_who) or lower(u.email) = lower(v_who);
   if v_teacher is null then raise exception 'No account found for "%"', v_who; end if;
-  if not exists (select 1 from public.teachers t where t.user_id = v_teacher) then
-    raise exception '"%" is not a teacher. Use a teacher account for this check.', v_who;
+  if not public.user_is_teacher(v_teacher) then
+    raise exception '"%" is not an approved teacher of a school. Use a teacher account for this check.', v_who;
   end if;
+  -- Schools (polyvo-schools-phase1.sql): someone the teacher's school doesn't know; else a made-up id
+  select u.id into v_stranger from auth.users u
+  where not public.student_in_school(u.id, public.user_school_id(v_teacher))
+    and public.user_school_id(u.id) is distinct from public.user_school_id(v_teacher)
+  limit 1;
+  v_stranger := coalesce(v_stranger, gen_random_uuid());
   select ct.class_id into v_class from public.class_teachers ct
   join public.classes c on c.id = ct.class_id
   where ct.teacher_id = v_teacher and not c.archived limit 1;
@@ -95,7 +102,16 @@ begin
       ('change a student''s cards directly',       format('update public.user_cards set level = 7 where user_id = %L', v_outsider),                 'no_error'),
       ('read teachers table',                      'select count(*) from public.teachers',                                                          'permission denied'),
       ('remove_co_teacher: class I don''t teach',  format('select public.remove_co_teacher(%L, %L)', v_other, v_other_teacher),                     'not_class_teacher'),
-      ('remove_co_teacher: outsider in my class',  format('select public.remove_co_teacher(%L, %L)', v_class, v_outsider),                          'teacher_not_in_class')
+      ('remove_co_teacher: outsider in my class',  format('select public.remove_co_teacher(%L, %L)', v_class, v_outsider),                          'teacher_not_in_class'),
+      -- Schools (polyvo-schools-phase1.sql; check-schools.sql has the full cross-school checks)
+      ('add_student_to_class: someone my school doesn''t know', format('select public.add_student_to_class(%L, %L, %L)', v_class, v_stranger, 'X'), 'student_not_in_school'),
+      ('add_co_teacher: someone who isn''t a teacher of my school', format('select public.add_co_teacher(%L, %L)', v_class, v_stranger),         'target_not_teacher'),
+      ('search_users: never returns an email',     'select 1 from public.search_users(''te'', false) where email is not null',                       'no_error'),
+      ('search_users (teachers): never returns an email', 'select 1 from public.search_users(''te'', true) where email is not null',                'no_error'),
+      ('search_users: finds nobody outside my school', format('select 1 from public.search_users(''te'', false) where id = %L', v_stranger),      'no_error'),
+      ('read schools table',                       'select count(*) from public.schools',                                                            'permission denied'),
+      ('read school_teachers table',               'select count(*) from public.school_teachers',                                                    'permission denied'),
+      ('admin_schools (a teacher is not a platform admin)', 'select public.admin_schools()',                                                       'not_platform_admin')
     ) as c(label, stmt, expected)
   loop
     begin

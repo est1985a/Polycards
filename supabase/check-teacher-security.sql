@@ -142,7 +142,33 @@ begin
       ('call internal note_join_code_failure', 'select public.note_join_code_failure()',                                                'permission denied'),
       ('call internal join_code_wrong', 'select public.join_code_wrong()',                                                              'permission denied'),
       -- Pre-filled rosters (polycards-roster-prefill.sql; check-roster-prefill.sql has the full checks)
-      ('add_roster_entries',         format('select public.add_roster_entries(%L, %L::jsonb)', v_class, '[]'),                          'not_teacher')
+      ('add_roster_entries',         format('select public.add_roster_entries(%L, %L::jsonb)', v_class, '[]'),                          'not_teacher'),
+      -- Schools (polyvo-schools-phase1.sql; check-schools.sql has the full checks)
+      ('my_school',                  'select public.my_school()',                                                                       'not_teacher'),
+      ('decide_school_request',      format('select public.decide_school_request(%L, true)', v_student),                                'not_school_admin'),
+      ('set_school_admin',           format('select public.set_school_admin(%L, true)', v_student),                                     'not_school_admin'),
+      ('remove_school_teacher',      'select public.remove_school_teacher(gen_random_uuid())',                                          'not_school_admin'),
+      ('set_school_auto_approve',    'select public.set_school_auto_approve(''f0000000-0000-4000-8000-000000000001'', true)',          'not_school_admin'),
+      ('admin_schools',              'select public.admin_schools()',                                                                   'not_platform_admin'),
+      ('admin_decide_school',        'select public.admin_decide_school(''f0000000-0000-4000-8000-000000000001'', false)',             'not_platform_admin'),
+      ('admin_set_school_domains',   'select public.admin_set_school_domains(''f0000000-0000-4000-8000-000000000001'', array[''x.example''])', 'not_platform_admin'),
+      ('read schools',               'select count(*) from public.schools',                                                            'permission denied'),
+      ('read school_domains',        'select count(*) from public.school_domains',                                                     'permission denied'),
+      ('read school_teachers',       'select count(*) from public.school_teachers',                                                    'permission denied'),
+      ('read platform_admins',       'select count(*) from public.platform_admins',                                                    'permission denied'),
+      ('make myself an approved school admin', format('insert into public.school_teachers (school_id, user_id, role, status) values (''f0000000-0000-4000-8000-000000000001'', %L, ''admin'', ''approved'')', v_student), 'permission denied'),
+      ('make myself a platform admin', format('insert into public.platform_admins (user_id) values (%L)', v_student),                   'permission denied'),
+      ('approve a school directly',  'update public.schools set status = ''approved''',                                                 'permission denied'),
+      ('add a school domain directly', 'insert into public.school_domains (domain, school_id) values (''x.example'', ''f0000000-0000-4000-8000-000000000001'')', 'permission denied'),
+      ('call internal user_school_id', format('select public.user_school_id(%L)', v_student),                                           'permission denied'),
+      ('call internal my_school_id', 'select public.my_school_id()',                                                                    'permission denied'),
+      ('call internal is_school_admin', 'select public.is_school_admin(gen_random_uuid())',                                             'permission denied'),
+      ('call internal is_platform_admin', 'select public.is_platform_admin()',                                                          'permission denied'),
+      ('call internal student_in_school', format('select public.student_in_school(%L, gen_random_uuid())', v_student),                  'permission denied'),
+      ('call internal grant_teacher_profile', format('select public.grant_teacher_profile(%L, ''X'')', v_student),                      'permission denied'),
+      ('call internal replace_school_domains', 'select public.replace_school_domains(gen_random_uuid(), array[''x.example''])',        'permission denied'),
+      ('call internal clean_domain', 'select public.clean_domain(''x.example'')',                                                       'permission denied'),
+      ('call internal is_free_mail_domain', 'select public.is_free_mail_domain(''x.example'')',                                         'permission denied')
     ) as c(label, stmt, expected)
   loop
     begin

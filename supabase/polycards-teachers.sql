@@ -13,6 +13,8 @@
 --   * Every change goes through the functions below, which check who is
 --     calling. The tables themselves are read-only (and only through RLS).
 --
+-- SINCE polyvo-schools-phase1.sql (2026-11-10) this snippet alone is NOT enough: a teacher also needs
+-- an approved membership in a school. Use snippet C at the top of polyvo-schools-phase1.sql instead.
 -- Make someone a teacher (put a test-account username OR a full email in both places):
 --   insert into public.teachers (user_id)
 --   select id from auth.users

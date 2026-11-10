@@ -38,13 +38,15 @@ declare
   v_e       uuid;
   v_e2      uuid;
   v_fake    uuid := gen_random_uuid();
+  v_school  uuid;     -- the teacher's school (polyvo-schools-phase1.sql); the made-up classes go there
 begin
   select u.id into v_teacher from auth.users u
   where lower(u.raw_user_meta_data->>'username') = lower(v_teacher_who) or lower(u.email) = lower(v_teacher_who);
   if v_teacher is null then raise exception 'No account found for TEACHER "%"', v_teacher_who; end if;
-  if not exists (select 1 from public.teachers t where t.user_id = v_teacher) then
-    raise exception 'TEACHER "%" is not in public.teachers.', v_teacher_who;
+  if not public.user_is_teacher(v_teacher) then
+    raise exception 'TEACHER "%" is not an approved teacher of a school.', v_teacher_who;
   end if;
+  v_school := public.user_school_id(v_teacher);
 
   select u.id, lower(u.email) into v_student, v_smail from auth.users u
   where lower(u.raw_user_meta_data->>'username') = lower(v_student_who) or lower(u.email) = lower(v_student_who);
@@ -109,7 +111,7 @@ begin
     v_out := v_out || 'INFO  ' || v_student_who || ' signs in with Google: password-account claim check skipped' || E'\n';
   else
     begin
-      insert into public.classes (name, school_year, join_code) values ('ROSTER CHECK S', 2026, public.new_join_code()) returning id into v_c1;
+      insert into public.classes (name, school_year, join_code, school_id) values ('ROSTER CHECK S', 2026, public.new_join_code(), v_school) returning id into v_c1;
       insert into public.class_roster_entries (class_id, email, real_name) values (v_c1, v_smail, 'Check Student');
       perform set_config('request.jwt.claims', json_build_object('sub', v_student, 'role', 'authenticated')::text, true);
       set local role authenticated;
@@ -128,9 +130,16 @@ begin
   -- Part B: the teacher pastes rows into a made-up class. Undone.
   -- ---------------------------------------------------------------
   begin
-    insert into public.classes (name, school_year, join_code) values ('ROSTER CHECK T', 2026, public.new_join_code()) returning id into v_c;
+    insert into public.classes (name, school_year, join_code, school_id) values ('ROSTER CHECK T', 2026, public.new_join_code(), v_school) returning id into v_c;
     insert into public.class_teachers (class_id, teacher_id) values (v_c, v_teacher);
-    insert into public.classes (name, school_year, join_code) values ('ROSTER CHECK F', 2026, public.new_join_code()) returning id into v_foreign;
+    insert into public.classes (name, school_year, join_code, school_id) values ('ROSTER CHECK F', 2026, public.new_join_code(), v_school) returning id into v_foreign;
+    -- A paste only takes emails on the school's verified domains (exact match). For this check
+    -- (undone with everything else in Part B) the domains of the test addresses are added for a
+    -- moment: example.jp and the Google student's own domain (gmail.com is fine here: the SQL
+    -- editor writes it directly, the app never could).
+    insert into public.school_domains (domain, school_id)
+    select d, v_school from unnest(array['example.jp', public.email_domain(v_gmail)]) d
+    on conflict (domain) do nothing;
 
     perform set_config('request.jwt.claims', json_build_object('sub', v_teacher, 'role', 'authenticated')::text, true);
     set local role authenticated;
@@ -169,7 +178,7 @@ begin
     end;
 
     -- The paste: the Google student (capitals + spaces), a new address, a bad address, the same
-    -- address twice, number 120, a full-width ５, an empty name.
+    -- address twice, number 120, a full-width ５, an empty name, an address outside the school's domains.
     v_res := jsonb_build_array(
       jsonb_build_object('student_number', '3', 'real_name', 'チェック　太郎', 'email', '  ' || upper(v_gmail) || ' '),
       jsonb_build_object('student_number', '7', 'real_name', 'Pending One', 'email', 'roster.check.pending@example.jp'),
@@ -178,21 +187,22 @@ begin
       jsonb_build_object('student_number', '10', 'real_name', 'Dup B', 'email', 'Roster.Check.Dup@example.jp'),
       jsonb_build_object('student_number', '120', 'real_name', 'Big Number', 'email', 'roster.check.n120@example.jp'),
       jsonb_build_object('student_number', '５', 'real_name', 'Full Width', 'email', 'roster.check.fw@example.jp'),
-      jsonb_build_object('student_number', '', 'real_name', '   ', 'email', 'roster.check.noname@example.jp'));
+      jsonb_build_object('student_number', '', 'real_name', '   ', 'email', 'roster.check.noname@example.jp'),
+      jsonb_build_object('student_number', '11', 'real_name', 'Outside', 'email', 'roster.check@sub.example.jp'));
 
     -- Dry run: the right answers, nothing written
     select string_agg(r->>'status' || coalesce(':' || (r->>'reason'), ''), ' ' order by (r->>'row')::int) into v_got
     from jsonb_array_elements(public.add_roster_entries(v_c, v_res, true)) r;
     select count(*) into v_n from public.class_roster_pending(v_c);
     select jsonb_array_length(public.class_detail(v_c)->'students') into v_n2;
-    v_out := v_out || (case when v_got = 'added_member added_pending error:bad_email error:duplicate_email error:duplicate_email error:bad_number added_pending error:bad_name'
+    v_out := v_out || (case when v_got = 'added_member added_pending error:bad_email error:duplicate_email error:duplicate_email error:bad_number added_pending error:bad_name error:outside_school_domain'
                              and v_n = 0 and v_n2 = 0 then 'PASS' else 'FAIL' end)
                    || '  teacher: dry run statuses, nothing written (' || v_got || '; pending ' || v_n || ', members ' || v_n2 || ')' || E'\n';
 
     -- The real paste
     select string_agg(r->>'status' || coalesce(':' || (r->>'reason'), ''), ' ' order by (r->>'row')::int) into v_got
     from jsonb_array_elements(public.add_roster_entries(v_c, v_res)) r;
-    v_out := v_out || (case when v_got = 'added_member added_pending error:bad_email error:duplicate_email error:duplicate_email error:bad_number added_pending error:bad_name'
+    v_out := v_out || (case when v_got = 'added_member added_pending error:bad_email error:duplicate_email error:duplicate_email error:bad_number added_pending error:bad_name error:outside_school_domain'
                             then 'PASS' else 'FAIL' end) || '  teacher: paste statuses (' || v_got || ')' || E'\n';
     select string_agg(p.email || '#' || coalesce(p.student_number::text, '-'), ' ' order by p.student_number) into v_got
     from public.class_roster_pending(v_c) p;
@@ -274,9 +284,9 @@ begin
   -- Part C: the Google student claims their rows. Undone.
   -- ---------------------------------------------------------------
   begin
-    insert into public.classes (name, school_year, join_code) values ('ROSTER CHECK 1', 2026, public.new_join_code()) returning id into v_c1;
-    insert into public.classes (name, school_year, join_code, archived) values ('ROSTER CHECK 2', 2026, public.new_join_code(), true) returning id into v_c2;
-    insert into public.classes (name, school_year, join_code) values ('ROSTER CHECK 3', 2026, public.new_join_code()) returning id into v_c3;
+    insert into public.classes (name, school_year, join_code, school_id) values ('ROSTER CHECK 1', 2026, public.new_join_code(), v_school) returning id into v_c1;
+    insert into public.classes (name, school_year, join_code, archived, school_id) values ('ROSTER CHECK 2', 2026, public.new_join_code(), true, v_school) returning id into v_c2;
+    insert into public.classes (name, school_year, join_code, school_id) values ('ROSTER CHECK 3', 2026, public.new_join_code(), v_school) returning id into v_c3;
     insert into public.class_roster_entries (class_id, email, real_name, student_number) values
       (v_c1, v_gmail, 'Check Google', 4), (v_c2, v_gmail, 'Check Google', 4), (v_c3, v_gmail, 'Check Google', 4),
       (v_c1, 'roster.check.someone.else@example.jp', 'Someone Else', 5);
